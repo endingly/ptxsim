@@ -1,0 +1,13 @@
+softfloat provides the CMake target:
+
+    find_package(softfloat CONFIG REQUIRED)
+
+    target_link_libraries(
+        your_target
+        PRIVATE
+            softfloat::softfloat
+    )
+
+The public C API can be included as:
+
+    #include <softfloat/softfloat.h>

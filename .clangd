@@ -1,0 +1,26 @@
+CompileFlags:
+  CompilationDatabase: out/build/ci-linux-gcc-debug/
+
+  # 剥除 GCC 的模块相关 flag——clangd 用 Clang 前端，不认识这些
+  Remove:
+    - -fmodules-ts
+    - -fmodule-only
+    - -fmodule-mapper=*
+    - -fdeps-format=*
+    - -fdeps-file=*
+    - -fdeps-target=*
+
+  Add:
+    - -std=c++23
+
+Index:
+  Background: Build
+
+Diagnostics:
+  UnusedIncludes: None
+  Suppress:
+    - "module_not_found"
+    - "ast_file_version_too_old"
+
+Documentation:
+  CommentFormat: Doxygen
