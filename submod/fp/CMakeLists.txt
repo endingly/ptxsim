@@ -14,6 +14,13 @@ if(BUILD_TESTING)
     file(GLOB ptxsim_fp_test_srcs CONFIGURE_DEPENDS test/*.cpp)
     add_executable(test_ptxsim_fp ${ptxsim_fp_test_srcs})
     find_package(GTest CONFIG REQUIRED)
-    target_link_libraries(test_ptxsim_fp PRIVATE GTest::gtest GTest::gtest_main ptxsim_fp)
+    target_link_libraries(
+        test_ptxsim_fp
+        PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+        ptxsim_fp
+        softfloat::softfloat
+    )
     gtest_discover_tests(test_ptxsim_fp)
 endif()
