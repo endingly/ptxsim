@@ -178,7 +178,19 @@ target_compile_definitions(
     INLINE_LEVEL=5
     SOFTFLOAT_FAST_DIV32TO16
     SOFTFLOAT_FAST_DIV64TO32
+
+    INTERFACE
+    "$<$<COMPILE_LANGUAGE:C>:THREAD_LOCAL=_Thread_local>"
+    "$<$<COMPILE_LANGUAGE:CXX>:THREAD_LOCAL=thread_local>"
 )
+
+if(SOFTFLOAT_LITTLE_ENDIAN)
+    target_compile_definitions(
+        softfloat
+        INTERFACE
+        LITTLEENDIAN
+    )
+endif()
 
 #
 # SoftFloat documents SOFTFLOAT_FAST_INT64 as appropriate for
@@ -187,7 +199,7 @@ target_compile_definitions(
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     target_compile_definitions(
         softfloat
-        PRIVATE
+        PUBLIC
         SOFTFLOAT_FAST_INT64
     )
 endif()

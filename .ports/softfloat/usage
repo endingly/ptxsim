@@ -11,3 +11,5 @@ softfloat provides the CMake target:
 The public C API can be included as:
 
     #include <softfloat/softfloat.h>
+
+Linking the target supplies its required public compile definitions; do not define SoftFloat configuration macros manually.
