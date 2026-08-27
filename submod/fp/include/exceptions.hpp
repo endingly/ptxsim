@@ -33,6 +33,20 @@ class ExceptionFlags {
     return ExceptionFlags{static_cast<std::uint8_t>(lhs.bits_ | rhs.bits_)};
   }
 
+  friend constexpr ExceptionFlags operator|(ExceptionFlags lhs,
+                                            ExceptionFlag rhs) noexcept {
+    return lhs | ExceptionFlags{static_cast<std::uint8_t>(rhs)};
+  }
+
+  constexpr ExceptionFlags& operator|=(ExceptionFlags rhs) noexcept {
+    bits_ = static_cast<std::uint8_t>(bits_ | rhs.bits_);
+    return *this;
+  }
+
+  constexpr ExceptionFlags& operator|=(ExceptionFlag rhs) noexcept {
+    return *this |= ExceptionFlags{static_cast<std::uint8_t>(rhs)};
+  }
+
  private:
   std::uint8_t bits_{};
 };

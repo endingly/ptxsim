@@ -254,6 +254,29 @@ TEST(Environment, SelectedConversions) {
       0x3FC00000u);
 }
 
+TEST(Environment, InvalidLegacyConversionRoundingIsRejected) {
+  const Environment environment;
+  const auto invalid = static_cast<RoundingMode>(0x7F);
+  EXPECT_THROW(static_cast<void>(environment.i32_to_f32(1, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.f32_to_i32(Fp32{}, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.u32_to_f32(1, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.f32_to_u32(Fp32{}, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.i32_to_f64(1, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.f64_to_i32(Fp64{}, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.u32_to_f64(1, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.f64_to_u32(Fp64{}, invalid)),
+               std::invalid_argument);
+  EXPECT_THROW(static_cast<void>(environment.f64_to_f32(Fp64{}, invalid)),
+               std::invalid_argument);
+}
+
 TEST(Types, ClassificationAndSignedZero) {
   EXPECT_EQ(classify(Fp16{}), FpClass::Zero);
   EXPECT_EQ(classify(Fp16{0x0001}), FpClass::Subnormal);
