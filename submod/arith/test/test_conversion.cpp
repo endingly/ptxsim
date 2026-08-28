@@ -39,6 +39,29 @@ constexpr fp_class e4m3_class(uint8_t bits) {
   return (bits & 0x7f) == 0x7f ? fp_class::quiet_nan : fp_class::normal;
 }
 
+// PTX 9.3 table literals, intentionally independent of FormatTraits and the
+// production low-precision encoder/decoder.
+constexpr fp_class ue8m0_class(uint8_t bits) {
+  return bits == 0xff ? fp_class::quiet_nan : fp_class::normal;
+}
+
+constexpr fp_class ue4m3_class(uint8_t bits) {
+  bits &= 0x7f;
+  if (bits == 0x7f)
+    return fp_class::quiet_nan;
+  return finite_class(bits, 0x7f, 0x78, 0x07);
+}
+
+constexpr uint32_t ue8m0_decoded_f32_bits(uint8_t bits) {
+  if (bits == 0xff)
+    return 0x7fc00000u;
+  // UE8M0 has the F32 exponent bias but no zero encoding.  Its 0x00 is 2^-127,
+  // represented exactly by the F32 subnormal 2^-127.
+  return bits == 0 ? 0x00400000u : static_cast<uint32_t>(bits) << 23;
+}
+
+constexpr uint32_t ue4m3_decoded_f32_bits(uint8_t bits);
+
 // This is a test-only field decoder.  It intentionally does not use the
 // production low-precision unpacker or encoder.
 constexpr uint32_t decoded_f32_bits(uint32_t bits, uint32_t storage_mask,
@@ -78,6 +101,13 @@ constexpr uint32_t decoded_f32_bits(uint32_t bits, uint32_t storage_mask,
       1 - exponent_bias - static_cast<int>(fraction_bits) +
       static_cast<int>(top) + 127);
   return sign | (f32_exponent << 23) | ((fraction << (23 - top)) & 0x007fffffu);
+}
+
+constexpr uint32_t ue4m3_decoded_f32_bits(uint8_t bits) {
+  bits &= 0x7f;
+  if (bits == 0x7f)
+    return 0x7fc00000u;
+  return decoded_f32_bits(bits, 0x7f, 0, 0x78, 0x07, 3, 7);
 }
 
 template <typename T>
@@ -190,8 +220,8 @@ TEST(Conversion, ExhaustiveLowPrecisionEncodingDecodeEncodeAndFixedRoundTrip) {
     EXPECT_EQ(classify(e2), finite_class(bits, 0x3f, 0x18, 0x07));
     EXPECT_EQ(classify(e3), finite_class(bits, 0x3f, 0x1c, 0x03));
     EXPECT_EQ(classify(f4), finite_class(bits, 0x0f, 0x06, 0x01));
-    EXPECT_EQ(classify(ue8), bits == 0 ? fp_class::zero : fp_class::normal);
-    EXPECT_EQ(classify(ue4), finite_class(bits, 0x7f, 0x78, 0x07));
+    EXPECT_EQ(classify(ue8), ue8m0_class(bits));
+    EXPECT_EQ(classify(ue4), ue4m3_class(bits));
 
     expect_f32_decode(
         c, e4,
@@ -204,9 +234,8 @@ TEST(Conversion, ExhaustiveLowPrecisionEncodingDecodeEncodeAndFixedRoundTrip) {
                       decoded_f32_bits(bits, 0x3f, 0x20, 0x1c, 0x03, 2, 3));
     expect_f32_decode(c, f4,
                       decoded_f32_bits(bits, 0x0f, 0x08, 0x06, 0x01, 1, 1));
-    expect_f32_decode(c, ue8, decoded_f32_bits(bits, 0xff, 0, 0xff, 0, 0, 127));
-    expect_f32_decode(c, ue4,
-                      decoded_f32_bits(bits, 0x7f, 0, 0x78, 0x07, 3, 7));
+    expect_f32_decode(c, ue8, ue8m0_decoded_f32_bits(bits));
+    expect_f32_decode(c, ue4, ue4m3_decoded_f32_bits(bits));
     expect_f32_roundtrip(c, e4, bits);
     expect_f32_roundtrip(
         c, e5,
@@ -233,8 +262,51 @@ TEST(Conversion, ExhaustiveLowPrecisionEncodingDecodeEncodeAndFixedRoundTrip) {
   }
 }
 
+TEST(Conversion, Ptx93UnsignedScaleRawBitGoldens) {
+  context c;
+  const auto ue8_min = ufloat8_e8m0_t::from_bits(0x00);
+  const auto ue8_nan = ufloat8_e8m0_t::from_bits(0xff);
+  const auto ue4_max = ufloat7_e4m3_t::from_bits(0x7e);
+  const auto ue4_nan = ufloat7_e4m3_t::from_bits(0x7f);
+
+  EXPECT_TRUE(is_normal(ue8_min));
+  EXPECT_FALSE(is_zero(ue8_min));
+  EXPECT_TRUE(is_nan(ue8_nan));
+  EXPECT_FALSE(is_infinity(ue8_nan));
+  EXPECT_TRUE(is_normal(ue4_max));
+  EXPECT_TRUE(is_nan(ue4_nan));
+  EXPECT_FALSE(is_infinity(ue4_nan));
+
+  EXPECT_EQ(cvt<float32_t>(c, ue8_min)->value.bits(), 0x00400000u);
+  EXPECT_EQ(cvt<float32_t>(c, ue8_nan)->value.bits(), 0x7fc00000u);
+  EXPECT_EQ(cvt<float32_t>(c, ue4_nan)->value.bits(), 0x7fc00000u);
+  EXPECT_EQ(cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x00400000))
+                ->value.bits(),
+            0x00);
+  EXPECT_EQ(cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x7fc00000))
+                ->value.bits(),
+            0xff);
+  EXPECT_EQ(cvt<ufloat7_e4m3_t>(c, float32_t::from_bits(0x7fc00000))
+                ->value.bits(),
+            0x7f);
+}
+
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   context c;
+  // The capability is the canonical decode/encode matrix, not a list of
+  // opportunistic F32 hub routes.  Every positive pair below has a generic
+  // path; TF32 remains deliberately limited to its PTX semantic bridge.
+  static_assert(convertible_to<float64_t, float8_e4m3_t>);
+  static_assert(convertible_to<float8_e4m3_t, bfloat16_t>);
+  static_assert(convertible_to<fixed8_s2f6_t, int64_t>);
+  static_assert(convertible_to<int64_t, fixed8_s2f6_t>);
+  static_assert(convertible_to<float8_e5m2_t, float64_t>);
+  static_assert(operation_capability<scalar_operation::cvt, float16_t,
+                                     float32_t>::value);
+  static_assert(operation_capability<scalar_operation::cvt, float64_t,
+                                     bfloat16_t>::value);
+  static_assert(!convertible_to<tfloat32_t, float64_t>);
+  static_assert(!convertible_to<float16_t, tfloat32_t>);
   expect_f32_conversion_routes(
       c, std::type_identity<float16_t>{}, std::type_identity<bfloat16_t>{},
       std::type_identity<float8_e4m3_t>{}, std::type_identity<float8_e5m2_t>{},
@@ -267,6 +339,42 @@ TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   EXPECT_TRUE(cvt<float64_t>(c, uint32_t{1}));
   EXPECT_TRUE(cvt<float64_t>(c, int64_t{1}));
   EXPECT_TRUE(cvt<float64_t>(c, uint64_t{1}));
+}
+
+TEST(Conversion, CanonicalMatrixDoesNotRoundThroughF32) {
+  context c;
+  // 2^53+1 is distinguishable in F64 but not F32.  The fixed target must see
+  // the original integer bits and saturate, rather than first losing them in
+  // a float hub.
+  const auto precise = float64_t::from_bits(0x4340000000000001ULL);
+  const auto fixed = cvt<fixed8_s2f6_t>(c, precise,
+                                        {.saturation = saturation_mode::type_range});
+  ASSERT_TRUE(fixed);
+  EXPECT_EQ(fixed->value.rep, 127);
+  EXPECT_TRUE(fixed->status.overflow);
+
+  const auto low = cvt<float8_e4m3_t>(c, precise);
+  ASSERT_TRUE(low);
+  EXPECT_EQ(low->value.bits(), 0x7e);  // finite E4M3 maximum, not NaN 0x7f
+  EXPECT_TRUE(low->status.overflow);
+
+  // Just above an E4M3 midpoint.  F64->F32 first would collapse this to the
+  // exact midpoint (and then choose even 0x38); canonical F64->E4M3 rounds
+  // once to 0x39.
+  const auto above_midpoint = float64_t::from_bits(0x3ff1000000400000ULL);
+  const auto direct_low = cvt<float8_e4m3_t>(c, above_midpoint);
+  ASSERT_TRUE(direct_low);
+  EXPECT_EQ(direct_low->value.bits(), 0x39);
+  const auto low_to_f64 = cvt<float64_t>(c, float8_e4m3_t::from_bits(0x39));
+  ASSERT_TRUE(low_to_f64);
+  EXPECT_EQ(low_to_f64->value.bits(), 0x3ff2000000000000ULL);
+
+  const auto exact_fixed = cvt<fixed8_s2f6_t>(c, int64_t{1});
+  ASSERT_TRUE(exact_fixed);
+  EXPECT_EQ(exact_fixed->value.rep, 64);
+  const auto exact_integer = cvt<int64_t>(c, fixed8_s2f6_t{96});
+  ASSERT_TRUE(exact_integer);
+  EXPECT_EQ(exact_integer->value, 2);
 }
 
 TEST(Conversion, DirectedControlsSpecialValuesAndDeterministicSamples) {
@@ -314,16 +422,27 @@ TEST(Conversion, DirectedControlsSpecialValuesAndDeterministicSamples) {
                      {.destination_subnormal = subnormal_mode::flush_output})
           ->value.bits(),
       0x8000);
-  EXPECT_EQ(cvt<float16_t>(c, float32_t::from_bits(0x7f800000),
-                           {.saturation = saturation_mode::finite})
-                .error(),
-            arithmetic_error::unsupported_saturation);
-  EXPECT_EQ(cvt<float16_t>(c, midpoint, {.activation = activation_mode::relu})
-                .error(),
-            arithmetic_error::unsupported_operation);
+  const auto finite = cvt<float16_t>(
+      c, float32_t::from_bits(0x7f800000),
+      {.saturation = saturation_mode::finite});
+  ASSERT_TRUE(finite);
+  EXPECT_EQ(finite->value.bits(), 0x7bff);
+  const auto relu = cvt<float16_t>(c, midpoint,
+                                   {.activation = activation_mode::relu});
+  ASSERT_TRUE(relu);
+  EXPECT_EQ(relu->value.bits(), 0x3c00);
   EXPECT_EQ(cvt<float16_t>(c, midpoint, {.rounding = rounding_mode::stochastic})
                 .error(),
-            arithmetic_error::unsupported_rounding);
+            arithmetic_error::invalid_stochastic_input);
+  const auto stochastic = cvt<float16_t>(
+      c, midpoint, {.rounding = rounding_mode::stochastic},
+      stochastic_rounding_input{bits32_t{0x12345678}});
+  ASSERT_TRUE(stochastic);
+  EXPECT_EQ(stochastic->value.bits(), 0x3c01);
+  EXPECT_EQ(cvt<float16_t>(c, midpoint, {},
+                           stochastic_rounding_input{bits32_t{0x12345678}})
+                .error(),
+            arithmetic_error::invalid_stochastic_input);
 
   uint32_t state = 0x00c0ffeeu;
   for (unsigned sample = 0; sample != 16; ++sample) {
@@ -462,13 +581,14 @@ TEST(Conversion, FixedS2f6ConversionsRoundAndSaturate) {
 TEST(Conversion, IdentityControlsAreNotIgnored) {
   context c;
   const auto one = float32_t::from_bits(0x3f800000);
-  EXPECT_EQ(
-      cvt<float32_t>(c, one, {.saturation = saturation_mode::finite}).error(),
-      arithmetic_error::unsupported_saturation);
-  EXPECT_EQ(
-      cvt<float32_t>(c, one, {.source_subnormal = subnormal_mode::flush_input})
-          .error(),
-      arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(cvt<float32_t>(c, one, {.saturation = saturation_mode::finite})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  const auto flushed = cvt<float32_t>(
+      c, float32_t::from_bits(1),
+      {.source_subnormal = subnormal_mode::flush_input});
+  ASSERT_TRUE(flushed);
+  EXPECT_EQ(flushed->value.bits(), 0u);
   EXPECT_EQ(
       cvt<int32_t>(c, int32_t{1}, {.rounding = rounding_mode::toward_zero})
           .error(),
@@ -478,6 +598,69 @@ TEST(Conversion, IdentityControlsAreNotIgnored) {
                    {.destination_subnormal = subnormal_mode::flush_output})
           .error(),
       arithmetic_error::unsupported_subnormal_mode);
+}
+
+TEST(Conversion, SatfiniteAndReluFollowDestinationFormatRules) {
+  context c;
+  const auto positive_infinity = float32_t::from_bits(0x7f800000u);
+  const auto negative_infinity = float32_t::from_bits(0xff800000u);
+  const auto negative_one = float32_t::from_bits(0xbf800000u);
+
+  const auto positive = cvt<float16_t>(
+      c, positive_infinity, {.saturation = saturation_mode::finite});
+  const auto negative = cvt<float16_t>(
+      c, negative_infinity, {.saturation = saturation_mode::finite});
+  ASSERT_TRUE(positive && negative);
+  EXPECT_EQ(positive->value.bits(), 0x7bffu);
+  EXPECT_EQ(negative->value.bits(), 0xfbffu);
+  EXPECT_TRUE(positive->status.overflow);
+  EXPECT_TRUE(positive->status.inexact);
+
+  const auto low_relu = cvt<float4_e2m1_t>(
+      c, negative_one,
+      {.saturation = saturation_mode::finite,
+       .activation = activation_mode::relu});
+  const auto fixed_relu = cvt<fixed8_s2f6_t>(
+      c, negative_one,
+      {.saturation = saturation_mode::finite,
+       .activation = activation_mode::relu});
+  ASSERT_TRUE(low_relu && fixed_relu);
+  EXPECT_EQ(low_relu->value.bits(), 0u);
+  EXPECT_EQ(fixed_relu->value.rep, 0);
+
+  EXPECT_EQ(cvt<float64_t>(c, float32_t::from_bits(0x3f800000u),
+                           {.saturation = saturation_mode::finite})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(cvt<bfloat16_t>(c, negative_one,
+                            {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(cvt<ufloat7_e4m3_t>(
+                c, negative_one,
+                {.saturation = saturation_mode::finite})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(cvt<ufloat8_e8m0_t>(
+                c, negative_one, {.activation = activation_mode::relu})
+                .error(),
+            arithmetic_error::unsupported_activation);
+  EXPECT_EQ(cvt<float32_t>(c, negative_one,
+                           {.activation = activation_mode::relu})
+                .error(),
+            arithmetic_error::unsupported_activation);
+
+  const auto tf32_tie = cvt<tfloat32_t>(
+      c, float32_t::from_bits(0x3f801000u),
+      {.rounding = rounding_mode::nearest_away});
+  const auto tf32_finite = cvt<tfloat32_t>(
+      c, positive_infinity, {.saturation = saturation_mode::finite});
+  const auto tf32_relu = cvt<tfloat32_t>(
+      c, negative_one, {.activation = activation_mode::relu});
+  ASSERT_TRUE(tf32_tie && tf32_finite && tf32_relu);
+  EXPECT_EQ(tf32_tie->value.canonical_value().bits(), 0x3f802000u);
+  EXPECT_EQ(tf32_finite->value.canonical_value().bits(), 0x7f7fe000u);
+  EXPECT_EQ(tf32_relu->value.canonical_value().bits(), 0u);
 }
 
 TEST(Conversion, PipelineIntegerLowPrecisionAndTf32Profile) {
@@ -514,18 +697,16 @@ TEST(Conversion, PipelineIntegerLowPrecisionAndTf32Profile) {
             arithmetic_error::unsupported_operation);
   EXPECT_EQ(encode(tf->value, unsupported.tf32).error(),
             arithmetic_error::unsupported_operation);
-  auto direct = detail::dispatch::quantize_tf32(
-      float32_t::from_bits(0x3f800001), {}, c.profile().tf32);
-  ASSERT_TRUE(direct);
-  EXPECT_EQ(direct->value.canonical_value().bits(), 0x3f800000u);
-  EXPECT_TRUE(direct->status.inexact);
-  EXPECT_EQ(detail::dispatch::quantize_tf32(float32_t::from_bits(0x3f800001),
-                                            {}, unsupported.tf32)
+  auto profile_quantized =
+      cvt<tfloat32_t>(c, float32_t::from_bits(0x3f800001));
+  ASSERT_TRUE(profile_quantized);
+  EXPECT_EQ(profile_quantized->value.canonical_value().bits(), 0x3f800000u);
+  EXPECT_TRUE(profile_quantized->status.inexact);
+  EXPECT_EQ(cvt<tfloat32_t>(context{unsupported}, float32_t::from_bits(0x3f800001))
                 .error(),
             arithmetic_error::unsupported_operation);
-  EXPECT_EQ(
-      cvt<float16_t>(c, f, {.rounding = rounding_mode::nearest_away}).error(),
-      arithmetic_error::unsupported_rounding);
+  EXPECT_TRUE(
+      cvt<float16_t>(c, f, {.rounding = rounding_mode::nearest_away}));
   EXPECT_TRUE(
       cvt<float16_t>(c, f, {.source_subnormal = subnormal_mode::flush_input}));
 }
@@ -574,14 +755,10 @@ TEST(Conversion, DirectF64ConversionAndControlRegressions) {
   EXPECT_EQ(f32_i32->value, 2147483520);
   EXPECT_EQ(f64_i64->value, std::numeric_limits<int64_t>::max() - 1023);
 
-  EXPECT_EQ(
-      cvt<float16_t>(c, midpoint_plus, {.saturation = saturation_mode::finite})
-          .error(),
-      arithmetic_error::unsupported_saturation);
-  EXPECT_EQ(
-      cvt<float16_t>(c, midpoint_plus, {.activation = activation_mode::relu})
-          .error(),
-      arithmetic_error::unsupported_operation);
+  EXPECT_TRUE(cvt<float16_t>(c, midpoint_plus,
+                            {.saturation = saturation_mode::finite}));
+  EXPECT_TRUE(cvt<float16_t>(c, midpoint_plus,
+                            {.activation = activation_mode::relu}));
 }
 
 TEST(Conversion, PackedLayoutsCanonicalizePaddingAndPreserveLaneOrder) {

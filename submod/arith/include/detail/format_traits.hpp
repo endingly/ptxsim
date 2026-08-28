@@ -44,10 +44,12 @@ struct format_info {
     static constexpr Bits quiet_nan_bit = Quiet;                          \
     static constexpr Bits storage_mask = static_cast<Bits>(~Bits{0});     \
     static constexpr bool has_subnormal = true;                           \
+    static constexpr bool has_zero = true;                                \
     static constexpr bool has_infinity = true;                            \
     static constexpr bool has_quiet_nan = true;                           \
     static constexpr bool has_signaling_nan = true;                       \
     static constexpr bool finite_only = false;                            \
+    static constexpr bool fixed_encoding = true;                          \
     static constexpr unsigned all_exponent_field = (1u << Exp) - 1;       \
     static constexpr unsigned maximum_finite_exponent_field =             \
         all_exponent_field - 1;                                           \
@@ -58,6 +60,10 @@ struct format_info {
     static constexpr std::uint64_t canonical_nan_fraction_field =         \
         std::uint64_t{1} << (Frac - 1);                                   \
     static constexpr bool preserves_nan_payload = true;                   \
+    static constexpr bool is_zero_fields(unsigned exponent,               \
+                                         std::uint64_t fraction) {         \
+      return exponent == 0 && fraction == 0;                              \
+    }                                                                     \
     static constexpr bool is_nan_fields(unsigned exponent,                \
                                         std::uint64_t fraction) {         \
       return exponent == all_exponent_field && fraction != 0;             \
@@ -97,13 +103,18 @@ struct FormatTraits<tfloat32_t> {
                         quiet_nan_bit = 0x00400000u, storage_mask = 0xFFFFE000u;
   static constexpr bool has_subnormal = true, has_infinity = true,
                         has_quiet_nan = true, has_signaling_nan = true,
-                        finite_only = false, fixed_encoding = false;
+                        finite_only = false, fixed_encoding = false,
+                        has_zero = true;
   static constexpr unsigned all_exponent_field = 0xFFu;
   static constexpr unsigned maximum_finite_exponent_field = 0xFEu;
   static constexpr std::uint64_t maximum_finite_fraction_field = 0x3FFu;
   static constexpr unsigned canonical_nan_exponent_field = 0xFFu;
   static constexpr std::uint64_t canonical_nan_fraction_field = 0x200u;
   static constexpr bool preserves_nan_payload = true;
+  static constexpr bool is_zero_fields(unsigned exponent,
+                                       std::uint64_t fraction) {
+    return exponent == 0 && fraction == 0;
+  }
   static constexpr bool is_nan_fields(unsigned exponent,
                                       std::uint64_t fraction) {
     return exponent == all_exponent_field && fraction != 0;
@@ -128,13 +139,18 @@ struct FormatTraits<float8_e4m3_t> {
                         storage_mask = 0xFFu;
   static constexpr bool has_subnormal = true, has_infinity = false,
                         has_quiet_nan = true, has_signaling_nan = false,
-                        finite_only = false;
+                        finite_only = false, fixed_encoding = true,
+                        has_zero = true;
   static constexpr unsigned all_exponent_field = 0xFu;
   static constexpr unsigned maximum_finite_exponent_field = 0xFu;
   static constexpr std::uint64_t maximum_finite_fraction_field = 0x6u;
   static constexpr unsigned canonical_nan_exponent_field = 0xFu;
   static constexpr std::uint64_t canonical_nan_fraction_field = 0x7u;
   static constexpr bool preserves_nan_payload = false;
+  static constexpr bool is_zero_fields(unsigned exponent,
+                                       std::uint64_t fraction) {
+    return exponent == 0 && fraction == 0;
+  }
   static constexpr bool is_nan_fields(unsigned exponent,
                                       std::uint64_t fraction) {
     return exponent == canonical_nan_exponent_field &&
@@ -157,13 +173,18 @@ struct FormatTraits<float4_e2m1_t> {
                         storage_mask = 0x0Fu;
   static constexpr bool has_subnormal = true, has_infinity = false,
                         has_quiet_nan = false, has_signaling_nan = false,
-                        finite_only = true;
+                        finite_only = true, fixed_encoding = true,
+                        has_zero = true;
   static constexpr unsigned all_exponent_field = 0x3u;
   static constexpr unsigned maximum_finite_exponent_field = 0x3u;
   static constexpr std::uint64_t maximum_finite_fraction_field = 0x1u;
   static constexpr unsigned canonical_nan_exponent_field = 0;
   static constexpr std::uint64_t canonical_nan_fraction_field = 0;
   static constexpr bool preserves_nan_payload = false;
+  static constexpr bool is_zero_fields(unsigned exponent,
+                                       std::uint64_t fraction) {
+    return exponent == 0 && fraction == 0;
+  }
   static constexpr bool is_nan_fields(unsigned, std::uint64_t) { return false; }
   static constexpr bool is_infinity_fields(unsigned, std::uint64_t) {
     return false;
@@ -188,10 +209,12 @@ struct FormatTraits<float4_e2m1_t> {
     static constexpr Bits quiet_nan_bit = 0;                              \
     static constexpr Bits storage_mask = (Bits{1} << Width) - 1;          \
     static constexpr bool has_subnormal = true;                           \
+    static constexpr bool has_zero = true;                                \
     static constexpr bool has_infinity = false;                           \
     static constexpr bool has_quiet_nan = false;                          \
     static constexpr bool has_signaling_nan = false;                      \
     static constexpr bool finite_only = true;                             \
+    static constexpr bool fixed_encoding = true;                          \
     static constexpr unsigned all_exponent_field = (1u << Exp) - 1;       \
     static constexpr unsigned maximum_finite_exponent_field =             \
         all_exponent_field;                                               \
@@ -200,6 +223,10 @@ struct FormatTraits<float4_e2m1_t> {
     static constexpr unsigned canonical_nan_exponent_field = 0;           \
     static constexpr std::uint64_t canonical_nan_fraction_field = 0;      \
     static constexpr bool preserves_nan_payload = false;                  \
+    static constexpr bool is_zero_fields(unsigned exponent,               \
+                                         std::uint64_t fraction) {         \
+      return exponent == 0 && fraction == 0;                              \
+    }                                                                     \
     static constexpr bool is_nan_fields(unsigned, std::uint64_t) {        \
       return false;                                                       \
     }                                                                     \
@@ -223,20 +250,28 @@ struct FormatTraits<ufloat8_e8m0_t> {
   static constexpr int exponent_bias = 127;
   static constexpr Bits sign_mask = 0, exponent_mask = 0xFFu, fraction_mask = 0,
                         quiet_nan_bit = 0, storage_mask = 0xFFu;
-  static constexpr bool has_subnormal = false, has_infinity = false,
-                        has_quiet_nan = false, has_signaling_nan = false,
-                        finite_only = true;
+  // PTX ISA 9.3 §5.2.3: ue8m0 has no zero or infinity; 0xff is its
+  // single (quiet) NaN encoding.
+  static constexpr bool has_subnormal = false, has_zero = false,
+                        has_infinity = false, has_quiet_nan = true,
+                        has_signaling_nan = false, finite_only = false,
+                        fixed_encoding = true;
   static constexpr unsigned all_exponent_field = 0xFFu;
-  static constexpr unsigned maximum_finite_exponent_field = 0xFFu;
+  static constexpr unsigned maximum_finite_exponent_field = 0xFEu;
   static constexpr std::uint64_t maximum_finite_fraction_field = 0;
-  static constexpr unsigned canonical_nan_exponent_field = 0;
+  static constexpr unsigned canonical_nan_exponent_field = 0xFFu;
   static constexpr std::uint64_t canonical_nan_fraction_field = 0;
   static constexpr bool preserves_nan_payload = false;
-  static constexpr bool is_nan_fields(unsigned, std::uint64_t) { return false; }
+  static constexpr bool is_zero_fields(unsigned, std::uint64_t) {
+    return false;
+  }
+  static constexpr bool is_nan_fields(unsigned exponent, std::uint64_t) {
+    return exponent == canonical_nan_exponent_field;
+  }
   static constexpr bool is_infinity_fields(unsigned, std::uint64_t) {
     return false;
   }
-  static constexpr bool is_quiet_nan_fraction(std::uint64_t) { return false; }
+  static constexpr bool is_quiet_nan_fraction(std::uint64_t) { return true; }
 };
 
 template <>
@@ -248,20 +283,30 @@ struct FormatTraits<ufloat7_e4m3_t> {
   static constexpr Bits sign_mask = 0, exponent_mask = 0x78u,
                         fraction_mask = 0x07u, quiet_nan_bit = 0,
                         storage_mask = 0x7Fu;
-  static constexpr bool has_subnormal = true, has_infinity = false,
-                        has_quiet_nan = false, has_signaling_nan = false,
-                        finite_only = true;
+  // PTX ISA 9.3 §5.2.3: ue4m3 has no infinity; raw 0x7f is its only
+  // NaN encoding.
+  static constexpr bool has_subnormal = true, has_zero = true,
+                        has_infinity = false, has_quiet_nan = true,
+                        has_signaling_nan = false, finite_only = false,
+                        fixed_encoding = true;
   static constexpr unsigned all_exponent_field = 0xFu;
   static constexpr unsigned maximum_finite_exponent_field = 0xFu;
-  static constexpr std::uint64_t maximum_finite_fraction_field = 0x7u;
-  static constexpr unsigned canonical_nan_exponent_field = 0;
-  static constexpr std::uint64_t canonical_nan_fraction_field = 0;
+  static constexpr std::uint64_t maximum_finite_fraction_field = 0x6u;
+  static constexpr unsigned canonical_nan_exponent_field = 0xFu;
+  static constexpr std::uint64_t canonical_nan_fraction_field = 0x7u;
   static constexpr bool preserves_nan_payload = false;
-  static constexpr bool is_nan_fields(unsigned, std::uint64_t) { return false; }
+  static constexpr bool is_zero_fields(unsigned exponent,
+                                       std::uint64_t fraction) {
+    return exponent == 0 && fraction == 0;
+  }
+  static constexpr bool is_nan_fields(unsigned exponent, std::uint64_t fraction) {
+    return exponent == canonical_nan_exponent_field &&
+           fraction == canonical_nan_fraction_field;
+  }
   static constexpr bool is_infinity_fields(unsigned, std::uint64_t) {
     return false;
   }
-  static constexpr bool is_quiet_nan_fraction(std::uint64_t) { return false; }
+  static constexpr bool is_quiet_nan_fraction(std::uint64_t) { return true; }
 };
 
 template <typename T>
@@ -294,8 +339,10 @@ template <FloatingFormat T>
                             (Traits::fraction_bits + fraction_lsb));
   const auto fraction = static_cast<std::uint64_t>(
       (value.bits() & Traits::fraction_mask) >> fraction_lsb);
-  if (exponent == 0)
-    return fraction == 0 ? fp_class::zero : fp_class::subnormal;
+  if (Traits::is_zero_fields(exponent, fraction))
+    return fp_class::zero;
+  if (exponent == 0 && Traits::has_subnormal)
+    return fp_class::subnormal;
   if (Traits::is_nan_fields(exponent, fraction))
     return Traits::is_quiet_nan_fraction(fraction) ? fp_class::quiet_nan
                                                    : fp_class::signaling_nan;
@@ -319,6 +366,10 @@ template <FloatingFormat T>
 template <FloatingFormat T>
 [[nodiscard]] constexpr bool is_subnormal(T value) noexcept {
   return classify(value) == fp_class::subnormal;
+}
+template <FloatingFormat T>
+[[nodiscard]] constexpr bool is_normal(T value) noexcept {
+  return classify(value) == fp_class::normal;
 }
 template <FloatingFormat T>
 [[nodiscard]] constexpr bool is_nan(T value) noexcept {
@@ -346,13 +397,13 @@ inline constexpr format_info format_info_v{
     .fraction_bits = FormatTraits<T>::fraction_bits,
     .exponent_bias = FormatTraits<T>::exponent_bias,
     .has_sign = FormatTraits<T>::sign_mask != 0,
-    .has_zero = true,
+    .has_zero = FormatTraits<T>::has_zero,
     .has_subnormal = FormatTraits<T>::has_subnormal,
     .has_infinity = FormatTraits<T>::has_infinity,
     .has_nan =
         FormatTraits<T>::has_quiet_nan || FormatTraits<T>::has_signaling_nan,
     .has_signaling_nan = FormatTraits<T>::has_signaling_nan,
-    .fixed_encoding = true,
+    .fixed_encoding = FormatTraits<T>::fixed_encoding,
 };
 
 [[nodiscard]] constexpr fp_class classify(tfloat32_t value) noexcept {
@@ -369,6 +420,9 @@ inline constexpr format_info format_info_v{
 }
 [[nodiscard]] constexpr bool is_subnormal(tfloat32_t value) noexcept {
   return is_subnormal(value.canonical_value());
+}
+[[nodiscard]] constexpr bool is_normal(tfloat32_t value) noexcept {
+  return is_normal(value.canonical_value());
 }
 [[nodiscard]] constexpr bool is_nan(tfloat32_t value) noexcept {
   return is_nan(value.canonical_value());

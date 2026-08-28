@@ -19,6 +19,14 @@ namespace {
                            : SubnormalMode::Preserve};
 }
 
+[[nodiscard]] constexpr bool is_reference_profile(
+    const ApproximationControl& control) noexcept {
+  return control.profile.revision == ptx_numeric_revision::v9_3 &&
+         control.profile.model == approximation_model::ptx_9_3_reference &&
+         control.profile.provenance ==
+             approximation_provenance::model_dependent_reference;
+}
+
 enum class Unary { Sin, Cos, Lg2, Ex2, Tanh };
 
 using F32 = Result<float32_t>;
@@ -312,27 +320,45 @@ template <typename Function>
 Result<float32_t> div_approx(float32_t lhs, float32_t rhs,
                              ApproximationControl control) {
   validate_approximation_control<Operation::DivApprox, float32_t>(control);
-  return SoftFloatBackend<float32_t>::div(lhs, rhs, exact_control(control));
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
+  // PTX div.approx is specified through an approximate reciprocal path; keep
+  // that composition explicit rather than accidentally making it an alias of
+  // correctly rounded division.
+  const auto reciprocal =
+      SoftFloatBackend<float32_t>::rcp(rhs, exact_control(control));
+  auto result = SoftFloatBackend<float32_t>::mul(lhs, reciprocal.value,
+                                                 exact_control(control));
+  result.flags |= reciprocal.flags;
+  return result;
 }
 
 Result<float32_t> div_full(float32_t lhs, float32_t rhs,
                            ApproximationControl control) {
   validate_approximation_control<Operation::DivFull, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return SoftFloatBackend<float32_t>::div(lhs, rhs, exact_control(control));
 }
 
 Result<float32_t> rcp_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::RcpApprox, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return SoftFloatBackend<float32_t>::rcp(value, exact_control(control));
 }
 
 Result<float32_t> sqrt_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::SqrtApprox, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return SoftFloatBackend<float32_t>::sqrt(value, exact_control(control));
 }
 
 Result<float32_t> rsqrt_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::RsqrtApprox, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   const auto root =
       SoftFloatBackend<float32_t>::sqrt(value, exact_control(control));
   auto result =
@@ -343,26 +369,36 @@ Result<float32_t> rsqrt_approx(float32_t value, ApproximationControl control) {
 
 Result<float32_t> sin_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::SinApprox, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return sin_or_cos(value, false, control);
 }
 
 Result<float32_t> cos_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::CosApprox, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return sin_or_cos(value, true, control);
 }
 
 Result<float32_t> lg2_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::Lg2Approx, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return log2_core(value, control);
 }
 
 Result<float32_t> ex2_approx(float32_t value, ApproximationControl control) {
   validate_approximation_control<Operation::Ex2Approx, float32_t>(control);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return exp2_core(value, control);
 }
 
-Result<float32_t> tanh_approx(float32_t value) {
+Result<float32_t> tanh_approx(float32_t value, ApproximationControl control) {
   static_assert(OperationTraits<float32_t, Operation::TanhApprox>::supported);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float32_t>();
   return tanh_core(value, {});
 }
 
@@ -398,23 +434,31 @@ Result<float64_t> rsqrt_approx_ftz(float64_t value) {
   });
 }
 
-Result<float16_t> tanh_approx(float16_t value) {
+Result<float16_t> tanh_approx(float16_t value, ApproximationControl control) {
   static_assert(OperationTraits<float16_t, Operation::TanhApprox>::supported);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float16_t>();
   return low_unary(value, Unary::Tanh, false);
 }
 
-Result<float16_t> ex2_approx(float16_t value) {
+Result<float16_t> ex2_approx(float16_t value, ApproximationControl control) {
   static_assert(OperationTraits<float16_t, Operation::Ex2Approx>::supported);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<float16_t>();
   return low_unary(value, Unary::Ex2, false);
 }
 
-Result<bfloat16_t> tanh_approx(bfloat16_t value) {
+Result<bfloat16_t> tanh_approx(bfloat16_t value, ApproximationControl control) {
   static_assert(OperationTraits<bfloat16_t, Operation::TanhApprox>::supported);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<bfloat16_t>();
   return low_unary(value, Unary::Tanh, false);
 }
 
-Result<bfloat16_t> ex2_approx(bfloat16_t value) {
+Result<bfloat16_t> ex2_approx(bfloat16_t value, ApproximationControl control) {
   static_assert(OperationTraits<bfloat16_t, Operation::Ex2Approx>::supported);
+  if (!is_reference_profile(control))
+    return canonical_invalid_nan<bfloat16_t>();
   return low_unary(value, Unary::Ex2, true);
 }
 

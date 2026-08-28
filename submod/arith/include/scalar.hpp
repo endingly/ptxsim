@@ -6,6 +6,7 @@
 #include <ptxsim/arith/context.hpp>
 #include <ptxsim/arith/controls.hpp>
 #include <ptxsim/arith/detail/dispatch.hpp>
+#include <ptxsim/arith/detail/canonical_conversion.hpp>
 #include <ptxsim/arith/detail/format_traits.hpp>
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/arith/result.hpp>
@@ -13,9 +14,10 @@
 namespace ptxsim::arith {
 namespace detail {
 constexpr bool supported_approximation_profile(const context& ctx) {
-  // The reference profile is deliberately the only implemented approximation
-  // model.  Do not pretend an arbitrary target model has these bit patterns.
-  return ctx.profile().approximation.model == 0;
+  const auto& p = ctx.profile().approximation;
+  return p.revision == ptx_numeric_revision::v9_3 &&
+         p.model == approximation_model::ptx_9_3_reference &&
+         p.provenance == approximation_provenance::model_dependent_reference;
 }
 template <typename T>
 constexpr bool special_subnormal_valid(special_function_control c) {
@@ -187,7 +189,14 @@ mad(const context& ctx, T a, T b, C c, product_control control = {}) {
     auto p = mul<Result>(ctx, a, b, control);
     if (!p)
       return std::unexpected(p.error());
-    return add(ctx, p->value, c, {control.overflow});
+    auto sum = add(ctx, p->value, c, {control.overflow});
+    if (!sum)
+      return std::unexpected(sum.error());
+    // Compound integer instructions report range loss from every stage.
+    sum->status.carry |= p->status.carry;
+    sum->status.borrow |= p->status.borrow;
+    sum->status.overflow |= p->status.overflow;
+    return sum;
   }
 }
 template <arithmetic_integer T>
@@ -327,13 +336,13 @@ inline std::expected<result<Result, floating_status>, arithmetic_error> fma(
   return detail::dispatch::fma(a, b, c, control);
 }
 template <typename Result = void, typename T>
-  requires operation_capability<scalar_operation::fma, T, T, T, T>::value
+  requires operation_capability<scalar_operation::mad, T, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> mad(
     const context& ctx, T a, T b, T c, floating_control control = {}) {
-  auto p = mul(ctx, a, b, control);
-  if (!p)
-    return std::unexpected(p.error());
-  return add(ctx, p->value, c, control);
+  // The reference profile defines floating mad as fused.  Legacy separate
+  // multiply/add behaviour belongs to an explicit legacy backend, not this
+  // public PTX 9.3 path.
+  return fma(ctx, a, b, c, control);
 }
 template <typename T>
   requires operation_capability<scalar_operation::sqrt, T, T>::value
@@ -392,10 +401,10 @@ inline std::expected<result<float32_t, floating_status>, arithmetic_error> div(
   if (c.approximation == approximation_mode::exact)
     return div(ctx, a, b, floating_control{.subnormal = c.subnormal});
   if (!detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   return c.approximation == approximation_mode::ptx_approximate
-             ? detail::dispatch::div_approx(a, b, c)
-             : detail::dispatch::div_full(a, b, c);
+             ? detail::dispatch::div_approx(a, b, c, ctx.profile().approximation)
+             : detail::dispatch::div_full(a, b, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
@@ -408,9 +417,9 @@ inline std::expected<result<T, floating_status>, arithmetic_error> sqrt(
   if constexpr (!std::same_as<T, float32_t>)
     return std::unexpected(arithmetic_error::unsupported_operation);
   else if (!detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   else
-    return detail::dispatch::sqrt_approx(a, c);
+    return detail::dispatch::sqrt_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
@@ -422,9 +431,9 @@ inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
     return rcp(ctx, a, floating_control{.subnormal = c.subnormal});
   if (c.approximation == approximation_mode::ptx_full ||
       !detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
-    return detail::dispatch::rcp_approx(a, c);
+    return detail::dispatch::rcp_approx(a, c, ctx.profile().approximation);
   else
     return std::unexpected(arithmetic_error::unsupported_operation);
 }
@@ -435,25 +444,15 @@ inline std::expected<result<T, floating_status>, arithmetic_error> rsqrt(
   if (!detail::special_subnormal_valid<T>(c))
     return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   if (c.approximation == approximation_mode::exact) {
-    auto root = sqrt(ctx, a, floating_control{.subnormal = c.subnormal});
-    if (!root)
-      return std::unexpected(root.error());
-    auto reciprocal = rcp(ctx, root->value,
-                          floating_control{.subnormal = c.subnormal});
-    if (!reciprocal)
-      return std::unexpected(reciprocal.error());
-    reciprocal->status.invalid |= root->status.invalid;
-    reciprocal->status.divide_by_zero |= root->status.divide_by_zero;
-    reciprocal->status.overflow |= root->status.overflow;
-    reciprocal->status.underflow |= root->status.underflow;
-    reciprocal->status.inexact |= root->status.inexact;
-    return reciprocal;
+    // sqrt followed by reciprocal double-rounds; do not label that sequence
+    // as an exact rsqrt implementation.
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   }
   if (c.approximation == approximation_mode::ptx_full ||
       !detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
-    return detail::dispatch::rsqrt_approx(a, c);
+    return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
   else if (c.subnormal == subnormal_mode::flush_input ||
            c.subnormal == subnormal_mode::flush_input_and_output) {
     return std::unexpected(arithmetic_error::unsupported_operation);
@@ -467,8 +466,8 @@ inline std::expected<result<T, floating_status>, arithmetic_error> rsqrt(
     if (c.approximation != approximation_mode::ptx_approximate ||          \
         !detail::special_subnormal_valid<float32_t>(c) ||                   \
         !detail::supported_approximation_profile(ctx))                      \
-      return std::unexpected(arithmetic_error::unsupported_operation);      \
-    return detail::dispatch::name##_approx(a, c);                           \
+      return std::unexpected(arithmetic_error::unsupported_approximation_mode); \
+    return detail::dispatch::name##_approx(a, c, ctx.profile().approximation); \
   }
 PTXSIM_ARITH_APPROX_UNARY(sin)
 PTXSIM_ARITH_APPROX_UNARY(cos)
@@ -480,11 +479,11 @@ inline std::expected<result<float32_t, floating_status>, arithmetic_error> tanh(
   if (c.approximation != approximation_mode::ptx_approximate ||
       !detail::special_subnormal_valid<float32_t>(c) ||
       !detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if (c.subnormal == subnormal_mode::flush_input ||
       c.subnormal == subnormal_mode::flush_input_and_output)
     a = flush_subnormal(a);
-  return detail::dispatch::tanh_approx(a, c);
+  return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
@@ -492,14 +491,14 @@ inline std::expected<result<T, floating_status>, arithmetic_error> tanh(
     const context& ctx, T a, special_function_control c = {}) {
   if (c.approximation != approximation_mode::ptx_approximate ||
       !detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, bfloat16_t>)
     if (c.subnormal != subnormal_mode::flush_input_and_output)
       return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   if (c.subnormal == subnormal_mode::flush_input ||
       c.subnormal == subnormal_mode::flush_input_and_output)
     a = flush_subnormal(a);
-  return detail::dispatch::tanh_approx(a, c);
+  return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
@@ -507,14 +506,14 @@ inline std::expected<result<T, floating_status>, arithmetic_error> ex2(
     const context& ctx, T a, special_function_control c = {}) {
   if (c.approximation != approximation_mode::ptx_approximate ||
       !detail::supported_approximation_profile(ctx))
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, bfloat16_t>)
     if (c.subnormal != subnormal_mode::flush_input_and_output)
       return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   if (c.subnormal == subnormal_mode::flush_input ||
       c.subnormal == subnormal_mode::flush_input_and_output)
     a = flush_subnormal(a);
-  return detail::dispatch::ex2_approx(a, c);
+  return detail::dispatch::ex2_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
 constexpr result<T> select(predicate_t p, T yes, T no) noexcept {
@@ -554,229 +553,156 @@ constexpr result<predicate_t> compare(const context&, T a, T b,
   }
   return {false};
 }
+namespace detail {
+template <typename To>
+inline constexpr bool signed_low_conversion_target =
+    std::same_as<To, float8_e4m3_t> ||
+    std::same_as<To, float8_e5m2_t> ||
+    std::same_as<To, float6_e2m3_t> ||
+    std::same_as<To, float6_e3m2_t> ||
+    std::same_as<To, float4_e2m1_t>;
+template <typename To>
+inline constexpr bool relu_conversion_target =
+    std::same_as<To, float16_t> || std::same_as<To, bfloat16_t> ||
+    std::same_as<To, tfloat32_t> || std::same_as<To, fixed8_s2f6_t> ||
+    signed_low_conversion_target<To>;
+template <typename To>
+inline constexpr bool unit_interval_conversion_target =
+    std::same_as<To, float16_t> || std::same_as<To, float32_t> ||
+    std::same_as<To, float64_t>;
+template <typename To>
+inline constexpr bool finite_conversion_target =
+    std::same_as<To, float16_t> || std::same_as<To, bfloat16_t> ||
+    std::same_as<To, tfloat32_t> || std::same_as<To, fixed8_s2f6_t> ||
+    std::same_as<To, ufloat8_e8m0_t> || signed_low_conversion_target<To>;
+
+template <typename To>
+constexpr std::expected<void, arithmetic_error> validate_destination_control(
+    conversion_control c) {
+  if (c.activation != activation_mode::none && !relu_conversion_target<To>)
+    return std::unexpected(arithmetic_error::unsupported_activation);
+  if (c.saturation == saturation_mode::none)
+    return {};
+  if (c.saturation == saturation_mode::type_range &&
+      (arithmetic_integer<To> || std::same_as<To, fixed8_s2f6_t>))
+    return {};
+  if (c.saturation == saturation_mode::finite && finite_conversion_target<To>)
+    return {};
+  if (c.saturation == saturation_mode::zero_to_one &&
+      unit_interval_conversion_target<To>)
+    return {};
+  return std::unexpected(arithmetic_error::unsupported_saturation);
+}
+
+template <typename To>
+constexpr void apply_destination_controls(canonical::number& value,
+                                          conversion_control c) {
+  using canonical::number_class;
+  const auto positive_zero = [&] { value = {}; };
+  if (c.saturation == saturation_mode::zero_to_one) {
+    if (value.classification == number_class::nan || value.negative) {
+      positive_zero();
+    } else if (value.classification == number_class::infinity ||
+               (value.classification == number_class::finite &&
+                value.exponent + static_cast<int>(canonical::bit_length(value.significand)) -
+                        1 >=
+                    0)) {
+      value = {.classification = number_class::finite, .significand = 1};
+    }
+  }
+  if constexpr (std::same_as<To, fixed8_s2f6_t>) {
+    if (c.saturation == saturation_mode::finite &&
+        (value.classification == number_class::nan ||
+         value.classification == number_class::infinity)) {
+      // S2F6 has no non-finite encoding.  Its finite form saturates to the
+      // signed fixed endpoint; NaN is deliberately canonicalized positive.
+      value = {.classification = number_class::finite,
+               .negative = value.classification == number_class::infinity &&
+                           value.negative,
+               .significand = 127,
+               .exponent = -fixed8_s2f6_t::fraction_bits};
+    }
+  }
+  if (c.activation == activation_mode::relu && value.negative &&
+      value.classification != number_class::nan)
+    positive_zero();
+}
+
+template <typename To, typename From>
+std::expected<result<To, floating_status>, arithmetic_error> canonical_cvt(
+    const context& ctx, From value, conversion_control control,
+    bool has_stochastic_input, std::uint32_t stochastic_bits = 0) {
+  if (control.rounding == rounding_mode::stochastic) {
+    if (!has_stochastic_input)
+      return std::unexpected(arithmetic_error::invalid_stochastic_input);
+    if constexpr (!conversion_control_capability<
+                      To, From, conversion_control_feature::stochastic>::value)
+      return std::unexpected(arithmetic_error::unsupported_rounding);
+  } else if (has_stochastic_input) {
+    return std::unexpected(arithmetic_error::invalid_stochastic_input);
+  } else if (control.rounding == rounding_mode::nearest_away) {
+    if constexpr (!conversion_control_capability<
+                      To, From,
+                      conversion_control_feature::nearest_away>::value)
+      return std::unexpected(arithmetic_error::unsupported_rounding);
+  }
+  if constexpr (arithmetic_integer<To> && arithmetic_integer<From>)
+    if (control.rounding != rounding_mode::nearest_even)
+      return std::unexpected(arithmetic_error::unsupported_rounding);
+  if (auto valid = validate_destination_control<To>(control); !valid)
+    return std::unexpected(valid.error());
+  if (control.source_subnormal == subnormal_mode::flush_output ||
+      control.source_subnormal == subnormal_mode::flush_input_and_output)
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (control.destination_subnormal == subnormal_mode::flush_input ||
+      control.destination_subnormal == subnormal_mode::flush_input_and_output)
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if constexpr (!(scalar_float<From> || std::same_as<From, tfloat32_t>))
+    if (control.source_subnormal != subnormal_mode::preserve)
+      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if constexpr (!(scalar_float<To> || std::same_as<To, tfloat32_t>))
+    if (control.destination_subnormal != subnormal_mode::preserve)
+      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+
+  auto decoded = canonical::decode(value);
+  if constexpr (FloatingFormat<From>) {
+    if ((control.source_subnormal == subnormal_mode::flush_input ||
+         control.source_subnormal == subnormal_mode::flush_input_and_output) &&
+        is_subnormal(value)) {
+      decoded = {};
+      decoded.negative = is_negative(value);
+    }
+  }
+  apply_destination_controls<To>(decoded, control);
+  auto encoded = canonical::encode<To>(decoded, ctx, control, stochastic_bits);
+  if (!encoded)
+    return std::unexpected(encoded.error());
+  if constexpr (FloatingFormat<To>) {
+    if ((control.destination_subnormal == subnormal_mode::flush_output ||
+         control.destination_subnormal == subnormal_mode::flush_input_and_output) &&
+        is_subnormal(encoded->value))
+      encoded->value = flush_subnormal(encoded->value);
+  }
+  return encoded;
+}
+}  // namespace detail
+
+// Generic conversion façade: source and target are never selected as a pair.
+// Format-specific work lives exclusively in canonical::decode and ::encode.
 template <typename To, typename From>
   requires convertible_to<To, From>
 inline std::expected<result<To, floating_status>, arithmetic_error> cvt(
-    const context& ctx, From value, conversion_control c = {}) {
-  if (c.rounding == rounding_mode::nearest_away ||
-      c.rounding == rounding_mode::stochastic)
-    return std::unexpected(arithmetic_error::unsupported_rounding);
-  if (c.activation != activation_mode::none)
-    return std::unexpected(arithmetic_error::unsupported_operation);
-  if constexpr (std::same_as<To, From>) {
-    if constexpr (std::same_as<To, tfloat32_t>)
-      if (ctx.profile().tf32.model != tf32_encoding_model::f32_top_19_bits)
-        return std::unexpected(arithmetic_error::unsupported_operation);
-    if (c.rounding != rounding_mode::nearest_even)
-      return std::unexpected(arithmetic_error::unsupported_rounding);
-    if (c.source_subnormal != subnormal_mode::preserve ||
-        c.destination_subnormal != subnormal_mode::preserve)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-    if constexpr (arithmetic_integer<To>) {
-      if (c.saturation != saturation_mode::none &&
-          c.saturation != saturation_mode::type_range)
-        return std::unexpected(arithmetic_error::unsupported_saturation);
-    } else if (c.saturation != saturation_mode::none) {
-      return std::unexpected(arithmetic_error::unsupported_saturation);
-    }
-    return {{value, {}}};
-  }
-  else if constexpr (arithmetic_integer<To> && arithmetic_integer<From>) {
-    if (c.rounding != rounding_mode::nearest_even)
-      return std::unexpected(arithmetic_error::unsupported_rounding);
-    if (c.source_subnormal != subnormal_mode::preserve ||
-        c.destination_subnormal != subnormal_mode::preserve)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-    if (c.saturation != saturation_mode::none &&
-        c.saturation != saturation_mode::type_range)
-      return std::unexpected(arithmetic_error::unsupported_saturation);
-    using W = __int128_t;
-    const W wide = static_cast<W>(value);
-    if (c.saturation == saturation_mode::type_range) {
-      if (wide > W(std::numeric_limits<To>::max()))
-        return {{std::numeric_limits<To>::max(), {false, false, true}}};
-      if constexpr (std::is_signed_v<To>)
-        if (wide < W(std::numeric_limits<To>::min()))
-          return {{std::numeric_limits<To>::min(), {false, false, true}}};
-      if constexpr (std::is_unsigned_v<To>)
-        if (wide < 0)
-          return {{To{}, {false, false, true}}};
-      return {{static_cast<To>(value), {}}};
-    }
-    using U = std::make_unsigned_t<To>;
-    const U bits = static_cast<U>(value);
-    const To wrapped = [&] {
-      if constexpr (std::is_signed_v<To>) return std::bit_cast<To>(bits);
-      else return bits;
-    }();
-    return {{wrapped, {}}};
-  } else if constexpr (std::same_as<To, float32_t> &&
-                       std::same_as<From, fixed8_s2f6_t>) {
-    if (c.saturation != saturation_mode::none ||
-        c.source_subnormal != subnormal_mode::preserve ||
-        c.destination_subnormal != subnormal_mode::preserve)
-      return std::unexpected(c.saturation != saturation_mode::none
-                                 ? arithmetic_error::unsupported_saturation
-                                 : arithmetic_error::unsupported_subnormal_mode);
-    auto integer = cvt<float32_t>(ctx, static_cast<int32_t>(value.rep),
-                                  {.rounding = rounding_mode::nearest_even});
-    if (!integer)
-      return std::unexpected(integer.error());
-    auto scaled = mul(ctx, integer->value, float32_t::from_bits(0x3c800000));
-    if (!scaled)
-      return std::unexpected(scaled.error());
-    return {{scaled->value, integer->status}};
-  } else if constexpr (std::same_as<To, fixed8_s2f6_t> &&
-                       std::same_as<From, float32_t>) {
-    if (c.saturation != saturation_mode::none &&
-        c.saturation != saturation_mode::type_range)
-      return std::unexpected(arithmetic_error::unsupported_saturation);
-    if (c.source_subnormal == subnormal_mode::flush_output ||
-        c.source_subnormal == subnormal_mode::flush_input_and_output ||
-        c.destination_subnormal != subnormal_mode::preserve)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-    const auto input = (c.source_subnormal == subnormal_mode::flush_input ||
-                        c.source_subnormal == subnormal_mode::flush_input_and_output)
-                           ? flush_subnormal(value)
-                           : value;
-    // S2F6 has range [-2, 127/64].  Its scale is a power of two, so F32
-    // multiply by 64 is exact before the requested integer rounding.
-    if (c.saturation == saturation_mode::type_range) {
-      if (compare(ctx, input, float32_t::from_bits(0x3ffe0000),
-                  {.relation = comparison_relation::greater}).value)
-        return {{fixed8_s2f6_t{static_cast<int8_t>(127)}, {false, false, true}}};
-      if (compare(ctx, input, float32_t::from_bits(0xc0000000),
-                  {.relation = comparison_relation::less}).value)
-        return {{fixed8_s2f6_t{static_cast<int8_t>(-128)}, {false, false, true}}};
-    }
-    auto scaled = mul(ctx, input, float32_t::from_bits(0x42800000),
-                      {.rounding = c.rounding});
-    if (!scaled)
-      return std::unexpected(scaled.error());
-    auto integer = cvt<int32_t>(ctx, scaled->value,
-                                {.rounding = c.rounding});
-    if (!integer)
-      return std::unexpected(integer.error());
-    return {{fixed8_s2f6_t{static_cast<int8_t>(integer->value)},
-             {integer->status.invalid, integer->status.divide_by_zero,
-              integer->status.overflow, integer->status.underflow,
-              integer->status.inexact || scaled->status.inexact}}};
-  } else if constexpr (std::same_as<To, fixed8_s2f6_t> &&
-                       arithmetic_integer<From>) {
-    auto widened = cvt<float32_t>(ctx, value, c);
-    if (!widened)
-      return std::unexpected(widened.error());
-    auto fixed = cvt<fixed8_s2f6_t>(ctx, widened->value, c);
-    if (!fixed)
-      return std::unexpected(fixed.error());
-    fixed->status.inexact |= widened->status.inexact;
-    return fixed;
-  } else if constexpr (arithmetic_integer<To> &&
-                       std::same_as<From, fixed8_s2f6_t>) {
-    auto widened = cvt<float32_t>(ctx, value, c);
-    if (!widened)
-      return std::unexpected(widened.error());
-    auto integer = cvt<To>(ctx, widened->value, c);
-    if (!integer)
-      return std::unexpected(integer.error());
-    integer->status.inexact |= widened->status.inexact;
-    return integer;
-  } else if constexpr (std::same_as<To, tfloat32_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::quantize_tf32(value, c, ctx.profile().tf32);
-  } else if constexpr (std::same_as<From, tfloat32_t> && std::same_as<To, float32_t>) {
-    if (ctx.profile().tf32.model != tf32_encoding_model::f32_top_19_bits)
-      return std::unexpected(arithmetic_error::unsupported_operation);
-    if (c.saturation != saturation_mode::none ||
-        c.source_subnormal != subnormal_mode::preserve ||
-        c.destination_subnormal != subnormal_mode::preserve)
-      return std::unexpected(c.saturation != saturation_mode::none
-                                 ? arithmetic_error::unsupported_saturation
-                                 : arithmetic_error::unsupported_subnormal_mode);
-    return {{value.canonical_value(), {}}};
-  } else if constexpr (std::same_as<To, float32_t> && std::same_as<From, std::int32_t>) {
-    return detail::dispatch::i32_to_f32(value, c);
-  } else if constexpr (std::same_as<To, float32_t> && std::same_as<From, std::uint32_t>) {
-    return detail::dispatch::u32_to_f32(value, c);
-  } else if constexpr (std::same_as<To, float32_t> && std::same_as<From, std::int64_t>) {
-    return detail::dispatch::i64_to_f32(value, c);
-  } else if constexpr (std::same_as<To, float32_t> && std::same_as<From, std::uint64_t>) {
-    return detail::dispatch::u64_to_f32(value, c);
-  } else if constexpr (std::same_as<To, float64_t> && std::same_as<From, std::int32_t>) {
-    return detail::dispatch::i32_to_f64(value, c);
-  } else if constexpr (std::same_as<To, float64_t> && std::same_as<From, std::uint32_t>) {
-    return detail::dispatch::u32_to_f64(value, c);
-  } else if constexpr (std::same_as<To, float64_t> && std::same_as<From, std::int64_t>) {
-    return detail::dispatch::i64_to_f64(value, c);
-  } else if constexpr (std::same_as<To, float64_t> && std::same_as<From, std::uint64_t>) {
-    return detail::dispatch::u64_to_f64(value, c);
-  } else if constexpr (std::same_as<To, float32_t> && scalar_float<From> &&
-                       !std::same_as<From, tfloat32_t>) {
-    return detail::dispatch::to_f32(value, c);
-  } else if constexpr (std::same_as<To, float64_t> &&
-                       (std::same_as<From, float32_t> ||
-                        std::same_as<From, float16_t>)) {
-    return detail::dispatch::to_f64(value, c);
-  } else if constexpr (std::same_as<To, float16_t> &&
-                       (std::same_as<From, float32_t> ||
-                        std::same_as<From, float64_t>)) {
-    return detail::dispatch::to_f16(value, c);
-  } else if constexpr (std::same_as<To, bfloat16_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_bf16(value, c);
-  } else if constexpr (std::same_as<To, float8_e4m3_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_f8e4m3(value, c);
-  } else if constexpr (std::same_as<To, float8_e5m2_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_f8e5m2(value, c);
-  } else if constexpr (std::same_as<To, float6_e2m3_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_f6e2m3(value, c);
-  } else if constexpr (std::same_as<To, float6_e3m2_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_f6e3m2(value, c);
-  } else if constexpr (std::same_as<To, float4_e2m1_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_f4e2m1(value, c);
-  } else if constexpr (std::same_as<To, ufloat8_e8m0_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_ue8m0(value, c);
-  } else if constexpr (std::same_as<To, ufloat7_e4m3_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::to_ue4m3(value, c);
-  } else if constexpr (std::same_as<To, std::int32_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::f32_to_i32(value, c);
-  } else if constexpr (std::same_as<To, std::uint32_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::f32_to_u32(value, c);
-  } else if constexpr (std::same_as<To, std::int64_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::f32_to_i64(value, c);
-  } else if constexpr (std::same_as<To, std::uint64_t> && std::same_as<From, float32_t>) {
-    return detail::dispatch::f32_to_u64(value, c);
-  } else if constexpr (std::same_as<To, std::int32_t> && std::same_as<From, float64_t>) {
-    return detail::dispatch::f64_to_i32(value, c);
-  } else if constexpr (std::same_as<To, std::uint32_t> && std::same_as<From, float64_t>) {
-    return detail::dispatch::f64_to_u32(value, c);
-  } else if constexpr (std::same_as<To, std::int64_t> && std::same_as<From, float64_t>) {
-    return detail::dispatch::f64_to_i64(value, c);
-  } else if constexpr (std::same_as<To, std::uint64_t> && std::same_as<From, float64_t>) {
-    return detail::dispatch::f64_to_u64(value, c);
-  } else if constexpr (scalar_float<From> && scalar_float<To> &&
-                       !std::same_as<From, float64_t> &&
-                       !std::same_as<To, float64_t> &&
-                       !std::same_as<From, tfloat32_t> &&
-                       !std::same_as<To, tfloat32_t>) {
-    auto widened = cvt<float32_t>(ctx, value, c);
-    if (!widened)
-      return std::unexpected(widened.error());
-    auto narrowed = cvt<To>(ctx, widened->value, c);
-    if (!narrowed)
-      return std::unexpected(narrowed.error());
-    narrowed->status.inexact |= widened->status.inexact;
-    return narrowed;
-  } else if constexpr (scalar_float<From> && arithmetic_integer<To> &&
-                       !std::same_as<From, float64_t>) {
-    auto widened = cvt<float32_t>(ctx, value, c);
-    if (!widened)
-      return std::unexpected(widened.error());
-    auto converted = cvt<To>(ctx, widened->value, c);
-    if (!converted)
-      return std::unexpected(converted.error());
-    converted->status.inexact |= widened->status.inexact;
-    return converted;
-  } else {
-    return std::unexpected(arithmetic_error::unsupported_type_combination);
-  }
+    const context& ctx, From value, conversion_control control = {}) {
+  return detail::canonical_cvt<To>(ctx, value, control, false);
+}
+
+// `.rs` carries exactly one explicit 32-bit replay threshold.  No global PRNG
+// state is read or advanced by conversion.
+template <typename To, typename From>
+  requires convertible_to<To, From>
+inline std::expected<result<To, floating_status>, arithmetic_error> cvt(
+    const context& ctx, From value, conversion_control c,
+    stochastic_rounding_input random) {
+  return detail::canonical_cvt<To>(ctx, value, c, true, random.random_bits);
 }
 }  // namespace ptxsim::arith

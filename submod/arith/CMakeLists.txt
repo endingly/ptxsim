@@ -1,6 +1,27 @@
+include(CheckCXXSourceCompiles)
+include(CMakePackageConfigHelpers)
+
+# The v0.1 arithmetic contract is Linux with GCC or Clang. __int128 is used
+# only for exact integer widening; fail configuration rather than selecting a
+# host-dependent fallback with different overflow behavior.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR
+   NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    message(FATAL_ERROR
+        "ptxsim::arith v0.1 requires GCC or Clang on Linux; its exact integer backend requires __int128")
+endif()
+check_cxx_source_compiles(
+    "int main() { __int128 value = 1; return static_cast<int>(value - 1); }"
+    PTXSIM_ARITH_HAS_INT128)
+if(NOT PTXSIM_ARITH_HAS_INT128)
+    message(FATAL_ERROR "ptxsim::arith requires compiler support for __int128")
+endif()
+
 file(GLOB_RECURSE ptxsim_arith_srcs CONFIGURE_DEPENDS src/*.cpp)
+list(REMOVE_ITEM ptxsim_arith_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/validation.cpp")
 add_library(ptxsim_arith ${ptxsim_arith_srcs})
 add_library(ptxsim::arith ALIAS ptxsim_arith)
+set_target_properties(ptxsim_arith PROPERTIES EXPORT_NAME arith)
+target_compile_features(ptxsim_arith PUBLIC cxx_std_23)
 register_headers(ptxsim_arith arith PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 find_package(softfloat CONFIG REQUIRED)
@@ -16,15 +37,91 @@ endforeach()
 if(NOT ptxsim_softfloat_tls_configured)
     message(FATAL_ERROR "softfloat::softfloat must export THREAD_LOCAL=thread_local")
 endif()
-target_link_libraries(
-    ptxsim_arith
-    PRIVATE
-    softfloat::softfloat
-)
+target_link_libraries(ptxsim_arith PRIVATE softfloat::softfloat)
 target_compile_definitions(ptxsim_arith PRIVATE PTXSIM_SOFTFLOAT_TLS_CONFIGURED=1)
+ptxsim_enable_sanitizers(ptxsim_arith)
+
+# Host floating-point tolerance helpers are diagnostic-only. Keeping them in
+# a distinct opt-in target prevents production users of ptxsim::arith from
+# linking that code accidentally.
+add_library(ptxsim_arith_validation src/validation.cpp)
+add_library(ptxsim::arith_validation ALIAS ptxsim_arith_validation)
+set_target_properties(ptxsim_arith_validation PROPERTIES EXPORT_NAME arith_validation)
+target_link_libraries(ptxsim_arith_validation PUBLIC ptxsim_arith)
+ptxsim_enable_sanitizers(ptxsim_arith_validation)
+
+# Compile every supported public header as its own translation unit. detail/
+# files are not a supported include surface; the few template implementation
+# headers transitively needed by scalar.hpp are installed solely so public
+# headers remain self-contained for package consumers.
+file(GLOB ptxsim_arith_public_headers CONFIGURE_DEPENDS include/*.hpp)
+set(ptxsim_arith_header_check_sources)
+foreach(ptxsim_arith_header IN LISTS ptxsim_arith_public_headers)
+    get_filename_component(ptxsim_arith_header_name "${ptxsim_arith_header}" NAME)
+    string(MAKE_C_IDENTIFIER "${ptxsim_arith_header_name}" ptxsim_arith_header_id)
+    set(ptxsim_arith_header_source
+        "${CMAKE_CURRENT_BINARY_DIR}/header-check/${ptxsim_arith_header_id}.cpp")
+    file(GENERATE OUTPUT "${ptxsim_arith_header_source}"
+         CONTENT "#include <ptxsim/arith/${ptxsim_arith_header_name}>\n")
+    list(APPEND ptxsim_arith_header_check_sources "${ptxsim_arith_header_source}")
+endforeach()
+add_library(ptxsim_arith_public_headers OBJECT ${ptxsim_arith_header_check_sources})
+target_link_libraries(ptxsim_arith_public_headers PRIVATE ptxsim_arith)
+ptxsim_enable_sanitizers(ptxsim_arith_public_headers)
+add_custom_target(ptxsim_arith_public_header_check ALL
+    DEPENDS ptxsim_arith_public_headers)
+
+set(ptxsim_arith_package_build_dir "${CMAKE_CURRENT_BINARY_DIR}")
+set(ptxsim_arith_package_install_dir
+    "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ptxsimConfig.cmake.in"
+    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION "${ptxsim_arith_package_install_dir}")
+write_basic_package_version_file(
+    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}ConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion)
+
+# Build-tree export supports the build-tree consumer gate; the installed
+# export deliberately keeps SoftFloat PRIVATE but find_dependency() supplies
+# its LINK_ONLY dependency for static-library consumers.
+export(TARGETS ptxsim_arith ptxsim_arith_validation
+       FILE "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Targets.cmake"
+       NAMESPACE ptxsim::)
+install(TARGETS ptxsim_arith ptxsim_arith_validation
+    EXPORT ptxsimTargets
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/arith"
+    FILES_MATCHING
+        PATTERN "*.hpp"
+        PATTERN "*.h"
+        PATTERN "*.inl"
+        PATTERN "*.ipp")
+install(FILES
+    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Config.cmake"
+    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION "${ptxsim_arith_package_install_dir}")
+install(EXPORT ptxsimTargets
+    FILE "${PROJECT_NAME}Targets.cmake"
+    NAMESPACE ptxsim::
+    DESTINATION "${ptxsim_arith_package_install_dir}")
 
 if(BUILD_TESTING)
     file(GLOB ptxsim_arith_test_srcs CONFIGURE_DEPENDS test/*.cpp)
+    foreach(ptxsim_arith_test_source IN LISTS ptxsim_arith_test_srcs)
+        file(READ "${ptxsim_arith_test_source}" ptxsim_arith_test_contents)
+        string(FIND "${ptxsim_arith_test_contents}" "detail::"
+            ptxsim_arith_detail_test_use)
+        if(NOT ptxsim_arith_detail_test_use EQUAL -1)
+            message(FATAL_ERROR
+                "Public arithmetic tests must use the supported API, not detail:: (${ptxsim_arith_test_source})")
+        endif()
+    endforeach()
     add_executable(test_ptxsim_arith ${ptxsim_arith_test_srcs})
     find_package(GTest CONFIG REQUIRED)
     target_link_libraries(
@@ -32,8 +129,38 @@ if(BUILD_TESTING)
         PRIVATE
         GTest::gtest
         GTest::gtest_main
-        ptxsim_arith
-        softfloat::softfloat
-    )
+        ptxsim_arith)
+    ptxsim_enable_sanitizers(test_ptxsim_arith)
     gtest_discover_tests(test_ptxsim_arith)
+
+    add_executable(test_ptxsim_arith_internal
+        test/internal/test_softfloat_context.cpp)
+    target_include_directories(test_ptxsim_arith_internal PRIVATE src)
+    target_link_libraries(test_ptxsim_arith_internal PRIVATE
+        GTest::gtest
+        GTest::gtest_main
+        ptxsim_arith
+        softfloat::softfloat)
+    ptxsim_enable_sanitizers(test_ptxsim_arith_internal)
+    gtest_discover_tests(test_ptxsim_arith_internal)
+
+    if(PTXSIM_BUILD_CONSUMER_TESTS)
+        foreach(ptxsim_arith_consumer_mode IN ITEMS build-tree installed)
+            add_test(
+                NAME ptxsim_arith_${ptxsim_arith_consumer_mode}_consumer
+                COMMAND "${CMAKE_COMMAND}"
+                    "-DPTXSIM_CONSUMER_MODE=${ptxsim_arith_consumer_mode}"
+                    "-DPTXSIM_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+                    "-DPTXSIM_BUILD_DIR=${CMAKE_BINARY_DIR}"
+                    "-DPTXSIM_PACKAGE_BUILD_DIR=${ptxsim_arith_package_build_dir}"
+                    "-DPTXSIM_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}"
+                    "-DPTXSIM_CONSUMER_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer-${ptxsim_arith_consumer_mode}"
+                    "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
+                    "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+                    "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                    "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
+                    "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
+                    -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
+        endforeach()
+    endif()
 endif()

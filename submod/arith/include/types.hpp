@@ -148,6 +148,31 @@ template <typename Element>
 struct packed_element_bits {
   static constexpr unsigned value = sizeof(Element) * 8;
 };
+
+// A packed container stores the architectural raw encoding of an element.
+// Most elements are basic_float and expose bits()/from_bits(); fixed-point
+// storage instead uses its signed integer representation.  Keeping this
+// conversion in one trait lets packed_t represent the PTX S2F6x2 storage
+// without teaching the generic lane engine about individual element classes.
+template <typename Element>
+struct packed_element_codec {
+  static constexpr std::uint64_t to_bits(Element value) noexcept {
+    return value.bits();
+  }
+  static constexpr Element from_bits(std::uint64_t bits) noexcept {
+    return Element::from_bits(
+        static_cast<typename Element::storage_type>(bits));
+  }
+};
+template <>
+struct packed_element_codec<fixed8_s2f6_t> {
+  static constexpr std::uint64_t to_bits(fixed8_s2f6_t value) noexcept {
+    return static_cast<std::uint8_t>(value.rep);
+  }
+  static constexpr fixed8_s2f6_t from_bits(std::uint64_t bits) noexcept {
+    return {std::bit_cast<std::int8_t>(static_cast<std::uint8_t>(bits))};
+  }
+};
 template <>
 struct packed_element_bits<float16_t> {
   static constexpr unsigned value = 16;
@@ -179,6 +204,14 @@ struct packed_element_bits<float6_e3m2_t> {
 template <>
 struct packed_element_bits<float4_e2m1_t> {
   static constexpr unsigned value = 4;
+};
+template <>
+struct packed_element_bits<ufloat8_e8m0_t> {
+  static constexpr unsigned value = 8;
+};
+template <>
+struct packed_element_bits<ufloat7_e4m3_t> {
+  static constexpr unsigned value = 7;
 };
 
 template <typename Element, std::size_t Lanes, typename Layout>
@@ -243,8 +276,8 @@ class packed_t {
   [[nodiscard]] constexpr container_type bits() const noexcept { return bits_; }
   [[nodiscard]] constexpr Element operator[](std::size_t lane) const noexcept {
     const auto mask = element_mask();
-    return Element::from_bits(static_cast<typename Element::storage_type>(
-        (std::uint64_t{bits_} >> traits::lane_offset(lane)) & mask));
+    return packed_element_codec<Element>::from_bits(
+        (std::uint64_t{bits_} >> traits::lane_offset(lane)) & mask);
   }
   friend constexpr bool operator==(packed_t, packed_t) = default;
 
@@ -275,7 +308,17 @@ using float8_e5m2x2_t = packed_t<float8_e5m2_t, 2>;
 using float8_e5m2x4_t = packed_t<float8_e5m2_t, 4>;
 using float6_e2m3x2_t = packed_t<float6_e2m3_t, 2>;
 using float6_e3m2x2_t = packed_t<float6_e3m2_t, 2>;
+using float6_e2m3x4_t = packed_t<float6_e2m3_t, 4>;
+using float6_e3m2x4_t = packed_t<float6_e3m2_t, 4>;
 using float4_e2m1x2_t = packed_t<float4_e2m1_t, 2>;
+using float4_e2m1x4_t = packed_t<float4_e2m1_t, 4>;
+// PTX specifies UE8M0 storage in paired form.  The scalar lane type remains
+// available for numeric conversion and tensor scale semantics only.
+using ufloat8_e8m0x2_t = packed_t<ufloat8_e8m0_t, 2>;
+// PTX names this storage S2F6x2.  It is a storage/conversion format, not a
+// claim that S2F6 has scalar or packed arithmetic instructions.
+using fixed8_s2f6x2_t = packed_t<fixed8_s2f6_t, 2>;
+using ufloat7_e4m3x2_t = packed_t<ufloat7_e4m3_t, 2>;
 
 enum class fp_class {
   zero,

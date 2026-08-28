@@ -1,4 +1,5 @@
 #pragma once
+#include <ptxsim/arith/context.hpp>
 namespace ptxsim::arith::detail {
 enum class RoundingMode {
   NearestEven,
@@ -40,5 +41,8 @@ struct MinMaxControl {
 };
 struct ApproximationControl {
   bool flush_subnormal = false;
+  // Unlike a raw integer selector, this carries the exact PTX revision and
+  // provenance all the way to the approximation backend.
+  approximation_profile profile{};
 };
 }  // namespace ptxsim::arith::detail

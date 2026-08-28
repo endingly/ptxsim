@@ -500,12 +500,32 @@ Result<To> narrow_from_f32(float32_t value, ConversionControl control) {
   const auto category = classify(value);
   if (category == fp_class::quiet_nan || category == fp_class::signaling_nan)
     return convert_nan<To>(value);
+  if constexpr (Traits::sign_mask == 0) {
+    if (negative) {
+      // Unsigned scale encodings cannot represent negative magnitudes.  Keep
+      // the conversion deterministic and diagnose it instead of silently
+      // interpreting the sign bit as a positive scale.
+      ExceptionFlags flags;
+      flags |= ExceptionFlag::Invalid;
+      flags |= ExceptionFlag::Inexact;
+      return {pack<To>(false, 0, 0), flags};
+    }
+  }
   if (category == fp_class::infinity)
     return Traits::has_infinity && !control.satfinite
                ? Result<To>{infinity<To>(negative), {}}
                : overflow<To>(negative, control);
-  if (category == fp_class::zero)
+  if (category == fp_class::zero) {
+    if constexpr (!Traits::has_zero) {
+      // UE8M0 has no zero encoding.  Its smallest finite value is 2^-127
+      // (raw 0x00), so zero rounds there and reports the lost magnitude.
+      ExceptionFlags flags;
+      flags |= ExceptionFlag::Underflow;
+      flags |= ExceptionFlag::Inexact;
+      return {pack<To>(false, 0, 0), flags};
+    }
     return {pack<To>(negative, 0, 0), {}};
+  }
 
   const std::uint32_t source_exp = (value.bits() >> 23) & 0xFFu;
   const std::uint32_t significand =
@@ -515,7 +535,10 @@ Result<To> narrow_from_f32(float32_t value, ConversionControl control) {
       source_exp == 0 ? -149 : static_cast<int>(source_exp) - 127 - 23;
   const int top = 31 - std::countl_zero(significand);
   const int exponent = top + scale;
-  const int minimum_normal_exponent = 1 - Traits::exponent_bias;
+  // Formats with no zero/subnormal encoding (UE8M0) use exponent field zero
+  // as their smallest *normal* finite value.
+  const int minimum_normal_exponent =
+      Traits::has_zero ? 1 - Traits::exponent_bias : -Traits::exponent_bias;
   RoundedInteger rounded{};
   unsigned target_exp = 0;
 
@@ -573,8 +596,20 @@ Result<float32_t> widen_to_f32(From raw, ConversionControl control) {
   const auto exponent_field =
       static_cast<unsigned>((value.bits() & Traits::exponent_mask) >>
                             (Traits::fraction_bits + fraction_lsb<From>));
-  if (exponent_field == 0 && fraction == 0)
+  if (Traits::has_zero && exponent_field == 0 && fraction == 0)
     return {float32_t::from_bits(negative ? 0x80000000u : 0u), {}};
+
+  // UE8M0 exponent field zero is the finite value 2^-127.  It is exactly
+  // representable as an F32 subnormal (bit 22), rather than F32 zero.
+  if constexpr (!Traits::has_zero) {
+    if (exponent_field == 0 && fraction == 0) {
+      constexpr int exponent = 1 - Traits::exponent_bias - 1;
+      static_assert(exponent >= -149 && exponent < -126);
+      return {float32_t::from_bits(
+                  std::uint32_t{1} << static_cast<unsigned>(exponent + 149)),
+              {}};
+    }
+  }
 
   if (exponent_field == 0) {
     const int quantum_exponent =

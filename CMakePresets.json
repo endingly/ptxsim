@@ -28,6 +28,50 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
+        },
+        {
+            "name": "ci-linux-clang-debug",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTING": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "name": "ci-linux-clang-release",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_BUILD_TYPE": "Release",
+                "BUILD_TESTING": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
+        },
+        {
+            "name": "ci-linux-gcc-asan-ubsan",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTING": "ON",
+                "PTXSIM_ENABLE_ASAN": "ON",
+                "PTXSIM_ENABLE_UBSAN": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            }
         }
     ],
     "buildPresets": [
@@ -40,6 +84,21 @@
             "name": "ci-linux-gcc-release",
             "configurePreset": "ci-linux-gcc-release",
             "configuration": "Release"
+        },
+        {
+            "name": "ci-linux-clang-debug",
+            "configurePreset": "ci-linux-clang-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "ci-linux-clang-release",
+            "configurePreset": "ci-linux-clang-release",
+            "configuration": "Release"
+        },
+        {
+            "name": "ci-linux-gcc-asan-ubsan",
+            "configurePreset": "ci-linux-gcc-asan-ubsan",
+            "configuration": "Debug"
         }
     ],
     "testPresets": [
@@ -52,6 +111,21 @@
             "name": "ci-linux-gcc-release",
             "configurePreset": "ci-linux-gcc-release",
             "configuration": "Release"
+        },
+        {
+            "name": "ci-linux-clang-debug",
+            "configurePreset": "ci-linux-clang-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "ci-linux-clang-release",
+            "configurePreset": "ci-linux-clang-release",
+            "configuration": "Release"
+        },
+        {
+            "name": "ci-linux-gcc-asan-ubsan",
+            "configurePreset": "ci-linux-gcc-asan-ubsan",
+            "configuration": "Debug"
         }
     ],
     "workflowPresets": [
@@ -91,6 +165,36 @@
                     "name": "ci-linux-gcc-release",
                     "type": "test"
                 }
+            ]
+        },
+        {
+            "name": "ci-linux-clang-debug",
+            "displayName": "CI Clang Debug Build + Test",
+            "description": "Configure, build Debug, run tests",
+            "steps": [
+                { "name": "ci-linux-clang-debug", "type": "configure" },
+                { "name": "ci-linux-clang-debug", "type": "build" },
+                { "name": "ci-linux-clang-debug", "type": "test" }
+            ]
+        },
+        {
+            "name": "ci-linux-clang-release",
+            "displayName": "CI Clang Release Build + Test",
+            "description": "Configure, build Release, run tests",
+            "steps": [
+                { "name": "ci-linux-clang-release", "type": "configure" },
+                { "name": "ci-linux-clang-release", "type": "build" },
+                { "name": "ci-linux-clang-release", "type": "test" }
+            ]
+        },
+        {
+            "name": "ci-linux-gcc-asan-ubsan",
+            "displayName": "CI GCC ASan+UBSan Build + Test",
+            "description": "Configure, build with ASan+UBSan, run tests",
+            "steps": [
+                { "name": "ci-linux-gcc-asan-ubsan", "type": "configure" },
+                { "name": "ci-linux-gcc-asan-ubsan", "type": "build" },
+                { "name": "ci-linux-gcc-asan-ubsan", "type": "test" }
             ]
         }
     ]

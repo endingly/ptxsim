@@ -1,16 +1,95 @@
-# ptxsim Project Roadmap
+# ptxsim Project Plan v2
 
-> Status: Draft v0.4  
-> Project: `ptxsim`  
-> Frontend: `endingly/ptx_frontend`  
-> PTX specification baseline: PTX ISA 9.x  
-> Primary goal: deterministic PTX functional ISA simulation with explicit execution IR, reproducible floating-point semantics, inspectable machine state, and extensible SIMT/memory support.
+> **Status:** Execution draft v2.0  
+> **Supersedes:** `.agents/project_plan.md` v0.4  
+> **Specification baseline:** NVIDIA PTX ISA 9.3  
+> **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
+> **Current blocking gate:** accept the V2-M1 remediation against `m4-review.md` and pass hosted Clang CI
+> **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
 
-## 1. Architecture decisions
+## 1. Why v2 is required
 
-The simulator uses the following execution pipeline:
+The previous project plan is no longer an executable roadmap. It assumes:
+
+```text
+ptxsim::fp
+fp::Environment
+raw-bit per-type floating overloads
+Milestone 4 as a small IEEE-only floating wrapper
+```
+
+The current architecture has deliberately moved to:
+
+```text
+ptxsim::arith
+strong typed numeric formats
+generic scalar/conversion/packed/tensor APIs
+independent controls
+private arithmetic backends
+```
+
+That is not a naming-only refactor. It changes module responsibility, API shape, testing strategy, and dependency ordering.
+
+The `refactor/arith-module` review also found that the arithmetic branch is not yet suitable for integration. Therefore v2 makes arithmetic conformance a formal blocking gate before executor work consumes its API.
+
+### 1.1 Main changes from v0.4
+
+| v0.4 assumption | v2 decision |
+|---|---|
+| Independent `ptxsim::fp` environment | Replace with pure `ptxsim::arith` numerical semantics library |
+| FP module mainly wraps SoftFloat | SoftFloat is one private backend; BF16/FP8/FP6/FP4/fixed/tensor need format-specific or generic exact cores |
+| FP public API models Fp16/Fp32/Fp64 overloads | Public API uses typed generic operations and capability traits |
+| Floating milestone can integrate early | Arithmetic must pass format/capability/conversion/tensor conformance before integration |
+| Roadmap baseline “PTX 9.x” | Pin semantic baseline to PTX ISA 9.3; future versions require explicit deltas |
+| No dedicated frontend isolation target | Add a lowering/front-end adapter boundary; execution core never links frontend |
+| Generic memory list is enough | TMEM remains a specialized storage resource, not a normal byte-addressed state space |
+| Trace considered as a possible independent module | No separate trace submodule in the current plan; use a minimal debug/event-sink boundary |
+| CI primarily proves ordinary build | Add capability, sanitizer, header consumer, install/export, concurrency and oracle-independence gates |
+
+---
+
+# 2. Project goals and non-goals
+
+## 2.1 Goals
+
+ptxsim v0.1 should provide:
+
+1. deterministic PTX functional execution for a documented subset;
+2. a formal `ptxsim::exec_ir` boundary after frontend resolution;
+3. frontend-independent executable program images;
+4. inspectable register, memory, specialized storage and scheduler state;
+5. exact numerical behavior where PTX determines a unique result;
+6. explicit deterministic reference profiles where PTX is target-dependent or underspecified;
+7. structured unsupported/error reporting, with no silent fallback;
+8. reproducible unit, conformance, differential and end-to-end tests;
+9. a usable library API and command-line runner;
+10. a support matrix that separates parsing, lowering, execution and validation status.
+
+## 2.2 Non-goals for v0.1
+
+The first release does not attempt to provide:
+
+```text
+SASS decoding or execution
+physical register allocation
+cycle-accurate timing
+cache/coalescer/pipeline timing
+GPU performance prediction
+full CUDA runtime emulation
+all PTX instructions
+all target-SM availability rules
+bit identity for behavior PTX explicitly leaves target-dependent
+```
+
+Instruction availability and target architecture gating belong outside `arith`; the first implementation may support a smaller documented target subset.
+
+---
+
+# 3. Architecture decisions
+
+## 3.1 Execution pipeline
 
 ```text
 PTX source
@@ -21,853 +100,917 @@ ptx_frontend
    v
 ptx_frontend::resolved_ir
    |
-   | lowering
+   |  lowering / validation
    v
 ptxsim::exec_ir
    |
    v
 ptxsim::program::ProgramImage
    |
-   +--------------+---------------+
-   |              |               |
-   v              v               v
-state           memory            fp
-   \              |              /
-    \             |             /
-     +---------- semantics -----+
-                  |
-                  v
-               executor
-                  |
-                  v
-              scheduler
-                  |
-                  v
-               runtime
-                  |
-                  v
-                debug
+   +--------------------+-------------------+
+   |                    |                   |
+   v                    v                   v
+state                memory/TMEM          arith
+   \                    |                  /
+    \                   |                 /
+     +-------------- semantics ----------+
+                         |
+                         v
+                      executor
+                         |
+                         v
+                      scheduler
+                         |
+                         v
+                       runtime
+                         |
+                         v
+                    debug/event sink
 ```
 
-The main architectural constraints are:
+## 3.2 Dependency rules
 
-1. `ptx_frontend::resolved_ir` is the frontend/simulator input boundary.
-2. `ptxsim::exec_ir` is the formal execution boundary.
-3. `semantics`, `executor`, `scheduler`, `state`, `memory`, and `fp` must not depend on frontend IR.
-4. `exec_ir` is not SASS. It is a PTX functional execution IR.
-5. SASS decoding, physical register allocation, machine scheduling, and cycle-accurate simulation remain out of scope for the first major development phase.
-6. TMEM is a specialized storage resource, not a normal byte-addressed PTX state space.
-7. Floating-point execution is isolated in an independent `ptxsim::fp` module.
-8. Berkeley SoftFloat is used as the canonical IEEE arithmetic backend; PTX-specific floating-point semantics remain in `ptxsim::fp`.
-9. The simulator must be deterministic unless PTX semantics explicitly require an allowed-set or memory-model style validation.
-10. Memory and specialized storage state must remain inspectable and dumpable.
+The required dependency direction is:
+
+```text
+common
+  |
+  +--> arith
+  +--> exec_ir
+  +--> state
+  +--> memory
+
+ptx_frontend --> lowering --> exec_ir/program
+
+exec_ir/program + state + memory + arith
+             --> semantics --> executor --> scheduler --> runtime
+
+runtime/executor/state/memory --> debug interfaces
+```
+
+Forbidden dependencies:
+
+```text
+arith -> exec_ir
+arith -> ptx_frontend
+arith -> state/memory/scheduler/runtime
+exec_ir -> ptx_frontend
+state/memory/semantics/executor -> ptx_frontend
+memory -> executor/scheduler
+scheduler -> ptx_frontend
+```
+
+Only the lowering/front-end adapter target may link `ptx_frontend`.
+
+## 3.3 `arith` responsibility
+
+`ptxsim::arith` owns only numerical semantics:
+
+```text
+typed scalar values
+format classification
+integer/floating/fixed conversions
+integer and bit primitives
+scalar arithmetic
+packed lane arithmetic where capability exists
+logical tensor arithmetic
+numeric controls
+numeric status/errors
+model profiles for numerically unspecified behavior
+```
+
+It does not own:
+
+```text
+PTX mnemonic/opcode/form
+modifier ordering or grammar
+target-SM instruction availability
+register file
+predicate execution
+PC or call stack
+warp/lane fragments
+memory descriptors
+TMEM address/descriptor handling
+scheduler state
+```
+
+## 3.4 `exec_ir` responsibility
+
+`exec_ir` is a typed PTX functional execution IR, not SASS. It should:
+
+- use resolved, compact operands;
+- encode facts needed by execution after frontend validation;
+- make PC targets and identifiers stable;
+- use typed instruction records or a bounded variant;
+- avoid frontend AST/IR ownership;
+- avoid embedding numerical backend details;
+- preserve source locations through side metadata.
+
+## 3.5 Tensor boundary
+
+```text
+executor / tensor instruction adapter
+  - decodes register fragments
+  - resolves layout/shape/instruction qualifiers
+  - reads shared memory/TMEM descriptors
+  - builds logical tiles and scale views
+
+arith::tensor
+  - receives logical A/B/C values
+  - applies explicit numeric scale model
+  - computes logical D
+  - returns numeric status
+```
+
+`arith::tensor` must never know lane IDs, warp fragments, TMEM addresses or PTX descriptor encoding.
+
+## 3.6 TMEM decision
+
+TMEM is a specialized execution resource. It is not added to a generic byte-addressed `StateSpace` enum as if it were global/shared/local memory.
+
+Recommended boundary:
+
+```cpp
+class TmemState;
+class TmemAddress;
+class TmemDescriptorView;
+```
+
+TMEM instruction adapters may read/write this resource and transform data into logical tensor tiles. Generic load/store memory APIs must not accidentally accept TMEM addresses.
+
+## 3.7 Trace/debug decision
+
+No independent trace submodule is introduced in the initial roadmap. Instead use a minimal, optional event-sink interface under debug/runtime:
+
+```cpp
+struct ExecutionEventSink {
+  virtual void on_step(const StepEvent&) = 0;
+  virtual void on_memory(const MemoryEvent&) = 0;
+  virtual void on_trap(const TrapEvent&) = 0;
+};
+```
+
+The executor must not depend on a concrete tracer. The hook must remain optional and low-intrusion.
+
+## 3.8 State-machine dependency decision
+
+Do not add a third-party state-machine library for v0.1 scheduler/executor work.
+
+Use explicit enums, transition functions and invariant checks while state graphs are small and performance/debugging requirements are evolving. Re-evaluate only if all are true:
+
+- the project has multiple independently evolving complex protocols;
+- transition duplication is measurable;
+- generated diagrams/introspection materially help testing;
+- the dependency does not infect public headers or core numeric paths;
+- compile-time and binary-size cost is acceptable.
 
 ---
 
-## 2. Module layout
+# 4. Proposed repository layout
 
 ```text
 ptxsim/
 ├── CMakeLists.txt
 ├── CMakePresets.json
 ├── vcpkg.json
-├── project_plan.md
-├── project_roadmap.md
-│
 ├── cmake/
-│   ├── ptxsim_register_headers.cmake
-│   ├── ptxsim_add_test.cmake
-│   └── ptxsim_sanitizers.cmake
-│
-├── third_party/
-│   ├── ptx_frontend/
-│   └── berkeley-softfloat-3/
-│
+│   ├── register_headers.cmake
+│   ├── add_test.cmake
+│   ├── sanitizers.cmake
+│   └── install_package.cmake
+├── docs/
+│   ├── arith_module_design.md
+│   ├── execution_model.md
+│   ├── exec_ir.md
+│   ├── memory_model.md
+│   ├── tensor_boundary.md
+│   ├── validation_policy.md
+│   ├── support_matrix.md
+│   └── adr/
 ├── submod/
 │   ├── common/
+│   ├── arith/
 │   ├── exec_ir/
+│   ├── lowering/
 │   ├── program/
 │   ├── state/
 │   ├── memory/
-│   ├── fp/
 │   ├── semantics/
 │   ├── executor/
 │   ├── scheduler/
 │   ├── runtime/
 │   └── debug/
-│
 ├── tools/
 │   └── ptxsim/
-│
-├── test/
-│   ├── e2e/
-│   ├── conformance/
-│   └── differential/
-│
-└── docs/
-    ├── execution_model.md
-    ├── floating_point.md
-    ├── memory_dump.md
-    └── support_matrix.md
+└── test/
+    ├── e2e/
+    ├── conformance/
+    ├── differential/
+    ├── consumer/
+    └── data/
+        ├── ptx_9_3/
+        └── hardware_vectors/
 ```
 
-Public CMake aliases:
+Public aliases:
 
 ```text
 ptxsim::common
+ptxsim::arith
 ptxsim::exec_ir
+ptxsim::lowering
 ptxsim::program
 ptxsim::state
 ptxsim::memory
-ptxsim::fp
 ptxsim::semantics
 ptxsim::executor
 ptxsim::scheduler
 ptxsim::runtime
 ptxsim::debug
-ptxsim::ptxsim
 ```
 
-Real target names should be prefixed:
-
-```text
-ptxsim_common
-ptxsim_exec_ir
-ptxsim_program
-ptxsim_state
-ptxsim_memory
-ptxsim_fp
-ptxsim_semantics
-ptxsim_executor
-ptxsim_scheduler
-ptxsim_runtime
-ptxsim_debug
-```
-
-This avoids collisions with targets exported by `ptx_frontend`.
+Real target names remain prefixed with `ptxsim_` to avoid collisions.
 
 ---
 
-## 3. Floating-point module
+# 5. Build and dependency contract
 
-### 3.1 Position in the architecture
+## 5.1 Supported build baseline
 
-`ptxsim::fp` is a numerical execution primitive layer.
-
-Dependency direction:
+Initial required environment:
 
 ```text
-common
-  |
-  v
- fp
-  ^
-  |
-semantics
+CMake >= 3.28
+C++23
+Ninja
+GCC on Linux as primary compiler
+Clang on Linux as secondary conformance compiler
+vcpkg manifest mode with project overlay ports
 ```
 
-The following dependencies are forbidden:
+MSVC/macOS support is not a v0.1 release gate unless explicitly added later.
+
+## 5.2 Third-party dependencies
+
+### `ptx_frontend`
+
+- consumed only by `ptxsim_lowering` and frontend-facing tools/tests;
+- pinned to a known revision/version;
+- no frontend types survive in `ProgramImage` or execution-core public APIs;
+- Python/build-time dependencies belong to the frontend package contract, not every execution target.
+
+### Berkeley SoftFloat
+
+- installed through the project overlay port;
+- pinned version/revision and license recorded;
+- built with thread-local mutable state;
+- linked `PRIVATE` by `ptxsim_arith`;
+- never exposed through public headers or package interface;
+- no other module calls SoftFloat directly.
+
+### GTest
+
+- test-only dependency;
+- never linked by production targets.
+
+### High-precision oracle dependencies
+
+MPFR or another high-precision library may be introduced only for tests/differential tools. It must not become a production dependency of `ptxsim::arith`.
+
+## 5.3 Required CMake options
 
 ```text
-fp -> exec_ir
-fp -> state
-fp -> memory
-fp -> scheduler
-fp -> runtime
-fp -> ptx_frontend
+PTXSIM_BUILD_TESTING
+PTXSIM_ENABLE_ASAN
+PTXSIM_ENABLE_UBSAN
+PTXSIM_ENABLE_TSAN          optional/non-blocking initially
+PTXSIM_BUILD_TOOLS
+PTXSIM_BUILD_CONSUMER_TESTS
+PTXSIM_ENABLE_HARDWARE_ORACLE
 ```
 
-`semantics` converts an `exec_ir` instruction into a call to `fp`.
+## 5.4 Build gates
 
-Example:
+Every merge to `main` must prove:
 
 ```text
-exec_ir::FmaF32
-      |
-      v
-semantics::execute()
-      |
-      v
-fp::Environment::fma()
-      |
-      +--> PTX FTZ preprocessing
-      |
-      +--> SoftFloat arithmetic
-      |
-      +--> PTX postprocessing
-      |
-      v
-result bits
+GCC Debug configure/build/test
+GCC Release configure/build/test
+Clang Debug configure/build/test
+Clang Release configure/build/test
+ASan+UBSan test run
+public header self-contained compile
+build-tree consumer
+install/export consumer
 ```
 
-### 3.2 SoftFloat role
+---
 
-Berkeley SoftFloat is used as an IEEE arithmetic backend.
+# 6. Validation policy
 
-Its responsibilities include:
+A universal epsilon is forbidden.
 
-- binary16 / binary32 / binary64 arithmetic primitives;
-- explicit rounding-mode selection;
-- fused multiply-add;
-- division;
-- square root;
-- integer/floating conversions;
-- comparison;
-- exception flags useful for diagnostics and conformance.
+## 6.1 Validation classes
 
-PTX rounding mapping:
+| Class | Meaning | Examples |
+|---|---|---|
+| V0 Structural | Shape/type/layout/invariant | exec IR, fragments, scale layouts |
+| V1 Bit Exact | Unique integer/floating result | integer add, exact FMA, signed zero |
+| V2 Spec-Bounded Numeric | ISA-defined error bound | approximate transcendental/div forms |
+| V3 Allowed-Set | PTX permits several values/classes | unspecified NaN payload/target model |
+| V4 Memory-Model | Outcome set under memory semantics | races/atomics/order |
+
+## 6.2 Oracle hierarchy
 
 ```text
-PTX .rn -> softfloat_round_near_even
-PTX .rz -> softfloat_round_minMag
-PTX .rm -> softfloat_round_min
-PTX .rp -> softfloat_round_max
+PTX 9.3 literal tables / pseudocode
+          |
+          +--> checked-in raw golden vectors
+          |
+          +--> independent reference model
+          |       - SoftFloat for IEEE primitives
+          |       - high precision for fused/approx/tensor
+          |
+          +--> NVIDIA hardware differential corpus
 ```
 
-SoftFloat is not allowed to become visible in public instruction semantics APIs.
+Production encode/decode/kernel code must not be reused as its own oracle.
 
-Bad:
+## 6.3 Reproducibility
+
+All randomized tests must emit:
+
+```text
+fixed seed
+input raw bits
+operation/capability
+controls/profile
+expected/actual raw bits
+single-case replay command or test parameter
+```
+
+---
+
+# 7. Delivery strategy
+
+The roadmap uses milestones `V2-M0` through `V2-M9`. Numbering reflects the new dependency order and intentionally does not preserve v0.4 milestone numbers.
+
+Critical path:
+
+```text
+V2-M0 build gate
+   +
+V2-M1 arithmetic conformance
+   |
+   +----> V2-M2 exec_ir/program/state
+             |
+             v
+          V2-M3 memory/TMEM
+             |
+             v
+          V2-M4 single-thread vertical slice
+             |
+             v
+          V2-M5 floating/conversion integration
+             |
+             v
+          V2-M6 SIMT/shared/barrier
+             |
+             v
+          V2-M7 runtime/ABI/CLI/debug
+             |
+             v
+          V2-M8 conformance and v0.1
+             |
+             v
+          V2-M9 advanced PTX
+```
+
+`V2-M0` and `V2-M1` may run in parallel, but no execution integration should depend on the current `arith` API until V2-M1 passes.
+
+---
+
+# 8. V2-M0 — Repository and build contract
+
+**Goal:** make every later semantic change independently reproducible.
+
+## 8.1 Tasks
+
+| ID | Task | Done condition |
+|---|---|---|
+| M0-01 | Pin dependency revisions | frontend and SoftFloat revisions recorded and reproducible |
+| M0-02 | Validate overlay ports | clean manifest install works without hidden machine state |
+| M0-03 | Normalize target naming | all real targets prefixed; all aliases resolve |
+| M0-04 | CMake presets | GCC/Clang Debug/Release and sanitizer presets configure |
+| M0-05 | Test helper | CTest discovery works for each submodule |
+| M0-06 | Sanitizer helper | ASan/UBSan can be enabled per preset without affecting third-party code incorrectly |
+| M0-07 | Header compile gate | each public header compiles standalone |
+| M0-08 | Install/export package | `find_package(ptxsim CONFIG)` consumer works |
+| M0-09 | CI trigger repair | PR and all relevant main pushes run complete gates |
+| M0-10 | License inventory | frontend, SoftFloat and test dependencies documented |
+
+## 8.2 Acceptance
+
+- fresh checkout succeeds without manually installed project dependencies other than documented build tools;
+- no production target links GTest or test-only oracle dependencies;
+- installed `ptxsim::arith` does not expose SoftFloat;
+- CI has no path filter that can skip ordinary source changes on `main`.
+
+---
+
+# 9. V2-M1 — Arithmetic conformance and API stabilization
+
+**Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
+
+**Source of truth:** `m4-review.md`.
+
+## 9.1 Work packages
+
+| ID | Work package | Review issues | Done condition |
+|---|---|---|---|
+| M1-01 | Independent PTX format goldens | P0-001, P1-009 | raw vectors exist independently of production traits |
+| M1-02 | Correct format descriptors | P0-001, P1-008 | UE8M0/UE4M3 and all classification metadata match PTX 9.3 |
+| M1-03 | Central operation capability | P0-002 | every true concept has an implementation; unsupported combinations fail at compile time where possible |
+| M1-04 | Canonical conversion pipeline | P0-003 | public `cvt` no longer carries pairwise type list |
+| M1-05 | Conversion controls | P1-001, P1-002 | directed/RNA/stochastic/satfinite/ReLU/subnormal legality and semantics implemented where specified |
+| M1-06 | Scalar compound semantics | P0-004, P1-003, P1-007 | `mad`, status composition, error mapping and rsqrt contract fixed |
+| M1-07 | Signed bit semantics | P0-005 | BFE/BFIND match PTX pseudocode for 32/64-bit signed/unsigned |
+| M1-08 | Packed capability/layout | P1-004 | operation/lane/layout capabilities and required aliases are explicit |
+| M1-09 | Tensor type combinations | P0-006 | numeric MMA capability matches PTX matrix data types |
+| M1-10 | Block scale model | P0-007 | A row chunks/B column chunks, scale types and layouts validated |
+| M1-11 | Widened tensor MAC | P0-008 | no premature F32 overflow/underflow or low-format rounding |
+| M1-12 | Typed model profile | P1-005 | PTX 9.3 reference profile explicitly controls unspecified choices |
+| M1-13 | Approximation model | P1-006 | corner behavior, deterministic model and error bounds proven |
+| M1-14 | SoftFloat stress | P1-010 | nested/exception/concurrent TLS isolation passes |
+| M1-15 | Packaging cleanup | P2 issues | public/private headers, validation target and consumer gates fixed |
+| M1-16 | Support matrix | all | generated/documented public capability matrix matches tests |
+
+## 9.2 Required public API shape
+
+The stable direction is:
 
 ```cpp
-void execute(const exec_ir::FmaF32& inst) {
-    softfloat_roundingMode = ...;
-    ...
-}
+context ctx{model_profile::ptx_9_3_reference()};
+
+auto x = add(ctx, a, b, floating_control{...});
+auto y = fma<Result>(ctx, a, b, c, floating_control{...});
+auto z = cvt<To>(ctx, from, conversion_control{...});
+auto s = cvt<To>(ctx, from,
+                 conversion_control{.rounding = rounding_mode::stochastic},
+                 stochastic_rounding_input{random_bits});
 ```
 
-Preferred:
+No public instruction form/opcode dispatch is added.
 
-```cpp
-auto result = ctx.fp().fma(
-    a,
-    b,
-    c,
-    inst.rounding_mode,
-    inst.fp_control);
-```
+## 9.3 Acceptance
 
-### 3.3 PTX-specific FP semantics
+V2-M1 is complete only when the merge checklist in `m4-review.md` passes and:
 
-The following remain `ptxsim` responsibilities:
-
-- `.ftz`;
-- `.sat`;
-- instruction-specific NaN rules;
-- signed-zero behavior;
-- exact vs approximate instruction contracts;
-- PTX conversion rules;
-- PTX-specific packed/vector forms;
-- BF16;
-- TF32;
-- FP8 families;
-- tensor-operation input/output format rules;
-- architecture-specific precision rules documented by PTX ISA.
-
-Therefore:
-
-```text
-SoftFloat != PTX floating-point semantics
-```
-
-Instead:
-
-```text
-SoftFloat = IEEE arithmetic primitive
-ptxsim::fp = PTX floating-point execution environment
-```
-
-### 3.4 Floating-point environment object
-
-Recommended interface:
-
-```cpp
-namespace ptxsim::fp {
-
-enum class RoundingMode {
-    NearestEven,
-    TowardZero,
-    TowardNegative,
-    TowardPositive,
-};
-
-struct FpControl {
-    RoundingMode rounding;
-    bool flush_subnormal;
-    bool saturate;
-};
-
-struct Fp32 {
-    std::uint32_t bits;
-};
-
-struct Fp64 {
-    std::uint64_t bits;
-};
-
-class Environment {
-public:
-    Fp32 add(Fp32, Fp32, FpControl);
-    Fp32 sub(Fp32, Fp32, FpControl);
-    Fp32 mul(Fp32, Fp32, FpControl);
-    Fp32 fma(Fp32, Fp32, Fp32, FpControl);
-    Fp32 div(Fp32, Fp32, FpControl);
-    Fp32 sqrt(Fp32, FpControl);
-
-    Fp64 add(Fp64, Fp64, FpControl);
-    Fp64 mul(Fp64, Fp64, FpControl);
-    Fp64 fma(Fp64, Fp64, Fp64, FpControl);
-};
-
-}
-```
-
-The implementation should use raw bits at its API boundary.
-
-### 3.5 SoftFloat environment isolation
-
-SoftFloat uses mode variables for rounding, tininess detection, and exception state.
-
-The wrapper must ensure:
-
-- simulator execution contexts do not accidentally leak rounding state into one another;
-- future host-side parallel simulation remains possible;
-- exception flags are reset/read in a controlled scope;
-- no external code mutates SoftFloat mode variables directly.
-
-Preferred implementation options:
-
-1. build a SoftFloat port with thread-local mode variables; or
-2. serialize access inside the backend initially and later replace it with an isolated context-capable port; or
-3. maintain one host worker thread per independent SoftFloat environment.
-
-The first implementation should prioritize correctness and deterministic behavior rather than host parallel execution.
-
-### 3.6 Native fast path
-
-A native backend may be introduced later:
-
-```text
-ptxsim::fp
-├── SoftFloatBackend
-└── NativeBackend
-```
-
-The SoftFloat path remains the canonical correctness backend.
-
-A native optimization may only be enabled for a PTX operation after differential tests demonstrate equivalence over:
-
-- normal values;
-- subnormals;
-- signed zero;
-- infinities;
-- qNaN/sNaN classification;
-- overflow;
-- underflow;
-- cancellation;
-- halfway rounding cases.
-
-The simulator must never globally enable `-ffast-math` or `-Ofast` for FP semantics targets.
+- all P0 are closed;
+- all P1 are closed or backed by an approved, narrowly scoped ADR with no false capability exposure;
+- public API stability is sufficient for semantics/executor integration;
+- no old `ptxsim::fp` symbols or targets remain;
+- independent goldens detect deliberate mutation of key format traits;
+- `arith` has no dependency on frontend, IR, machine state or runtime.
 
 ---
 
-## 4. Validation policy
+# 10. V2-M2 — Exec IR, lowering, ProgramImage and core state
 
-Instruction correctness must not use a universal epsilon.
+**Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-Validation classes:
+## 10.1 Exec IR principles
 
-```text
-V0 Structural
-V1 Bit Exact
-V2 Specification-Bounded Numeric
-V3 Allowed-Set
-V4 Memory-Model Conformance
-```
+- typed instruction records;
+- resolved register/function/label identifiers;
+- explicit operands and control facts needed by execution;
+- no SoftFloat/arith backend details;
+- no frontend node pointers/references;
+- no SASS assumptions;
+- source location stored as side metadata where practical.
 
-Examples:
+## 10.2 Tasks
 
-```text
-integer add                 -> BitExact
-fma.rn.f32 finite result    -> BitExact
-signed zero                 -> BitExact
-unspecified NaN payload     -> FloatClass / AllowedSet
-div.approx.f32              -> ISA-specified ULP bound
-sqrt.approx.f32             -> ISA-specified relative bound
-concurrent racy memory      -> AllowedSet / MemoryModel
-```
-
-FP validation should compare raw result bits wherever the PTX specification determines a unique result.
-
-Recommended conformance infrastructure:
-
-```text
-test/conformance/
-├── integer/
-├── floating_exact/
-├── floating_approx/
-├── conversion/
-├── memory/
-├── atomic/
-└── tensor/
-```
-
-Triangular validation:
-
-```text
-                 PTX specification
-                    /          \
-                   /            \
-          Reference model ---- ptxsim
-                   \            /
-                    \          /
-                    NVIDIA GPU
-```
-
-The reference model for exact IEEE operations should normally use the SoftFloat backend.
-
-A separate MPFR-based oracle may later be added for high-precision verification of approximate/transcendental instructions.
-
----
-
-# 5. Milestones
-
-## Milestone 0 — Repository and Build Contract
-
-Goal: reproducible build skeleton with frontend and third-party dependencies.
-
-### Independent issues
-
-| ID | Issue | Done condition |
+| ID | Task | Done condition |
 |---|---|---|
-| M0-I01 | Repository layout | `submod`, `third_party`, `test`, `docs`, `cmake`, `tools` created |
-| M0-I02 | Top-level CMake | CMake 3.28+, C++23, Ninja/GCC path, testing, sanitizer options |
-| M0-I03 | Header registration helper | `<ptxsim/<module>/...>` build-tree includes work |
-| M0-I04 | CMake presets | Debug and Release presets configure cleanly |
-| M0-I05 | vcpkg manifest | dependency resolution works from clean checkout |
-| M0-I06 | test helper | GTest targets are discoverable by CTest |
-| M0-I07 | third-party license inventory | frontend and SoftFloat license notices documented |
+| M2-01 | Core IDs | PC, function, register slot, symbol, thread/CTA/warp IDs |
+| M2-02 | Raw machine value storage | pred, b8/b16/b32/b64/b128 and typed extraction helpers |
+| M2-03 | Operand model | register, immediate, special, address and target operands |
+| M2-04 | Initial instruction records | mov, integer add/sub/mul, bit ops, bra, selected ld/st |
+| M2-05 | ProgramImage | owned instruction sequence, functions, symbols and metadata |
+| M2-06 | Lowering diagnostics | structured error with source location and unsupported feature |
+| M2-07 | Lowering context | frontend IDs map to stable simulator IDs/PCs |
+| M2-08 | Module lowering | resolved module can outlive frontend objects after conversion |
+| M2-09 | RegisterFile | dense raw storage and initialization tracking |
+| M2-10 | ThreadState | PC, status, registers, call metadata placeholder |
+| M2-11 | Special register provider | testable interface independent of scheduler implementation |
 
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M0-C01 | Pin `ptx_frontend` | fixed source dependency builds with simulator |
-| M0-C02 | Pin Berkeley SoftFloat | fixed revision/release builds into private backend library |
-| M0-C03 | Build all empty module targets | all public aliases resolve without CMake name collision |
-| M0-C04 | Clean Debug/Release workflow | clean checkout configures, builds, and tests |
-
----
-
-## Milestone 1 — Exec IR / Program Image / Core State
-
-Goal: formalize the lowering boundary and create executable program/state structures.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M1-I01 | core index/value types | `ProgramCounter`, `RegisterSlot`, `FunctionId`, thread/CTA/warp IDs |
-| M1-I02 | raw scalar representation | pred and 8/16/32/64/128-bit storage |
-| M1-I03 | exec_ir operand model | register/immediate/special/address operand types |
-| M1-I04 | initial typed exec_ir instructions | mov/add/sub/bra/ld forms |
-| M1-I05 | ProgramImage structure | executable instruction spans and metadata side tables |
-| M1-I06 | RegisterFile | dense slot storage and initialization tracking |
-| M1-I07 | ThreadState | PC/status/register state |
-| M1-I08 | special-register provider interface | fake provider testable without scheduler |
-| M1-I09 | lowering diagnostics | structured errors, no abort on input problem |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M1-C01 | lowering context | `SymbolId -> RegisterSlot/FunctionId/PC` mappings |
-| M1-C02 | first instruction lowering | frontend IR lowers to typed exec_ir |
-| M1-C03 | ResolvedModule -> ProgramImage | executable program survives frontend object destruction |
-| M1-C04 | execution context | ProgramImage + ThreadState context without frontend dependency |
-| M1-C05 | source-to-ProgramImage smoke | minimal PTX reaches executable image |
-
----
-
-## Milestone 2 — Generic Memory and Dump
-
-Goal: implement inspectable addressable PTX memory.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M2-I01 | StateSpace / VirtualAddress | global/const/param/shared/local |
-| M2-I02 | MemoryRegion | bounds/alignment/read/write |
-| M2-I03 | Global/Const storage | mutability and initialization semantics |
-| M2-I04 | Param storage | per-launch parameter region |
-| M2-I05 | Shared/Local factories | CTA/thread isolation |
-| M2-I06 | initialized-byte tracking | uninitialized reads are observable |
-| M2-I07 | MemorySnapshot | immutable range/symbol/scope snapshot |
-| M2-I08 | dump formatters | stable hex/raw/manifest output |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M2-C01 | program data layout -> memory | PTX symbols receive stable simulator addresses |
-| M2-C02 | launch-scoped instances | param/shared/local lifetimes correct |
-| M2-C03 | symbol-aware dump | all MVP addressable state spaces dump correctly |
-
----
-
-## Milestone 3 — Single-Thread Integer Execution
-
-Goal: first complete executable vertical slice.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M3-I01 | exec_ir dispatch | `std::visit` on typed execution instruction |
-| M3-I02 | operand access helpers | register/immediate/special read and destination write |
-| M3-I03 | predicate execution | true/false/negated behavior |
-| M3-I04 | mov semantics | initial scalar forms |
-| M3-I05 | integer add/sub semantics | wrap and bit interpretation verified |
-| M3-I06 | bra semantics | direct PC target, no runtime label lookup |
-| M3-I07 | initial load semantics | selected global forms |
-| M3-I08 | StepResult contract | stop/trap/unsupported/step-limit |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M3-C01 | ThreadExecutor | fetch -> execute -> PC/status update |
-| M3-C02 | source-to-register E2E | PTX arithmetic/branch result matches golden |
-| M3-C03 | load + dump E2E | memory input and post-run inspection coexist |
-
----
-
-## Milestone 4 — Floating-Point Environment
-
-Goal: establish a deterministic PTX floating-point backend before broad FP instruction support.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M4-I01 | `ptxsim::fp` public value/control types | raw-bit `Fp16/Fp32/Fp64`, rounding enum, control flags |
-| M4-I02 | SoftFloat CMake integration | SoftFloat built privately and not exposed through public headers |
-| M4-I03 | SoftFloat environment guard | rounding/exception/tininess state cannot leak between calls/tests |
-| M4-I04 | rounding-mode mapping | `.rn/.rz/.rm/.rp` mapped and unit-tested |
-| M4-I05 | exact binary32 primitives | add/sub/mul/fma/div/sqrt wrapper paths |
-| M4-I06 | exact binary64 primitives | add/sub/mul/fma/div/sqrt wrapper paths |
-| M4-I07 | conversion primitives | integer<->float and f32<->f64 selected forms |
-| M4-I08 | FTZ helper | signed subnormal input/result flush behavior |
-| M4-I09 | NaN/signed-zero classification helpers | raw-bit semantics testable independently |
-| M4-I10 | FP validation policies | BitExact/FloatClass/ULP/relative/absolute comparator infrastructure |
-| M4-I11 | randomized SoftFloat self-check corpus | deterministic raw-bit vectors for corner classes |
-| M4-I12 | document `docs/floating_point.md` | backend boundary, rounding mapping, unsupported formats documented |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M4-C01 | first FP exec_ir forms | frontend-gated f32 operations lower with explicit rounding/FTZ facts |
-| M4-C02 | semantics -> fp integration | scalar `add/mul/fma` selected variants use only `ptxsim::fp` |
-| M4-C03 | four-rounding-mode FMA conformance | `.rn/.rz/.rm/.rp` selected f32 test vectors match SoftFloat reference bits |
-| M4-C04 | NVIDIA differential harness for exact FP | optional GPU job compares supported exact operations against real execution |
-| M4-C05 | FTZ E2E | PTX `.ftz` signed-zero/subnormal cases match expected raw bits |
-
-Milestone acceptance:
+## 10.3 Acceptance
 
 ```text
 PTX source
- -> frontend
- -> exec_ir
- -> semantics
- -> ptxsim::fp
- -> SoftFloat
- -> raw result bits
+-> ptx_frontend::resolved_ir
+-> lowering
+-> ProgramImage + ThreadState
 ```
 
-works for an initial exact scalar FP subset, and no host `fesetround()` is required by the canonical path.
+works for a minimal typed instruction subset, and deleting the frontend object does not invalidate execution data.
 
 ---
 
-## Milestone 5 — CTA / SIMT / Shared Memory / Barrier
+# 11. V2-M3 — Memory, storage lifetimes and TMEM foundation
 
-Goal: deterministic multi-thread functional execution.
+**Goal:** implement inspectable addressable memory while preserving specialized storage boundaries.
 
-### Independent issues
+## 11.1 Generic memory tasks
 
-| ID | Issue | Done condition |
+| ID | Task | Done condition |
 |---|---|---|
-| M5-I01 | LaunchConfig | 1D/2D/3D thread enumeration |
-| M5-I02 | basic special registers | tid/ntid/ctaid/nctaid |
-| M5-I03 | warp/lane grouping | partial warp supported |
-| M5-I04 | deterministic scheduler | fixed selection order |
-| M5-I05 | CTA barrier state | arrive/wait/release generations |
-| M5-I06 | bar semantics | scheduler-visible waiting effect |
-| M5-I07 | store semantics gate | global/shared initial store |
-| M5-I08 | shared/global load expansion | explicit state-space forms |
-| M5-I09 | deadlock detection | no-progress report |
+| M3-01 | StateSpace/VirtualAddress | global/const/param/shared/local represented explicitly |
+| M3-02 | MemoryRegion | bounds, alignment and read/write policy |
+| M3-03 | Global/const storage | initialization and mutability rules |
+| M3-04 | Param storage | per-launch parameter region |
+| M3-05 | Shared/local factories | per-CTA/per-thread isolation |
+| M3-06 | Initialized-byte tracking | uninitialized reads observable through policy/status |
+| M3-07 | Symbol layout | ProgramImage symbols receive stable simulator addresses |
+| M3-08 | Snapshots/dumps | deterministic immutable range/symbol/scope output |
 
-### Coupling issues
+## 11.2 TMEM tasks
 
-| ID | Issue | Done condition |
+| ID | Task | Done condition |
 |---|---|---|
-| M5-C01 | grid/CTA scheduling | multiple threads and CTAs finish deterministically |
-| M5-C02 | shared-memory barrier E2E | write -> barrier -> read |
-| M5-C03 | per-CTA shared dump | CTA storage remains isolated |
+| M3-09 | TmemState skeleton | specialized allocation/storage object exists outside generic StateSpace |
+| M3-10 | Tmem address/descriptor types | cannot be passed to generic memory API by accident |
+| M3-11 | Logical tile bridge | test adapter maps TMEM-like storage to logical tensor tiles |
+| M3-12 | Inspectability | TMEM state can be dumped without pretending to be byte-addressed PTX memory |
+
+## 11.3 Acceptance
+
+- memory scopes/lifetimes are deterministic and isolated;
+- generic load/store cannot access TMEM;
+- all implemented storage has stable diagnostic snapshots;
+- no scheduler or frontend dependency leaks into memory core.
 
 ---
 
-## Milestone 6 — ABI / Calls / Runtime API / CLI
+# 12. V2-M4 — Single-thread integer execution vertical slice
 
-Goal: expose the simulator as a usable library and command-line tool.
+**Goal:** execute a complete minimal PTX program through lowering, state, memory and executor.
 
-### Independent issues
+## 12.1 Tasks
 
-| ID | Issue | Done condition |
+| ID | Task | Done condition |
 |---|---|---|
-| M6-I01 | entry parameter layout | scalar/pointer/alignment behavior |
-| M6-I02 | host buffer import/export | stable global-memory exchange |
-| M6-I03 | call-frame model | return PC/function/register/local metadata |
-| M6-I04 | local frame lifetime | function local memory lifecycle |
-| M6-I05 | ret/exit gate | exec_ir + semantics |
-| M6-I06 | call gate | target lowering and call semantics |
-| M6-I07 | generic address/CVTA gate | explicit address conversion subset |
-| M6-I08 | public Simulator API | load/launch/run/step/inspection |
-| M6-I09 | CLI | source/entry/grid/block/dump/step-limit |
+| M4-01 | Step contract | continue/branch/exit/trap/unsupported/step-limit modeled |
+| M4-02 | Operand read/write | typed register/immediate/special access |
+| M4-03 | Predication | true/false/negated guard behavior |
+| M4-04 | Integer semantics adapter | exec_ir controls map to `arith` integer/bit primitives |
+| M4-05 | Mov semantics | selected scalar forms |
+| M4-06 | Branch semantics | direct PC target, no runtime label lookup |
+| M4-07 | Load/store semantics | initial global forms with bounds/alignment errors |
+| M4-08 | ThreadExecutor | fetch, guard, execute, commit and PC update |
+| M4-09 | Step limit | deterministic runaway protection |
+| M4-10 | E2E corpus | source-to-register and source-to-memory goldens |
 
-### Coupling issues
+## 12.2 Acceptance
 
-| ID | Issue | Done condition |
-|---|---|---|
-| M6-C01 | parameterized output kernel | host input -> kernel -> host output |
-| M6-C02 | device call E2E | function call and local state |
-| M6-C03 | CLI full-path test | source -> run -> dump in one command |
-
----
-
-## Milestone 7 — Conformance and v0.1
-
-Goal: make the implemented subset maintainable and externally verifiable.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M7-I01 | support matrix | frontend/lowering/semantics/validation status separated |
-| M7-I02 | E2E corpus | each implemented instruction family has regression coverage |
-| M7-I03 | exact FP conformance corpus | raw-bit edge vectors for each supported exact FP form |
-| M7-I04 | approximate FP policy table | per-op ULP/relative/absolute bounds from PTX ISA |
-| M7-I05 | NVIDIA hardware oracle harness | optional GPU-backed differential execution |
-| M7-I06 | ASan/UBSan workflows | clean unit and E2E execution |
-| M7-I07 | unsupported-feature audit | no silent semantic downgrade |
-| M7-I08 | frontend isolation audit | execution-core targets do not link frontend |
-| M7-I09 | FP backend isolation audit | semantics do not call SoftFloat directly |
-| M7-I10 | execution/debug documentation | reproducible from clean checkout |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M7-C01 | integer/memory differential bundle | selected kernels agree with hardware oracle |
-| M7-C02 | exact FP differential bundle | finite exact operations agree bit-for-bit where PTX determines unique result |
-| M7-C03 | deterministic regression bundle | repeated runs produce identical result/dump |
-| M7-C04 | v0.1 release checklist | pinned dependencies, support matrix, limitations, all CI green |
-
----
-
-## Milestone 8 — Advanced PTX Semantics
-
-Goal: extend the stable functional core toward atomics, memory ordering, warp collectives, and advanced floating formats.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M8-I01 | atomic memory primitives | deterministic typed RMW backend |
-| M8-I02 | atom lowering + semantics gate | initial integer atomics |
-| M8-I03 | fence/membar gate | supported order/scope explicit |
-| M8-I04 | WarpContext / active mask | divergence-aware execution context |
-| M8-I05 | vote/ballot gate | active-lane semantics |
-| M8-I06 | shfl gate | source-lane/mask semantics |
-| M8-I07 | BF16 support in fp | PTX conversion/arithmetic rules isolated from SoftFloat |
-| M8-I08 | TF32 support in fp | explicit input quantization/rounding rules |
-| M8-I09 | FP8 format layer | e4m3/e5m2 family raw format support where required |
-| M8-I10 | approximate FP reference framework | MPFR or equivalent high-precision oracle for selected ops |
-| M8-I11 | cluster topology | target-gated cluster IDs/dimensions |
-| M8-I12 | mbarrier base model | lifecycle and transitions |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M8-C01 | atomic/fence E2E | selected synchronized kernels validated |
-| M8-C02 | warp collective E2E | divergence + ballot/shfl |
-| M8-C03 | reduced-precision FP E2E | BF16/TF32/FP8 selected kernels match reference policy |
-| M8-C04 | cluster synchronization E2E | minimal target-gated cluster scenario |
-
----
-
-## Milestone 9 — TMEM / tcgen05 Foundation
-
-Goal: add Tensor Memory as a specialized resource without corrupting the generic memory abstraction.
-
-### Independent issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M9-I01 | TensorMemoryGeometry / Address | target-aware lane/column geometry |
-| M9-I02 | TMEM allocation map | per-CTA allocation ownership |
-| M9-I03 | allocation permit/lifetime | leak and misuse detection |
-| M9-I04 | TMEM cell state | unallocated/uninitialized/initialized |
-| M9-I05 | warp/lane access validator | supported lane ownership rules |
-| M9-I06 | TensorMemorySnapshot | deterministic 2D dump |
-| M9-I07 | exec_ir TMEM operands | dedicated address/shape types |
-| M9-I08 | async completion contract | explicit functional completion model |
-| M9-I09 | alloc/dealloc lowering gate | frontend-gated typed exec_ir |
-| M9-I10 | ld/st lowering gate | frontend-gated supported shape subset |
-| M9-I11 | tensor FP-format adapters | tcgen05 data-format conversion uses `ptxsim::fp` |
-| M9-I12 | tensor numeric validation policy | exact vs bounded result rules recorded per supported tcgen05 form |
-
-### Coupling issues
-
-| ID | Issue | Done condition |
-|---|---|---|
-| M9-C01 | alloc/dealloc E2E | lifecycle closes with no leaked TMEM |
-| M9-C02 | TMEM st -> ld E2E | register/TMEM movement matches raw-bit golden |
-| M9-C03 | TMEM dump E2E | allocation and cell states inspectable |
-| M9-C04 | first tensor arithmetic E2E | only after storage/format semantics are stable |
-
----
-
-# 6. Floating-point implementation priority
-
-Recommended order:
+At least one parameter-free PTX function must execute:
 
 ```text
-f32 exact primitives
-   |
-   v
-f64 exact primitives
-   |
-   v
-conversion semantics
-   |
-   v
-FTZ / NaN / signed zero
-   |
-   v
-exact PTX FP instruction coverage
-   |
-   v
-approx instruction policies
-   |
-   v
-BF16 / TF32
-   |
-   v
-FP8
-   |
-   v
-tensor arithmetic
+source -> frontend -> lowering -> exec_ir -> executor
+       -> integer/bit arith -> register/memory result -> dump
 ```
 
-Do not begin with tensor arithmetic.
-
-The scalar floating-point environment must be proven first.
+with deterministic raw output and structured unsupported errors.
 
 ---
 
-# 7. v0.1 floating-point definition of done
+# 13. V2-M5 — Floating, conversion and packed integration
 
-For v0.1, the minimum FP architecture requirement is:
+**Goal:** integrate the stabilized arithmetic API without leaking instruction modeling into `arith`.
 
-- [ ] `ptxsim::fp` exists as an independent module.
-- [ ] Berkeley SoftFloat is pinned as a private third-party dependency.
-- [ ] `.rn/.rz/.rm/.rp` mappings are tested.
-- [ ] canonical FP execution does not depend on host `fesetround()`.
-- [ ] exact f32 FMA can be evaluated through SoftFloat.
-- [ ] exact result validation compares raw bits.
-- [ ] signed zero is preserved.
-- [ ] FTZ behavior is modeled outside SoftFloat as PTX-specific semantics.
-- [ ] NaN comparison policy distinguishes classification from unspecified payload.
-- [ ] no `-ffast-math` / `-Ofast` is used by canonical FP semantics.
-- [ ] `semantics` does not include SoftFloat headers.
-- [ ] support matrix distinguishes exact and approximate FP instructions.
-- [ ] optional NVIDIA differential tests exist for at least one exact FP family.
+## 13.1 Integration rule
 
-Full BF16/TF32/FP8/tensor arithmetic coverage is not required for v0.1.
-
----
-
-# 8. Risks
-
-## 8.1 SoftFloat mode-variable leakage
-
-Risk: rounding mode or exception state leaks between simulated instructions or host workers.
-
-Mitigation:
-
-- wrapper-owned scoped environment;
-- thread-local SoftFloat port where practical;
-- no direct SoftFloat API calls outside `ptxsim::fp`;
-- deterministic tests that alternate rounding modes every instruction.
-
-## 8.2 Confusing SoftFloat semantics with PTX semantics
-
-Risk: `.ftz`, `.sat`, NaN handling, and PTX-specific formats are accidentally delegated to SoftFloat.
-
-Mitigation:
+The semantics layer maps instruction facts to numeric controls:
 
 ```text
-PTX preprocessing
- -> SoftFloat primitive
- -> PTX postprocessing
+exec_ir rounding fact       -> arith::rounding_mode
+exec_ir .ftz fact           -> arith::subnormal_mode
+exec_ir .sat/.satfinite     -> arith::saturation_mode
+exec_ir .relu               -> arith::activation_mode
+exec_ir random-bit operand  -> stochastic_rounding_input
 ```
 
-must remain explicit and tested independently.
+`arith` never parses or stores PTX modifier spelling.
 
-## 8.3 Native optimization changes results
+## 13.2 Tasks
 
-Risk: future `std::fma`/hardware-FMA fast paths differ at edge cases.
+| ID | Task | Done condition |
+|---|---|---|
+| M5-01 | Typed value bridge | raw register bits convert to/from `arith` strong types without host FP |
+| M5-02 | Exact F32 subset | add/sub/mul/fma/div/sqrt selected forms |
+| M5-03 | Exact F64 subset | selected forms and directed rounding |
+| M5-04 | F16/BF16 subset | capability-driven scalar/packed forms |
+| M5-05 | Conversion subset | integer/floating/alternate formats selected PTX forms |
+| M5-06 | Control mapping tests | each modifier mapping explicit and negative cases rejected |
+| M5-07 | Status policy | executor uses value; diagnostics may retain numeric status without creating FP architecture registers |
+| M5-08 | Exact conformance | bit-exact reference vectors and optional hardware differential |
+| M5-09 | Approximate subset | only operations whose V2-M1 profiles/error bounds are complete |
+| M5-10 | E2E FTZ/sat/ReLU/stochastic | source-level cases preserve raw bits and explicit random operand |
 
-Mitigation:
+## 13.3 Acceptance
 
-- SoftFloat remains canonical;
-- native fast path is opt-in;
-- randomized differential corpus is required before enabling it.
-
-## 8.4 Reduced precision infects the core FP API
-
-Risk: TF32/BF16/FP8 are shoehorned into binary32 types and implicit host conversions.
-
-Mitigation:
-
-- explicit raw format types;
-- explicit conversion/quantization operations;
-- no host `float` as the canonical state representation.
-
-## 8.5 Tensor arithmetic implemented before storage and format semantics
-
-Risk: `mma/tcgen05` becomes an untestable monolith.
-
-Mitigation:
-
-- scalar FP foundation first;
-- reduced-precision format layer second;
-- TMEM storage third;
-- tensor arithmetic coupling last.
+No executor/semantics source directly includes SoftFloat or private `arith` backend headers. Exact operations agree bit-for-bit wherever PTX 9.3 defines a unique reference result.
 
 ---
 
-# 9. Reference dependencies
+# 14. V2-M6 — CTA, SIMT, shared memory and barriers
 
-- NVIDIA PTX ISA 9.x
-- `endingly/ptx_frontend`
-- Berkeley SoftFloat Release 3e
-- optional MPFR for high-precision oracle work
-- NVIDIA Driver/GPU as an optional differential oracle
-- GPGPU-Sim and Accel-Sim as architecture references only
+**Goal:** deterministic multi-thread functional execution.
 
-Berkeley SoftFloat should be treated as an implementation dependency, not as the PTX semantic specification.
+## 14.1 Tasks
 
-The PTX ISA remains authoritative.
+| ID | Task | Done condition |
+|---|---|---|
+| M6-01 | LaunchConfig | 1D/2D/3D grid and block enumeration |
+| M6-02 | Special registers | tid/ntid/ctaid/nctaid and lane/warp facts |
+| M6-03 | Warp grouping | partial warp supported |
+| M6-04 | Deterministic scheduler | fixed documented selection order |
+| M6-05 | CTA lifecycle | per-CTA state/memory creation and teardown |
+| M6-06 | Barrier state | generation-aware arrive/wait/release |
+| M6-07 | Barrier semantics | waiting threads do not advance |
+| M6-08 | Shared memory E2E | write -> barrier -> read |
+| M6-09 | Deadlock/no-progress detection | structured diagnostic with blocked reasons |
+| M6-10 | Debug events | optional sink observes scheduling without controlling it |
+
+## 14.2 Acceptance
+
+- repeated runs produce identical schedule and state dumps;
+- CTA shared state is isolated;
+- barrier misuse/deadlock produces diagnostics, not host hangs;
+- no third-party FSM dependency is required.
+
+---
+
+# 15. V2-M7 — ABI, calls, runtime API, CLI and inspection
+
+**Goal:** expose a usable simulator and parameterized kernel path.
+
+## 15.1 Tasks
+
+| ID | Task | Done condition |
+|---|---|---|
+| M7-01 | Entry parameter layout | scalar/pointer/alignment subset documented |
+| M7-02 | Host buffer import/export | deterministic global-memory exchange |
+| M7-03 | Call frame | return PC, function, register/local metadata |
+| M7-04 | Local frame lifetime | function-scoped local memory lifecycle |
+| M7-05 | Call/ret/exit lowering | typed exec_ir and structured validation |
+| M7-06 | Generic address/CVTA subset | explicit conversions with state-space checks |
+| M7-07 | Simulator API | load, instantiate, launch, run, step, inspect |
+| M7-08 | CLI | source/entry/grid/block/params/dump/step-limit |
+| M7-09 | Debug snapshots | registers, memory, scheduler, calls and TMEM where applicable |
+| M7-10 | Event output | optional stable event stream format without separate trace submodule |
+
+## 15.2 Acceptance
+
+A parameterized kernel can consume host input, execute, return host-visible output and emit deterministic inspection data through both library API and CLI.
+
+---
+
+# 16. V2-M8 — Conformance hardening and v0.1
+
+**Goal:** make the implemented subset externally verifiable and maintainable.
+
+## 16.1 Tasks
+
+| ID | Task | Done condition |
+|---|---|---|
+| M8-01 | Support matrix | parse/lower/execute/validate status separated per instruction/type/control |
+| M8-02 | Unit coverage map | every public capability has positive and negative tests |
+| M8-03 | E2E corpus | each supported family has source-level regression |
+| M8-04 | Exact numeric corpus | raw-bit vectors for each exact arithmetic form |
+| M8-05 | Approximate policy table | operation domain, corner cases and bound documented |
+| M8-06 | Hardware oracle tool | optional GPU differential path with captured vectors |
+| M8-07 | Determinism suite | repeated execution and dump identity |
+| M8-08 | Unsupported audit | no silent control/type/instruction downgrade |
+| M8-09 | Dependency audit | frontend and SoftFloat isolation proven by target/link checks |
+| M8-10 | Security/robustness | malformed inputs and limits return structured errors |
+| M8-11 | Documentation | clean-checkout build, execution model and known limitations |
+| M8-12 | Release checklist | versions, licenses, support matrix and all CI gates green |
+
+## 16.2 v0.1 release bar
+
+- deterministic single-thread and selected CTA execution;
+- global/param/shared/local subset with inspection;
+- exact integer/bit and selected floating/conversion support;
+- explicit unsupported behavior;
+- no dependency leaks;
+- clean GCC/Clang/sanitizer gates;
+- no open P0/P1 correctness issues in supported surface.
+
+---
+
+# 17. V2-M9 — Advanced PTX semantics
+
+This milestone starts only after v0.1 has a stable support matrix.
+
+Potential workstreams:
+
+```text
+atomics and memory ordering
+warp vote/shuffle/match/redux
+advanced barriers and async copy
+expanded address/state-space semantics
+sparse tensor operations
+instruction-fragment and TMEM tensor integration
+advanced block scaling
+additional low-precision conversions
+texture/surface support
+more complete calls/ABI
+allowed-set memory-model validation
+hardware differential expansion
+```
+
+Each advanced feature must preserve the existing boundary:
+
+```text
+instruction/layout/storage handling outside arith
+logical numeric kernel inside arith when reusable
+```
+
+---
+
+# 18. Cross-cutting engineering rules
+
+## 18.1 Unsupported behavior
+
+Never silently:
+
+```text
+change rounding to nearest-even
+ignore FTZ/saturation/ReLU
+replace stochastic rounding with deterministic rounding
+promote an unsupported type combination
+use host FP as a substitute
+return an arbitrary tensor layout
+```
+
+Return a typed error or reject at compile time.
+
+## 18.2 Numerical status
+
+Statuses are diagnostics, not simulated architectural registers unless a PTX instruction explicitly exposes a result such as carry/borrow.
+
+Compound operations must merge all contributing status according to an explicit helper. No stage status may be accidentally dropped.
+
+## 18.3 Host floating point
+
+Production semantic paths must not use host `float`/`double` arithmetic, host fenv or `std::fma`.
+
+Host FP is allowed only in:
+
+```text
+formatting
+diagnostics
+validation-only tolerance helpers
+hardware-oracle tooling
+```
+
+Validation helpers should be a separate target from core arithmetic.
+
+## 18.4 Determinism
+
+Any unspecified behavior selected by the reference simulator must come from an immutable profile. Global mutable numeric/scheduler random state is forbidden.
+
+Stochastic PTX operations receive random bits explicitly from executor/runtime so runs can replay exactly.
+
+## 18.5 Documentation synchronization
+
+Every semantic PR must update at least one of:
+
+```text
+support_matrix.md
+arith implementation status
+exec_ir instruction table
+validation policy/golden source
+known limitations
+```
+
+A passing implementation test without a support-matrix update is not complete.
+
+---
+
+# 19. Branch and PR strategy
+
+## 19.1 Arithmetic remediation
+
+Use the lane split defined in `m4-review.md`:
+
+```text
+Lane A format/conversion
+Lane B scalar/bit
+Lane C packed/tensor
+Lane D profile/approximation
+Lane E tests/build
+Integration Agent
+```
+
+No single PR should mix a new oracle, a rewritten production core and rewritten expected values without a clearly reviewable red-to-green sequence.
+
+## 19.2 General PR size
+
+Each PR should have one semantic thesis and include:
+
+- public capability delta;
+- dependency delta;
+- rounding points;
+- special-value policy;
+- independent oracle source;
+- positive/negative tests;
+- support-matrix delta.
+
+## 19.3 Merge ordering
+
+Foundation changes merge before dependents:
+
+```text
+format facts
+-> capabilities
+-> conversion
+-> scalar/tensor consumers
+-> integration
+```
+
+Avoid long-lived branches that copy capability or format tables; rebase instead.
+
+---
+
+# 20. Risk register
+
+| Risk | Failure mode | Mitigation |
+|---|---|---|
+| Oracle contamination | tests duplicate production mistake | literal PTX goldens + independent reference implementation |
+| Capability drift | concept true but runtime unsupported | single operation-capability source + generated coverage tests |
+| Scope explosion | advanced PTX blocks first vertical slice | strict support matrix and milestone gates |
+| Frontend leakage | runtime tied to frontend object lifetime | isolated lowering target and owned ProgramImage |
+| SoftFloat state leak | concurrent results depend on other calls | TLS build check, RAII, nested/concurrent stress |
+| Host FP leakage | host/compiler changes semantics | target/link/code audit and no-fast-math policy |
+| Tensor boundary erosion | arith starts modeling fragments/TMEM | logical tile API and separate instruction adapters |
+| Target-dependent claims | one model presented as universal NVIDIA behavior | typed reference profiles + model-dependent status |
+| Build-only confidence | green unit tests miss packaging/UB | compiler matrix, sanitizers, consumer and install gates |
+| Premature abstraction | third-party FSM/large framework obscures semantics | explicit transitions first; add dependency only with measured need |
+| Performance pressure | correctness backend replaced too early | optimize only after differential equivalence and profiling |
+
+---
+
+# 21. Definition of Done for a semantic feature
+
+A feature is complete only when all applicable boxes are checked:
+
+- [ ] PTX 9.3 section/table/pseudocode identified;
+- [ ] module owner is correct;
+- [ ] public capability is explicit;
+- [ ] unsupported combinations are compile-time or typed errors;
+- [ ] controls and defaults are explicit;
+- [ ] exact intermediate and rounding points documented;
+- [ ] zero/subnormal/Inf/qNaN/sNaN behavior documented;
+- [ ] status composition documented;
+- [ ] implementation does not use host FP in production;
+- [ ] oracle is independent;
+- [ ] boundary and randomized/replay tests exist;
+- [ ] sanitizer build passes;
+- [ ] support matrix updated;
+- [ ] no forbidden dependency introduced;
+- [ ] clean external consumer still builds.
+
+---
+
+# 22. Immediate next actions
+
+The V2-M1 implementation work and local GCC Debug/Release/ASan+UBSan gates
+are complete. The next development actions, in order, are:
+
+1. Review the remediation diff against every item in `m4-review.md` and record closure evidence.
+2. Run the hosted GCC/Clang Debug/Release and sanitizer matrix; local Clang was unavailable during remediation.
+3. Publish/update the public arithmetic support matrix from the centralized capability traits.
+4. Merge the stabilized `arith` API only after review acceptance and hosted CI pass.
+5. Begin V2-M2 exec IR/lowering work without bypassing the established `arith` boundary.
+
+---
+
+# 23. Final architecture invariant
+
+The project should always be explainable by this separation:
+
+```text
+ptx_frontend tells us what valid PTX means syntactically and structurally.
+exec_ir tells the simulator what operation must execute.
+state/memory/TMEM hold machine-visible data.
+arith computes typed numerical meaning without knowing the instruction.
+semantics maps execution facts to pure primitives.
+executor commits state changes.
+scheduler chooses deterministic progress.
+runtime exposes launch and inspection.
+```
+
+If a proposed change makes `arith` aware of PTX instruction forms, makes the execution core depend on frontend IR, or makes tensor arithmetic aware of lane/TMEM descriptor encoding, the change violates this plan even if it appears locally convenient.

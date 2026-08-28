@@ -5,19 +5,28 @@
 #include <ptxsim/arith/types.hpp>
 
 namespace ptxsim::arith {
-struct nan_policy {
-  bool quiet_signaling_nan = true;
-  bool preserve_payload = true;
-  bool preserve_sign = true;
-  bool canonicalize = false;
-};
+// The public profile is intentionally a closed, versioned contract.  PTX
+// specifies approximate instructions in terms of accuracy/corner-case bounds,
+// not a portable bit-identical hardware implementation.
+enum class ptx_numeric_revision { v9_3 };
+enum class approximation_model { ptx_9_3_reference, unavailable };
+enum class approximation_provenance { model_dependent_reference };
 struct approximation_profile {
-  int model = 0;
-  int target_family = 0;
+  ptx_numeric_revision revision = ptx_numeric_revision::v9_3;
+  approximation_model model = approximation_model::ptx_9_3_reference;
+  approximation_provenance provenance =
+      approximation_provenance::model_dependent_reference;
 };
+// Tensor arithmetic has the same closed-profile rule as approximate scalar
+// operations.  Booleans cannot represent an unknown model or provenance, and
+// would let callers accidentally claim that a model-dependent result is not
+// model dependent.
+enum class tensor_model { ptx_9_3_reference, unavailable };
+enum class tensor_provenance { model_dependent_reference };
 struct tensor_arithmetic_profile {
-  bool deterministic = true;
-  bool model_dependent = true;
+  ptx_numeric_revision revision = ptx_numeric_revision::v9_3;
+  tensor_model model = tensor_model::ptx_9_3_reference;
+  tensor_provenance provenance = tensor_provenance::model_dependent_reference;
 };
 enum class tf32_encoding_model { f32_top_19_bits, unsupported };
 struct tf32_encoding_profile {
@@ -26,7 +35,6 @@ struct tf32_encoding_profile {
   tf32_encoding_model model = tf32_encoding_model::f32_top_19_bits;
 };
 struct model_profile {
-  nan_policy nan{};
   approximation_profile approximation{};
   tensor_arithmetic_profile tensor{};
   tf32_encoding_profile tf32{};

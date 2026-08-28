@@ -203,7 +203,7 @@ TEST(ScalarArithmetic, FmaControlRegressions) {
   context c;
   const auto min_normal = float32_t::from_bits(0x00800000);
   auto ftz = fma(c, min_normal, float32_t::from_bits(0x3f000000), float32_t{},
-                 {.subnormal = subnormal_mode::flush_output});
+                 {.subnormal = subnormal_mode::flush_input_and_output});
   ASSERT_TRUE(ftz);
   EXPECT_EQ(ftz->value.bits(), 0u);
   EXPECT_EQ(fma(c, float64_t::from_bits(0x3ff0000000000000ULL),
@@ -211,6 +211,46 @@ TEST(ScalarArithmetic, FmaControlRegressions) {
                 {.subnormal = subnormal_mode::flush_output})
                 .error(),
             arithmetic_error::unsupported_subnormal_mode);
+}
+
+TEST(ScalarArithmetic, MadIsFusedAndControlsAreTyped) {
+  context c;
+  const auto a = float32_t::from_bits(0x3f800001u);
+  const auto b = float32_t::from_bits(0x3f7fffffu);
+  const auto minus_one = float32_t::from_bits(0xbf800000u);
+  const auto fused = fma(c, a, b, minus_one);
+  const auto multiply_add = add(c, mul(c, a, b)->value, minus_one);
+  const auto madd = mad(c, a, b, minus_one);
+  ASSERT_TRUE(fused && multiply_add && madd);
+  EXPECT_EQ(madd->value.bits(), fused->value.bits());
+  EXPECT_EQ(madd->status.inexact, fused->status.inexact);
+  EXPECT_NE(madd->value.bits(), multiply_add->value.bits());
+
+  const auto positive = float32_t::from_bits(0x40000000u);
+  const auto negative = float32_t::from_bits(0xbf800000u);
+  const auto nan = float32_t::from_bits(0x7fc00001u);
+  EXPECT_EQ(add(c, positive, positive,
+                {.saturation = saturation_mode::zero_to_one})->value.bits(),
+            0x3f800000u);
+  EXPECT_EQ(add(c, negative, float32_t{},
+                {.saturation = saturation_mode::zero_to_one})->value.bits(),
+            0u);
+  EXPECT_EQ(add(c, nan, float32_t{},
+                {.saturation = saturation_mode::zero_to_one})->value.bits(),
+            0u);
+  EXPECT_EQ(add(c, negative, float32_t{},
+                {.activation = activation_mode::relu})
+                .error(), arithmetic_error::unsupported_activation);
+  EXPECT_EQ(add(c, positive, positive,
+                {.subnormal = subnormal_mode::flush_input})
+                .error(), arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(add(c, positive, positive,
+                {.saturation = saturation_mode::finite})
+                .error(), arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(add(c, float64_t::from_bits(0x3ff0000000000000ULL),
+                float64_t::from_bits(0x3ff0000000000000ULL),
+                {.activation = activation_mode::relu})
+                .error(), arithmetic_error::unsupported_activation);
 }
 
 TEST(ScalarArithmetic, PackedLaneOperationsReuseScalarCapabilities) {
@@ -233,7 +273,8 @@ TEST(ScalarArithmetic, PackedLaneOperationsReuseScalarCapabilities) {
   ASSERT_TRUE(fused);
   EXPECT_EQ(fused->value[0].bits(), 0x4000);
   EXPECT_EQ(fused->value[1].bits(), 0x40c0);
-  static_assert(!packed_operation_capability<float8_e4m3x2_t>::value);
+  static_assert(!packed_operation_capability<packed_operation::add,
+                                             float8_e4m3x2_t>::value);
 }
 
 namespace {
@@ -266,7 +307,7 @@ void check_float_edges(T zero, T negative_zero, T one, T two, T half,
   ASSERT_TRUE(invalid);
   ASSERT_TRUE(overflow);
   ASSERT_TRUE(underflow);
-  if constexpr (std::same_as<T, float64_t>) {
+  if constexpr (std::same_as<T, float64_t> || std::same_as<T, float32_t>) {
     EXPECT_EQ(input_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
     EXPECT_EQ(output_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
   } else {
@@ -277,7 +318,7 @@ void check_float_edges(T zero, T negative_zero, T one, T two, T half,
   EXPECT_TRUE(is_nan(invalid->value));
   EXPECT_EQ(overflow->value.bits(), infinity.bits());
   EXPECT_EQ(underflow->value.bits(), zero.bits());
-  if constexpr (!std::same_as<T, float64_t>) {
+  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
     EXPECT_EQ(input_ftz->value.bits(), zero.bits());
     EXPECT_EQ(output_ftz->value.bits(), zero.bits());
   }
@@ -285,7 +326,7 @@ void check_float_edges(T zero, T negative_zero, T one, T two, T half,
   expect_status(invalid->status, true);
   expect_status(overflow->status, false, true, false, true);
   expect_status(underflow->status, false, false, true, true);
-  if constexpr (!std::same_as<T, float64_t>) {
+  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
     expect_status(input_ftz->status);
     expect_status(output_ftz->status);
   }

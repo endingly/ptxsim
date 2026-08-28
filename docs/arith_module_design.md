@@ -2,8 +2,9 @@
 
 > **规范基准：** NVIDIA PTX ISA 9.3  
 > **目标模块：** `submod/arith` / `ptxsim::arith`  
-> **文档用途：** 指导 Coding Agent 从零实现新的算术语义模块，并在集成完成后删除现有 `submod/fp`  
+> **文档用途：** 指导 `arith` 模块的实现、维护与后续扩展，并约束已移除的旧 `fp` 架构不得回流
 > **文档性质：** 软件架构、公共 API、实现边界与验收规范
+> **文档沿革：** 本文已取代历史 `docs/fp_module_refactor.md`；后续不得同时维护两份 fp/arith 重构规范
 
 ---
 
@@ -80,8 +81,8 @@ executor:
 本设计明确作出以下决策：
 
 1. `arith` 是全新模块，不以兼容现有 `fp::Environment` 为设计前提。
-2. 现有 `submod/fp` 只可作为 F32/F64、SoftFloat 状态管理和测试样本的实现参考。
-3. `arith` 完成集成后，现有 `submod/fp`、`ptxsim::fp` namespace、旧测试和旧 CMake target 必须删除。
+2. 历史 `submod/fp` 仅曾作为 F32/F64、SoftFloat 状态管理和测试样本的实现参考，不构成当前依赖。
+3. 仓库必须持续保持不含 `submod/fp`、`ptxsim::fp` namespace、旧测试和旧 CMake target；不得为兼容旧架构而恢复它们。
 4. `arith` 不建立 PTX instruction、opcode、instruction form、modifier sequence、target SM 或 operand grammar 模型。
 5. PTX 指令解析、合法性检查及指令到算术原语的映射属于 frontend / lowering / exec IR / executor。
 6. `arith` 只提供类型驱动、操作驱动的数值 API。
@@ -764,8 +765,9 @@ float16_t/float32_t/float64_t -> ieee_binary
 bfloat16_t                    -> bfloat
 float8_e4m3_t                 -> finite_low_precision
 float8_e5m2_t                 -> finite_low_precision
-float4_e2m1_t                 -> tensor_quantized
- tfloat32_t                   -> tensor_quantized
+float6_e2m3_t/float6_e3m2_t   -> finite_low_precision
+float4_e2m1_t                 -> finite_low_precision
+tfloat32_t                    -> tensor_quantized
 fixed8_s2f6_t                 -> fixed_point
 ```
 
@@ -1578,7 +1580,7 @@ unpack
 | `float32_t` | 是 | 是 | `float32x2_t`（按能力） | 作为输入/累加器 |
 | `float64_t` | 是 | 是 | 否 | 是，按 PTX 支持组合 |
 | `bfloat16_t` | PTX 规定的子集 | 是 | `bfloat16x2_t` | 作为输入，通常 F32 累加 |
-| `tfloat32_t` | 否 | 是 | 否 | 是，通常 F32 累加 |
+| `tfloat32_t` | 否 | 受限：仅 F32 ↔ TF32 | 否 | 是，通常 F32 累加 |
 | E4M3/E5M2 | 否（默认） | 是 | x2/x4 storage | 是 |
 | E2M3/E3M2/E2M1 | 否 | 是 | PTX 规定 packed storage | 是 |
 | UE8M0/UE4M3 | 否 | 是 | 按 PTX storage | 作为 scale |
@@ -1710,6 +1712,21 @@ canonical/unpacked numeric representation
  destination value
 ```
 
+该 pipeline 是 public `cvt` 的**唯一数值路径**：
+
+```text
+cvt<To>(context, source, control[, stochastic_bits])
+    -> validate operation/type/control capability
+    -> decode source to an exact canonical number
+    -> apply destination-domain controls
+    -> encode canonical number to To exactly once
+```
+
+public `cvt` MUST NOT 再分流到以 `(To, From)` 为键的第二套 backend
+router。特别是不得重新引入 `backend::convert<To>`、`convert_impl` 或生成
+逐对 wrapper 的宏。否则同一种转换会同时受 canonical core 和旧 F32 hub
+控制，重新产生能力、错误映射和舍入点不一致。
+
 每种格式通常只实现：
 
 ```text
@@ -1721,26 +1738,34 @@ encode_to_format
 
 ## 16.2 Canonical representation
 
-建议内部定义：
+内部 canonical value 必须精确表示 source，而不是先量化到 F32。当前实现的
+有限值语义为：
 
 ```cpp
-struct unpacked_binary {
-  fp_class classification;
-  bool sign;
-  std::int32_t exponent;
-  big_uint significand;
-  bool sticky;
+enum class number_class { zero, finite, infinity, nan };
+
+struct number {
+  number_class classification;
+  bool negative;
+  bool signaling_nan;
+  std::uint64_t nan_payload;
+  unsigned nan_payload_bits;
+  std::uint64_t significand;
+  int exponent;
 };
 ```
 
-另有：
+其中 finite value 严格等于：
 
-```cpp
-struct unpacked_integer;
-struct unpacked_fixed;
+```text
+(-1)^negative × significand × 2^exponent
 ```
 
-转换路径按 source/destination family 选择。
+现有 scalar float、至多 64-bit integer 和 S2F6 source 都能无损进入该表示；
+decode 阶段不得设置 sticky 或执行目标格式舍入。舍入、overflow、underflow
+和 inexact 只在 destination encode 阶段决定。若未来加入超过该精确容量的
+source，必须先扩展 canonical significand，而不是回退到 host float 或 F32
+中转。
 
 ## 16.3 Pair-specific exception
 
@@ -1754,6 +1779,10 @@ struct unpacked_fixed;
 
 此类 specialization 必须带测试和注释说明原因。
 
+Pair-specific specialization 只能是 canonical pipeline 的叶端 adapter，不能
+成为另一条通用转换路线。例如 TF32 的 profile-specific quantizer 可以作为
+`encode<tfloat32_t>` 的最后一步，但不能据此恢复 `F32 -> X -> Y` hub。
+
 ## 16.4 Conversion controls
 
 `conversion_control` 独立表达：
@@ -1766,6 +1795,27 @@ relu
 ```
 
 随机位作为额外显式 operand，不嵌入全局 state。
+
+## 16.5 Canonical conversion 与 low-precision backend 的职责边界
+
+`canonical_conversion` 拥有 public conversion semantics，包括：
+
+- source classification/decode；
+- integer、floating、fixed 的统一精确 canonical value；
+- directed、RNA 和显式 stochastic rounding；
+- source/destination subnormal、`.sat`、`.satfinite`、ReLU；
+- destination status 与 typed error。
+
+`low_precision_backend` 不再是 public `cvt` router。它仍可拥有并复用：
+
+- BF16 arithmetic 所需的精确 widening/narrowing；
+- approximate low-precision operation 的内部 F32 bridge；
+- 独立的 low-precision round/pack primitive。
+
+这些内部 helper 的存在不构成另一套 public conversion contract。若一个
+`narrow_from_f32`/`widen_to_f32` helper 仍被 arithmetic 或 approximation
+kernel 使用，应保留；仅把它包装成无人调用的 `convert_impl(To, From)` 不会
+增加数值能力，必须删除。
 
 ---
 
@@ -2141,7 +2191,7 @@ executor 将 PTX 指令 modifier 映射成明确模式；`arith` 只执行该模
 
 ## 21.1 Backend 分层
 
-建议内部 backend：
+逻辑上可划分为以下 backend/semantic kernel：
 
 ```text
 IntegerBackend
@@ -2149,12 +2199,20 @@ SoftFloatBackend
 BfloatBackend
 LowPrecisionBackend
 FixedPointBackend
-ConversionBackend
 ApproximationBackend
 TensorBackend
 ```
 
 每个 backend 服务一个 arithmetic family/semantic kernel，不服务某条 PTX instruction。
+
+当前 conversion 是一个有意的例外：它由 public template 所需的
+`include/detail/canonical_conversion.hpp` 提供唯一 decode/encode core，而
+不是由 `environment.cpp` 中的 pairwise dispatch 提供。该 detail header 会因
+public template 实例化而随包安装，但仍不是受支持的 public include surface。
+
+`environment.cpp`/`detail::dispatch` 只适配仍需要编译型 backend 的 arithmetic、
+approximation 和 profile-specific TF32 leaf operation；不得增加 generic
+`convert`/`convert_impl` façade。
 
 ## 21.2 SoftFloat
 
@@ -2301,7 +2359,6 @@ submod/arith/
 │       ├── low_precision_backend.hpp
 │       ├── fixed_backend.hpp
 │       │
-│       ├── conversion_backend.hpp
 │       ├── comparison_backend.hpp
 │       ├── approximation_backend.hpp
 │       │
@@ -2328,6 +2385,11 @@ submod/arith/
 ## 23.1 文件数量控制
 
 上述结构是逻辑边界，不要求初期机械创建所有文件。
+
+当前实现按较少文件合并这些逻辑边界：public conversion façade 位于
+`scalar.hpp`，canonical template core 位于
+`include/detail/canonical_conversion.hpp`，低精度 arithmetic helper 位于
+`src/detail/low_precision_backend.*`。文件合并不改变第 16.5 节规定的所有权。
 
 初期 MAY 合并小文件，但必须保持：
 

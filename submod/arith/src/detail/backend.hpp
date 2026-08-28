@@ -67,7 +67,8 @@ class backend {
                                                     ApproximationControl = {});
   [[nodiscard]] static Result<float32_t> ex2_approx(float32_t,
                                                     ApproximationControl = {});
-  [[nodiscard]] static Result<float32_t> tanh_approx(float32_t);
+  [[nodiscard]] static Result<float32_t> tanh_approx(float32_t,
+                                                       ApproximationControl);
   //
   // Binary64
   //
@@ -178,17 +179,14 @@ class backend {
                                                   float64_t magnitude);
   [[nodiscard]] static Result<bool> testp(float32_t, TestpOp);
   [[nodiscard]] static Result<bool> testp(float64_t, TestpOp);
-  [[nodiscard]] static Result<float16_t> tanh_approx(float16_t);
-  [[nodiscard]] static Result<float16_t> ex2_approx(float16_t);
-  [[nodiscard]] static Result<bfloat16_t> tanh_approx(bfloat16_t);
-  [[nodiscard]] static Result<bfloat16_t> ex2_approx(bfloat16_t);
-  template <typename To, typename From>
-    requires SupportedConversion<To, From>
-  [[nodiscard]] static Result<To> convert(From value,
-                                          ConversionControl control = {}) {
-    return convert_impl(std::type_identity<To>{}, value, control);
-  }
-
+  [[nodiscard]] static Result<float16_t> tanh_approx(float16_t,
+                                                       ApproximationControl);
+  [[nodiscard]] static Result<float16_t> ex2_approx(float16_t,
+                                                      ApproximationControl);
+  [[nodiscard]] static Result<bfloat16_t> tanh_approx(bfloat16_t,
+                                                        ApproximationControl);
+  [[nodiscard]] static Result<bfloat16_t> ex2_approx(bfloat16_t,
+                                                       ApproximationControl);
   [[nodiscard]] static Result<float32_t> i32_to_f32(std::int32_t value,
                                                     RoundingMode rounding);
   [[nodiscard]] static Result<std::int32_t> f32_to_i32(float32_t value,
@@ -220,55 +218,6 @@ class backend {
   [[nodiscard]] static Result<float16_t> f64_to_f16(float64_t value,
                                                     RoundingMode rounding);
   [[nodiscard]] static Result<float64_t> f16_to_f64(float16_t value);
-  [[nodiscard]] static Result<bfloat16_t> f32_to_bf16(
-      float32_t value, ConversionControl control = {}) {
-    return convert<bfloat16_t>(value, control);
-  }
-  [[nodiscard]] static Result<float32_t> bf16_to_f32(bfloat16_t value) {
-    return convert<float32_t>(value);
-  }
-
- private:
-  [[nodiscard]] static Result<float16_t> convert_impl(
-      std::type_identity<float16_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float16_t, ConversionControl);
-  [[nodiscard]] static Result<float16_t> convert_impl(
-      std::type_identity<float16_t>, float64_t, ConversionControl);
-  [[nodiscard]] static Result<float64_t> convert_impl(
-      std::type_identity<float64_t>, float16_t, ConversionControl);
-  [[nodiscard]] static Result<bfloat16_t> convert_impl(
-      std::type_identity<bfloat16_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float8_e4m3_t> convert_impl(
-      std::type_identity<float8_e4m3_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float8_e5m2_t> convert_impl(
-      std::type_identity<float8_e5m2_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float4_e2m1_t> convert_impl(
-      std::type_identity<float4_e2m1_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float6_e2m3_t> convert_impl(
-      std::type_identity<float6_e2m3_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float6_e3m2_t> convert_impl(
-      std::type_identity<float6_e3m2_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<ufloat8_e8m0_t> convert_impl(
-      std::type_identity<ufloat8_e8m0_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<ufloat7_e4m3_t> convert_impl(
-      std::type_identity<ufloat7_e4m3_t>, float32_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, bfloat16_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float8_e4m3_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float8_e5m2_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float4_e2m1_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float6_e2m3_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, float6_e3m2_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, ufloat8_e8m0_t, ConversionControl);
-  [[nodiscard]] static Result<float32_t> convert_impl(
-      std::type_identity<float32_t>, ufloat7_e4m3_t, ConversionControl);
 };
 
 }  // namespace ptxsim::arith::detail

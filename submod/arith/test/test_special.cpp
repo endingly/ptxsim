@@ -66,16 +66,16 @@ TEST(SpecialFunctions, ControlledDeterministicModel) {
                 ->value.bits(),
             0u);
   EXPECT_EQ(sin(c, float32_t::from_bits(0x3f000000), {}).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(rcp(c, float32_t::from_bits(0x3f800000),
                 {.approximation = approximation_mode::ptx_full})
                 .error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   model_profile other{};
-  other.approximation.model = 1;
+  other.approximation.model = approximation_model::unavailable;
   EXPECT_EQ(
       sin(context{other}, float32_t::from_bits(0x3f000000), approx).error(),
-      arithmetic_error::unsupported_operation);
+      arithmetic_error::unsupported_approximation_mode);
   const auto first = sin(c, float32_t::from_bits(0x3f000000), approx);
   const auto second = sin(c, float32_t::from_bits(0x3f000000), approx);
   ASSERT_TRUE(first && second);
@@ -356,29 +356,32 @@ TEST(SpecialFunctions, UnsupportedApproximationAndProfile) {
   const special_function_control approx{
       .approximation = approximation_mode::ptx_approximate};
   const auto one = float32_t::from_bits(0x3f800000);
-  EXPECT_EQ(sin(c, one).error(), arithmetic_error::unsupported_operation);
+  EXPECT_EQ(rsqrt(c, one).error(),
+            arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(sin(c, one).error(),
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(
       rcp(c, one, {.approximation = approximation_mode::ptx_full}).error(),
-      arithmetic_error::unsupported_operation);
+      arithmetic_error::unsupported_approximation_mode);
   model_profile unsupported{};
-  unsupported.approximation.model = 1;
+  unsupported.approximation.model = approximation_model::unavailable;
   const context other{unsupported};
   EXPECT_EQ(div(other, one, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(sqrt(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(rsqrt(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(sin(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(cos(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(lg2(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(ex2(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(tanh(other, one, approx).error(),
-            arithmetic_error::unsupported_operation);
+            arithmetic_error::unsupported_approximation_mode);
 }
 
 }  // namespace ptxsim::arith::test
