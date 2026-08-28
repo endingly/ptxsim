@@ -33,15 +33,35 @@ struct ConversionTraits {
   }
 
 PTXSIM_NARROW_CONVERSION_TRAITS(Bf16);
+PTXSIM_NARROW_CONVERSION_TRAITS(Fp16);
 PTXSIM_NARROW_CONVERSION_TRAITS(Tf32);
 PTXSIM_NARROW_CONVERSION_TRAITS(Fp8E4M3);
 PTXSIM_NARROW_CONVERSION_TRAITS(Fp8E5M2);
 PTXSIM_NARROW_CONVERSION_TRAITS(Fp4E2M1);
 PTXSIM_WIDEN_CONVERSION_TRAITS(Bf16);
+PTXSIM_WIDEN_CONVERSION_TRAITS(Fp16);
 PTXSIM_WIDEN_CONVERSION_TRAITS(Tf32);
 PTXSIM_WIDEN_CONVERSION_TRAITS(Fp8E4M3);
 PTXSIM_WIDEN_CONVERSION_TRAITS(Fp8E5M2);
 PTXSIM_WIDEN_CONVERSION_TRAITS(Fp4E2M1);
+
+template <>
+struct ConversionTraits<Fp16, Fp64> {
+  using Output = Fp16;
+  static constexpr bool supported = true;
+  static constexpr bool accepts_rounding = true;
+  static constexpr bool accepts_satfinite = false;
+  static constexpr bool inherent_saturation = false;
+};
+
+template <>
+struct ConversionTraits<Fp64, Fp16> {
+  using Output = Fp64;
+  static constexpr bool supported = true;
+  static constexpr bool accepts_rounding = false;
+  static constexpr bool accepts_satfinite = false;
+  static constexpr bool inherent_saturation = false;
+};
 
 #undef PTXSIM_NARROW_CONVERSION_TRAITS
 #undef PTXSIM_WIDEN_CONVERSION_TRAITS
