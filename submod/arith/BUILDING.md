@@ -14,6 +14,13 @@ compile; consumers must not include or depend on them directly.
 floating-point tolerance helpers and is intentionally separate from the
 production `ptxsim::arith` target.
 
+The project root owns install and package configuration. It exports only the
+production `ptxsim::arith` and diagnostic `ptxsim::arith_validation` libraries,
+installs the arithmetic headers below `include/ptxsim/arith`, and uses the
+project package helper for build-tree and installed exports. `arith` owns the
+build-tree and installed-package consumer CTest gates, in addition to its unit
+and internal tests; none of those test targets are exported.
+
 ## Conversion ownership
 
 The public `cvt<To>` API has one conversion path: validate controls, decode the

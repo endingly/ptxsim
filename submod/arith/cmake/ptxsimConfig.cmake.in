@@ -1,8 +1,0 @@
-@PACKAGE_INIT@
-
-include(CMakeFindDependencyMacro)
-# SoftFloat remains a PRIVATE dependency of ptxsim::arith. Static-library
-# consumers still need this imported target when CMake resolves LINK_ONLY.
-find_dependency(softfloat CONFIG REQUIRED)
-
-include("${CMAKE_CURRENT_LIST_DIR}/ptxsimTargets.cmake")

@@ -1,6 +1,4 @@
 include(CheckCXXSourceCompiles)
-include(CMakePackageConfigHelpers)
-
 # The v0.1 arithmetic contract is Linux with GCC or Clang. __int128 is used
 # only for exact integer widening; fail configuration rather than selecting a
 # host-dependent fallback with different overflow behavior.
@@ -66,50 +64,10 @@ foreach(ptxsim_arith_header IN LISTS ptxsim_arith_public_headers)
     list(APPEND ptxsim_arith_header_check_sources "${ptxsim_arith_header_source}")
 endforeach()
 add_library(ptxsim_arith_public_headers OBJECT ${ptxsim_arith_header_check_sources})
-target_link_libraries(ptxsim_arith_public_headers PRIVATE ptxsim_arith)
+target_link_libraries(ptxsim_arith_public_headers PRIVATE ptxsim::arith)
 ptxsim_enable_sanitizers(ptxsim_arith_public_headers)
 add_custom_target(ptxsim_arith_public_header_check ALL
     DEPENDS ptxsim_arith_public_headers)
-
-set(ptxsim_arith_package_build_dir "${CMAKE_CURRENT_BINARY_DIR}")
-set(ptxsim_arith_package_install_dir
-    "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
-configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/ptxsimConfig.cmake.in"
-    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION "${ptxsim_arith_package_install_dir}")
-write_basic_package_version_file(
-    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}ConfigVersion.cmake"
-    VERSION "${PROJECT_VERSION}"
-    COMPATIBILITY SameMajorVersion)
-
-# Build-tree export supports the build-tree consumer gate; the installed
-# export deliberately keeps SoftFloat PRIVATE but find_dependency() supplies
-# its LINK_ONLY dependency for static-library consumers.
-export(TARGETS ptxsim_arith ptxsim_arith_validation
-       FILE "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Targets.cmake"
-       NAMESPACE ptxsim::)
-install(TARGETS ptxsim_arith ptxsim_arith_validation
-    EXPORT ptxsimTargets
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/arith"
-    FILES_MATCHING
-        PATTERN "*.hpp"
-        PATTERN "*.h"
-        PATTERN "*.inl"
-        PATTERN "*.ipp")
-install(FILES
-    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}Config.cmake"
-    "${ptxsim_arith_package_build_dir}/${PROJECT_NAME}ConfigVersion.cmake"
-    DESTINATION "${ptxsim_arith_package_install_dir}")
-install(EXPORT ptxsimTargets
-    FILE "${PROJECT_NAME}Targets.cmake"
-    NAMESPACE ptxsim::
-    DESTINATION "${ptxsim_arith_package_install_dir}")
 
 if(BUILD_TESTING)
     file(GLOB ptxsim_arith_test_srcs CONFIGURE_DEPENDS test/*.cpp)
@@ -129,7 +87,7 @@ if(BUILD_TESTING)
         PRIVATE
         GTest::gtest
         GTest::gtest_main
-        ptxsim_arith)
+        ptxsim::arith)
     ptxsim_enable_sanitizers(test_ptxsim_arith)
     gtest_discover_tests(test_ptxsim_arith)
 
@@ -139,7 +97,7 @@ if(BUILD_TESTING)
     target_link_libraries(test_ptxsim_arith_internal PRIVATE
         GTest::gtest
         GTest::gtest_main
-        ptxsim_arith
+        ptxsim::arith
         softfloat::softfloat)
     ptxsim_enable_sanitizers(test_ptxsim_arith_internal)
     gtest_discover_tests(test_ptxsim_arith_internal)
@@ -151,8 +109,8 @@ if(BUILD_TESTING)
                 COMMAND "${CMAKE_COMMAND}"
                     "-DPTXSIM_CONSUMER_MODE=${ptxsim_arith_consumer_mode}"
                     "-DPTXSIM_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
-                    "-DPTXSIM_BUILD_DIR=${CMAKE_BINARY_DIR}"
-                    "-DPTXSIM_PACKAGE_BUILD_DIR=${ptxsim_arith_package_build_dir}"
+                    "-DPTXSIM_BUILD_DIR=${PROJECT_BINARY_DIR}"
+                    "-DPTXSIM_PACKAGE_BUILD_DIR=${PROJECT_BINARY_DIR}"
                     "-DPTXSIM_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}"
                     "-DPTXSIM_CONSUMER_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer-${ptxsim_arith_consumer_mode}"
                     "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"

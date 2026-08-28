@@ -2440,6 +2440,12 @@ target_link_libraries(
 
 SoftFloat MUST NOT 出现在 interface dependency 中。
 
+项目顶层 CMake 通过 `install_project_targets` helper 统一拥有 install、export 和
+package config，并选择 arithmetic production/diagnostic target 作为 public
+package；`submod/arith/CMakeLists.txt` 只定义 arithmetic target、header check 和
+自身测试（含 build-tree / installed consumer gate）。package 只导出
+`ptxsim::arith` 与 `ptxsim::arith_validation`，不导出测试或 header-check target。
+
 `arith` 不得链接：
 
 ```text

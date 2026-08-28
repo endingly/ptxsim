@@ -60,3 +60,18 @@ if(BUILD_TESTING)
 endif()
 
 add_subdirectory(submod)
+
+# Package ownership belongs to the project root: individual modules define
+# targets, while this project-level surface selects the production and
+# diagnostic libraries that form the public ptxsim package.
+include(install_project_targets)
+install_project_targets(
+    PROJECT "${PROJECT_NAME}"
+    VERSION "${PROJECT_VERSION}"
+    NAMESPACE ptxsim
+    TARGETS
+        ptxsim_arith
+        ptxsim_arith_validation
+    INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
+    INCLUDE_DESTINATIONS "${PROJECT_NAME}/arith"
+    DEPENDENCIES "softfloat CONFIG REQUIRED")
