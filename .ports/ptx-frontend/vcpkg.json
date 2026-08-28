@@ -1,0 +1,19 @@
+{
+    "name": "ptx-frontend",
+    "version-string": "0.0.1",
+    "description": "A C++23 frontend for NVIDIA PTX with resolved semantic IR",
+    "homepage": "https://github.com/endingly/ptx_frontend",
+    "license": "MIT",
+    "dependencies": [
+        "fmt",
+        "magic-enum",
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}

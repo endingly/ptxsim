@@ -1,0 +1,51 @@
+#ifndef SOFTFLOAT_VCPKG_PLATFORM_H
+#define SOFTFLOAT_VCPKG_PLATFORM_H
+
+/*
+ * Endianness
+ */
+
+#if @SOFTFLOAT_LITTLE_ENDIAN@
+#define LITTLEENDIAN 1
+#endif
+
+/*
+ * Inline support
+ */
+
+#if defined(_MSC_VER)
+
+#define INLINE __inline
+
+#else
+
+#define INLINE inline
+
+#endif
+
+/*
+ * SoftFloat execution environment.
+ *
+ * PTX simulator workers must not share rounding mode / exception flags
+ * through process-global SoftFloat state.
+ */
+
+#if defined(_MSC_VER)
+
+#define THREAD_LOCAL __declspec(thread)
+
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
+
+#define THREAD_LOCAL _Thread_local
+
+#elif defined(__GNUC__) || defined(__clang__)
+
+#define THREAD_LOCAL __thread
+
+#else
+
+#error "SoftFloat requires thread-local storage for this port"
+
+#endif
+
+#endif

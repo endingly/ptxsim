@@ -1,0 +1,131 @@
+name: Linux CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 1 * *"
+
+permissions:
+  contents: read
+
+env:
+  VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+  VCPKG_DOWNLOADS: ${{ github.workspace }}/.cache/vcpkg/downloads
+  VCPKG_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg/archives
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.cache/vcpkg/archives,readwrite"
+  CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
+  CCACHE_MAXSIZE: 1G
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    concurrency:
+      group: linux-ci-${{ github.ref }}-${{ matrix.preset }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Debug
+            preset: ci-linux-gcc-debug
+          - name: Release
+            preset: ci-linux-gcc-release
+          - name: Clang Debug
+            preset: ci-linux-clang-debug
+          - name: Clang Release
+            preset: ci-linux-clang-release
+          - name: GCC ASan + UBSan
+            preset: ci-linux-gcc-asan-ubsan
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Compute cache epoch
+        id: cache-epoch
+        shell: bash
+        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore APT package cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/apt/archives
+          key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml') }}
+          restore-keys: |
+            apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-
+
+      - name: Install system dependencies
+        shell: bash
+        env:
+          APT_CACHE_DIR: ${{ github.workspace }}/.cache/apt/archives
+        run: |
+          mkdir -p "$APT_CACHE_DIR/partial"
+          chmod 0777 "$APT_CACHE_DIR" "$APT_CACHE_DIR/partial"
+          sudo apt-get update
+          sudo apt-get \
+            -o Dir::Cache::archives="$APT_CACHE_DIR" \
+            -o Binary::apt::APT::Keep-Downloaded-Packages=true \
+            install -y --no-install-recommends \
+            build-essential \
+            ccache \
+            clang \
+            clang-format \
+            cmake \
+            curl \
+            flex \
+            gcc \
+            g++ \
+            git \
+            ninja-build \
+            pkg-config \
+            python3 \
+            python3-pip \
+            python3-venv \
+            tar \
+            unzip \
+            zip
+          sudo chmod -R a+rX "$APT_CACHE_DIR"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            .cache/vcpkg/archives
+            .cache/vcpkg/downloads
+          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Prepare vcpkg cache directories
+        shell: bash
+        run: mkdir -p "$VCPKG_BINARY_CACHE" "$VCPKG_DOWNLOADS"
+
+      - name: Set up vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: ${{ env.VCPKG_ROOT }}
+          vcpkgJsonGlob: '**/vcpkg.json'
+          runVcpkgInstall: false
+          doNotCache: true
+
+      - name: Restore compiler cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/ccache
+          key: ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
+          restore-keys: |
+            ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+
+      - name: Run CMake workflow preset
+        shell: bash
+        run: cmake --workflow --preset "${{ matrix.preset }}"
+
+      - name: Show compiler cache statistics
+        if: always()
+        shell: bash
+        run: ccache --show-stats || true

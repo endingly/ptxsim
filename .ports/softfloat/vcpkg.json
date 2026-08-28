@@ -1,0 +1,17 @@
+{
+    "name": "softfloat",
+    "version-string": "3e",
+    "description": "Berkeley SoftFloat Release 3e IEEE binary floating-point library",
+    "homepage": "https://github.com/ucb-bar/berkeley-softfloat-3",
+    "license": "BSD-3-Clause",
+    "dependencies": [
+        {
+            "name": "vcpkg-cmake",
+            "host": true
+        },
+        {
+            "name": "vcpkg-cmake-config",
+            "host": true
+        }
+    ]
+}
