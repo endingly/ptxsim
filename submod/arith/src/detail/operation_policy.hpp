@@ -151,12 +151,12 @@ struct OperationTraits<bfloat16_t, Operation::Ex2Approx>
                                    approximation_mode::ptx_approximate,
                                    bfloat16_t> {};
 
-template <>
-struct OperationTraits<float32_t, Operation::TanhApprox> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = false;
-};
+template <typename T>
+  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
+           std::same_as<T, float32_t>)
+struct OperationTraits<T, Operation::TanhApprox>
+    : ApproximationOperationTraits<scalar_operation::tanh,
+                                   approximation_mode::ptx_approximate, T> {};
 template <>
 struct OperationTraits<float64_t, Operation::RcpApprox> {
   static constexpr bool supported = false;
@@ -184,18 +184,6 @@ struct OperationTraits<float64_t, Op> {
           {.approximation = approximation_mode::ptx_approximate,
            .subnormal = subnormal_mode::flush_input_and_output});
   static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = false;
-};
-template <>
-struct OperationTraits<float16_t, Operation::TanhApprox> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = false;
-};
-template <>
-struct OperationTraits<bfloat16_t, Operation::TanhApprox> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
 

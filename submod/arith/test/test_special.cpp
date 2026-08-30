@@ -260,6 +260,40 @@ TEST(SpecialFunctions, F64ApproximateForms) {
             arithmetic_error::unsupported_subnormal_mode);
 }
 
+TEST(SpecialFunctions, TanhApproxIsPreserveOnly) {
+  context c;
+  const special_function_control preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const auto f32 = tanh(c, float32_t::from_bits(0x00000001), preserve);
+  const auto f16 = tanh(c, float16_t::from_bits(0x0001), preserve);
+  const auto bf16 = tanh(c, bfloat16_t::from_bits(0x0001), preserve);
+  ASSERT_TRUE(f32 && f16 && bf16);
+  EXPECT_EQ(f32->value.bits(), 0x00000001u);
+  EXPECT_FALSE(f32->status.invalid);
+  EXPECT_FALSE(f32->status.divide_by_zero);
+  EXPECT_FALSE(f32->status.overflow);
+  EXPECT_FALSE(f32->status.underflow);
+  EXPECT_FALSE(f32->status.inexact);
+  EXPECT_TRUE(f32->status.model_dependent);
+  EXPECT_FALSE(is_nan(f16->value));
+  EXPECT_FALSE(is_nan(bf16->value));
+  EXPECT_TRUE(f16->status.model_dependent);
+  EXPECT_TRUE(bf16->status.model_dependent);
+
+  for (const auto mode : {subnormal_mode::flush_input,
+                          subnormal_mode::flush_output,
+                          subnormal_mode::flush_input_and_output}) {
+    const special_function_control ftz{
+        .approximation = approximation_mode::ptx_approximate, .subnormal = mode};
+    EXPECT_EQ(tanh(c, float32_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+    EXPECT_EQ(tanh(c, float16_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+    EXPECT_EQ(tanh(c, bfloat16_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+  }
+}
+
 TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
   context c;
   const special_function_control approx{
@@ -271,13 +305,15 @@ TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
             0x3765u);
   EXPECT_EQ(ex2(c, float16_t::from_bits(0x3800), approx)->value.bits(),
             0x3da8u);
+  const special_function_control bf16_preserve{
+      .approximation = approximation_mode::ptx_approximate};
   const special_function_control bf16_ftz{
       .approximation = approximation_mode::ptx_approximate,
       .subnormal = subnormal_mode::flush_input_and_output};
-  EXPECT_EQ(tanh(c, bfloat16_t{}, bf16_ftz)->value.bits(), 0u);
+  EXPECT_EQ(tanh(c, bfloat16_t{}, bf16_preserve)->value.bits(), 0u);
   EXPECT_EQ(ex2(c, bfloat16_t::from_bits(0x3f80), bf16_ftz)->value.bits(),
             0x4000u);
-  EXPECT_EQ(tanh(c, bfloat16_t::from_bits(0x3f00), bf16_ftz)->value.bits(),
+  EXPECT_EQ(tanh(c, bfloat16_t::from_bits(0x3f00), bf16_preserve)->value.bits(),
             0x3eedu);
   EXPECT_EQ(ex2(c, bfloat16_t::from_bits(0x3f00), bf16_ftz)->value.bits(),
             0x3fb5u);
@@ -397,7 +433,8 @@ TEST(SpecialFunctions, ApproximateCornerCasesAndFtz) {
   EXPECT_EQ(cos(c, subnormal, ftz)->value.bits(), 0x3f800000u);
   EXPECT_EQ(lg2(c, subnormal, ftz)->value.bits(), 0xff800000u);
   EXPECT_EQ(ex2(c, subnormal, ftz)->value.bits(), 0x3f800000u);
-  EXPECT_EQ(tanh(c, subnormal, ftz)->value.bits(), 0u);
+  EXPECT_EQ(tanh(c, subnormal, ftz).error(),
+            arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(
       div(c, subnormal, float32_t::from_bits(0x3f800000), ftz)->value.bits(),
       0u);

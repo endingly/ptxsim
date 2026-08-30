@@ -496,28 +496,24 @@ PTXSIM_ARITH_APPROX_UNARY(ex2, ex2)
 #undef PTXSIM_ARITH_APPROX_UNARY
 inline std::expected<result<float32_t, floating_status>, arithmetic_error> tanh(
     const context& ctx, float32_t a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::special_subnormal_valid<float32_t>(c) ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::tanh,
+                                                    float32_t>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if (c.subnormal == subnormal_mode::flush_input ||
-      c.subnormal == subnormal_mode::flush_input_and_output)
-    a = flush_subnormal(a);
   return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> tanh(
     const context& ctx, T a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::tanh,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if constexpr (std::same_as<T, bfloat16_t>)
-    if (c.subnormal != subnormal_mode::flush_input_and_output)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-  if (c.subnormal == subnormal_mode::flush_input ||
-      c.subnormal == subnormal_mode::flush_input_and_output)
-    a = flush_subnormal(a);
   return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>

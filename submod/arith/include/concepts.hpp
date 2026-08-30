@@ -34,6 +34,7 @@ enum class scalar_operation {
   cos,
   lg2,
   ex2,
+  tanh,
 };
 enum class arithmetic_family {
   signed_integer,
@@ -202,6 +203,11 @@ template <scalar_operation Op>
            Op == scalar_operation::lg2 || Op == scalar_operation::ex2)
 struct special_function_operation_capability<Op, float32_t>
     : special_function_control_capability<true, false, true, false, true> {};
+template <typename T>
+  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
+           std::same_as<T, float32_t>)
+struct special_function_operation_capability<scalar_operation::tanh, T>
+    : special_function_control_capability<true, false, true, false, false> {};
 template <>
 struct special_function_operation_capability<scalar_operation::ex2, float16_t>
     : special_function_control_capability<true, false, true> {};

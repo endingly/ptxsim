@@ -410,6 +410,8 @@ Result<float32_t> tanh_approx(float32_t value, ApproximationControl control) {
   static_assert(OperationTraits<float32_t, Operation::TanhApprox>::supported);
   if (!is_reference_profile(control))
     return canonical_invalid_nan<float32_t>();
+  if (is_subnormal(value))
+    return {value, {}};
   return tanh_core(value, {});
 }
 
