@@ -63,8 +63,8 @@ TEST(SpecialFunctions, ControlledDeterministicModel) {
   EXPECT_EQ(sin(c, float32_t::from_bits(1),
                 {.approximation = approximation_mode::ptx_approximate,
                  .subnormal = subnormal_mode::flush_input})
-                ->value.bits(),
-            0u);
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(sin(c, float32_t::from_bits(0x3f000000), {}).error(),
             arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(rcp(c, float32_t::from_bits(0x3f800000),
@@ -83,6 +83,314 @@ TEST(SpecialFunctions, ControlledDeterministicModel) {
   EXPECT_TRUE(first->status.model_dependent);
 }
 
+TEST(SpecialFunctions, ApproximationCapabilityMatrix) {
+  static_assert(special_function_operation_capability<
+                scalar_operation::div, float32_t>::supports(
+                approximation_mode::ptx_approximate));
+  static_assert(special_function_operation_capability<
+                scalar_operation::div, float32_t>::supports(
+                approximation_mode::ptx_full));
+  context c;
+  const auto one = float32_t::from_bits(0x3f800000);
+  EXPECT_TRUE(div(c, one, one,
+                  {.approximation = approximation_mode::ptx_approximate}));
+  EXPECT_TRUE(div(c, one, one,
+                  {.approximation = approximation_mode::ptx_full}));
+}
+
+TEST(SpecialFunctions, ApproximateDivisionMarksOnlySuccessfulResults) {
+  context c;
+  constexpr auto one = float32_t::from_bits(0x3f800000);
+  const auto approx = div(c, one, one,
+                          {.approximation = approximation_mode::ptx_approximate});
+  const auto full = div(c, one, one,
+                        {.approximation = approximation_mode::ptx_full});
+  const auto exact = div(c, one, one,
+                         {.approximation = approximation_mode::exact});
+  ASSERT_TRUE(approx && full && exact);
+  EXPECT_TRUE(approx->status.model_dependent);
+  EXPECT_TRUE(full->status.model_dependent);
+  EXPECT_FALSE(exact->status.model_dependent);
+
+  model_profile unavailable{};
+  unavailable.approximation.model = approximation_model::unavailable;
+  EXPECT_EQ(div(context{unavailable}, one, one,
+                {.approximation = approximation_mode::ptx_approximate})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+}
+
+TEST(SpecialFunctions, DivApproxLargeDivisorPtxDomain) {
+  context c;
+  const special_function_control preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const special_function_control fio{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const auto f32 = [](std::uint32_t bits) { return float32_t::from_bits(bits); };
+
+  for (const auto control : {preserve, fio}) {
+    for (const auto [lhs, rhs, expected] :
+         std::array{std::array{0x3f800000u, 0x7f000000u, 0x00000000u},
+                    std::array{0x3f800000u, 0xff000000u, 0x80000000u},
+                    std::array{0xbf800000u, 0x7f000000u, 0x80000000u},
+                    std::array{0xbf800000u, 0xff000000u, 0x00000000u}}) {
+      const auto result = div(c, f32(lhs), f32(rhs), control);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected);
+    }
+  }
+
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7e800000), preserve)
+                ->value.bits(),
+            0x00800000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7e800001), preserve)
+                ->value.bits(),
+            0x00000000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7f7fffff), preserve)
+                ->value.bits(),
+            0x00000000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7f800000), preserve)
+                ->value.bits(),
+            0x00000000u);
+
+  for (const auto lhs : {0x7f800000u, 0xff800000u})
+    for (const auto rhs : {0x7f000000u, 0xff000000u}) {
+      const auto result = div(c, f32(lhs), f32(rhs), preserve);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), 0x7fc00000u);
+      EXPECT_TRUE(result->status.invalid);
+    }
+
+  EXPECT_TRUE(is_nan(div(c, f32(0x7fc00001), f32(0x7f000000), preserve)
+                         ->value));
+  EXPECT_TRUE(is_nan(div(c, f32(0x3f800000), f32(0x7fc00001), preserve)
+                         ->value));
+}
+
+TEST(SpecialFunctions, F64ApproximateForms) {
+  context c;
+  const special_function_control rcp_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const special_function_control rsqrt_preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const special_function_control rsqrt_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  static_assert(special_function_operation_capability<
+                scalar_operation::rcp, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate,
+                 .subnormal = subnormal_mode::flush_input_and_output}));
+  static_assert(!special_function_operation_capability<
+                scalar_operation::rcp, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate}));
+  static_assert(special_function_operation_capability<
+                scalar_operation::rsqrt, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate}));
+  static_assert(special_function_operation_capability<
+                scalar_operation::rsqrt, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate,
+                 .subnormal = subnormal_mode::flush_input_and_output}));
+
+  struct f64_case {
+    std::uint64_t input, expected;
+    bool invalid = false, divide_by_zero = false;
+  };
+  const auto f64 = [](std::uint64_t bits) { return float64_t::from_bits(bits); };
+  const auto expect = [&]<std::size_t N>(const auto& function,
+                                         const std::array<f64_case, N>& cases) {
+    for (const auto [input, expected, invalid, divide_by_zero] : cases) {
+      const auto result = function(f64(input));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected);
+      EXPECT_EQ(result->status.invalid, invalid);
+      EXPECT_EQ(result->status.divide_by_zero, divide_by_zero);
+      EXPECT_FALSE(result->status.overflow);
+      EXPECT_FALSE(result->status.underflow);
+      EXPECT_FALSE(result->status.inexact);
+      EXPECT_TRUE(result->status.model_dependent);
+    }
+  };
+
+  constexpr auto f64_ptx_nan = 0x7fffffff00000000ULL;
+  expect([&](float64_t x) { return rcp(c, x, rcp_ftz); },
+         std::array<f64_case, 7>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0x7ff8000100000000ULL, f64_ptx_nan},
+                    {0x7ff0000000000001ULL, 0x0000000000000000ULL},
+                    {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
+                     true}});
+  expect([&](float64_t x) { return rsqrt(c, x, rsqrt_preserve); },
+         std::array<f64_case, 8>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0xbff0000000000000ULL, 0x7ff8000000000000ULL, true},
+                    {0x7ff8000000000001ULL, 0x7ff8000000000001ULL},
+                    {0x7ff0000000000001ULL, 0x7ff8000000000001ULL, true},
+                    {0x0000000000000001ULL, 0x6180000000000000ULL}});
+  expect([&](float64_t x) { return rsqrt(c, x, rsqrt_ftz); },
+         std::array<f64_case, 8>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0xbff0000000000000ULL, f64_ptx_nan, true},
+                    {0x7ff8000100000000ULL, f64_ptx_nan},
+                    {0x7ff0000000000001ULL, 0x0000000000000000ULL},
+                    {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
+                     true}});
+
+  const auto truncated = rcp(c, f64(0x4008000012345678ULL), rcp_ftz);
+  ASSERT_TRUE(truncated);
+  EXPECT_EQ(truncated->value.bits(), 0x3fd5555500000000ULL);
+  EXPECT_TRUE(truncated->status.inexact);
+  EXPECT_TRUE(truncated->status.model_dependent);
+
+  const auto one = f64(0x3ff0000000000000ULL);
+  EXPECT_TRUE(rcp(c, one, {.approximation = approximation_mode::exact}));
+  EXPECT_EQ(rcp(c, one, rsqrt_preserve).error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(rcp(c, one,
+                {.approximation = approximation_mode::exact,
+                 .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(rcp(c, one,
+                {.approximation = approximation_mode::ptx_full,
+                 .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one).error(), arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one,
+                  {.approximation = approximation_mode::ptx_full,
+                   .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one,
+                  {.approximation = approximation_mode::ptx_approximate,
+                   .subnormal = subnormal_mode::flush_input})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+}
+
+TEST(SpecialFunctions, F64ApproximateFtzUsesOnlyUpperWord) {
+  context c;
+  const special_function_control rcp_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const special_function_control rsqrt_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+
+  struct expected_case {
+    std::uint64_t value;
+    bool invalid = false;
+    bool divide_by_zero = false;
+  };
+  const auto special_oracle = [](std::uint64_t input, bool rsqrt) {
+    const auto upper = static_cast<std::uint32_t>(input >> 32);
+    const auto exponent = (upper >> 20) & 0x7ffu;
+    const auto fraction = upper & 0x000f'ffffu;
+    const auto sign = upper & 0x8000'0000u;
+    constexpr auto ptx_nan = 0x7fff'ffff'0000'0000ULL;
+
+    if (exponent == 0x7ffu) {
+      if (fraction != 0)
+        return expected_case{ptx_nan, (fraction & 0x0008'0000u) == 0};
+      if (sign == 0)
+        return expected_case{};
+      return rsqrt ? expected_case{ptx_nan, true}
+                   : expected_case{0x8000'0000'0000'0000ULL};
+    }
+
+    // The inputs below have zero exponent, so 1.11.20 FTZ produces signed 0.
+    return expected_case{sign == 0 ? 0x7ff0'0000'0000'0000ULL
+                                   : 0xfff0'0000'0000'0000ULL,
+                         false, true};
+  };
+  const auto expect_special = [&]<typename Function>(Function function,
+                                                       bool rsqrt) {
+    for (const auto input :
+         std::array{0x00000000'cafe'babeULL, 0x80000000'1234'5678ULL,
+                    0x7ff00000'0000'0001ULL, 0xfff00000'0000'0001ULL,
+                    0x7ff00001'0000'0000ULL, 0x7ff80000'0000'0001ULL,
+                    0x00000001'0123'4567ULL, 0x80000001'89ab'cdefULL}) {
+      const auto expected = special_oracle(input, rsqrt);
+      const auto result = function(float64_t::from_bits(input));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected.value);
+      EXPECT_EQ(result->status.invalid, expected.invalid);
+      EXPECT_EQ(result->status.divide_by_zero, expected.divide_by_zero);
+      EXPECT_FALSE(result->status.overflow);
+      EXPECT_FALSE(result->status.underflow);
+      EXPECT_FALSE(result->status.inexact);
+      EXPECT_TRUE(result->status.model_dependent);
+    }
+  };
+
+  expect_special([&](float64_t x) { return rcp(c, x, rcp_ftz); }, false);
+  expect_special([&](float64_t x) { return rsqrt(c, x, rsqrt_ftz); }, true);
+
+  for (const auto [input, rcp_expected, rsqrt_expected, rsqrt_invalid] :
+       std::array{std::array{0x40080000'1234'5678ULL,
+                             0x3fd55555'0000'0000ULL,
+                             0x3fe279a7'0000'0000ULL, 0ULL},
+                  std::array{0xc0080000'dead'beefULL,
+                             0xbfd55555'0000'0000ULL,
+                             0x7fffffff'0000'0000ULL, 1ULL}}) {
+    const auto rcp_result = rcp(c, float64_t::from_bits(input), rcp_ftz);
+    const auto rsqrt_result =
+        rsqrt(c, float64_t::from_bits(input), rsqrt_ftz);
+    ASSERT_TRUE(rcp_result && rsqrt_result);
+    EXPECT_EQ(rcp_result->value.bits(), rcp_expected);
+    EXPECT_EQ(rsqrt_result->value.bits(), rsqrt_expected);
+    EXPECT_EQ(rsqrt_result->status.invalid, rsqrt_invalid != 0);
+  }
+}
+
+TEST(SpecialFunctions, TanhApproxIsPreserveOnly) {
+  context c;
+  const special_function_control preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const auto f32 = tanh(c, float32_t::from_bits(0x00000001), preserve);
+  const auto f16 = tanh(c, float16_t::from_bits(0x0001), preserve);
+  const auto bf16 = tanh(c, bfloat16_t::from_bits(0x0001), preserve);
+  ASSERT_TRUE(f32 && f16 && bf16);
+  EXPECT_EQ(f32->value.bits(), 0x00000001u);
+  EXPECT_FALSE(f32->status.invalid);
+  EXPECT_FALSE(f32->status.divide_by_zero);
+  EXPECT_FALSE(f32->status.overflow);
+  EXPECT_FALSE(f32->status.underflow);
+  EXPECT_FALSE(f32->status.inexact);
+  EXPECT_TRUE(f32->status.model_dependent);
+  EXPECT_FALSE(is_nan(f16->value));
+  EXPECT_FALSE(is_nan(bf16->value));
+  EXPECT_TRUE(f16->status.model_dependent);
+  EXPECT_TRUE(bf16->status.model_dependent);
+
+  for (const auto mode : {subnormal_mode::flush_input,
+                          subnormal_mode::flush_output,
+                          subnormal_mode::flush_input_and_output}) {
+    const special_function_control ftz{
+        .approximation = approximation_mode::ptx_approximate, .subnormal = mode};
+    EXPECT_EQ(tanh(c, float32_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+    EXPECT_EQ(tanh(c, float16_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+    EXPECT_EQ(tanh(c, bfloat16_t::from_bits(1), ftz).error(),
+              arithmetic_error::unsupported_subnormal_mode);
+  }
+}
+
 TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
   context c;
   const special_function_control approx{
@@ -94,13 +402,15 @@ TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
             0x3765u);
   EXPECT_EQ(ex2(c, float16_t::from_bits(0x3800), approx)->value.bits(),
             0x3da8u);
+  const special_function_control bf16_preserve{
+      .approximation = approximation_mode::ptx_approximate};
   const special_function_control bf16_ftz{
       .approximation = approximation_mode::ptx_approximate,
       .subnormal = subnormal_mode::flush_input_and_output};
-  EXPECT_EQ(tanh(c, bfloat16_t{}, bf16_ftz)->value.bits(), 0u);
+  EXPECT_EQ(tanh(c, bfloat16_t{}, bf16_preserve)->value.bits(), 0u);
   EXPECT_EQ(ex2(c, bfloat16_t::from_bits(0x3f80), bf16_ftz)->value.bits(),
             0x4000u);
-  EXPECT_EQ(tanh(c, bfloat16_t::from_bits(0x3f00), bf16_ftz)->value.bits(),
+  EXPECT_EQ(tanh(c, bfloat16_t::from_bits(0x3f00), bf16_preserve)->value.bits(),
             0x3eedu);
   EXPECT_EQ(ex2(c, bfloat16_t::from_bits(0x3f00), bf16_ftz)->value.bits(),
             0x3fb5u);
@@ -220,7 +530,8 @@ TEST(SpecialFunctions, ApproximateCornerCasesAndFtz) {
   EXPECT_EQ(cos(c, subnormal, ftz)->value.bits(), 0x3f800000u);
   EXPECT_EQ(lg2(c, subnormal, ftz)->value.bits(), 0xff800000u);
   EXPECT_EQ(ex2(c, subnormal, ftz)->value.bits(), 0x3f800000u);
-  EXPECT_EQ(tanh(c, subnormal, ftz)->value.bits(), 0u);
+  EXPECT_EQ(tanh(c, subnormal, ftz).error(),
+            arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(
       div(c, subnormal, float32_t::from_bits(0x3f800000), ftz)->value.bits(),
       0u);

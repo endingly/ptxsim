@@ -291,6 +291,175 @@ TEST(Conversion, Ptx93UnsignedScaleRawBitGoldens) {
             0x7f);
 }
 
+TEST(Conversion, UE8M0MinimumFiniteEndpoint) {
+  context c;
+  const auto expect_endpoint = [&](std::uint32_t bits, conversion_control control) {
+    const auto encoded = cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(bits), control);
+    ASSERT_TRUE(encoded);
+    EXPECT_EQ(encoded->value.bits(), 0x00);
+    EXPECT_FALSE(encoded->status.invalid);
+    EXPECT_FALSE(encoded->status.divide_by_zero);
+    EXPECT_FALSE(encoded->status.overflow);
+    EXPECT_TRUE(encoded->status.underflow);
+    EXPECT_TRUE(encoded->status.inexact);
+  };
+
+  const auto exact_min = cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x00400000));
+  ASSERT_TRUE(exact_min);
+  EXPECT_EQ(exact_min->value.bits(), 0x00);
+  EXPECT_FALSE(exact_min->status.invalid);
+  EXPECT_FALSE(exact_min->status.underflow);
+  EXPECT_FALSE(exact_min->status.inexact);
+
+  expect_endpoint(0x00300000, {});  // 0.75 * 2^-127
+  expect_endpoint(0x00200000, {});  // 0.5 * 2^-127
+  expect_endpoint(0x003fffff, {});  // just below 2^-127
+  for (const auto mode : {rounding_mode::toward_zero,
+                          rounding_mode::toward_positive,
+                          rounding_mode::toward_negative,
+                          rounding_mode::nearest_away})
+    expect_endpoint(0x00300000, {.rounding = mode});
+
+  expect_endpoint(0x00000000, {});
+  const auto negative =
+      cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x80400000));
+  ASSERT_TRUE(negative);
+  EXPECT_EQ(negative->value.bits(), 0x00);
+  EXPECT_TRUE(negative->status.invalid);
+  EXPECT_FALSE(negative->status.underflow);
+  EXPECT_TRUE(negative->status.inexact);
+}
+
+TEST(Conversion, S2F6FiniteSaturationSpecialValuesReportDiagnostics) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  const auto positive =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7f800000), finite);
+  const auto negative =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0xff800000), finite);
+  const auto qnan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7fc00000), finite);
+  const auto snan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7f800001), finite);
+  ASSERT_TRUE(positive && negative && qnan && snan);
+  EXPECT_EQ(positive->value.rep, 127);
+  EXPECT_EQ(negative->value.rep, -128);
+  EXPECT_EQ(qnan->value.rep, 127);
+  EXPECT_EQ(snan->value.rep, 127);
+  EXPECT_FALSE(positive->status.invalid);
+  EXPECT_FALSE(negative->status.invalid);
+  EXPECT_TRUE(qnan->status.invalid);
+  EXPECT_TRUE(snan->status.invalid);
+  EXPECT_TRUE(positive->status.overflow);
+  EXPECT_TRUE(negative->status.overflow);
+  EXPECT_FALSE(qnan->status.overflow);
+  EXPECT_FALSE(snan->status.overflow);
+  EXPECT_TRUE(positive->status.inexact);
+  EXPECT_TRUE(negative->status.inexact);
+  EXPECT_FALSE(qnan->status.inexact);
+  EXPECT_FALSE(snan->status.inexact);
+  EXPECT_FALSE(positive->status.divide_by_zero || positive->status.underflow ||
+               positive->status.model_dependent);
+  EXPECT_FALSE(negative->status.divide_by_zero || negative->status.underflow ||
+               negative->status.model_dependent);
+  EXPECT_FALSE(qnan->status.divide_by_zero || qnan->status.underflow ||
+               qnan->status.model_dependent);
+  EXPECT_FALSE(snan->status.divide_by_zero || snan->status.underflow ||
+               snan->status.model_dependent);
+}
+
+TEST(Conversion, S2F6FiniteSaturationClampsRoundedFiniteValues) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  struct finite_case {
+    std::uint32_t input;
+    std::int8_t expected;
+  };
+  for (const auto [input, expected] :
+       std::array<finite_case, 6>{finite_case{0x40400000u, 127},  // +3
+                                  {0xc0400000u, -128},            // -3
+                                  {0x3ffe0000u, 127},             // exact +127/64
+                                  {0xc0000000u, -128},            // exact -128/64
+                                  {0x40000000u, 127},             // just above +127/64
+                                  {0xc0010000u, -128}}) {         // just below -128/64
+    const auto result = cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, expected);
+    const bool exact_endpoint = input == 0x3ffe0000u || input == 0xc0000000u;
+    EXPECT_EQ(result->status.overflow, !exact_endpoint);
+    EXPECT_EQ(result->status.inexact, !exact_endpoint);
+    EXPECT_FALSE(result->status.invalid);
+    EXPECT_FALSE(result->status.divide_by_zero);
+    EXPECT_FALSE(result->status.underflow);
+    EXPECT_FALSE(result->status.model_dependent);
+  }
+
+  const conversion_control relu_finite{
+      .saturation = saturation_mode::finite, .activation = activation_mode::relu};
+  for (const auto input : {0xc0400000u, 0xff800000u}) {
+    const auto result =
+        cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), relu_finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, 0);
+    EXPECT_FALSE(result->status.invalid);
+    EXPECT_FALSE(result->status.divide_by_zero);
+    EXPECT_FALSE(result->status.overflow);
+    EXPECT_FALSE(result->status.underflow);
+    EXPECT_FALSE(result->status.inexact);
+    EXPECT_FALSE(result->status.model_dependent);
+  }
+  const auto relu_nan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7fc00000), relu_finite);
+  ASSERT_TRUE(relu_nan);
+  EXPECT_EQ(relu_nan->value.rep, 127);
+  EXPECT_TRUE(relu_nan->status.invalid);
+  EXPECT_FALSE(relu_nan->status.overflow);
+  EXPECT_FALSE(relu_nan->status.inexact);
+}
+
+TEST(Conversion, S2F6FiniteSaturationReportsExactSourceRangeBeforeRounding) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  const auto expect = [&](auto input, std::int8_t expected, bool overflow) {
+    const auto result = cvt<fixed8_s2f6_t>(c, input, finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, expected);
+    EXPECT_EQ(result->status.overflow, overflow);
+    EXPECT_EQ(result->status.inexact, overflow);
+    EXPECT_FALSE(result->status.invalid || result->status.divide_by_zero ||
+                 result->status.underflow || result->status.model_dependent);
+  };
+
+  expect(float32_t::from_bits(0x3ffe0000), 127, false);  // +127/64
+  expect(float32_t::from_bits(0xc0000000), -128, false);  // -128/64
+  expect(float32_t::from_bits(0x3ffe0001), 127, true);    // nextafter(+127/64)
+  expect(float32_t::from_bits(0xc0000001), -128, true);   // nextafter(-128/64)
+  expect(float64_t::from_bits(0x3fffc00000000000ULL), 127, false);
+  expect(float64_t::from_bits(0xc000000000000000ULL), -128, false);
+  expect(float64_t::from_bits(0x3fffc00000000001ULL), 127, true);
+  expect(float64_t::from_bits(0xc000000000000001ULL), -128, true);
+
+  for (const auto rounding : {rounding_mode::nearest_even,
+                              rounding_mode::toward_zero,
+                              rounding_mode::toward_positive,
+                              rounding_mode::toward_negative}) {
+    const conversion_control directed{.rounding = rounding,
+                                      .saturation = saturation_mode::finite};
+    for (const auto [input, expected] :
+         {std::pair{0x3ffe0001u, std::int8_t{127}},
+          std::pair{0xc0000001u, std::int8_t{-128}}}) {
+      const auto result =
+          cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), directed);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.rep, expected);
+      EXPECT_TRUE(result->status.overflow);
+      EXPECT_TRUE(result->status.inexact);
+      EXPECT_FALSE(result->status.invalid || result->status.divide_by_zero ||
+                   result->status.underflow || result->status.model_dependent);
+    }
+  }
+}
+
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   context c;
   // The capability is the canonical decode/encode matrix, not a list of
@@ -457,6 +626,50 @@ TEST(Conversion, DirectedControlsSpecialValuesAndDeterministicSamples) {
     ASSERT_TRUE(converted);
     EXPECT_EQ(converted->value.bits(), expected);
   }
+}
+
+TEST(Conversion, StochasticRoundingUsesSupportedF32Forms) {
+  context c;
+  constexpr conversion_control stochastic{.rounding = rounding_mode::stochastic};
+  constexpr stochastic_rounding_input zero{bits32_t{0}};
+  constexpr stochastic_rounding_input maximum{bits32_t{0xffffffffu}};
+  constexpr auto near_midpoint = float32_t::from_bits(0x3f800fff);
+  constexpr auto far_midpoint = float32_t::from_bits(0x3f800001);
+
+  static_assert(conversion_control_capability<
+                float16_t, float32_t,
+                conversion_control_feature::stochastic>::value);
+  static_assert(!conversion_control_capability<
+                float16_t, float64_t,
+                conversion_control_feature::stochastic>::value);
+  static_assert(!conversion_control_capability<
+                ufloat8_e8m0_t, float32_t,
+                conversion_control_feature::stochastic>::value);
+
+  EXPECT_EQ(cvt<float16_t>(c, near_midpoint, stochastic, zero)->value.bits(),
+            0x3c01);
+  EXPECT_EQ(cvt<float16_t>(c, near_midpoint, stochastic, maximum)->value.bits(),
+            0x3c00);
+  EXPECT_EQ(cvt<float16_t>(c, far_midpoint, stochastic, zero)->value.bits(),
+            0x3c01);
+  EXPECT_EQ(cvt<float16_t>(c, far_midpoint, stochastic, maximum)->value.bits(),
+            0x3c00);
+
+  const auto replay_a = cvt<float16_t>(
+      c, near_midpoint, stochastic, stochastic_rounding_input{bits32_t{0x12345678}});
+  const auto replay_b = cvt<float16_t>(
+      c, near_midpoint, stochastic, stochastic_rounding_input{bits32_t{0x12345678}});
+  ASSERT_TRUE(replay_a && replay_b);
+  EXPECT_EQ(replay_a->value.bits(), replay_b->value.bits());
+  EXPECT_EQ(replay_a->status.inexact, replay_b->status.inexact);
+
+  constexpr auto tiny_f64 = float64_t::from_bits(1);
+  EXPECT_EQ(cvt<float16_t>(c, tiny_f64, stochastic, zero).error(),
+            arithmetic_error::unsupported_rounding);
+  EXPECT_EQ(cvt<float16_t>(c, tiny_f64, stochastic, maximum).error(),
+            arithmetic_error::unsupported_rounding);
+  EXPECT_EQ(cvt<ufloat8_e8m0_t>(c, near_midpoint, stochastic, zero).error(),
+            arithmetic_error::unsupported_rounding);
 }
 
 TEST(Conversion, Bf16ParityTiesDirectedRoundingAndSpecials) {

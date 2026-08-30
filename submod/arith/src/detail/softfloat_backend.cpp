@@ -329,21 +329,23 @@ Result<float32_t> widen_for_mixed(bfloat16_t value) {
   return widen_to_f32(value, {});
 }
 
-template <typename T>
-Result<float32_t> mixed_add(T low, float32_t high, ArithmeticControl control,
-                            bool subtract) {
-  validate_mixed_control(control);
+template <scalar_operation Op, typename T>
+Result<float32_t> mixed_add(T low, float32_t high, ArithmeticControl control) {
+  validate_mixed_control<Op, float32_t, T, float32_t>(control);
   const auto widened = widen_for_mixed(low);
-  auto result =
-      subtract ? SoftFloatBackend<float32_t>::sub(widened.value, high, control)
-               : SoftFloatBackend<float32_t>::add(widened.value, high, control);
+  auto result = Op == scalar_operation::sub
+                    ? SoftFloatBackend<float32_t>::sub(widened.value, high,
+                                                        control)
+                    : SoftFloatBackend<float32_t>::add(widened.value, high,
+                                                        control);
   result.flags |= widened.flags;
   return result;
 }
 
 template <typename T>
 Result<float32_t> mixed_fma(T a, T b, float32_t c, ArithmeticControl control) {
-  validate_mixed_control(control);
+  validate_mixed_control<scalar_operation::fma, float32_t, T, T, float32_t>(
+      control);
   const auto widened_a = widen_for_mixed(a);
   const auto widened_b = widen_for_mixed(b);
   auto result = SoftFloatBackend<float32_t>::fma(widened_a.value,
@@ -357,11 +359,11 @@ Result<float32_t> mixed_fma(T a, T b, float32_t c, ArithmeticControl control) {
 
 Result<float32_t> add(float16_t low, float32_t high,
                       ArithmeticControl control) {
-  return mixed_add(low, high, control, false);
+  return mixed_add<scalar_operation::add>(low, high, control);
 }
 Result<float32_t> sub(float16_t low, float32_t high,
                       ArithmeticControl control) {
-  return mixed_add(low, high, control, true);
+  return mixed_add<scalar_operation::sub>(low, high, control);
 }
 Result<float32_t> fma(float16_t a, float16_t b, float32_t c,
                       ArithmeticControl control) {
@@ -369,11 +371,11 @@ Result<float32_t> fma(float16_t a, float16_t b, float32_t c,
 }
 Result<float32_t> add(bfloat16_t low, float32_t high,
                       ArithmeticControl control) {
-  return mixed_add(low, high, control, false);
+  return mixed_add<scalar_operation::add>(low, high, control);
 }
 Result<float32_t> sub(bfloat16_t low, float32_t high,
                       ArithmeticControl control) {
-  return mixed_add(low, high, control, true);
+  return mixed_add<scalar_operation::sub>(low, high, control);
 }
 Result<float32_t> fma(bfloat16_t a, bfloat16_t b, float32_t c,
                       ArithmeticControl control) {

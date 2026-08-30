@@ -31,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Debug
+          - name: GCC Debug
             preset: ci-linux-gcc-debug
-          - name: Release
+          - name: GCC Release
             preset: ci-linux-gcc-release
           - name: Clang Debug
             preset: ci-linux-clang-debug
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Compute cache epoch
         id: cache-epoch
@@ -52,7 +52,7 @@ jobs:
         run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
 
       - name: Restore APT package cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/apt/archives
           key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml') }}
@@ -92,7 +92,7 @@ jobs:
           sudo chmod -R a+rX "$APT_CACHE_DIR"
 
       - name: Restore vcpkg binary cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .cache/vcpkg/archives
@@ -106,7 +106,7 @@ jobs:
         run: mkdir -p "$VCPKG_BINARY_CACHE" "$VCPKG_DOWNLOADS"
 
       - name: Set up vcpkg
-        uses: lukka/run-vcpkg@v11
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11.6
         with:
           vcpkgDirectory: ${{ env.VCPKG_ROOT }}
           vcpkgJsonGlob: '**/vcpkg.json'
@@ -114,7 +114,7 @@ jobs:
           doNotCache: true
 
       - name: Restore compiler cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
           key: ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
@@ -124,6 +124,15 @@ jobs:
       - name: Run CMake workflow preset
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
+
+      - name: Frontend-lowering vcpkg install smoke
+        if: matrix.name == 'GCC Debug'
+        shell: bash
+        run: |
+          "$VCPKG_ROOT/vcpkg" install \
+            --x-manifest-root="$GITHUB_WORKSPACE" \
+            --x-feature=frontend-lowering \
+            --x-install-root="$RUNNER_TEMP/ptxsim-frontend-lowering-installed"
 
       - name: Show compiler cache statistics
         if: always()

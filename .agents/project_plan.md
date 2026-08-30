@@ -4,7 +4,13 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current blocking gate:** accept the V2-M1 remediation against `m4-review.md` and pass hosted Clang CI
+> **Current gate:** V2-M1 remains pending acceptance. The final integrated
+> tree must pass the five local CMake workflows and receive hosted CI evidence.
+> `MAIN-P2-004` is complete: active default-branch ruleset `21723631` requires
+> PRs and strict checks for exactly `GCC Debug`, `GCC Release`, `Clang Debug`,
+> `Clang Release`, and `GCC ASan + UBSan`. Hosted Linux CI run `33310952274`
+> succeeded for prior head `0f5ef9a`; evidence for the final current head is
+> still pending. The user owns that cloud execution.
 > **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
@@ -32,7 +38,13 @@ private arithmetic backends
 
 That is not a naming-only refactor. It changes module responsibility, API shape, testing strategy, and dependency ordering.
 
-The `refactor/arith-module` review also found that the arithmetic branch is not yet suitable for integration. Therefore v2 makes arithmetic conformance a formal blocking gate before executor work consumes its API.
+Arithmetic remediation is tracked in the [V2-M1 review audit chain](../docs/reviews/README.md):
+[main review](../docs/reviews/v2-m1-main-review.md),
+[remediation review](../docs/reviews/v2-m1-fix-review.md), and
+[rereview](../docs/reviews/v2-m1-fix-rereview.r1.md); archive governance is
+defined in [`.agents/review_policy.md`](review_policy.md).
+V2 keeps an accepted `arith` boundary as the prerequisite for executor
+integration.
 
 ### 1.1 Main changes from v0.4
 
@@ -398,7 +410,7 @@ GCC Debug configure/build/test
 GCC Release configure/build/test
 Clang Debug configure/build/test
 Clang Release configure/build/test
-ASan+UBSan test run
+GCC ASan + UBSan configure/build/test
 public header self-contained compile
 build-tree consumer
 install/export consumer
@@ -486,7 +498,12 @@ V2-M1 arithmetic conformance
           V2-M9 advanced PTX
 ```
 
-`V2-M0` and `V2-M1` may run in parallel, but no execution integration should depend on the current `arith` API until V2-M1 passes.
+V2-M2 consumes only the stabilized `arith` API established by V2-M1.
+
+Legacy review artifacts and the retained `fix/m5-main-review` branch name
+predate the V2 milestone reorder. They identify this V2-M1 arithmetic
+remediation chain only; the branch remains unchanged to avoid pre-merge churn,
+and V2-M5 remains the future floating/conversion integration milestone.
 
 ---
 
@@ -522,7 +539,11 @@ V2-M1 arithmetic conformance
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Source of truth:** `m4-review.md`.
+**Current remediation status:** the audit chain and map below record local
+fixes, including `05b0af2` (F64 FTZ projection), `419e2e6` (S2F6 finite
+saturation), `def4b8a` (frontend snapshot integrity), and `a407c8e`
+(pre-rounding S2F6 status). They are not V2-M1 acceptance evidence: the final
+integrated tree must pass the five workflows and receive final-head hosted CI.
 
 ## 9.1 Work packages
 
@@ -564,14 +585,47 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-V2-M1 is complete only when the merge checklist in `m4-review.md` passes and:
+V2-M1 remains pending acceptance. `MAIN-P2-004` branch-protection
+configuration is complete; the final integrated tree must still pass the five
+local workflows and receive final-head hosted CI evidence. The map below
+records remediation targets and checks, not proof that those gates have closed.
 
-- all P0 are closed;
-- all P1 are closed or backed by an approved, narrowly scoped ADR with no false capability exposure;
-- public API stability is sufficient for semantics/executor integration;
-- no old `ptxsim::fp` symbols or targets remain;
-- independent goldens detect deliberate mutation of key format traits;
-- `arith` has no dependency on frontend, IR, machine state or runtime.
+## 9.4 MAIN remediation and regression map
+
+The five local workflows are GCC Debug, GCC Release, Clang Debug, Clang
+Release, and GCC ASan + UBSan. They remain required final integrated-tree gates;
+the review audit chain is under [`docs/reviews`](../docs/reviews/).
+
+| Issue | Fix commit | Regression target / check |
+|---|---|---|
+| MAIN-P0-004 | `173a951` | `test_scalar.cpp`, `test_special.cpp` |
+| MAIN-P0-001 | `04c67c1` | `test_scalar.cpp` |
+| MAIN-P0-002 | `6adc5f7` | `test_special.cpp` |
+| MAIN-P0-003 | `6be18ec` | `test_special.cpp` |
+| MAIN-P1-001 | `e48fba2` | `test_special.cpp` |
+| MAIN-P1-002 | `93147b9` | `test_conversion.cpp` |
+| MAIN-P1-003 | `1aa80f9` | `test_conversion.cpp` |
+| MAIN-P1-004 | `7dd0e71` | `test_conversion.cpp` |
+| MAIN-P1-005 | `97eab10` | `test_bit.cpp` |
+| MAIN-P1-006 | `ad44346` | `test_special.cpp` |
+| MAIN-P1-007 | `3b50b45` | `test_scalar.cpp` |
+| MAIN-P1-008 | `de1ab28` | `test_bit.cpp`, `test_scalar.cpp` |
+| MAIN-P1-009 | `35873ec` | `test_tensor.cpp` |
+| MAIN-P1-010 | `2c59b86` | `test_packed.cpp` |
+| MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
+| MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
+| MAIN-P2-003 | `20e0e37` + `def4b8a` | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
+| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33310952274` passed prior head `0f5ef9a`, final-head hosted CI pending |
+| MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
+| MAIN-P2-006 | `24dd230` | plan/document consistency searches |
+| FIX-P0-001 | `05b0af2` | F64 FTZ upper-word projection; `test_special.cpp` |
+| FIX-P0-002 + FIX-P1-001 | `419e2e6` | S2F6 finite saturation/status; `test_conversion.cpp` |
+| FIX-P2-002 | `def4b8a` | automatic snapshot integrity CTest + manual byte comparison |
+| REREVIEW-P1-001 | `a407c8e` | S2F6 pre-rounding finite-range status; `test_conversion.cpp` |
+| REREVIEW-P2-002 | `8dd6ef5` | plan consistency search and diff check |
+| REREVIEW-P3-001 | `d43cc2d` | pinned workflow action refs and YAML check |
+| REREVIEW-P2-003 | this archival commit | V2-M1 review audit-chain preservation/link checks |
+| FIX-P2-003 | `777ac67` | [`docs/reviews`](../docs/reviews/) provenance and archival links |
 
 ---
 
@@ -902,20 +956,10 @@ A passing implementation test without a support-matrix update is not complete.
 
 # 19. Branch and PR strategy
 
-## 19.1 Arithmetic remediation
+## 19.1 Arithmetic integration
 
-Use the lane split defined in `m4-review.md`:
-
-```text
-Lane A format/conversion
-Lane B scalar/bit
-Lane C packed/tensor
-Lane D profile/approximation
-Lane E tests/build
-Integration Agent
-```
-
-No single PR should mix a new oracle, a rewritten production core and rewritten expected values without a clearly reviewable red-to-green sequence.
+No single PR should mix a new oracle, a rewritten production core, and
+rewritten expected values without a clearly reviewable red-to-green sequence.
 
 ## 19.2 General PR size
 
@@ -987,14 +1031,12 @@ A feature is complete only when all applicable boxes are checked:
 
 # 22. Immediate next actions
 
-The V2-M1 implementation work and local GCC Debug/Release/ASan+UBSan gates
-are complete. The next development actions, in order, are:
-
-1. Review the remediation diff against every item in `m4-review.md` and record closure evidence.
-2. Run the hosted GCC/Clang Debug/Release and sanitizer matrix; local Clang was unavailable during remediation.
-3. Publish/update the public arithmetic support matrix from the centralized capability traits.
-4. Merge the stabilized `arith` API only after review acceptance and hosted CI pass.
-5. Begin V2-M2 exec IR/lowering work without bypassing the established `arith` boundary.
+1. Create or update a pull request for the final current head and run hosted
+   Linux CI (user-owned cloud execution).
+2. Confirm its five required contexts: GCC Debug, GCC Release, Clang Debug,
+   Clang Release, and GCC ASan + UBSan.
+3. Begin V2-M2 exec IR/lowering work without bypassing the established
+   `arith` boundary.
 
 ---
 

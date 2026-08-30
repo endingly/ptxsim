@@ -28,6 +28,10 @@ constexpr bit_unsigned_t<T> low_bits(unsigned count) noexcept {
   return (U{1} << count) - U{1};
 }
 
+constexpr unsigned ptx_bitfield_operand(std::uint32_t value) noexcept {
+  return value & 0xffu;
+}
+
 template <arithmetic_integer T>
 constexpr std::uint32_t ptx_bfind_position(bit_unsigned_t<T> value) noexcept {
   using U = bit_unsigned_t<T>;
@@ -99,8 +103,8 @@ constexpr T bit_extract_unsigned(T v, std::uint32_t offset,
                                  std::uint32_t width) noexcept {
   using U = detail::bit_unsigned_t<T>;
   constexpr unsigned n = std::numeric_limits<U>::digits;
-  const unsigned pos = offset & 0xffu;
-  const unsigned len = width & 0xffu;
+  const unsigned pos = detail::ptx_bitfield_operand(offset);
+  const unsigned len = detail::ptx_bitfield_operand(width);
   if (len == 0 || pos >= n)
     return {};
 
@@ -117,8 +121,8 @@ constexpr T bit_extract_signed(T v, std::uint32_t offset,
                                std::uint32_t width) noexcept {
   using U = detail::bit_unsigned_t<T>;
   constexpr unsigned n = std::numeric_limits<U>::digits;
-  const unsigned pos = offset & 0xffu;
-  const unsigned len = width & 0xffu;
+  const unsigned pos = detail::ptx_bitfield_operand(offset);
+  const unsigned len = detail::ptx_bitfield_operand(width);
   if (len == 0)
     return {};
 
@@ -143,16 +147,19 @@ constexpr T bit_extract(T v, std::uint32_t offset,
     return bit_extract_unsigned(v, offset, width);
 }
 template <arithmetic_integer T>
-constexpr T bit_insert(T base, T field, unsigned offset,
-                       unsigned width) noexcept {
+constexpr T bit_insert(T base, T field, std::uint32_t offset,
+                       std::uint32_t width) noexcept {
   using U = detail::bit_unsigned_t<T>;
   constexpr unsigned n = std::numeric_limits<U>::digits;
-  if (offset >= n || width == 0)
+  const unsigned pos = detail::ptx_bitfield_operand(offset);
+  const unsigned len = detail::ptx_bitfield_operand(width);
+  if (pos >= n || len == 0)
     return base;
-  const U mask = width >= n ? ~U{} : (U{1} << width) - 1;
-  const U shifted = mask << offset;
+  const unsigned count = (len < n - pos) ? len : n - pos;
+  const U mask = detail::low_bits<T>(count);
+  const U shifted = mask << pos;
   return detail::bit_value<T>((detail::bit_unsigned(base) & ~shifted) |
-                              ((detail::bit_unsigned(field) & mask) << offset));
+                              ((detail::bit_unsigned(field) & mask) << pos));
 }
 template <arithmetic_integer T>
 constexpr T funnel_shift(T lo, T hi, unsigned shift) noexcept {

@@ -59,16 +59,40 @@ std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
   std::expected<result<T, floating_status>, arithmetic_error> abs(        \
       T, floating_control);                                                \
   std::expected<result<T, floating_status>, arithmetic_error> neg(        \
-      T, floating_control);                                                \
-  std::expected<result<T, floating_status>, arithmetic_error> min(        \
-      T, T, floating_control);                                             \
-  std::expected<result<T, floating_status>, arithmetic_error> max(        \
-      T, T, floating_control)
+      T, floating_control)
 PTXSIM_ARITH_DISPATCH_UNARY(float16_t);
 PTXSIM_ARITH_DISPATCH_UNARY(bfloat16_t);
 PTXSIM_ARITH_DISPATCH_UNARY(float32_t);
 PTXSIM_ARITH_DISPATCH_UNARY(float64_t);
 #undef PTXSIM_ARITH_DISPATCH_UNARY
+
+#define PTXSIM_ARITH_DISPATCH_MINMAX(T)                                   \
+  std::expected<result<T, floating_status>, arithmetic_error> min(        \
+      T, T, floating_control, minmax_control);                            \
+  std::expected<result<T, floating_status>, arithmetic_error> max(        \
+      T, T, floating_control, minmax_control)
+PTXSIM_ARITH_DISPATCH_MINMAX(float16_t);
+PTXSIM_ARITH_DISPATCH_MINMAX(bfloat16_t);
+PTXSIM_ARITH_DISPATCH_MINMAX(float32_t);
+PTXSIM_ARITH_DISPATCH_MINMAX(float64_t);
+#undef PTXSIM_ARITH_DISPATCH_MINMAX
+std::expected<result<float32_t, floating_status>, arithmetic_error> min(
+    float32_t, float32_t, float32_t, minmax_control, floating_control);
+std::expected<result<float32_t, floating_status>, arithmetic_error> max(
+    float32_t, float32_t, float32_t, minmax_control, floating_control);
+
+#define PTXSIM_ARITH_DISPATCH_COMPARE(T)                                  \
+  std::expected<result<predicate_t, floating_status>, arithmetic_error>   \
+  compare(T, T, comparison_control, floating_control)
+PTXSIM_ARITH_DISPATCH_COMPARE(float16_t);
+PTXSIM_ARITH_DISPATCH_COMPARE(bfloat16_t);
+PTXSIM_ARITH_DISPATCH_COMPARE(float32_t);
+PTXSIM_ARITH_DISPATCH_COMPARE(float64_t);
+#undef PTXSIM_ARITH_DISPATCH_COMPARE
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float32_t, floating_test);
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float64_t, floating_test);
 
 std::expected<result<float32_t, floating_status>, arithmetic_error> sqrt(
     float32_t, floating_control);
@@ -98,6 +122,14 @@ PTXSIM_ARITH_DISPATCH_APPROX(lg2_approx);
 PTXSIM_ARITH_DISPATCH_APPROX(ex2_approx);
 PTXSIM_ARITH_DISPATCH_APPROX(tanh_approx);
 #undef PTXSIM_ARITH_DISPATCH_APPROX
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rcp_approx_ftz(float64_t, special_function_control,
+               const approximation_profile&);
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx(float64_t, special_function_control, const approximation_profile&);
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx_ftz(float64_t, special_function_control,
+                 const approximation_profile&);
 std::expected<result<float16_t, floating_status>, arithmetic_error> tanh_approx(
     float16_t, special_function_control, const approximation_profile&);
 std::expected<result<bfloat16_t, floating_status>, arithmetic_error> tanh_approx(

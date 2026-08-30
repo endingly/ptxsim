@@ -7,6 +7,28 @@
 
 namespace ptxsim::arith::test {
 
+template <typename D, typename A, typename B, typename C>
+void expect_mma_control_error_for_all_shapes(const context& c,
+                                             tensor_control control,
+                                             arithmetic_error error) {
+  const tensor::tile<0, 0, A> empty_a{};
+  const tensor::tile<0, 0, B> empty_b{};
+  const tensor::tile<0, 0, C> empty_c{};
+  EXPECT_EQ(tensor::mma<D>(c, empty_a, empty_b, empty_c, control).error(),
+            error);
+
+  const tensor::tile<1, 0, A> zero_k_a{};
+  const tensor::tile<0, 1, B> zero_k_b{};
+  const tensor::tile<1, 1, C> zero_k_c{};
+  EXPECT_EQ(tensor::mma<D>(c, zero_k_a, zero_k_b, zero_k_c, control).error(),
+            error);
+
+  const tensor::tile<1, 1, A> a{};
+  const tensor::tile<1, 1, B> b{};
+  const tensor::tile<1, 1, C> normal_c{};
+  EXPECT_EQ(tensor::mma<D>(c, a, b, normal_c, control).error(), error);
+}
+
 static_assert(tensor_capability_v<float16_t, float16_t, float16_t, float16_t>);
 static_assert(tensor_capability_v<float32_t, float16_t, float16_t, float32_t>);
 static_assert(tensor_capability_v<float32_t, bfloat16_t, bfloat16_t, float32_t>);
@@ -25,6 +47,98 @@ static_assert(!tensor_capability_v<int32_t, int32_t, int32_t, int32_t>);
 static_assert(!tensor_capability_v<int32_t, uint16_t, int8_t, int32_t>);
 static_assert(!tensor_capability_v<float32_t, float4_e2m1_t, float8_e4m3_t,
                                    float32_t, tensor_scale_model::two_x>);
+
+TEST(TensorArithmetic, ControlsAreValidatedPerAccumulatorAtEntry) {
+  context c;
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::fma, float16_t>::supports(
+                rounding_mode::toward_positive));
+  static_assert(floating_operation_control_capability<
+                scalar_operation::fma, float32_t>::supports(
+                rounding_mode::toward_positive));
+  static_assert(floating_operation_control_capability<
+                scalar_operation::fma, float64_t>::supports(
+                rounding_mode::toward_positive));
+
+  expect_mma_control_error_for_all_shapes<float16_t, float16_t, float16_t,
+                                          float16_t>(
+      c, {.accumulator_rounding = rounding_mode::toward_positive},
+      arithmetic_error::unsupported_rounding);
+  expect_mma_control_error_for_all_shapes<float32_t, float16_t, float16_t,
+                                          float32_t>(
+      c, {.accumulator_subnormal = subnormal_mode::flush_input_and_output},
+      arithmetic_error::unsupported_subnormal_mode);
+  expect_mma_control_error_for_all_shapes<float64_t, float64_t, float64_t,
+                                          float64_t>(
+      c, {.saturation = saturation_mode::zero_to_one},
+      arithmetic_error::unsupported_saturation);
+  expect_mma_control_error_for_all_shapes<int32_t, uint8_t, int8_t, int32_t>(
+      c, {.accumulator_rounding = rounding_mode::toward_positive},
+      arithmetic_error::unsupported_rounding);
+  expect_mma_control_error_for_all_shapes<int32_t, uint8_t, int8_t, int32_t>(
+      c, {.accumulator_subnormal = subnormal_mode::flush_input_and_output},
+      arithmetic_error::unsupported_subnormal_mode);
+  expect_mma_control_error_for_all_shapes<int32_t, uint8_t, int8_t, int32_t>(
+      c, {.saturation = saturation_mode::zero_to_one},
+      arithmetic_error::unsupported_saturation);
+
+  const tensor::tile<1, 1, int8_t> one{{1}};
+  const tensor::tile<1, 1, int32_t> top{{std::numeric_limits<int32_t>::max()}};
+  EXPECT_TRUE(tensor::mma<int32_t>(
+      c, tensor::tile<1, 1, uint8_t>{{1}}, one, top,
+      {.saturation = saturation_mode::type_range}));
+}
+
+TEST(TensorArithmetic, ControlValidationPrecedesScaledLayoutAndViewShape) {
+  context c;
+  constexpr tensor_control invalid{
+      .accumulator_subnormal = subnormal_mode::flush_input_and_output};
+  const tensor::block_scale_view<ufloat8_e8m0_t> invalid_scales{};
+
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::tile<0, 0, float8_e4m3_t>{},
+                tensor::tile<0, 0, float8_e5m2_t>{},
+                tensor::tile<0, 0, float32_t>{}, invalid, invalid_scales,
+                invalid_scales))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::tile<1, 0, float8_e4m3_t>{},
+                tensor::tile<0, 1, float8_e5m2_t>{},
+                tensor::tile<1, 1, float32_t>{}, invalid, invalid_scales,
+                invalid_scales))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::tile<1, 1, float8_e4m3_t>{},
+                tensor::tile<1, 1, float8_e5m2_t>{},
+                tensor::tile<1, 1, float32_t>{}, invalid, invalid_scales,
+                invalid_scales))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::matrix_view<const float16_t>{nullptr, 0, 0, 0},
+                tensor::matrix_view<const float16_t>{nullptr, 0, 0, 0},
+                tensor::matrix_view<const float32_t>{nullptr, 0, 0, 0},
+                tensor::matrix_view<float32_t>{nullptr, 0, 0, 0}, invalid))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::matrix_view<const float16_t>{nullptr, 1, 0, 0},
+                tensor::matrix_view<const float16_t>{nullptr, 0, 1, 1},
+                tensor::matrix_view<const float32_t>{nullptr, 1, 1, 1},
+                tensor::matrix_view<float32_t>{nullptr, 1, 1, 1}, invalid))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ((tensor::mma<float32_t>(
+                c, tensor::matrix_view<const float16_t>{nullptr, 1, 1, 1},
+                tensor::matrix_view<const float16_t>{nullptr, 1, 1, 1},
+                tensor::matrix_view<const float32_t>{nullptr, 1, 1, 1},
+                tensor::matrix_view<float32_t>{nullptr, 1, 1, 1}, invalid))
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+}
 
 TEST(TensorArithmetic, CombinationTableAndWidenedLowProducts) {
   context c;

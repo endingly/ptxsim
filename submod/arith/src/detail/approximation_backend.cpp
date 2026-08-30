@@ -34,6 +34,12 @@ using F32 = Result<float32_t>;
 [[nodiscard]] constexpr float32_t f32(std::uint32_t bits) {
   return float32_t::from_bits(bits);
 }
+[[nodiscard]] constexpr bool is_large_divisor(float32_t value) {
+  constexpr auto two_to_126 = 0x7e800000u;
+  constexpr auto two_to_128 = 0x7f800000u;
+  const auto magnitude = value.bits() & 0x7fffffffu;
+  return magnitude > two_to_126 && magnitude < two_to_128;
+}
 [[nodiscard]] F32 join(F32 a, F32 b, F32 value) {
   value.flags |= a.flags;
   value.flags |= b.flags;
@@ -296,11 +302,16 @@ template <typename T>
           ExceptionFlags{static_cast<std::uint8_t>(ExceptionFlag::Invalid)}};
 }
 
+[[nodiscard]] constexpr float64_t project_f64_to_ptx_1_11_20(
+    float64_t value) noexcept {
+  return float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
+}
+
 template <typename Function>
 [[nodiscard]] Result<float64_t> f64_ftz_approx(float64_t value,
                                                Function function) {
+  value = project_f64_to_ptx_1_11_20(value);
   value = flush_subnormal(value);
-  value = float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
   if (is_nan(value))
     return canonical_nan_f64(value);
   auto result = function(value);
@@ -310,8 +321,7 @@ template <typename Function>
     return canonical;
   }
   result.value = flush_subnormal(result.value);
-  result.value =
-      float64_t::from_bits(result.value.bits() & 0xFFFFFFFF00000000ULL);
+  result.value = project_f64_to_ptx_1_11_20(result.value);
   return result;
 }
 
@@ -322,6 +332,11 @@ Result<float32_t> div_approx(float32_t lhs, float32_t rhs,
   validate_approximation_control<Operation::DivApprox, float32_t>(control);
   if (!is_reference_profile(control))
     return canonical_invalid_nan<float32_t>();
+  if (is_large_divisor(rhs) && !is_nan(lhs)) {
+    if (is_infinity(lhs))
+      return canonical_invalid_nan<float32_t>();
+    return {f32((lhs.bits() ^ rhs.bits()) & 0x80000000u), {}};
+  }
   // PTX div.approx is specified through an approximate reciprocal path; keep
   // that composition explicit rather than accidentally making it an alias of
   // correctly rounded division.
@@ -399,6 +414,8 @@ Result<float32_t> tanh_approx(float32_t value, ApproximationControl control) {
   static_assert(OperationTraits<float32_t, Operation::TanhApprox>::supported);
   if (!is_reference_profile(control))
     return canonical_invalid_nan<float32_t>();
+  if (is_subnormal(value))
+    return {value, {}};
   return tanh_core(value, {});
 }
 

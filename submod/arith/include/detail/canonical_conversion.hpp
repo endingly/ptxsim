@@ -239,6 +239,11 @@ template <FloatingFormat To>
   const int maximum_normal =
       static_cast<int>(traits::maximum_finite_exponent_field) - traits::exponent_bias;
 
+  if constexpr (!traits::has_zero && !traits::has_subnormal) {
+    if (leading_exponent < minimum_normal)
+      return {pack(false, 0, 0), {.underflow = true, .inexact = true}};
+  }
+
   std::uint64_t rounded_significand{};
   bool inexact = false;
   unsigned target_exponent{};
@@ -364,10 +369,49 @@ template <arithmetic_integer To>
 [[nodiscard]] constexpr result<fixed8_s2f6_t, floating_status> encode_fixed(
     number input, conversion_control control,
     std::uint32_t stochastic_bits = 0) noexcept {
+  const bool finite_outside_range = [&] {
+    if (control.saturation != saturation_mode::finite ||
+        input.classification != number_class::finite)
+      return false;
+
+    const auto limit = input.negative ? std::uint64_t{128} : std::uint64_t{127};
+    const int scaled_exponent = input.exponent + fixed8_s2f6_t::fraction_bits;
+    if (scaled_exponent >= 0) {
+      const auto bits = bit_length(input.significand);
+      if (scaled_exponent >= 64 ||
+          bits + static_cast<unsigned>(scaled_exponent) > 64)
+        return true;
+      return (input.significand << static_cast<unsigned>(scaled_exponent)) > limit;
+    }
+
+    const auto shift = static_cast<unsigned>(-scaled_exponent);
+    const auto limit_bits = bit_length(limit);
+    if (shift >= 64 || limit_bits + shift > 64)
+      return false;
+    return input.significand > (limit << shift);
+  }();
+
+  if (control.saturation == saturation_mode::finite) {
+    if (input.classification == number_class::nan)
+      return {{std::numeric_limits<std::int8_t>::max()}, {.invalid = true}};
+    if (input.classification == number_class::infinity)
+      return {{input.negative ? std::numeric_limits<std::int8_t>::min()
+                              : std::numeric_limits<std::int8_t>::max()},
+              {.overflow = true, .inexact = true}};
+  }
   if (input.classification == number_class::finite)
     input.exponent += fixed8_s2f6_t::fraction_bits;
-  const auto encoded = encode_integer<std::int8_t>(input, control,
-                                                    stochastic_bits);
+  auto integer_control = control;
+  if (integer_control.saturation == saturation_mode::finite)
+    integer_control.saturation = saturation_mode::type_range;
+  auto encoded =
+      encode_integer<std::int8_t>(input, integer_control, stochastic_bits);
+  if (control.saturation == saturation_mode::finite &&
+      (finite_outside_range || encoded.status.overflow)) {
+    encoded.status.invalid = false;
+    encoded.status.overflow = true;
+    encoded.status.inexact = true;
+  }
   return {{encoded.value}, encoded.status};
 }
 

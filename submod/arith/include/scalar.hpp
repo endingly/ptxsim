@@ -24,14 +24,19 @@ constexpr bool special_subnormal_valid(special_function_control c) {
   (void)c;
   return true;
 }
-template <typename T>
-constexpr bool valid(floating_control c) {
-  return c.rounding != rounding_mode::nearest_away &&
-         c.rounding != rounding_mode::stochastic &&
-         c.saturation == saturation_mode::none &&
-         c.activation == activation_mode::none &&
-         !(std::same_as<T, float16_t> &&
-           c.rounding != rounding_mode::nearest_even);
+template <scalar_operation Op, typename T>
+constexpr std::expected<void, arithmetic_error> validate_special_control(
+    special_function_control control) {
+  using Capability = special_function_operation_capability<Op, T>;
+  if (!Capability::supported)
+    return std::unexpected(arithmetic_error::unsupported_operation);
+  if (!Capability::supports(control.approximation))
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
+  if (!Capability::supports(control.subnormal))
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (!Capability::supports(control))
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  return {};
 }
 template <typename T>
 constexpr T wrap_add(T a, T b) {
@@ -100,6 +105,7 @@ template <arithmetic_integer T>
 using integer_wide_t = detail::integer_wide_t<T>;
 
 template <typename Result = void, arithmetic_integer T>
+  requires(std::same_as<Result, void> || std::same_as<Result, T>)
 constexpr std::expected<result<T, integer_status>, arithmetic_error> add(
     const context&, T a, T b, integer_control c = {}) {
   if (c.overflow == integer_overflow_mode::wrap)
@@ -114,6 +120,7 @@ constexpr std::expected<result<T, integer_status>, arithmetic_error> add(
   }
 }
 template <typename Result = void, arithmetic_integer T>
+  requires(std::same_as<Result, void> || std::same_as<Result, T>)
 constexpr std::expected<result<T, integer_status>, arithmetic_error> sub(
     const context&, T a, T b, integer_control c = {}) {
   if (c.overflow == integer_overflow_mode::wrap)
@@ -186,6 +193,19 @@ mad(const context& ctx, T a, T b, C c, product_control control = {}) {
   if constexpr (!std::same_as<C, R>) {
     return std::unexpected(arithmetic_error::unsupported_type_combination);
   } else {
+    if constexpr (std::same_as<R, std::int32_t> &&
+                  std::same_as<T, std::int32_t>) {
+      if (control.part == product_part::high &&
+          control.overflow == integer_overflow_mode::saturate) {
+        using U = detail::unsigned_integer_t<T>;
+        using W = detail::integer_wide_t<T>;
+        using UW = std::make_unsigned_t<W>;
+        constexpr unsigned n = std::numeric_limits<U>::digits;
+        const auto product = static_cast<UW>(W(a) * W(b));
+        const auto high = detail::from_bits<T>(U(product >> n));
+        return detail::saturate_from<T>(W(high) + W(c));
+      }
+    }
     auto p = mul<Result>(ctx, a, b, control);
     if (!p)
       return std::unexpected(p.error());
@@ -295,6 +315,7 @@ constexpr std::expected<result<T, integer_status>, arithmetic_error> sad(
 #define PTXSIM_ARITH_FLOAT_BINARY(name, capability)                        \
   template <typename Result = void, typename T>                            \
     requires scalar_float<T> &&                                            \
+             (std::same_as<Result, void> || std::same_as<Result, T>) &&    \
              operation_capability<scalar_operation::capability, T, T,      \
                                   T>::value                                \
   inline std::expected<result<T, floating_status>, arithmetic_error> name( \
@@ -321,7 +342,8 @@ inline std::expected<result<Result, floating_status>, arithmetic_error> sub(
   return detail::dispatch::sub(a, b, control);
 }
 template <typename Result = void, typename T>
-  requires operation_capability<scalar_operation::fma, T, T, T, T>::value
+  requires(std::same_as<Result, void> || std::same_as<Result, T>) &&
+          operation_capability<scalar_operation::fma, T, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> fma(
     const context&, T a, T b, T c, floating_control control = {}) {
   return detail::dispatch::fma(a, b, c, control);
@@ -336,7 +358,8 @@ inline std::expected<result<Result, floating_status>, arithmetic_error> fma(
   return detail::dispatch::fma(a, b, c, control);
 }
 template <typename Result = void, typename T>
-  requires operation_capability<scalar_operation::mad, T, T, T, T>::value
+  requires(std::same_as<Result, void> || std::same_as<Result, T>) &&
+          operation_capability<scalar_operation::mad, T, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> mad(
     const context& ctx, T a, T b, T c, floating_control control = {}) {
   // The reference profile defines floating mad as fused.  Legacy separate
@@ -351,38 +374,53 @@ inline std::expected<result<T, floating_status>, arithmetic_error> sqrt(
   return detail::dispatch::sqrt(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::rcp,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::rcp(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::abs,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> abs(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::abs(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::neg,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> neg(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::neg(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires operation_capability<scalar_operation::min, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> min(
-    const context&, T a, T b, floating_control c = {}) {
-  return detail::dispatch::min(a, b, c);
+    const context&, T a, T b, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::min(a, b, c, modifiers);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires operation_capability<scalar_operation::max, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> max(
-    const context&, T a, T b, floating_control c = {}) {
-  return detail::dispatch::max(a, b, c);
+    const context&, T a, T b, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::max(a, b, c, modifiers);
+}
+template <typename D>
+  requires std::same_as<std::remove_cvref_t<D>, float32_t>
+inline std::expected<result<float32_t, floating_status>, arithmetic_error>
+min(const context&, float32_t a, float32_t b, D d, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::min(a, b, d, modifiers, c);
+}
+template <typename D>
+  requires std::same_as<std::remove_cvref_t<D>, float32_t>
+inline std::expected<result<float32_t, floating_status>, arithmetic_error>
+max(const context&, float32_t a, float32_t b, D d, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::max(a, b, d, modifiers, c);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
@@ -396,8 +434,10 @@ constexpr result<T> copysign(const context&, T sign, T magnitude) noexcept {
 inline std::expected<result<float32_t, floating_status>, arithmetic_error> div(
     const context& ctx, float32_t a, float32_t b,
     special_function_control c) {
-  if (!detail::special_subnormal_valid<float32_t>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::div,
+                                                    float32_t>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return div(ctx, a, b, floating_control{.subnormal = c.subnormal});
   if (!detail::supported_approximation_profile(ctx))
@@ -410,106 +450,101 @@ template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> sqrt(
     const context& ctx, T a, special_function_control c) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::sqrt,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return sqrt(ctx, a, floating_control{.subnormal = c.subnormal});
-  if constexpr (!std::same_as<T, float32_t>)
-    return std::unexpected(arithmetic_error::unsupported_operation);
-  else if (!detail::supported_approximation_profile(ctx))
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  else
+  if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::sqrt_approx(a, c, ctx.profile().approximation);
+  else
+    return std::unexpected(arithmetic_error::unsupported_operation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
     const context& ctx, T a, special_function_control c) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::rcp,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return rcp(ctx, a, floating_control{.subnormal = c.subnormal});
-  if (c.approximation == approximation_mode::ptx_full ||
-      !detail::supported_approximation_profile(ctx))
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rcp_approx(a, c, ctx.profile().approximation);
   else
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return detail::dispatch::rcp_approx_ftz(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> rsqrt(
     const context& ctx, T a, special_function_control c = {}) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-  if (c.approximation == approximation_mode::exact) {
-    // sqrt followed by reciprocal double-rounds; do not label that sequence
-    // as an exact rsqrt implementation.
-    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  }
-  if (c.approximation == approximation_mode::ptx_full ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::rsqrt,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
-  else if (c.subnormal == subnormal_mode::flush_input ||
-           c.subnormal == subnormal_mode::flush_input_and_output) {
-    return std::unexpected(arithmetic_error::unsupported_operation);
-  }
+  else if (c.subnormal == subnormal_mode::preserve)
+    return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
   else
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+    return detail::dispatch::rsqrt_approx_ftz(a, c,
+                                              ctx.profile().approximation);
 }
-#define PTXSIM_ARITH_APPROX_UNARY(name)                                   \
+#define PTXSIM_ARITH_APPROX_UNARY(name, operation)                        \
   inline std::expected<result<float32_t, floating_status>, arithmetic_error> \
   name(const context& ctx, float32_t a, special_function_control c = {}) { \
-    if (c.approximation != approximation_mode::ptx_approximate ||          \
-        !detail::special_subnormal_valid<float32_t>(c) ||                   \
-        !detail::supported_approximation_profile(ctx))                      \
+    if (auto valid = detail::validate_special_control<scalar_operation::operation, \
+                                                      float32_t>(c); !valid) \
+      return std::unexpected(valid.error());                                \
+    if (!detail::supported_approximation_profile(ctx))                      \
       return std::unexpected(arithmetic_error::unsupported_approximation_mode); \
     return detail::dispatch::name##_approx(a, c, ctx.profile().approximation); \
   }
-PTXSIM_ARITH_APPROX_UNARY(sin)
-PTXSIM_ARITH_APPROX_UNARY(cos)
-PTXSIM_ARITH_APPROX_UNARY(lg2)
-PTXSIM_ARITH_APPROX_UNARY(ex2)
+PTXSIM_ARITH_APPROX_UNARY(sin, sin)
+PTXSIM_ARITH_APPROX_UNARY(cos, cos)
+PTXSIM_ARITH_APPROX_UNARY(lg2, lg2)
+PTXSIM_ARITH_APPROX_UNARY(ex2, ex2)
 #undef PTXSIM_ARITH_APPROX_UNARY
 inline std::expected<result<float32_t, floating_status>, arithmetic_error> tanh(
     const context& ctx, float32_t a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::special_subnormal_valid<float32_t>(c) ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::tanh,
+                                                    float32_t>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if (c.subnormal == subnormal_mode::flush_input ||
-      c.subnormal == subnormal_mode::flush_input_and_output)
-    a = flush_subnormal(a);
   return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> tanh(
     const context& ctx, T a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::tanh,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if constexpr (std::same_as<T, bfloat16_t>)
-    if (c.subnormal != subnormal_mode::flush_input_and_output)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-  if (c.subnormal == subnormal_mode::flush_input ||
-      c.subnormal == subnormal_mode::flush_input_and_output)
-    a = flush_subnormal(a);
   return detail::dispatch::tanh_approx(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> ex2(
     const context& ctx, T a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::ex2,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if constexpr (std::same_as<T, bfloat16_t>)
-    if (c.subnormal != subnormal_mode::flush_input_and_output)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   if (c.subnormal == subnormal_mode::flush_input ||
       c.subnormal == subnormal_mode::flush_input_and_output)
     a = flush_subnormal(a);
@@ -520,38 +555,18 @@ constexpr result<T> select(predicate_t p, T yes, T no) noexcept {
   return {p ? yes : no};
 }
 template <typename T>
-  requires FloatingFormat<T>
-constexpr result<predicate_t> compare(const context&, T a, T b,
-                                      comparison_control c = {}) {
-  if (is_nan(a) || is_nan(b))
-    return {c.nan == nan_comparison_mode::unordered};
-  if (is_zero(a) && is_zero(b)) {
-    return {c.relation == comparison_relation::equal ||
-            c.relation == comparison_relation::less_equal ||
-            c.relation == comparison_relation::greater_equal};
-  }
-  using U = typename FormatTraits<T>::Bits;
-  constexpr U sign = FormatTraits<T>::sign_mask;
-  const auto order = [](U x) {
-    return (x & sign) ? static_cast<U>(~x) : static_cast<U>(x | sign);
-  };
-  const auto x = order(normalize_encoding(a).bits()),
-             y = order(normalize_encoding(b).bits());
-  switch (c.relation) {
-    case comparison_relation::equal:
-      return {x == y};
-    case comparison_relation::not_equal:
-      return {x != y};
-    case comparison_relation::less:
-      return {x < y};
-    case comparison_relation::less_equal:
-      return {x <= y};
-    case comparison_relation::greater:
-      return {x > y};
-    case comparison_relation::greater_equal:
-      return {x >= y};
-  }
-  return {false};
+  requires operation_capability<scalar_operation::compare, predicate_t, T,
+                                T>::value
+inline std::expected<result<predicate_t, floating_status>, arithmetic_error>
+compare(const context&, T a, T b, comparison_control c = {},
+        floating_control floating = {}) {
+  return detail::dispatch::compare(a, b, c, floating);
+}
+template <typename T>
+  requires operation_capability<scalar_operation::testp, predicate_t, T>::value
+inline std::expected<result<predicate_t, floating_status>, arithmetic_error>
+testp(const context&, T value, floating_test test) {
+  return detail::dispatch::testp(value, test);
 }
 namespace detail {
 template <typename To>
@@ -608,19 +623,6 @@ constexpr void apply_destination_controls(canonical::number& value,
                         1 >=
                     0)) {
       value = {.classification = number_class::finite, .significand = 1};
-    }
-  }
-  if constexpr (std::same_as<To, fixed8_s2f6_t>) {
-    if (c.saturation == saturation_mode::finite &&
-        (value.classification == number_class::nan ||
-         value.classification == number_class::infinity)) {
-      // S2F6 has no non-finite encoding.  Its finite form saturates to the
-      // signed fixed endpoint; NaN is deliberately canonicalized positive.
-      value = {.classification = number_class::finite,
-               .negative = value.classification == number_class::infinity &&
-                           value.negative,
-               .significand = 127,
-               .exponent = -fixed8_s2f6_t::fraction_bits};
     }
   }
   if (c.activation == activation_mode::relu && value.negative &&

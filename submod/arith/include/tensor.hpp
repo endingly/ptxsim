@@ -168,29 +168,30 @@ block_scale_view(const std::array<Scale, Count>&, block_scale_layout)
 namespace detail {
 
 template <typename D>
-inline constexpr bool valid_tensor_control(const tensor_control& c) {
-  return c.accumulator_rounding != rounding_mode::nearest_away &&
-         c.accumulator_rounding != rounding_mode::stochastic &&
-         c.product_subnormal == subnormal_mode::preserve &&
-         c.accumulator_subnormal == subnormal_mode::preserve &&
-         c.order == accumulation_order::k_ascending &&
-         c.precision == accumulation_precision::format_defined &&
-         (c.saturation == saturation_mode::none ||
-          (std::same_as<D, int32_t> &&
-           c.saturation == saturation_mode::type_range)) &&
-         c.nan == tensor_nan_mode::profile_default;
-}
-template <typename D>
-inline constexpr arithmetic_error tensor_control_error(const tensor_control& c) {
-  if (c.accumulator_rounding == rounding_mode::nearest_away ||
-      c.accumulator_rounding == rounding_mode::stochastic)
-    return arithmetic_error::unsupported_rounding;
+constexpr std::expected<void, arithmetic_error> validate_tensor_control(
+    const tensor_control& c) {
+  if constexpr (std::same_as<D, int32_t>) {
+    if (c.accumulator_rounding != rounding_mode::nearest_even)
+      return std::unexpected(arithmetic_error::unsupported_rounding);
+  } else if (!floating_operation_control_capability<
+                 scalar_operation::fma, D>::supports(c.accumulator_rounding)) {
+    return std::unexpected(arithmetic_error::unsupported_rounding);
+  }
   if (c.product_subnormal != subnormal_mode::preserve ||
       c.accumulator_subnormal != subnormal_mode::preserve)
-    return arithmetic_error::unsupported_subnormal_mode;
-  if (c.saturation != saturation_mode::none)
-    return arithmetic_error::unsupported_saturation;
-  return arithmetic_error::unsupported_operation;
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if constexpr (std::same_as<D, int32_t>) {
+    if (c.saturation != saturation_mode::none &&
+        c.saturation != saturation_mode::type_range)
+      return std::unexpected(arithmetic_error::unsupported_saturation);
+  } else if (c.saturation != saturation_mode::none) {
+    return std::unexpected(arithmetic_error::unsupported_saturation);
+  }
+  if (c.order != accumulation_order::k_ascending ||
+      c.precision != accumulation_precision::format_defined ||
+      c.nan != tensor_nan_mode::profile_default)
+    return std::unexpected(arithmetic_error::unsupported_operation);
+  return {};
 }
 
 [[nodiscard]] constexpr bool supported_tensor_profile(const context& ctx) {
@@ -580,8 +581,8 @@ std::expected<result<tile<M, N, D>, tensor_status>, arithmetic_error> mma(
     return std::unexpected(arithmetic_error::unsupported_type_combination);
   if (!detail::supported_tensor_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_model_profile);
-  if (!detail::valid_tensor_control<D>(control))
-    return std::unexpected(detail::tensor_control_error<D>(control));
+  if (auto valid = detail::validate_tensor_control<D>(control); !valid)
+    return std::unexpected(valid.error());
   tile<M, N, D> out{};
   auto status = detail::initial_status<D>(ctx);
   for (std::size_t row = 0; row != M; ++row)
@@ -619,8 +620,8 @@ std::expected<result<tile<M, N, D>, tensor_status>, arithmetic_error> mma(
     return std::unexpected(arithmetic_error::unsupported_type_combination);
   if (!detail::supported_tensor_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_model_profile);
-  if (!detail::valid_tensor_control<D>(control))
-    return std::unexpected(detail::tensor_control_error<D>(control));
+  if (auto valid = detail::validate_tensor_control<D>(control); !valid)
+    return std::unexpected(valid.error());
   if (!detail::valid_scales<A, B, ScaleA, ScaleB, M, N, K>(scales_a, scales_b))
     return std::unexpected(arithmetic_error::invalid_scale_layout);
   tile<M, N, D> out{};
@@ -650,8 +651,8 @@ std::expected<tensor_status, arithmetic_error> mma(
     return std::unexpected(arithmetic_error::unsupported_type_combination);
   if (!detail::supported_tensor_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_model_profile);
-  if (!detail::valid_tensor_control<D>(control))
-    return std::unexpected(detail::tensor_control_error<D>(control));
+  if (auto valid = detail::validate_tensor_control<D>(control); !valid)
+    return std::unexpected(valid.error());
   const auto needs_data = [](const auto& view) { return view.rows && view.cols; };
   if (a.cols != b.rows || a.rows != c.rows || b.cols != c.cols ||
       d.rows != c.rows || d.cols != c.cols || a.stride < a.cols ||

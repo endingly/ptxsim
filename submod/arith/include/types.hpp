@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <bit>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
@@ -260,6 +262,7 @@ template <typename Element, std::size_t Lanes,
           typename Layout = default_packed_layout_t<Element, Lanes>>
 class packed_t {
  public:
+  static_assert(Lanes > 0);
   using element_type = Element;
   using layout_type = Layout;
   using traits = packed_layout_traits<Element, Lanes, Layout>;
@@ -275,6 +278,7 @@ class packed_t {
   }
   [[nodiscard]] constexpr container_type bits() const noexcept { return bits_; }
   [[nodiscard]] constexpr Element operator[](std::size_t lane) const noexcept {
+    assert(lane < Lanes);
     const auto mask = element_mask();
     return packed_element_codec<Element>::from_bits(
         (std::uint64_t{bits_} >> traits::lane_offset(lane)) & mask);

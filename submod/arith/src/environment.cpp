@@ -1,4 +1,5 @@
 #include "detail/backend.hpp"
+#include <ptxsim/arith/concepts.hpp>
 #include <ptxsim/arith/context.hpp>
 #include <ptxsim/arith/detail/dispatch.hpp>
 #include <ptxsim/arith/detail/format_traits.hpp>
@@ -362,6 +363,63 @@ RoundingMode legacy_rounding(rounding_mode mode) {
 ArithmeticControl legacy(floating_control control) {
   return {legacy_rounding(control.rounding), false, SubnormalMode::Preserve};
 }
+MinMaxControl legacy(minmax_control control) {
+  return {control.nan == minmax_nan_mode::propagate, control.absolute,
+          control.xor_sign};
+}
+std::expected<CompareOp, arithmetic_error> legacy(comparison_control control) {
+  if (control.relation == comparison_relation::number) {
+    if (control.nan != nan_comparison_mode::ordered)
+      return std::unexpected(arithmetic_error::unsupported_operation);
+    return CompareOp::Number;
+  }
+  if (control.relation == comparison_relation::nan) {
+    if (control.nan != nan_comparison_mode::ordered)
+      return std::unexpected(arithmetic_error::unsupported_operation);
+    return CompareOp::NaN;
+  }
+  switch (control.relation) {
+    case comparison_relation::equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::EqualUnordered
+                 : CompareOp::Equal;
+    case comparison_relation::not_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::NotEqualUnordered
+                 : CompareOp::NotEqual;
+    case comparison_relation::less:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::LessUnordered
+                 : CompareOp::Less;
+    case comparison_relation::less_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::LessEqualUnordered
+                 : CompareOp::LessEqual;
+    case comparison_relation::greater:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::GreaterUnordered
+                 : CompareOp::Greater;
+    case comparison_relation::greater_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::GreaterEqualUnordered
+                 : CompareOp::GreaterEqual;
+    case comparison_relation::number:
+    case comparison_relation::nan:
+      std::unreachable();
+  }
+  return std::unexpected(arithmetic_error::unsupported_operation);
+}
+TestpOp legacy(floating_test test) {
+  switch (test) {
+    case floating_test::finite: return TestpOp::Finite;
+    case floating_test::infinite: return TestpOp::Infinite;
+    case floating_test::number: return TestpOp::Number;
+    case floating_test::nan: return TestpOp::NotANumber;
+    case floating_test::normal: return TestpOp::Normal;
+    case floating_test::subnormal: return TestpOp::Subnormal;
+  }
+  std::unreachable();
+}
 ConversionControl legacy(conversion_control control) {
   return {legacy_rounding(control.rounding), false};
 }
@@ -386,64 +444,63 @@ T output_ftz(T value, subnormal_mode mode) {
              ? flush_subnormal(value)
              : value;
 }
-[[nodiscard]] float32_t apply_result_controls(float32_t value,
-                                               floating_control control) {
-  // PTX scalar F32 .sat has a defined NaN result (positive zero).
+template <typename T>
+[[nodiscard]] T apply_result_controls(T value, floating_control control) {
   if (control.saturation == saturation_mode::zero_to_one) {
     if (is_nan(value) || is_negative(value))
-      return float32_t{};
-    if (value.bits() > 0x3f800000u)
-      return float32_t::from_bits(0x3f800000u);
-    return value;
+      return T{};
+    using Traits = FormatTraits<T>;
+    const auto one = T::from_bits(static_cast<typename Traits::Bits>(
+        static_cast<typename Traits::Bits>(Traits::exponent_bias)
+        << Traits::fraction_bits));
+    if (value.bits() > one.bits())
+      return one;
+  }
+  if (control.activation == activation_mode::relu) {
+    if (is_nan(value)) {
+      using Traits = FormatTraits<T>;
+      return T::from_bits(static_cast<typename Traits::Bits>(
+          (static_cast<typename Traits::Bits>(Traits::canonical_nan_exponent_field)
+           << Traits::fraction_bits) |
+          static_cast<typename Traits::Bits>(
+              Traits::canonical_nan_fraction_field)));
+    }
+    if (is_negative(value))
+      return T{};
   }
   return value;
 }
-template <typename T>
-[[nodiscard]] T apply_result_controls(T value, floating_control) {
-  return value;
-}
-template <typename T>
+template <scalar_operation Op, typename T, typename... Operands>
 std::expected<void, arithmetic_error> validate(floating_control control) {
-  if (control.rounding == rounding_mode::nearest_away ||
-      control.rounding == rounding_mode::stochastic)
+  using Capability = floating_operation_control_capability<Op, T, Operands...>;
+  if (!Capability::supported)
+    return std::unexpected(arithmetic_error::unsupported_operation);
+  if (!Capability::supports(control.rounding))
     return std::unexpected(arithmetic_error::unsupported_rounding);
-  if constexpr (std::same_as<T, float32_t>) {
-    if (control.subnormal != subnormal_mode::preserve &&
-        control.subnormal != subnormal_mode::flush_input_and_output)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-    if (control.saturation != saturation_mode::none &&
-        control.saturation != saturation_mode::zero_to_one)
-      return std::unexpected(arithmetic_error::unsupported_saturation);
-    if (control.activation != activation_mode::none)
-      return std::unexpected(arithmetic_error::unsupported_activation);
-  } else {
-    if (control.saturation != saturation_mode::none)
-      return std::unexpected(arithmetic_error::unsupported_saturation);
-    if (control.activation != activation_mode::none)
-      return std::unexpected(arithmetic_error::unsupported_activation);
-  }
-  if constexpr (std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
-    if (control.rounding != rounding_mode::nearest_even)
-      return std::unexpected(arithmetic_error::unsupported_rounding);
-  if constexpr (std::same_as<T, float64_t>)
-    if (control.subnormal != subnormal_mode::preserve)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (!Capability::supports(control.subnormal))
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (!Capability::supports(control.saturation))
+    return std::unexpected(arithmetic_error::unsupported_saturation);
+  if (!Capability::supports(control.activation))
+    return std::unexpected(arithmetic_error::unsupported_activation);
+  if (!Capability::supports(control))
+    return std::unexpected(arithmetic_error::unsupported_activation);
   return {};
 }
-template <typename T, typename F>
+template <scalar_operation Op, typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> execute(
     floating_control control, F&& operation, T a) {
-  if (auto valid = validate<T>(control); !valid)
+  if (auto valid = validate<Op, T>(control); !valid)
     return std::unexpected(valid.error());
   auto raw = operation(input_ftz(a, control.subnormal));
   return result<T, floating_status>{
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
 }
-template <typename T, typename F>
+template <scalar_operation Op, typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> execute(
     floating_control control, F&& operation, T a, T b) {
-  if (auto valid = validate<T>(control); !valid)
+  if (auto valid = validate<Op, T>(control); !valid)
     return std::unexpected(valid.error());
   auto raw = operation(input_ftz(a, control.subnormal),
                        input_ftz(b, control.subnormal));
@@ -451,10 +508,10 @@ std::expected<result<T, floating_status>, arithmetic_error> execute(
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
 }
-template <typename T, typename F>
+template <scalar_operation Op, typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> execute(
     floating_control control, F&& operation, T a, T b, T c) {
-  if (auto valid = validate<T>(control); !valid)
+  if (auto valid = validate<Op, T>(control); !valid)
     return std::unexpected(valid.error());
   auto raw = operation(input_ftz(a, control.subnormal),
                        input_ftz(b, control.subnormal),
@@ -463,12 +520,21 @@ std::expected<result<T, floating_status>, arithmetic_error> execute(
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
 }
+template <scalar_operation Op, typename T, typename F>
+std::expected<result<predicate_t, floating_status>, arithmetic_error>
+execute_predicate(floating_control control, F&& operation, T a, T b) {
+  if (auto valid = validate<Op, T>(control); !valid)
+    return std::unexpected(valid.error());
+  auto raw = operation(input_ftz(a, control.subnormal),
+                       input_ftz(b, control.subnormal));
+  return result<predicate_t, floating_status>{raw.value, status(raw.flags)};
+}
 }  // namespace
 
 #define PTXSIM_DISPATCH_BINARY(T, name)                                    \
   std::expected<result<T, floating_status>, arithmetic_error> name(        \
       T a, T b, floating_control c) {                                      \
-    return execute<T>(c, [&](T x, T y) { return backend::name(x, y, legacy(c)); }, a, b); \
+    return execute<scalar_operation::name, T>(c, [&](T x, T y) { return backend::name(x, y, legacy(c)); }, a, b); \
   }
 #define PTXSIM_DISPATCH_BINARY_SET(T) \
   PTXSIM_DISPATCH_BINARY(T, add) PTXSIM_DISPATCH_BINARY(T, sub) PTXSIM_DISPATCH_BINARY(T, mul)
@@ -541,7 +607,7 @@ quantize_tf32(float32_t value, conversion_control control,
 #define PTXSIM_DISPATCH_MIXED(name, T)                                    \
   std::expected<result<float32_t, floating_status>, arithmetic_error> name(\
       T a, float32_t b, floating_control c) {                              \
-    if (auto valid = validate<float32_t>(c); !valid)                        \
+    if (auto valid = validate<scalar_operation::name, float32_t, T, float32_t>(c); !valid) \
       return std::unexpected(valid.error());                               \
     auto raw = backend::name(input_ftz(a, c.subnormal),                    \
                              input_ftz(b, c.subnormal), legacy(c));        \
@@ -556,14 +622,14 @@ PTXSIM_DISPATCH_MIXED(sub, bfloat16_t)
 #undef PTXSIM_DISPATCH_MIXED
 
 std::expected<result<float32_t, floating_status>, arithmetic_error> div(
-    float32_t a, float32_t b, floating_control c) { return execute<float32_t>(c, [&](auto x, auto y) { return backend::div(x, y, legacy(c)); }, a, b); }
+    float32_t a, float32_t b, floating_control c) { return execute<scalar_operation::div, float32_t>(c, [&](auto x, auto y) { return backend::div(x, y, legacy(c)); }, a, b); }
 std::expected<result<float64_t, floating_status>, arithmetic_error> div(
-    float64_t a, float64_t b, floating_control c) { return execute<float64_t>(c, [&](auto x, auto y) { return backend::div(x, y, legacy(c)); }, a, b); }
+    float64_t a, float64_t b, floating_control c) { return execute<scalar_operation::div, float64_t>(c, [&](auto x, auto y) { return backend::div(x, y, legacy(c)); }, a, b); }
 
 #define PTXSIM_DISPATCH_FMA(T)                                             \
   std::expected<result<T, floating_status>, arithmetic_error> fma(         \
       T a, T b, T z, floating_control c) {                                 \
-    return execute<T>(c, [&](T x, T y, T q) { return backend::fma(x, y, q, legacy(c)); }, a, b, z); \
+    return execute<scalar_operation::fma, T>(c, [&](T x, T y, T q) { return backend::fma(x, y, q, legacy(c)); }, a, b, z); \
   }
 PTXSIM_DISPATCH_FMA(float16_t)
 PTXSIM_DISPATCH_FMA(bfloat16_t)
@@ -572,7 +638,7 @@ PTXSIM_DISPATCH_FMA(float64_t)
 #undef PTXSIM_DISPATCH_FMA
 std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
     float16_t a, float16_t b, float32_t z, floating_control c) {
-  if (auto valid = validate<float32_t>(c); !valid) return std::unexpected(valid.error());
+  if (auto valid = validate<scalar_operation::fma, float32_t, float16_t, float16_t, float32_t>(c); !valid) return std::unexpected(valid.error());
   auto raw = backend::fma(input_ftz(a, c.subnormal), input_ftz(b, c.subnormal),
                           input_ftz(z, c.subnormal), legacy(c));
   return result<float32_t, floating_status>{
@@ -581,7 +647,7 @@ std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
 }
 std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
     bfloat16_t a, bfloat16_t b, float32_t z, floating_control c) {
-  if (auto valid = validate<float32_t>(c); !valid) return std::unexpected(valid.error());
+  if (auto valid = validate<scalar_operation::fma, float32_t, bfloat16_t, bfloat16_t, float32_t>(c); !valid) return std::unexpected(valid.error());
   auto raw = backend::fma(input_ftz(a, c.subnormal), input_ftz(b, c.subnormal),
                           input_ftz(z, c.subnormal), legacy(c));
   return result<float32_t, floating_status>{
@@ -591,24 +657,103 @@ std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
 
 #define PTXSIM_DISPATCH_UNARY(T, name)                                     \
   std::expected<result<T, floating_status>, arithmetic_error> name(        \
-      T a, floating_control c) { return execute<T>(c, [&](T x) { return backend::name(x, legacy(c)); }, a); }
-#define PTXSIM_DISPATCH_MINMAX(T, name)                                    \
-  std::expected<result<T, floating_status>, arithmetic_error> name(        \
-      T a, T b, floating_control c) { return execute<T>(c, [&](T x, T y) { return backend::name(x, y, {}, legacy(c)); }, a, b); }
+      T a, floating_control c) { return execute<scalar_operation::name, T>(c, [&](T x) { return backend::name(x, legacy(c)); }, a); }
 #define PTXSIM_DISPATCH_UNARY_SET(T) \
-  PTXSIM_DISPATCH_UNARY(T, abs) PTXSIM_DISPATCH_UNARY(T, neg) \
-  PTXSIM_DISPATCH_MINMAX(T, min) PTXSIM_DISPATCH_MINMAX(T, max)
+  PTXSIM_DISPATCH_UNARY(T, abs) PTXSIM_DISPATCH_UNARY(T, neg)
 PTXSIM_DISPATCH_UNARY_SET(float16_t)
 PTXSIM_DISPATCH_UNARY_SET(bfloat16_t)
 PTXSIM_DISPATCH_UNARY_SET(float32_t)
 PTXSIM_DISPATCH_UNARY_SET(float64_t)
 #undef PTXSIM_DISPATCH_UNARY_SET
-#undef PTXSIM_DISPATCH_MINMAX
 #undef PTXSIM_DISPATCH_UNARY
+
+template <scalar_operation Op, typename T>
+std::expected<void, arithmetic_error> validate_minmax(
+    floating_control floating, minmax_control modifiers) {
+  if (auto valid = validate<Op, T>(floating); !valid)
+    return std::unexpected(valid.error());
+  if (!minmax_control_capability<T>::supports(modifiers))
+    return std::unexpected(arithmetic_error::unsupported_minmax_modifier);
+  return {};
+}
+#define PTXSIM_DISPATCH_MINMAX(T, name)                                    \
+  std::expected<result<T, floating_status>, arithmetic_error> name(        \
+      T a, T b, floating_control c, minmax_control modifiers) {            \
+    if (auto valid = validate_minmax<scalar_operation::name, T>(c, modifiers); !valid) \
+      return std::unexpected(valid.error());                               \
+    auto raw = backend::name(input_ftz(a, c.subnormal), input_ftz(b, c.subnormal), \
+                             legacy(modifiers), legacy(c));                 \
+    return result<T, floating_status>{output_ftz(raw.value, c.subnormal), status(raw.flags)}; \
+  }
+PTXSIM_DISPATCH_MINMAX(float16_t, min)
+PTXSIM_DISPATCH_MINMAX(bfloat16_t, min)
+PTXSIM_DISPATCH_MINMAX(float32_t, min)
+PTXSIM_DISPATCH_MINMAX(float64_t, min)
+PTXSIM_DISPATCH_MINMAX(float16_t, max)
+PTXSIM_DISPATCH_MINMAX(bfloat16_t, max)
+PTXSIM_DISPATCH_MINMAX(float32_t, max)
+PTXSIM_DISPATCH_MINMAX(float64_t, max)
+#undef PTXSIM_DISPATCH_MINMAX
+
+template <scalar_operation Op>
+std::expected<result<float32_t, floating_status>, arithmetic_error> minmax3(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c, bool minimum) {
+  if (auto valid = validate<Op, float32_t>(c); !valid)
+    return std::unexpected(valid.error());
+  if (!minmax_control_capability<float32_t, true>::supports(modifiers))
+    return std::unexpected(arithmetic_error::unsupported_minmax_modifier);
+  auto raw = minimum
+                 ? backend::min(input_ftz(a, c.subnormal),
+                                input_ftz(b, c.subnormal),
+                                input_ftz(d, c.subnormal), legacy(modifiers),
+                                legacy(c))
+                 : backend::max(input_ftz(a, c.subnormal),
+                                input_ftz(b, c.subnormal),
+                                input_ftz(d, c.subnormal), legacy(modifiers),
+                                legacy(c));
+  return {{output_ftz(raw.value, c.subnormal), status(raw.flags)}};
+}
+std::expected<result<float32_t, floating_status>, arithmetic_error> min(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c) {
+  return minmax3<scalar_operation::min>(a, b, d, modifiers, c, true);
+}
+std::expected<result<float32_t, floating_status>, arithmetic_error> max(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c) {
+  return minmax3<scalar_operation::max>(a, b, d, modifiers, c, false);
+}
+
+#define PTXSIM_DISPATCH_COMPARE(T)                                         \
+  std::expected<result<predicate_t, floating_status>, arithmetic_error>    \
+  compare(T a, T b, comparison_control relation, floating_control c) {     \
+    auto operation = legacy(relation);                                     \
+    if (!operation) return std::unexpected(operation.error());             \
+    const auto backend_control = legacy(c);                                \
+    return execute_predicate<scalar_operation::compare, T>(                \
+        c, [operation = *operation, backend_control](T x, T y) { return backend::compare(x, y, operation, backend_control); }, a, b); \
+  }
+PTXSIM_DISPATCH_COMPARE(float16_t)
+PTXSIM_DISPATCH_COMPARE(bfloat16_t)
+PTXSIM_DISPATCH_COMPARE(float32_t)
+PTXSIM_DISPATCH_COMPARE(float64_t)
+#undef PTXSIM_DISPATCH_COMPARE
+
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float32_t value, floating_test test) {
+  const auto raw = backend::testp(value, legacy(test));
+  return {{raw.value, status(raw.flags)}};
+}
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float64_t value, floating_test test) {
+  const auto raw = backend::testp(value, legacy(test));
+  return {{raw.value, status(raw.flags)}};
+}
 
 #define PTXSIM_DISPATCH_F32F64_UNARY(T, name)                              \
   std::expected<result<T, floating_status>, arithmetic_error> name(        \
-      T a, floating_control c) { return execute<T>(c, [&](T x) { return backend::name(x, legacy(c)); }, a); }
+      T a, floating_control c) { return execute<scalar_operation::name, T>(c, [&](T x) { return backend::name(x, legacy(c)); }, a); }
 PTXSIM_DISPATCH_F32F64_UNARY(float32_t, sqrt)
 PTXSIM_DISPATCH_F32F64_UNARY(float64_t, sqrt)
 PTXSIM_DISPATCH_F32F64_UNARY(float32_t, rcp)
@@ -627,6 +772,13 @@ ApproximationControl legacy(special_function_control control,
   result.profile = profile;
   return result;
 }
+template <typename T>
+std::expected<result<T, floating_status>, arithmetic_error> model_dependent(
+    std::expected<result<T, floating_status>, arithmetic_error> out) {
+  if (out)
+    out->status.model_dependent = true;
+  return out;
+}
 template <typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> approximate(
     T value, special_function_control control, F&& operation) {
@@ -634,22 +786,23 @@ std::expected<result<T, floating_status>, arithmetic_error> approximate(
   auto raw = operation(input);
   auto out = result<T, floating_status>{output_ftz(raw.value, control.subnormal),
                                         status(raw.flags)};
-  out.status.model_dependent = true;
-  return out;
+  return model_dependent<T>(out);
 }
 }  // namespace
 
 std::expected<result<float32_t, floating_status>, arithmetic_error> div_approx(
     float32_t a, float32_t b, special_function_control c,
     const approximation_profile& profile) {
-  return execute<float32_t>({.subnormal = c.subnormal}, [&](auto x, auto y) {
-    return backend::div_approx(x, y, legacy(c, profile)); }, a, b);
+  return model_dependent(execute<scalar_operation::div, float32_t>(
+      {.subnormal = c.subnormal}, [&](auto x, auto y) {
+    return backend::div_approx(x, y, legacy(c, profile)); }, a, b));
 }
 std::expected<result<float32_t, floating_status>, arithmetic_error> div_full(
     float32_t a, float32_t b, special_function_control c,
     const approximation_profile& profile) {
-  return execute<float32_t>({.subnormal = c.subnormal}, [&](auto x, auto y) {
-    return backend::div_full(x, y, legacy(c, profile)); }, a, b);
+  return model_dependent(execute<scalar_operation::div, float32_t>(
+      {.subnormal = c.subnormal}, [&](auto x, auto y) {
+    return backend::div_full(x, y, legacy(c, profile)); }, a, b));
 }
 #define PTXSIM_APPROX_F32(name)                                            \
   std::expected<result<float32_t, floating_status>, arithmetic_error> name(\
@@ -662,6 +815,22 @@ PTXSIM_APPROX_F32(cos_approx)
 PTXSIM_APPROX_F32(lg2_approx)
 PTXSIM_APPROX_F32(ex2_approx)
 #undef PTXSIM_APPROX_F32
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rcp_approx_ftz(float64_t v, special_function_control c,
+               const approximation_profile&) {
+  return approximate(v, c, [](float64_t x) { return backend::rcp_approx_ftz(x); });
+}
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx(float64_t v, special_function_control c,
+             const approximation_profile&) {
+  return approximate(v, c, [](float64_t x) { return backend::rsqrt_approx(x); });
+}
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx_ftz(float64_t v, special_function_control c,
+                 const approximation_profile&) {
+  return approximate(v, c,
+                     [](float64_t x) { return backend::rsqrt_approx_ftz(x); });
+}
 std::expected<result<float32_t, floating_status>, arithmetic_error> tanh_approx(
     float32_t v, special_function_control c, const approximation_profile& p) {
   return approximate(v, c, [&](float32_t x) { return backend::tanh_approx(x, legacy(c, p)); });

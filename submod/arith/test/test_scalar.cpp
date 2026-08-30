@@ -10,6 +10,92 @@
 
 namespace ptxsim::arith::test {
 
+template <typename Result, typename T>
+concept same_type_add_callable = requires(const context& c, T value) {
+  add<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_sub_callable = requires(const context& c, T value) {
+  sub<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_mul_callable = requires(const context& c, T value) {
+  mul<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_fma_callable = requires(const context& c, T value) {
+  fma<Result>(c, value, value, value);
+};
+template <typename Result, typename T>
+concept same_type_mad_callable = requires(const context& c, T value) {
+  mad<Result>(c, value, value, value);
+};
+
+TEST(ScalarArithmetic, SameTypeResultTemplateArgumentsAreConstrained) {
+  static_assert(same_type_add_callable<void, std::int32_t>);
+  static_assert(same_type_add_callable<std::int32_t, std::int32_t>);
+  static_assert(!same_type_add_callable<std::int64_t, std::int32_t>);
+  static_assert(same_type_sub_callable<void, std::int32_t>);
+  static_assert(same_type_sub_callable<std::int32_t, std::int32_t>);
+  static_assert(!same_type_sub_callable<std::int64_t, std::int32_t>);
+
+  static_assert(same_type_add_callable<void, float32_t>);
+  static_assert(same_type_add_callable<float32_t, float32_t>);
+  static_assert(!same_type_add_callable<float64_t, float32_t>);
+  static_assert(same_type_sub_callable<float32_t, float32_t>);
+  static_assert(!same_type_sub_callable<float64_t, float32_t>);
+  static_assert(same_type_mul_callable<float32_t, float32_t>);
+  static_assert(!same_type_mul_callable<float64_t, float32_t>);
+  static_assert(same_type_fma_callable<float32_t, float32_t>);
+  static_assert(!same_type_fma_callable<float64_t, float32_t>);
+  static_assert(same_type_mad_callable<float32_t, float32_t>);
+  static_assert(!same_type_mad_callable<float64_t, float32_t>);
+
+  static_assert(requires(const context& c, float16_t h, float32_t f) {
+    add<float32_t>(c, h, f);
+    fma<float32_t>(c, h, h, f);
+  });
+}
+
+TEST(ScalarArithmetic, PtxIntegerTypesDrivePublicCapabilities) {
+  static_assert(arithmetic_integer<std::int8_t>);
+  static_assert(arithmetic_integer<std::uint8_t>);
+  static_assert(arithmetic_integer<std::int16_t>);
+  static_assert(arithmetic_integer<std::uint16_t>);
+  static_assert(arithmetic_integer<std::int32_t>);
+  static_assert(arithmetic_integer<std::uint32_t>);
+  static_assert(arithmetic_integer<std::int64_t>);
+  static_assert(arithmetic_integer<std::uint64_t>);
+  static_assert(!arithmetic_integer<bool>);
+  static_assert(!arithmetic_integer<char>);
+  static_assert(!arithmetic_integer<wchar_t>);
+  static_assert(!arithmetic_integer<char16_t>);
+  static_assert(!arithmetic_integer<char32_t>);
+#if defined(__SIZEOF_INT128__)
+  static_assert(!arithmetic_integer<__int128>);
+#endif
+  static_assert(arithmetic_family_v<bool> == arithmetic_family::predicate);
+  static_assert(arithmetic_family_v<char> == arithmetic_family::raw_bits);
+
+  static_assert(operation_capability<scalar_operation::add, std::int32_t,
+                                     std::int32_t, std::int32_t>::value);
+  static_assert(!operation_capability<scalar_operation::add, char, char,
+                                      char>::value);
+  static_assert(!operation_capability<scalar_operation::mul, bool, bool,
+                                      bool>::value);
+  static_assert(convertible_to<float32_t, std::uint64_t>);
+  static_assert(convertible_to<std::int64_t, float32_t>);
+  static_assert(!convertible_to<float32_t, char>);
+  static_assert(!convertible_to<char, float32_t>);
+  static_assert(!convertible_to<float32_t, bool>);
+#if defined(__SIZEOF_INT128__)
+  static_assert(!operation_capability<scalar_operation::add, __int128,
+                                      __int128, __int128>::value);
+  static_assert(!convertible_to<float32_t, __int128>);
+  static_assert(!convertible_to<__int128, float32_t>);
+#endif
+}
+
 TEST(ScalarArithmetic, GenericScalarAndInteger) {
   context c;
   auto f = add(c, float32_t::from_bits(0x3f800000),
@@ -56,19 +142,130 @@ TEST(ScalarArithmetic, ThreadLocalState) {
 
 TEST(ScalarArithmetic, CompareAndBorrowEdges) {
   context c;
-  EXPECT_TRUE(compare(c, float32_t::from_bits(0xbf800000),
+  ASSERT_TRUE(compare(c, float32_t::from_bits(0xbf800000),
                       float32_t::from_bits(0x3f800000),
-                      {.relation = comparison_relation::less})
-                  .value);
-  EXPECT_TRUE(
-      compare(c, float32_t::from_bits(0x80000000), float32_t{}, {}).value);
+                      {.relation = comparison_relation::less}));
+  EXPECT_TRUE(compare(c, float32_t::from_bits(0x80000000), float32_t{}, {})
+                  ->value);
   EXPECT_FALSE(compare(c, float32_t::from_bits(0x7fc00000), float32_t{},
                        {.nan = nan_comparison_mode::ordered})
-                   .value);
+                   ->value);
   auto r =
       sub_with_borrow(uint32_t{}, std::numeric_limits<uint32_t>::max(), true);
   EXPECT_TRUE(r.status.borrow);
   EXPECT_EQ(r.value, 0u);
+}
+
+TEST(ScalarArithmetic, PublicMinMaxComparisonAndTestpControls) {
+  context c;
+  const auto qnan = float32_t::from_bits(0x7fc01234u);
+  const auto snan = float32_t::from_bits(0x7f800001u);
+  const auto one = float32_t::from_bits(0x3f800000u);
+
+  static_assert(minmax_control_capability<float32_t>::supports({}));
+  static_assert(!minmax_control_capability<float64_t>::supports(
+      {.nan = minmax_nan_mode::propagate}));
+  static_assert(operation_capability<scalar_operation::min, float32_t,
+                                     float32_t, float32_t, float32_t>::value);
+  static_assert(!minmax_control_capability<float8_e4m3_t>::supports({}));
+  static_assert(operation_capability<scalar_operation::testp, predicate_t,
+                                     float32_t>::value);
+  static_assert(!operation_capability<scalar_operation::testp, predicate_t,
+                                      float16_t>::value);
+
+  const auto number = min(c, qnan, one);
+  ASSERT_TRUE(number);
+  EXPECT_EQ(number->value.bits(), one.bits());
+  const auto compatibility = min(c, one, one, {});
+  ASSERT_TRUE(compatibility);
+  const auto propagated = min(c, qnan, one, {},
+                              {.nan = minmax_nan_mode::propagate});
+  ASSERT_TRUE(propagated);
+  EXPECT_EQ(propagated->value.bits(), 0x7fc00000u);
+  EXPECT_FALSE(propagated->status.invalid);
+
+  const auto minimum_zero = min(c, float32_t::from_bits(0x80000000u),
+                                float32_t{});
+  const auto maximum_zero = max(c, float32_t::from_bits(0x80000000u),
+                                float32_t{});
+  ASSERT_TRUE(minimum_zero);
+  ASSERT_TRUE(maximum_zero);
+  EXPECT_EQ(minimum_zero->value.bits(), 0x80000000u);
+  EXPECT_EQ(maximum_zero->value.bits(), 0u);
+
+  const auto abs_xor = min(c, float32_t::from_bits(0xc0400000u),
+                           float32_t::from_bits(0x40000000u),
+                           {}, {.absolute = true, .xor_sign = true});
+  ASSERT_TRUE(abs_xor);
+  EXPECT_EQ(abs_xor->value.bits(), 0xc0000000u);
+  const auto three = min(c, float32_t::from_bits(0x40400000u), one,
+                         float32_t::from_bits(0x40000000u));
+  ASSERT_TRUE(three);
+  EXPECT_EQ(three->value.bits(), one.bits());
+
+  EXPECT_EQ(min(c, one, one, {}, {.absolute = true}).error(),
+            arithmetic_error::unsupported_minmax_modifier);
+  EXPECT_EQ(min(c, float64_t::from_bits(0x3ff0000000000000ull),
+                float64_t::from_bits(0x4000000000000000ull),
+                {}, {.nan = minmax_nan_mode::propagate})
+                .error(),
+            arithmetic_error::unsupported_minmax_modifier);
+  EXPECT_EQ(max(c, one, one, one, {}, {.xor_sign = true}).error(),
+            arithmetic_error::unsupported_minmax_modifier);
+
+  const auto less = compare(c, float32_t::from_bits(0xbf800000u), one,
+                            {.relation = comparison_relation::less});
+  const auto greater_equal = compare(
+      c, one, one, {.relation = comparison_relation::greater_equal});
+  ASSERT_TRUE(less);
+  ASSERT_TRUE(greater_equal);
+  EXPECT_TRUE(less->value);
+  EXPECT_TRUE(greater_equal->value);
+  const auto unordered = compare(c, qnan, one,
+                                 {.nan = nan_comparison_mode::unordered});
+  ASSERT_TRUE(unordered);
+  EXPECT_TRUE(unordered->value);
+  const auto signaling = compare(c, snan, one);
+  ASSERT_TRUE(signaling);
+  EXPECT_FALSE(signaling->value);
+  EXPECT_TRUE(signaling->status.invalid);
+  const auto numeric_qnan = compare(c, qnan, one,
+                                    {.relation = comparison_relation::number});
+  const auto numeric_snan = compare(c, snan, one,
+                                    {.relation = comparison_relation::number});
+  const auto nan_qnan = compare(c, qnan, one,
+                                {.relation = comparison_relation::nan});
+  const auto nan_snan = compare(c, snan, one,
+                                {.relation = comparison_relation::nan});
+  ASSERT_TRUE(numeric_qnan);
+  ASSERT_TRUE(numeric_snan);
+  ASSERT_TRUE(nan_qnan);
+  ASSERT_TRUE(nan_snan);
+  EXPECT_FALSE(numeric_qnan->value);
+  EXPECT_FALSE(numeric_qnan->status.invalid);
+  EXPECT_FALSE(numeric_snan->value);
+  EXPECT_TRUE(numeric_snan->status.invalid);
+  EXPECT_TRUE(nan_qnan->value);
+  EXPECT_FALSE(nan_qnan->status.invalid);
+  EXPECT_TRUE(nan_snan->value);
+  EXPECT_TRUE(nan_snan->status.invalid);
+  EXPECT_EQ(compare(c, one, one,
+                    {.relation = comparison_relation::number,
+                     .nan = nan_comparison_mode::unordered})
+                .error(),
+            arithmetic_error::unsupported_operation);
+  EXPECT_EQ(compare(c, one, one, {},
+                    {.rounding = rounding_mode::toward_positive})
+                .error(),
+            arithmetic_error::unsupported_rounding);
+
+  EXPECT_TRUE(testp(c, one, floating_test::finite)->value);
+  EXPECT_TRUE(testp(c, float32_t::from_bits(0x7f800000u),
+                    floating_test::infinite)
+                  ->value);
+  EXPECT_TRUE(testp(c, qnan, floating_test::nan)->value);
+  EXPECT_TRUE(testp(c, float32_t::from_bits(1u), floating_test::subnormal)
+                  ->value);
 }
 
 TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
@@ -89,12 +286,6 @@ TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
                                           {.part = product_part::wide});
   ASSERT_TRUE(wide);
   EXPECT_EQ(wide->value, -200);
-  auto wide64 =
-      mul<integer_wide_t<int64_t>>(c, std::numeric_limits<int64_t>::max(),
-                                   int64_t{2}, {.part = product_part::wide});
-  ASSERT_TRUE(wide64);
-  EXPECT_EQ(wide64->value,
-            integer_wide_t<int64_t>(std::numeric_limits<int64_t>::max()) * 2);
   EXPECT_EQ(mul(c, int8_t{2}, int8_t{3}, {.part = product_part::wide}).error(),
             arithmetic_error::unsupported_type_combination);
   EXPECT_EQ(mul(c, int8_t{2}, int8_t{3},
@@ -128,6 +319,42 @@ TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
                       {.overflow = integer_overflow_mode::saturate});
   ASSERT_TRUE(distance);
   EXPECT_EQ(distance->value, std::numeric_limits<int8_t>::max());
+}
+
+TEST(ScalarArithmetic, MadHighSaturatesOnlyFinalSignedResult) {
+  context c;
+  const product_control high_saturate{
+      .part = product_part::high,
+      .overflow = integer_overflow_mode::saturate};
+
+  const auto positive = mad(c, std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::max(), high_saturate);
+  ASSERT_TRUE(positive);
+  EXPECT_EQ(positive->value, std::numeric_limits<int32_t>::max());
+  EXPECT_TRUE(positive->status.overflow);
+
+  const auto negative = mad(c, std::numeric_limits<int32_t>::min(),
+                            std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::min(), high_saturate);
+  ASSERT_TRUE(negative);
+  EXPECT_EQ(negative->value, std::numeric_limits<int32_t>::min());
+  EXPECT_TRUE(negative->status.overflow);
+
+  EXPECT_EQ(mul(c, std::numeric_limits<int32_t>::max(),
+                std::numeric_limits<int32_t>::max(), high_saturate)
+                .error(),
+            arithmetic_error::unsupported_overflow_mode);
+
+  EXPECT_EQ(mad(c, int8_t{2}, int8_t{3}, int8_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(mad(c, int16_t{2}, int16_t{3}, int16_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(mad(c, int64_t{2}, int64_t{3}, int64_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(
+      mad(c, uint32_t{2}, uint32_t{3}, uint32_t{4}, high_saturate).error(),
+      arithmetic_error::unsupported_overflow_mode);
 }
 
 TEST(ScalarArithmetic, EightBitIntegerAndBitBoundaries) {
@@ -211,6 +438,91 @@ TEST(ScalarArithmetic, FmaControlRegressions) {
                 {.subnormal = subnormal_mode::flush_output})
                 .error(),
             arithmetic_error::unsupported_subnormal_mode);
+}
+
+TEST(ScalarArithmetic, FloatingControlCapabilityMatrix) {
+  static_assert(floating_operation_control_capability<
+                scalar_operation::add, float16_t>::supports(
+                saturation_mode::zero_to_one));
+  static_assert(floating_operation_control_capability<
+                scalar_operation::fma, bfloat16_t>::supports(
+                activation_mode::relu));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::fma, float16_t>::supports(
+                {.saturation = saturation_mode::zero_to_one,
+                 .activation = activation_mode::relu}));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::sqrt, float32_t>::supports(
+                saturation_mode::zero_to_one));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::div, float32_t>::supports(
+                saturation_mode::zero_to_one));
+
+  context c;
+  const auto h_one = float16_t::from_bits(0x3c00);
+  const auto h_two = float16_t::from_bits(0x4000);
+  EXPECT_EQ(add(c, h_one, h_two,
+                {.saturation = saturation_mode::zero_to_one})
+                ->value.bits(),
+            h_one.bits());
+  EXPECT_TRUE(add(c, h_one, h_one,
+                  {.subnormal = subnormal_mode::flush_input_and_output}));
+  EXPECT_EQ(add(c, h_one, h_one,
+                {.subnormal = subnormal_mode::flush_input})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  const auto bf_one = bfloat16_t::from_bits(0x3f80);
+  const auto bf_minus_two = bfloat16_t::from_bits(0xc000);
+  EXPECT_EQ(fma(c, bf_one, bf_one, bf_minus_two,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0u);
+  EXPECT_EQ(fma(c, float16_t::from_bits(0x7e01), h_one, h_one,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0x7e00u);
+  EXPECT_EQ(fma(c, bfloat16_t::from_bits(0x7fc1), bf_one, bf_one,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0x7fc0u);
+  EXPECT_EQ(fma(c, h_one, h_one, h_one,
+                {.saturation = saturation_mode::zero_to_one,
+                 .activation = activation_mode::relu})
+                .error(),
+            arithmetic_error::unsupported_activation);
+  EXPECT_EQ(add(c, bf_one, bf_one,
+                {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  const auto f_one = float32_t::from_bits(0x3f800000);
+  EXPECT_EQ(sqrt(c, f_one, {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(div(c, f_one, f_one,
+                {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+
+  const auto d_one = float64_t::from_bits(0x3ff0000000000000ULL);
+  EXPECT_EQ(add(c, d_one, d_one,
+                {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(add(c, d_one, d_one,
+                {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  EXPECT_EQ(fma<float32_t>(c, h_one, h_one, f_one,
+                            {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(fma<float32_t>(c, h_one, h_one, f_one,
+                            {.saturation = saturation_mode::zero_to_one})
+                ->value.bits(),
+            f_one.bits());
 }
 
 TEST(ScalarArithmetic, MadIsFusedAndControlsAreTyped) {
@@ -307,29 +619,16 @@ void check_float_edges(T zero, T negative_zero, T one, T two, T half,
   ASSERT_TRUE(invalid);
   ASSERT_TRUE(overflow);
   ASSERT_TRUE(underflow);
-  if constexpr (std::same_as<T, float64_t> || std::same_as<T, float32_t>) {
-    EXPECT_EQ(input_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
-    EXPECT_EQ(output_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
-  } else {
-    ASSERT_TRUE(input_ftz);
-    ASSERT_TRUE(output_ftz);
-  }
+  EXPECT_EQ(input_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(output_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(signed_zero->value.bits(), negative_zero.bits());
   EXPECT_TRUE(is_nan(invalid->value));
   EXPECT_EQ(overflow->value.bits(), infinity.bits());
   EXPECT_EQ(underflow->value.bits(), zero.bits());
-  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
-    EXPECT_EQ(input_ftz->value.bits(), zero.bits());
-    EXPECT_EQ(output_ftz->value.bits(), zero.bits());
-  }
   expect_status(signed_zero->status);
   expect_status(invalid->status, true);
   expect_status(overflow->status, false, true, false, true);
   expect_status(underflow->status, false, false, true, true);
-  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
-    expect_status(input_ftz->status);
-    expect_status(output_ftz->status);
-  }
 }
 
 template <typename T>
@@ -363,14 +662,12 @@ void check_integer_samples() {
     const auto difference = sub(c, a, b);
     const auto low = mul(c, a, b);
     const auto high = mul(c, a, b, {.part = product_part::high});
-    const auto wide = mul<W>(c, a, b, {.part = product_part::wide});
     const auto carry = add_with_carry(a, b, true);
     const auto borrow = sub_with_borrow(a, b, true);
     ASSERT_TRUE(sum);
     ASSERT_TRUE(difference);
     ASSERT_TRUE(low);
     ASSERT_TRUE(high);
-    ASSERT_TRUE(wide);
     EXPECT_EQ(sum->value, reference_from_bits<T>(U(ua + ub)));
     EXPECT_EQ(difference->value, reference_from_bits<T>(U(ua - ub)));
     const UW product = UW(ua) * UW(ub);
@@ -378,10 +675,14 @@ void check_integer_samples() {
         std::is_signed_v<T> ? static_cast<UW>(W(a) * W(b)) : product;
     EXPECT_EQ(low->value, reference_from_bits<T>(U(product)));
     EXPECT_EQ(high->value, reference_from_bits<T>(U(high_product >> width)));
-    if constexpr (std::is_signed_v<T>)
-      EXPECT_EQ(wide->value, W(a) * W(b));
-    else
-      EXPECT_EQ(wide->value, W(ua) * W(ub));
+    if constexpr (sizeof(T) < sizeof(std::int64_t)) {
+      const auto wide = mul<W>(c, a, b, {.part = product_part::wide});
+      ASSERT_TRUE(wide);
+      if constexpr (std::is_signed_v<T>)
+        EXPECT_EQ(wide->value, W(a) * W(b));
+      else
+        EXPECT_EQ(wide->value, W(ua) * W(ub));
+    }
     const UW carried = UW(ua) + UW(ub) + 1;
     EXPECT_EQ(carry.value, reference_from_bits<T>(U(carried)));
     EXPECT_EQ(carry.status.carry, (carried >> width) != 0);

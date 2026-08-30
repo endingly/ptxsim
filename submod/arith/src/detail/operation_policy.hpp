@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ptxsim/arith/controls.hpp>
+#include <ptxsim/arith/concepts.hpp>
 #include "internal_controls.hpp"
 #include <ptxsim/arith/types.hpp>
 
@@ -48,25 +48,49 @@ struct OperationTraits {
 };
 
 template <Operation Op>
+struct PublicOperation;
+#define PTXSIM_PUBLIC_OPERATION(Internal, Public) \
+  template <>                                      \
+  struct PublicOperation<Operation::Internal> {    \
+    static constexpr auto value = scalar_operation::Public; \
+  }
+PTXSIM_PUBLIC_OPERATION(Add, add);
+PTXSIM_PUBLIC_OPERATION(Sub, sub);
+PTXSIM_PUBLIC_OPERATION(Mul, mul);
+PTXSIM_PUBLIC_OPERATION(Fma, fma);
+PTXSIM_PUBLIC_OPERATION(Mad, mad);
+PTXSIM_PUBLIC_OPERATION(Div, div);
+PTXSIM_PUBLIC_OPERATION(Sqrt, sqrt);
+PTXSIM_PUBLIC_OPERATION(Rcp, rcp);
+PTXSIM_PUBLIC_OPERATION(Abs, abs);
+PTXSIM_PUBLIC_OPERATION(Neg, neg);
+PTXSIM_PUBLIC_OPERATION(Min, min);
+PTXSIM_PUBLIC_OPERATION(Max, max);
+PTXSIM_PUBLIC_OPERATION(Compare, compare);
+#undef PTXSIM_PUBLIC_OPERATION
+
+template <typename T, Operation Op>
+struct PublicOperationTraits
+    : floating_operation_control_capability<PublicOperation<Op>::value, T> {
+  static constexpr bool supports_ftz =
+      floating_operation_control_capability<PublicOperation<Op>::value,
+                                            T>::supports(
+          subnormal_mode::flush_input_and_output);
+  static constexpr bool supports_directed_rounding =
+      floating_operation_control_capability<PublicOperation<Op>::value,
+                                            T>::supports(
+          rounding_mode::toward_zero);
+};
+
+template <typename T, Operation Op>
   requires(Op == Operation::Add || Op == Operation::Sub ||
            Op == Operation::Mul || Op == Operation::Fma ||
            Op == Operation::Div || Op == Operation::Sqrt ||
-           Op == Operation::Mad || Op == Operation::Rcp)
-struct OperationTraits<float32_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = true;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Abs || Op == Operation::Neg ||
+           Op == Operation::Mad || Op == Operation::Rcp ||
+           Op == Operation::Abs || Op == Operation::Neg ||
            Op == Operation::Min || Op == Operation::Max ||
            Op == Operation::Compare)
-struct OperationTraits<float32_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = false;
-};
+struct OperationTraits<T, Op> : PublicOperationTraits<T, Op> {};
 
 template <Operation Op>
   requires(Op == Operation::Copysign || Op == Operation::Testp)
@@ -75,114 +99,91 @@ struct OperationTraits<float32_t, Op> {
   static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
-
 template <Operation Op>
-  requires(Op == Operation::Add || Op == Operation::Sub ||
-           Op == Operation::Mul || Op == Operation::Fma ||
-           Op == Operation::Div || Op == Operation::Sqrt ||
-           Op == Operation::Mad || Op == Operation::Rcp)
+  requires(Op == Operation::Copysign || Op == Operation::Testp)
 struct OperationTraits<float64_t, Op> {
   static constexpr bool supported = true;
   static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = true;
-};
-
-template <Operation Op>
-  requires(Op == Operation::DivApprox || Op == Operation::DivFull ||
-           Op == Operation::RcpApprox || Op == Operation::SqrtApprox ||
-           Op == Operation::RsqrtApprox || Op == Operation::SinApprox ||
-           Op == Operation::CosApprox || Op == Operation::Lg2Approx ||
-           Op == Operation::Ex2Approx)
-struct OperationTraits<float32_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = true;
   static constexpr bool supports_directed_rounding = false;
 };
 
+template <scalar_operation Op, approximation_mode Mode, typename T>
+struct ApproximationOperationTraits {
+  using Capability = special_function_operation_capability<Op, T>;
+  static constexpr bool supported = Capability::supported &&
+                                    Capability::supports(Mode);
+  static constexpr bool supports_ftz =
+      Capability::supports(subnormal_mode::flush_input_and_output);
+  static constexpr bool supports_directed_rounding = false;
+};
+#define PTXSIM_APPROXIMATION_OPERATION(Internal, Public, Mode)             \
+  template <typename T>                                                     \
+  struct OperationTraits<T, Operation::Internal>                            \
+      : ApproximationOperationTraits<scalar_operation::Public,             \
+                                     approximation_mode::Mode, T> {}
+PTXSIM_APPROXIMATION_OPERATION(DivApprox, div, ptx_approximate);
+PTXSIM_APPROXIMATION_OPERATION(DivFull, div, ptx_full);
+PTXSIM_APPROXIMATION_OPERATION(RcpApprox, rcp, ptx_approximate);
+PTXSIM_APPROXIMATION_OPERATION(SqrtApprox, sqrt, ptx_approximate);
+PTXSIM_APPROXIMATION_OPERATION(SinApprox, sin, ptx_approximate);
+PTXSIM_APPROXIMATION_OPERATION(CosApprox, cos, ptx_approximate);
+PTXSIM_APPROXIMATION_OPERATION(Lg2Approx, lg2, ptx_approximate);
+#undef PTXSIM_APPROXIMATION_OPERATION
+
 template <>
-struct OperationTraits<float32_t, Operation::TanhApprox> {
-  static constexpr bool supported = true;
+struct OperationTraits<float32_t, Operation::RsqrtApprox>
+    : ApproximationOperationTraits<scalar_operation::rsqrt,
+                                   approximation_mode::ptx_approximate,
+                                   float32_t> {};
+template <>
+struct OperationTraits<float32_t, Operation::Ex2Approx>
+    : ApproximationOperationTraits<scalar_operation::ex2,
+                                   approximation_mode::ptx_approximate,
+                                   float32_t> {};
+template <>
+struct OperationTraits<float16_t, Operation::Ex2Approx>
+    : ApproximationOperationTraits<scalar_operation::ex2,
+                                   approximation_mode::ptx_approximate,
+                                   float16_t> {};
+template <>
+struct OperationTraits<bfloat16_t, Operation::Ex2Approx>
+    : ApproximationOperationTraits<scalar_operation::ex2,
+                                   approximation_mode::ptx_approximate,
+                                   bfloat16_t> {};
+
+template <typename T>
+  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
+           std::same_as<T, float32_t>)
+struct OperationTraits<T, Operation::TanhApprox>
+    : ApproximationOperationTraits<scalar_operation::tanh,
+                                   approximation_mode::ptx_approximate, T> {};
+template <>
+struct OperationTraits<float64_t, Operation::RcpApprox> {
+  static constexpr bool supported = false;
   static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
-
 template <>
 struct OperationTraits<float64_t, Operation::RsqrtApprox> {
-  static constexpr bool supported = true;
+  static constexpr bool supported =
+      special_function_operation_capability<scalar_operation::rsqrt,
+                                            float64_t>::supports(
+          {.approximation = approximation_mode::ptx_approximate,
+           .subnormal = subnormal_mode::preserve});
   static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
-
 template <Operation Op>
   requires(Op == Operation::RcpApproxFtz || Op == Operation::RsqrtApproxFtz)
 struct OperationTraits<float64_t, Op> {
-  static constexpr bool supported = true;
+  static constexpr auto operation = Op == Operation::RcpApproxFtz
+                                        ? scalar_operation::rcp
+                                        : scalar_operation::rsqrt;
+  static constexpr bool supported =
+      special_function_operation_capability<operation, float64_t>::supports(
+          {.approximation = approximation_mode::ptx_approximate,
+           .subnormal = subnormal_mode::flush_input_and_output});
   static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Abs || Op == Operation::Neg ||
-           Op == Operation::Min || Op == Operation::Max ||
-           Op == Operation::Compare || Op == Operation::Copysign ||
-           Op == Operation::Testp)
-struct OperationTraits<float64_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Add || Op == Operation::Sub ||
-           Op == Operation::Mul || Op == Operation::Fma)
-struct OperationTraits<float16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Abs || Op == Operation::Neg ||
-           Op == Operation::Min || Op == Operation::Max ||
-           Op == Operation::Compare)
-struct OperationTraits<float16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = true;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Add || Op == Operation::Sub ||
-           Op == Operation::Mul || Op == Operation::Fma)
-struct OperationTraits<bfloat16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::TanhApprox || Op == Operation::Ex2Approx)
-struct OperationTraits<float16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::TanhApprox || Op == Operation::Ex2Approx)
-struct OperationTraits<bfloat16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = Op == Operation::Ex2Approx;
-  static constexpr bool supports_directed_rounding = false;
-};
-
-template <Operation Op>
-  requires(Op == Operation::Abs || Op == Operation::Neg ||
-           Op == Operation::Min || Op == Operation::Max ||
-           Op == Operation::Compare)
-struct OperationTraits<bfloat16_t, Op> {
-  static constexpr bool supported = true;
-  static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
 
@@ -231,17 +232,27 @@ inline void validate_exact_widening_control(ConversionControl control) {
   }
 }
 
+template <scalar_operation Op, typename Result, typename... Operands>
 inline void validate_mixed_control(ArithmeticControl control) {
+  using Capability =
+      floating_operation_control_capability<Op, Result, Operands...>;
+  static_assert(Capability::supported,
+                "mixed operation is not supported for these formats");
   validate_rounding(control.rounding);
-  if (resolve_subnormal(control) != SubnormalMode::Preserve)
+  const auto directed = control.rounding != RoundingMode::NearestEven;
+  if (directed && !Capability::supports(rounding_mode::toward_zero))
+    throw std::invalid_argument(
+        "mixed floating-point operation only supports nearest-even rounding");
+  if (resolve_subnormal(control) != SubnormalMode::Preserve &&
+      !Capability::supports(subnormal_mode::flush_input_and_output))
     throw std::invalid_argument(
         "mixed floating-point operations do not support FTZ");
 }
 
 template <Operation Op, typename T>
 inline void validate_approximation_control(ApproximationControl control) {
-  static_assert(OperationTraits<T, Op>::supported,
-                "approximation is not supported for this format");
+  if (!OperationTraits<T, Op>::supported)
+    throw std::invalid_argument("approximation is not supported for this format");
   if (control.flush_subnormal && !OperationTraits<T, Op>::supports_ftz) {
     throw std::invalid_argument("approximation/format does not support FTZ");
   }
