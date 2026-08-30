@@ -62,7 +62,9 @@ TEST(BitOperations, BfindReturnsPtxNonSignPositionAndSentinel) {
   EXPECT_EQ(find_most_significant_non_sign(0x8000'1000u), 31u);
   EXPECT_EQ(find_most_significant_non_sign(1u), 0u);
   EXPECT_EQ(find_most_significant_non_sign(std::uint64_t{}), not_found);
-  EXPECT_EQ(find_most_significant_non_sign(0x8000'0000'0000'0000ull), 63u);
+  EXPECT_EQ(find_most_significant_non_sign(
+                std::uint64_t{0x8000'0000'0000'0000ull}),
+            63u);
 
   EXPECT_EQ(find_most_significant_non_sign(std::int32_t{}), not_found);
   EXPECT_EQ(find_most_significant_non_sign(std::int32_t{-1}), not_found);

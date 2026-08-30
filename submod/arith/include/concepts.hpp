@@ -2,6 +2,7 @@
 
 #include <ptxsim/arith/controls.hpp>
 
+#include <cstdint>
 #include <concepts>
 #include <type_traits>
 
@@ -49,12 +50,28 @@ enum class arithmetic_family {
 };
 
 template <typename T>
+concept arithmetic_integer =
+    std::same_as<std::remove_cvref_t<T>, std::int8_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::uint8_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::int16_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::uint16_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::int32_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::uint32_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::int64_t> ||
+    std::same_as<std::remove_cvref_t<T>, std::uint64_t>;
+
+template <typename T>
 struct arithmetic_family_of {
   static constexpr arithmetic_family value =
-      std::is_integral_v<T>
+      arithmetic_integer<T>
           ? (std::is_signed_v<T> ? arithmetic_family::signed_integer
                                  : arithmetic_family::unsigned_integer)
           : arithmetic_family::raw_bits;
+};
+
+template <>
+struct arithmetic_family_of<bool> {
+  static constexpr auto value = arithmetic_family::predicate;
 };
 
 template <typename F>
@@ -293,7 +310,7 @@ template <typename To, typename From>
 struct conversion_capability {
  private:
   template <typename T>
-  static constexpr bool integer = std::integral<T> && !std::same_as<T, bool>;
+  static constexpr bool integer = arithmetic_integer<T>;
   template <typename T>
   static constexpr bool scalar =
       arithmetic_family_v<T> == arithmetic_family::ieee_binary ||
@@ -358,17 +375,17 @@ struct conversion_control_capability<To, From,
 
 template <typename T>
 struct operation_capability<scalar_operation::add, T, T, T>
-    : std::bool_constant<std::integral<T> ||
+    : std::bool_constant<arithmetic_integer<T> ||
                          floating_operation_control_capability<
                              scalar_operation::add, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::sub, T, T, T>
-    : std::bool_constant<std::integral<T> ||
+    : std::bool_constant<arithmetic_integer<T> ||
                          floating_operation_control_capability<
                              scalar_operation::sub, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::mul, T, T, T>
-    : std::bool_constant<std::integral<T> ||
+    : std::bool_constant<arithmetic_integer<T> ||
                          floating_operation_control_capability<
                              scalar_operation::mul, T>::supported> {};
 template <typename T>
@@ -411,8 +428,6 @@ PTXSIM_MIXED_F32_CAPABILITY(add, bfloat16_t);
 PTXSIM_MIXED_F32_CAPABILITY(sub, bfloat16_t);
 #undef PTXSIM_MIXED_F32_CAPABILITY
 
-template <typename T>
-concept arithmetic_integer = std::integral<T> && !std::same_as<T, bool>;
 template <typename T>
 concept scalar_float =
     requires { arithmetic_family_v<T>; } &&

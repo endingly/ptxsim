@@ -57,6 +57,45 @@ TEST(ScalarArithmetic, SameTypeResultTemplateArgumentsAreConstrained) {
   });
 }
 
+TEST(ScalarArithmetic, PtxIntegerTypesDrivePublicCapabilities) {
+  static_assert(arithmetic_integer<std::int8_t>);
+  static_assert(arithmetic_integer<std::uint8_t>);
+  static_assert(arithmetic_integer<std::int16_t>);
+  static_assert(arithmetic_integer<std::uint16_t>);
+  static_assert(arithmetic_integer<std::int32_t>);
+  static_assert(arithmetic_integer<std::uint32_t>);
+  static_assert(arithmetic_integer<std::int64_t>);
+  static_assert(arithmetic_integer<std::uint64_t>);
+  static_assert(!arithmetic_integer<bool>);
+  static_assert(!arithmetic_integer<char>);
+  static_assert(!arithmetic_integer<wchar_t>);
+  static_assert(!arithmetic_integer<char16_t>);
+  static_assert(!arithmetic_integer<char32_t>);
+#if defined(__SIZEOF_INT128__)
+  static_assert(!arithmetic_integer<__int128>);
+#endif
+  static_assert(arithmetic_family_v<bool> == arithmetic_family::predicate);
+  static_assert(arithmetic_family_v<char> == arithmetic_family::raw_bits);
+
+  static_assert(operation_capability<scalar_operation::add, std::int32_t,
+                                     std::int32_t, std::int32_t>::value);
+  static_assert(!operation_capability<scalar_operation::add, char, char,
+                                      char>::value);
+  static_assert(!operation_capability<scalar_operation::mul, bool, bool,
+                                      bool>::value);
+  static_assert(convertible_to<float32_t, std::uint64_t>);
+  static_assert(convertible_to<std::int64_t, float32_t>);
+  static_assert(!convertible_to<float32_t, char>);
+  static_assert(!convertible_to<char, float32_t>);
+  static_assert(!convertible_to<float32_t, bool>);
+#if defined(__SIZEOF_INT128__)
+  static_assert(!operation_capability<scalar_operation::add, __int128,
+                                      __int128, __int128>::value);
+  static_assert(!convertible_to<float32_t, __int128>);
+  static_assert(!convertible_to<__int128, float32_t>);
+#endif
+}
+
 TEST(ScalarArithmetic, GenericScalarAndInteger) {
   context c;
   auto f = add(c, float32_t::from_bits(0x3f800000),
@@ -136,12 +175,6 @@ TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
                                           {.part = product_part::wide});
   ASSERT_TRUE(wide);
   EXPECT_EQ(wide->value, -200);
-  auto wide64 =
-      mul<integer_wide_t<int64_t>>(c, std::numeric_limits<int64_t>::max(),
-                                   int64_t{2}, {.part = product_part::wide});
-  ASSERT_TRUE(wide64);
-  EXPECT_EQ(wide64->value,
-            integer_wide_t<int64_t>(std::numeric_limits<int64_t>::max()) * 2);
   EXPECT_EQ(mul(c, int8_t{2}, int8_t{3}, {.part = product_part::wide}).error(),
             arithmetic_error::unsupported_type_combination);
   EXPECT_EQ(mul(c, int8_t{2}, int8_t{3},
@@ -518,14 +551,12 @@ void check_integer_samples() {
     const auto difference = sub(c, a, b);
     const auto low = mul(c, a, b);
     const auto high = mul(c, a, b, {.part = product_part::high});
-    const auto wide = mul<W>(c, a, b, {.part = product_part::wide});
     const auto carry = add_with_carry(a, b, true);
     const auto borrow = sub_with_borrow(a, b, true);
     ASSERT_TRUE(sum);
     ASSERT_TRUE(difference);
     ASSERT_TRUE(low);
     ASSERT_TRUE(high);
-    ASSERT_TRUE(wide);
     EXPECT_EQ(sum->value, reference_from_bits<T>(U(ua + ub)));
     EXPECT_EQ(difference->value, reference_from_bits<T>(U(ua - ub)));
     const UW product = UW(ua) * UW(ub);
@@ -533,10 +564,14 @@ void check_integer_samples() {
         std::is_signed_v<T> ? static_cast<UW>(W(a) * W(b)) : product;
     EXPECT_EQ(low->value, reference_from_bits<T>(U(product)));
     EXPECT_EQ(high->value, reference_from_bits<T>(U(high_product >> width)));
-    if constexpr (std::is_signed_v<T>)
-      EXPECT_EQ(wide->value, W(a) * W(b));
-    else
-      EXPECT_EQ(wide->value, W(ua) * W(ub));
+    if constexpr (sizeof(T) < sizeof(std::int64_t)) {
+      const auto wide = mul<W>(c, a, b, {.part = product_part::wide});
+      ASSERT_TRUE(wide);
+      if constexpr (std::is_signed_v<T>)
+        EXPECT_EQ(wide->value, W(a) * W(b));
+      else
+        EXPECT_EQ(wide->value, W(ua) * W(ub));
+    }
     const UW carried = UW(ua) + UW(ub) + 1;
     EXPECT_EQ(carry.value, reference_from_bits<T>(U(carried)));
     EXPECT_EQ(carry.status.carry, (carried >> width) != 0);
