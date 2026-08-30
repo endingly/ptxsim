@@ -7,6 +7,7 @@ enum class arithmetic_error {
   unsupported_subnormal_mode,
   unsupported_saturation,
   unsupported_activation,
+  unsupported_minmax_modifier,
   unsupported_approximation_mode,
   unsupported_model_profile,
   unsupported_overflow_mode,

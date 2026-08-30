@@ -30,6 +30,7 @@ enum class scalar_operation {
   min,
   max,
   compare,
+  testp,
   rsqrt,
   sin,
   cos,
@@ -303,6 +304,23 @@ struct floating_operation_control_capability<scalar_operation::fma, float32_t,
                                              Low, Low, float32_t>
     : floating_control_capability<true, true, false, true> {};
 
+template <typename T, bool ThreeInput = false>
+struct minmax_control_capability {
+  static constexpr bool supported =
+      floating_operation_control_capability<scalar_operation::min, T>::supported;
+
+  static constexpr bool supports(minmax_control control) {
+    if (!supported) return false;
+    if constexpr (std::same_as<T, float64_t>)
+      return control.nan == minmax_nan_mode::number && !control.absolute &&
+             !control.xor_sign;
+    else if constexpr (ThreeInput)
+      return !control.xor_sign;
+    else
+      return control.absolute == control.xor_sign;
+  }
+};
+
 // Conversion capability is intentionally sourced from one generic canonical
 // route: every supported type has a decode hook and an encode hook.  It is no
 // longer a Cartesian list of pairwise F32 hub routes.
@@ -416,6 +434,28 @@ template <typename T>
 struct operation_capability<scalar_operation::mad, T, T, T, T>
     : std::bool_constant<floating_operation_control_capability<
                              scalar_operation::mad, T>::supported> {};
+template <typename T>
+struct operation_capability<scalar_operation::min, T, T, T>
+    : std::bool_constant<minmax_control_capability<T>::supported> {};
+template <typename T>
+struct operation_capability<scalar_operation::max, T, T, T>
+    : std::bool_constant<minmax_control_capability<T>::supported> {};
+template <>
+struct operation_capability<scalar_operation::min, float32_t, float32_t,
+                            float32_t, float32_t>
+    : std::bool_constant<minmax_control_capability<float32_t, true>::supported> {};
+template <>
+struct operation_capability<scalar_operation::max, float32_t, float32_t,
+                            float32_t, float32_t>
+    : std::bool_constant<minmax_control_capability<float32_t, true>::supported> {};
+template <typename T>
+struct operation_capability<scalar_operation::compare, predicate_t, T, T>
+    : std::bool_constant<floating_operation_control_capability<
+          scalar_operation::compare, T>::supported> {};
+template <typename T>
+struct operation_capability<scalar_operation::testp, predicate_t, T>
+    : std::bool_constant<std::same_as<T, float32_t> ||
+                         std::same_as<T, float64_t>> {};
 #define PTXSIM_MIXED_F32_CAPABILITY(op, low)                               \
   template <>                                                               \
   struct operation_capability<scalar_operation::op, float32_t, low,        \

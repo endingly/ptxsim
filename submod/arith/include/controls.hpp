@@ -18,6 +18,8 @@ enum class subnormal_mode {
 enum class saturation_mode { none, type_range, zero_to_one, finite };
 enum class activation_mode { none, relu };
 enum class approximation_mode { exact, ptx_approximate, ptx_full };
+enum class minmax_nan_mode { number, propagate };
+enum class floating_test { finite, infinite, number, nan, normal, subnormal };
 enum class product_part { low, high, wide };
 enum class integer_overflow_mode { wrap, saturate };
 enum class comparison_relation {
@@ -26,7 +28,9 @@ enum class comparison_relation {
   less,
   less_equal,
   greater,
-  greater_equal
+  greater_equal,
+  number,
+  nan
 };
 enum class nan_comparison_mode { ordered, unordered };
 struct integer_control {
@@ -41,6 +45,11 @@ struct floating_control {
   subnormal_mode subnormal = subnormal_mode::preserve;
   saturation_mode saturation = saturation_mode::none;
   activation_mode activation = activation_mode::none;
+};
+struct minmax_control {
+  minmax_nan_mode nan = minmax_nan_mode::number;
+  bool absolute = false;
+  bool xor_sign = false;
 };
 struct conversion_control {
   rounding_mode rounding = rounding_mode::nearest_even;

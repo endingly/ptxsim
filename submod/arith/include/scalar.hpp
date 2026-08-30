@@ -395,18 +395,32 @@ inline std::expected<result<T, floating_status>, arithmetic_error> neg(
   return detail::dispatch::neg(a, c);
 }
 template <typename T>
-  requires floating_operation_control_capability<scalar_operation::min,
-                                                 T>::supported
+  requires operation_capability<scalar_operation::min, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> min(
-    const context&, T a, T b, floating_control c = {}) {
-  return detail::dispatch::min(a, b, c);
+    const context&, T a, T b, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::min(a, b, c, modifiers);
 }
 template <typename T>
-  requires floating_operation_control_capability<scalar_operation::max,
-                                                 T>::supported
+  requires operation_capability<scalar_operation::max, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> max(
-    const context&, T a, T b, floating_control c = {}) {
-  return detail::dispatch::max(a, b, c);
+    const context&, T a, T b, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::max(a, b, c, modifiers);
+}
+template <typename D>
+  requires std::same_as<std::remove_cvref_t<D>, float32_t>
+inline std::expected<result<float32_t, floating_status>, arithmetic_error>
+min(const context&, float32_t a, float32_t b, D d, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::min(a, b, d, modifiers, c);
+}
+template <typename D>
+  requires std::same_as<std::remove_cvref_t<D>, float32_t>
+inline std::expected<result<float32_t, floating_status>, arithmetic_error>
+max(const context&, float32_t a, float32_t b, D d, floating_control c = {},
+    minmax_control modifiers = {}) {
+  return detail::dispatch::max(a, b, d, modifiers, c);
 }
 template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
@@ -541,38 +555,18 @@ constexpr result<T> select(predicate_t p, T yes, T no) noexcept {
   return {p ? yes : no};
 }
 template <typename T>
-  requires FloatingFormat<T>
-constexpr result<predicate_t> compare(const context&, T a, T b,
-                                      comparison_control c = {}) {
-  if (is_nan(a) || is_nan(b))
-    return {c.nan == nan_comparison_mode::unordered};
-  if (is_zero(a) && is_zero(b)) {
-    return {c.relation == comparison_relation::equal ||
-            c.relation == comparison_relation::less_equal ||
-            c.relation == comparison_relation::greater_equal};
-  }
-  using U = typename FormatTraits<T>::Bits;
-  constexpr U sign = FormatTraits<T>::sign_mask;
-  const auto order = [](U x) {
-    return (x & sign) ? static_cast<U>(~x) : static_cast<U>(x | sign);
-  };
-  const auto x = order(normalize_encoding(a).bits()),
-             y = order(normalize_encoding(b).bits());
-  switch (c.relation) {
-    case comparison_relation::equal:
-      return {x == y};
-    case comparison_relation::not_equal:
-      return {x != y};
-    case comparison_relation::less:
-      return {x < y};
-    case comparison_relation::less_equal:
-      return {x <= y};
-    case comparison_relation::greater:
-      return {x > y};
-    case comparison_relation::greater_equal:
-      return {x >= y};
-  }
-  return {false};
+  requires operation_capability<scalar_operation::compare, predicate_t, T,
+                                T>::value
+inline std::expected<result<predicate_t, floating_status>, arithmetic_error>
+compare(const context&, T a, T b, comparison_control c = {},
+        floating_control floating = {}) {
+  return detail::dispatch::compare(a, b, c, floating);
+}
+template <typename T>
+  requires operation_capability<scalar_operation::testp, predicate_t, T>::value
+inline std::expected<result<predicate_t, floating_status>, arithmetic_error>
+testp(const context&, T value, floating_test test) {
+  return detail::dispatch::testp(value, test);
 }
 namespace detail {
 template <typename To>

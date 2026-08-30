@@ -363,6 +363,63 @@ RoundingMode legacy_rounding(rounding_mode mode) {
 ArithmeticControl legacy(floating_control control) {
   return {legacy_rounding(control.rounding), false, SubnormalMode::Preserve};
 }
+MinMaxControl legacy(minmax_control control) {
+  return {control.nan == minmax_nan_mode::propagate, control.absolute,
+          control.xor_sign};
+}
+std::expected<CompareOp, arithmetic_error> legacy(comparison_control control) {
+  if (control.relation == comparison_relation::number) {
+    if (control.nan != nan_comparison_mode::ordered)
+      return std::unexpected(arithmetic_error::unsupported_operation);
+    return CompareOp::Number;
+  }
+  if (control.relation == comparison_relation::nan) {
+    if (control.nan != nan_comparison_mode::ordered)
+      return std::unexpected(arithmetic_error::unsupported_operation);
+    return CompareOp::NaN;
+  }
+  switch (control.relation) {
+    case comparison_relation::equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::EqualUnordered
+                 : CompareOp::Equal;
+    case comparison_relation::not_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::NotEqualUnordered
+                 : CompareOp::NotEqual;
+    case comparison_relation::less:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::LessUnordered
+                 : CompareOp::Less;
+    case comparison_relation::less_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::LessEqualUnordered
+                 : CompareOp::LessEqual;
+    case comparison_relation::greater:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::GreaterUnordered
+                 : CompareOp::Greater;
+    case comparison_relation::greater_equal:
+      return control.nan == nan_comparison_mode::unordered
+                 ? CompareOp::GreaterEqualUnordered
+                 : CompareOp::GreaterEqual;
+    case comparison_relation::number:
+    case comparison_relation::nan:
+      std::unreachable();
+  }
+  return std::unexpected(arithmetic_error::unsupported_operation);
+}
+TestpOp legacy(floating_test test) {
+  switch (test) {
+    case floating_test::finite: return TestpOp::Finite;
+    case floating_test::infinite: return TestpOp::Infinite;
+    case floating_test::number: return TestpOp::Number;
+    case floating_test::nan: return TestpOp::NotANumber;
+    case floating_test::normal: return TestpOp::Normal;
+    case floating_test::subnormal: return TestpOp::Subnormal;
+  }
+  std::unreachable();
+}
 ConversionControl legacy(conversion_control control) {
   return {legacy_rounding(control.rounding), false};
 }
@@ -462,6 +519,15 @@ std::expected<result<T, floating_status>, arithmetic_error> execute(
   return result<T, floating_status>{
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
+}
+template <scalar_operation Op, typename T, typename F>
+std::expected<result<predicate_t, floating_status>, arithmetic_error>
+execute_predicate(floating_control control, F&& operation, T a, T b) {
+  if (auto valid = validate<Op, T>(control); !valid)
+    return std::unexpected(valid.error());
+  auto raw = operation(input_ftz(a, control.subnormal),
+                       input_ftz(b, control.subnormal));
+  return result<predicate_t, floating_status>{raw.value, status(raw.flags)};
 }
 }  // namespace
 
@@ -592,19 +658,98 @@ std::expected<result<float32_t, floating_status>, arithmetic_error> fma(
 #define PTXSIM_DISPATCH_UNARY(T, name)                                     \
   std::expected<result<T, floating_status>, arithmetic_error> name(        \
       T a, floating_control c) { return execute<scalar_operation::name, T>(c, [&](T x) { return backend::name(x, legacy(c)); }, a); }
-#define PTXSIM_DISPATCH_MINMAX(T, name)                                    \
-  std::expected<result<T, floating_status>, arithmetic_error> name(        \
-      T a, T b, floating_control c) { return execute<scalar_operation::name, T>(c, [&](T x, T y) { return backend::name(x, y, {}, legacy(c)); }, a, b); }
 #define PTXSIM_DISPATCH_UNARY_SET(T) \
-  PTXSIM_DISPATCH_UNARY(T, abs) PTXSIM_DISPATCH_UNARY(T, neg) \
-  PTXSIM_DISPATCH_MINMAX(T, min) PTXSIM_DISPATCH_MINMAX(T, max)
+  PTXSIM_DISPATCH_UNARY(T, abs) PTXSIM_DISPATCH_UNARY(T, neg)
 PTXSIM_DISPATCH_UNARY_SET(float16_t)
 PTXSIM_DISPATCH_UNARY_SET(bfloat16_t)
 PTXSIM_DISPATCH_UNARY_SET(float32_t)
 PTXSIM_DISPATCH_UNARY_SET(float64_t)
 #undef PTXSIM_DISPATCH_UNARY_SET
-#undef PTXSIM_DISPATCH_MINMAX
 #undef PTXSIM_DISPATCH_UNARY
+
+template <scalar_operation Op, typename T>
+std::expected<void, arithmetic_error> validate_minmax(
+    floating_control floating, minmax_control modifiers) {
+  if (auto valid = validate<Op, T>(floating); !valid)
+    return std::unexpected(valid.error());
+  if (!minmax_control_capability<T>::supports(modifiers))
+    return std::unexpected(arithmetic_error::unsupported_minmax_modifier);
+  return {};
+}
+#define PTXSIM_DISPATCH_MINMAX(T, name)                                    \
+  std::expected<result<T, floating_status>, arithmetic_error> name(        \
+      T a, T b, floating_control c, minmax_control modifiers) {            \
+    if (auto valid = validate_minmax<scalar_operation::name, T>(c, modifiers); !valid) \
+      return std::unexpected(valid.error());                               \
+    auto raw = backend::name(input_ftz(a, c.subnormal), input_ftz(b, c.subnormal), \
+                             legacy(modifiers), legacy(c));                 \
+    return result<T, floating_status>{output_ftz(raw.value, c.subnormal), status(raw.flags)}; \
+  }
+PTXSIM_DISPATCH_MINMAX(float16_t, min)
+PTXSIM_DISPATCH_MINMAX(bfloat16_t, min)
+PTXSIM_DISPATCH_MINMAX(float32_t, min)
+PTXSIM_DISPATCH_MINMAX(float64_t, min)
+PTXSIM_DISPATCH_MINMAX(float16_t, max)
+PTXSIM_DISPATCH_MINMAX(bfloat16_t, max)
+PTXSIM_DISPATCH_MINMAX(float32_t, max)
+PTXSIM_DISPATCH_MINMAX(float64_t, max)
+#undef PTXSIM_DISPATCH_MINMAX
+
+template <scalar_operation Op>
+std::expected<result<float32_t, floating_status>, arithmetic_error> minmax3(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c, bool minimum) {
+  if (auto valid = validate<Op, float32_t>(c); !valid)
+    return std::unexpected(valid.error());
+  if (!minmax_control_capability<float32_t, true>::supports(modifiers))
+    return std::unexpected(arithmetic_error::unsupported_minmax_modifier);
+  auto raw = minimum
+                 ? backend::min(input_ftz(a, c.subnormal),
+                                input_ftz(b, c.subnormal),
+                                input_ftz(d, c.subnormal), legacy(modifiers),
+                                legacy(c))
+                 : backend::max(input_ftz(a, c.subnormal),
+                                input_ftz(b, c.subnormal),
+                                input_ftz(d, c.subnormal), legacy(modifiers),
+                                legacy(c));
+  return {{output_ftz(raw.value, c.subnormal), status(raw.flags)}};
+}
+std::expected<result<float32_t, floating_status>, arithmetic_error> min(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c) {
+  return minmax3<scalar_operation::min>(a, b, d, modifiers, c, true);
+}
+std::expected<result<float32_t, floating_status>, arithmetic_error> max(
+    float32_t a, float32_t b, float32_t d, minmax_control modifiers,
+    floating_control c) {
+  return minmax3<scalar_operation::max>(a, b, d, modifiers, c, false);
+}
+
+#define PTXSIM_DISPATCH_COMPARE(T)                                         \
+  std::expected<result<predicate_t, floating_status>, arithmetic_error>    \
+  compare(T a, T b, comparison_control relation, floating_control c) {     \
+    auto operation = legacy(relation);                                     \
+    if (!operation) return std::unexpected(operation.error());             \
+    const auto backend_control = legacy(c);                                \
+    return execute_predicate<scalar_operation::compare, T>(                \
+        c, [operation = *operation, backend_control](T x, T y) { return backend::compare(x, y, operation, backend_control); }, a, b); \
+  }
+PTXSIM_DISPATCH_COMPARE(float16_t)
+PTXSIM_DISPATCH_COMPARE(bfloat16_t)
+PTXSIM_DISPATCH_COMPARE(float32_t)
+PTXSIM_DISPATCH_COMPARE(float64_t)
+#undef PTXSIM_DISPATCH_COMPARE
+
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float32_t value, floating_test test) {
+  const auto raw = backend::testp(value, legacy(test));
+  return {{raw.value, status(raw.flags)}};
+}
+std::expected<result<predicate_t, floating_status>, arithmetic_error> testp(
+    float64_t value, floating_test test) {
+  const auto raw = backend::testp(value, legacy(test));
+  return {{raw.value, status(raw.flags)}};
+}
 
 #define PTXSIM_DISPATCH_F32F64_UNARY(T, name)                              \
   std::expected<result<T, floating_status>, arithmetic_error> name(        \

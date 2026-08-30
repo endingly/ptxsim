@@ -142,19 +142,130 @@ TEST(ScalarArithmetic, ThreadLocalState) {
 
 TEST(ScalarArithmetic, CompareAndBorrowEdges) {
   context c;
-  EXPECT_TRUE(compare(c, float32_t::from_bits(0xbf800000),
+  ASSERT_TRUE(compare(c, float32_t::from_bits(0xbf800000),
                       float32_t::from_bits(0x3f800000),
-                      {.relation = comparison_relation::less})
-                  .value);
-  EXPECT_TRUE(
-      compare(c, float32_t::from_bits(0x80000000), float32_t{}, {}).value);
+                      {.relation = comparison_relation::less}));
+  EXPECT_TRUE(compare(c, float32_t::from_bits(0x80000000), float32_t{}, {})
+                  ->value);
   EXPECT_FALSE(compare(c, float32_t::from_bits(0x7fc00000), float32_t{},
                        {.nan = nan_comparison_mode::ordered})
-                   .value);
+                   ->value);
   auto r =
       sub_with_borrow(uint32_t{}, std::numeric_limits<uint32_t>::max(), true);
   EXPECT_TRUE(r.status.borrow);
   EXPECT_EQ(r.value, 0u);
+}
+
+TEST(ScalarArithmetic, PublicMinMaxComparisonAndTestpControls) {
+  context c;
+  const auto qnan = float32_t::from_bits(0x7fc01234u);
+  const auto snan = float32_t::from_bits(0x7f800001u);
+  const auto one = float32_t::from_bits(0x3f800000u);
+
+  static_assert(minmax_control_capability<float32_t>::supports({}));
+  static_assert(!minmax_control_capability<float64_t>::supports(
+      {.nan = minmax_nan_mode::propagate}));
+  static_assert(operation_capability<scalar_operation::min, float32_t,
+                                     float32_t, float32_t, float32_t>::value);
+  static_assert(!minmax_control_capability<float8_e4m3_t>::supports({}));
+  static_assert(operation_capability<scalar_operation::testp, predicate_t,
+                                     float32_t>::value);
+  static_assert(!operation_capability<scalar_operation::testp, predicate_t,
+                                      float16_t>::value);
+
+  const auto number = min(c, qnan, one);
+  ASSERT_TRUE(number);
+  EXPECT_EQ(number->value.bits(), one.bits());
+  const auto compatibility = min(c, one, one, {});
+  ASSERT_TRUE(compatibility);
+  const auto propagated = min(c, qnan, one, {},
+                              {.nan = minmax_nan_mode::propagate});
+  ASSERT_TRUE(propagated);
+  EXPECT_EQ(propagated->value.bits(), 0x7fc00000u);
+  EXPECT_FALSE(propagated->status.invalid);
+
+  const auto minimum_zero = min(c, float32_t::from_bits(0x80000000u),
+                                float32_t{});
+  const auto maximum_zero = max(c, float32_t::from_bits(0x80000000u),
+                                float32_t{});
+  ASSERT_TRUE(minimum_zero);
+  ASSERT_TRUE(maximum_zero);
+  EXPECT_EQ(minimum_zero->value.bits(), 0x80000000u);
+  EXPECT_EQ(maximum_zero->value.bits(), 0u);
+
+  const auto abs_xor = min(c, float32_t::from_bits(0xc0400000u),
+                           float32_t::from_bits(0x40000000u),
+                           {}, {.absolute = true, .xor_sign = true});
+  ASSERT_TRUE(abs_xor);
+  EXPECT_EQ(abs_xor->value.bits(), 0xc0000000u);
+  const auto three = min(c, float32_t::from_bits(0x40400000u), one,
+                         float32_t::from_bits(0x40000000u));
+  ASSERT_TRUE(three);
+  EXPECT_EQ(three->value.bits(), one.bits());
+
+  EXPECT_EQ(min(c, one, one, {}, {.absolute = true}).error(),
+            arithmetic_error::unsupported_minmax_modifier);
+  EXPECT_EQ(min(c, float64_t::from_bits(0x3ff0000000000000ull),
+                float64_t::from_bits(0x4000000000000000ull),
+                {}, {.nan = minmax_nan_mode::propagate})
+                .error(),
+            arithmetic_error::unsupported_minmax_modifier);
+  EXPECT_EQ(max(c, one, one, one, {}, {.xor_sign = true}).error(),
+            arithmetic_error::unsupported_minmax_modifier);
+
+  const auto less = compare(c, float32_t::from_bits(0xbf800000u), one,
+                            {.relation = comparison_relation::less});
+  const auto greater_equal = compare(
+      c, one, one, {.relation = comparison_relation::greater_equal});
+  ASSERT_TRUE(less);
+  ASSERT_TRUE(greater_equal);
+  EXPECT_TRUE(less->value);
+  EXPECT_TRUE(greater_equal->value);
+  const auto unordered = compare(c, qnan, one,
+                                 {.nan = nan_comparison_mode::unordered});
+  ASSERT_TRUE(unordered);
+  EXPECT_TRUE(unordered->value);
+  const auto signaling = compare(c, snan, one);
+  ASSERT_TRUE(signaling);
+  EXPECT_FALSE(signaling->value);
+  EXPECT_TRUE(signaling->status.invalid);
+  const auto numeric_qnan = compare(c, qnan, one,
+                                    {.relation = comparison_relation::number});
+  const auto numeric_snan = compare(c, snan, one,
+                                    {.relation = comparison_relation::number});
+  const auto nan_qnan = compare(c, qnan, one,
+                                {.relation = comparison_relation::nan});
+  const auto nan_snan = compare(c, snan, one,
+                                {.relation = comparison_relation::nan});
+  ASSERT_TRUE(numeric_qnan);
+  ASSERT_TRUE(numeric_snan);
+  ASSERT_TRUE(nan_qnan);
+  ASSERT_TRUE(nan_snan);
+  EXPECT_FALSE(numeric_qnan->value);
+  EXPECT_FALSE(numeric_qnan->status.invalid);
+  EXPECT_FALSE(numeric_snan->value);
+  EXPECT_TRUE(numeric_snan->status.invalid);
+  EXPECT_TRUE(nan_qnan->value);
+  EXPECT_FALSE(nan_qnan->status.invalid);
+  EXPECT_TRUE(nan_snan->value);
+  EXPECT_TRUE(nan_snan->status.invalid);
+  EXPECT_EQ(compare(c, one, one,
+                    {.relation = comparison_relation::number,
+                     .nan = nan_comparison_mode::unordered})
+                .error(),
+            arithmetic_error::unsupported_operation);
+  EXPECT_EQ(compare(c, one, one, {},
+                    {.rounding = rounding_mode::toward_positive})
+                .error(),
+            arithmetic_error::unsupported_rounding);
+
+  EXPECT_TRUE(testp(c, one, floating_test::finite)->value);
+  EXPECT_TRUE(testp(c, float32_t::from_bits(0x7f800000u),
+                    floating_test::infinite)
+                  ->value);
+  EXPECT_TRUE(testp(c, qnan, floating_test::nan)->value);
+  EXPECT_TRUE(testp(c, float32_t::from_bits(1u), floating_test::subnormal)
+                  ->value);
 }
 
 TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
