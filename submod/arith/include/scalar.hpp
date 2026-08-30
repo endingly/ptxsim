@@ -625,22 +625,6 @@ constexpr void apply_destination_controls(canonical::number& value,
       value = {.classification = number_class::finite, .significand = 1};
     }
   }
-  if constexpr (std::same_as<To, fixed8_s2f6_t>) {
-    if (c.saturation == saturation_mode::finite &&
-        (value.classification == number_class::nan ||
-         value.classification == number_class::infinity)) {
-      // S2F6 has no non-finite encoding.  Its finite form saturates to the
-      // signed fixed endpoint; NaN is deliberately canonicalized positive.
-      value = {.classification = number_class::finite,
-               .negative = value.classification == number_class::infinity &&
-                           value.negative,
-               .significand = value.classification == number_class::infinity &&
-                                      value.negative
-                                  ? std::uint64_t{128}
-                                  : std::uint64_t{127},
-               .exponent = -fixed8_s2f6_t::fraction_bits};
-    }
-  }
   if (c.activation == activation_mode::relu && value.negative &&
       value.classification != number_class::nan)
     positive_zero();

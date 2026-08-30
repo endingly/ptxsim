@@ -330,28 +330,91 @@ TEST(Conversion, UE8M0MinimumFiniteEndpoint) {
   EXPECT_TRUE(negative->status.inexact);
 }
 
-TEST(Conversion, S2F6FiniteSaturationEndpoints) {
+TEST(Conversion, S2F6FiniteSaturationSpecialValuesReportDiagnostics) {
   context c;
   const conversion_control finite{.saturation = saturation_mode::finite};
   const auto positive =
       cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7f800000), finite);
   const auto negative =
       cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0xff800000), finite);
-  const auto nan =
+  const auto qnan =
       cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7fc00000), finite);
-  ASSERT_TRUE(positive && negative && nan);
+  const auto snan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7f800001), finite);
+  ASSERT_TRUE(positive && negative && qnan && snan);
   EXPECT_EQ(positive->value.rep, 127);
   EXPECT_EQ(negative->value.rep, -128);
-  EXPECT_EQ(nan->value.rep, 127);
+  EXPECT_EQ(qnan->value.rep, 127);
+  EXPECT_EQ(snan->value.rep, 127);
   EXPECT_FALSE(positive->status.invalid);
   EXPECT_FALSE(negative->status.invalid);
-  EXPECT_FALSE(nan->status.invalid);
-  EXPECT_FALSE(positive->status.overflow);
-  EXPECT_FALSE(negative->status.overflow);
-  EXPECT_FALSE(nan->status.overflow);
-  EXPECT_FALSE(positive->status.inexact);
-  EXPECT_FALSE(negative->status.inexact);
-  EXPECT_FALSE(nan->status.inexact);
+  EXPECT_TRUE(qnan->status.invalid);
+  EXPECT_TRUE(snan->status.invalid);
+  EXPECT_TRUE(positive->status.overflow);
+  EXPECT_TRUE(negative->status.overflow);
+  EXPECT_FALSE(qnan->status.overflow);
+  EXPECT_FALSE(snan->status.overflow);
+  EXPECT_TRUE(positive->status.inexact);
+  EXPECT_TRUE(negative->status.inexact);
+  EXPECT_FALSE(qnan->status.inexact);
+  EXPECT_FALSE(snan->status.inexact);
+  EXPECT_FALSE(positive->status.divide_by_zero || positive->status.underflow ||
+               positive->status.model_dependent);
+  EXPECT_FALSE(negative->status.divide_by_zero || negative->status.underflow ||
+               negative->status.model_dependent);
+  EXPECT_FALSE(qnan->status.divide_by_zero || qnan->status.underflow ||
+               qnan->status.model_dependent);
+  EXPECT_FALSE(snan->status.divide_by_zero || snan->status.underflow ||
+               snan->status.model_dependent);
+}
+
+TEST(Conversion, S2F6FiniteSaturationClampsRoundedFiniteValues) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  struct finite_case {
+    std::uint32_t input;
+    std::int8_t expected;
+  };
+  for (const auto [input, expected] :
+       std::array<finite_case, 6>{finite_case{0x40400000u, 127},  // +3
+                                  {0xc0400000u, -128},            // -3
+                                  {0x3ffe0000u, 127},             // exact +127/64
+                                  {0xc0000000u, -128},            // exact -128/64
+                                  {0x40000000u, 127},             // just above +127/64
+                                  {0xc0010000u, -128}}) {         // just below -128/64
+    const auto result = cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, expected);
+    const bool exact_endpoint = input == 0x3ffe0000u || input == 0xc0000000u;
+    EXPECT_EQ(result->status.overflow, !exact_endpoint);
+    EXPECT_EQ(result->status.inexact, !exact_endpoint);
+    EXPECT_FALSE(result->status.invalid);
+    EXPECT_FALSE(result->status.divide_by_zero);
+    EXPECT_FALSE(result->status.underflow);
+    EXPECT_FALSE(result->status.model_dependent);
+  }
+
+  const conversion_control relu_finite{
+      .saturation = saturation_mode::finite, .activation = activation_mode::relu};
+  for (const auto input : {0xc0400000u, 0xff800000u}) {
+    const auto result =
+        cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), relu_finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, 0);
+    EXPECT_FALSE(result->status.invalid);
+    EXPECT_FALSE(result->status.divide_by_zero);
+    EXPECT_FALSE(result->status.overflow);
+    EXPECT_FALSE(result->status.underflow);
+    EXPECT_FALSE(result->status.inexact);
+    EXPECT_FALSE(result->status.model_dependent);
+  }
+  const auto relu_nan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7fc00000), relu_finite);
+  ASSERT_TRUE(relu_nan);
+  EXPECT_EQ(relu_nan->value.rep, 127);
+  EXPECT_TRUE(relu_nan->status.invalid);
+  EXPECT_FALSE(relu_nan->status.overflow);
+  EXPECT_FALSE(relu_nan->status.inexact);
 }
 
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {

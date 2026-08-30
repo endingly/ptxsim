@@ -1311,6 +1311,10 @@ struct tensor_status {
 
 这些状态属于算术诊断，不代表 `arith` 拥有 PTX 架构寄存器。
 
+对无 NaN/Inf 编码的目标 conversion，有限范围外和 ±Inf 的 endpoint
+saturation 报告 `overflow` 与 `inexact`；NaN 映射到指定 endpoint 只报告
+`invalid`。精确 endpoint 和 ReLU 消除的负输入不设置诊断位。
+
 executor 对普通 PTX 浮点指令可只使用 `.value`；对 extended-precision integer 指令可将 carry/borrow 写入自身维护的 CC 状态。
 
 ## 11.2 Unsupported control

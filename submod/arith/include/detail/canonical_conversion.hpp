@@ -369,10 +369,25 @@ template <arithmetic_integer To>
 [[nodiscard]] constexpr result<fixed8_s2f6_t, floating_status> encode_fixed(
     number input, conversion_control control,
     std::uint32_t stochastic_bits = 0) noexcept {
+  if (control.saturation == saturation_mode::finite) {
+    if (input.classification == number_class::nan)
+      return {{std::numeric_limits<std::int8_t>::max()}, {.invalid = true}};
+    if (input.classification == number_class::infinity)
+      return {{input.negative ? std::numeric_limits<std::int8_t>::min()
+                              : std::numeric_limits<std::int8_t>::max()},
+              {.overflow = true, .inexact = true}};
+  }
   if (input.classification == number_class::finite)
     input.exponent += fixed8_s2f6_t::fraction_bits;
-  const auto encoded = encode_integer<std::int8_t>(input, control,
-                                                    stochastic_bits);
+  auto integer_control = control;
+  if (integer_control.saturation == saturation_mode::finite)
+    integer_control.saturation = saturation_mode::type_range;
+  auto encoded =
+      encode_integer<std::int8_t>(input, integer_control, stochastic_bits);
+  if (control.saturation == saturation_mode::finite && encoded.status.overflow) {
+    encoded.status.invalid = false;
+    encoded.status.inexact = true;
+  }
   return {{encoded.value}, encoded.status};
 }
 
