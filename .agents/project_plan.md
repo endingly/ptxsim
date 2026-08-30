@@ -4,7 +4,7 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M2 M2-06 lowering diagnostics. V2-M1 arithmetic
+> **Current gate:** V2-M2 M2-07 lowering context. V2-M1 arithmetic
 > remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
@@ -632,7 +632,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-06 Lowering diagnostics):** M2-00 pinned frontend baseline
+**Current phase (M2-07 Lowering context):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
 feature-on compile/link smoke. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
@@ -656,9 +656,10 @@ its production values and launch configuration remain absent. Executor PC/status
 transitions are M4+ work, and call semantics are M7 work. `%tid`, `%ntid`,
 `%ctaid`, `%nctaid`, `%laneid`, and `%warpid` values are M6 work.
 `ptxsim::lowering` is an optional `frontend-lowering` build-tree target and
-now owns only structured, fully copied lowering diagnostics. It is not
-installed or exported yet. Lowering context, frontend-ID maps, and module or
-instruction lowering remain M2-07/M2-08 work.
+now owns structured, fully copied lowering diagnostics plus a temporary dense
+frontend-ID-to-simulator-ID/PC `LoweringContext`. It is not installed or
+exported, and must not survive in `ProgramImage`. Module or instruction
+lowering remains M2-08 work.
 
 ## 10.1 Exec IR principles
 

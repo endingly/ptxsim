@@ -1,11 +1,17 @@
 find_package(ptx_frontend CONFIG QUIET)
 
 if(ptx_frontend_FOUND)
-    add_library(ptxsim_lowering STATIC src/diagnostic.cpp)
+    add_library(ptxsim_lowering STATIC
+        src/context.cpp
+        src/diagnostic.cpp)
     add_library(ptxsim::lowering ALIAS ptxsim_lowering)
     set_target_properties(ptxsim_lowering PROPERTIES EXPORT_NAME lowering)
     target_compile_features(ptxsim_lowering PUBLIC cxx_std_23)
-    target_link_libraries(ptxsim_lowering PRIVATE ptx_frontend::resolved_ir)
+    target_link_libraries(ptxsim_lowering
+        PUBLIC ptxsim::common
+        PRIVATE ptx_frontend::resolved_ir)
+    target_include_directories(ptxsim_lowering PUBLIC
+        $<TARGET_PROPERTY:ptx_frontend::resolved_ir,INTERFACE_INCLUDE_DIRECTORIES>)
     register_headers(ptxsim_lowering lowering PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     ptxsim_enable_sanitizers(ptxsim_lowering)
@@ -32,7 +38,9 @@ if(ptx_frontend_FOUND)
         DEPENDS ptxsim_lowering_public_headers)
 
     if(BUILD_TESTING)
-        add_executable(test_ptxsim_lowering test/test_diagnostic.cpp)
+        add_executable(test_ptxsim_lowering
+            test/test_context.cpp
+            test/test_diagnostic.cpp)
         find_package(GTest CONFIG REQUIRED)
         target_link_libraries(test_ptxsim_lowering PRIVATE
             GTest::gtest
