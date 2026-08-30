@@ -114,12 +114,12 @@ jobs:
           doNotCache: true
 
       - name: Restore compiler cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        uses: actions/cache@v6
         with:
           path: .cache/ccache
-          key: ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
+          key: ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml', 'CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
           restore-keys: |
-            ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+            ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
 
       - name: Run CMake workflow preset
         shell: bash
