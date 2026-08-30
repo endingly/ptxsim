@@ -1,11 +1,16 @@
-# Historical / Remediation Record
+# Historical / V2-M1 Remediation Record
 
-> **Archived remediation snapshot.** Original body below is preserved verbatim from the `fix/m5-main-review@24dd2308ef7869f950e6f956bb88544194a2059a` review snapshot.
-> Its **NOT MERGE READY** conclusion is historical and intentionally retained; later remediation commits are recorded in the [project plan](../../.agents/project_plan.md).
-> **Audit chain:** [m4 historical review](m4-review.md) → [m5-main provenance and closure](m5-main-review.md) → this remediation record.
+> **Archive status:** Historical / Superseded remediation snapshot.
+> **Original:** `m5-fix-review.md`; original report body SHA256
+> `077ab14ccfe482411e563ee491c021187e49b78ed9cad886f9b08464660aea2e`.
+> **Reviewed:** `fix/m5-main-review@24dd2308ef7869f950e6f956bb88544194a2059a`;
+> baseline `main@13bd652377b2256da05b1b8b4d106c365b9488b6`.
+> **Milestone mapping:** V2-M1 arithmetic remediation; retained branch name is
+> pre-merge continuity, not V2-M5.
+> **Supersedes:** [V2-M1 main review](v2-m1-main-review.md).
+> **Superseded by:** [V2-M1 rereview](v2-m1-fix-rereview.r1.md).
 
 ---
-
 # `fix/m5-main-review` 分支修复验收 Review
 
 > **结论：NOT MERGE READY**  

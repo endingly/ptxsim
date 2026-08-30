@@ -26,6 +26,13 @@ Sol should not perform routine mechanical work when a worker can perform it.
 
 ---
 
+## Review-document governance
+
+Before creating, importing, renaming, or superseding a review artifact, agents
+must read [`.agents/review_policy.md`](review_policy.md).
+
+---
+
 ## Role selection
 
 Use Terra for substantial engineering work.

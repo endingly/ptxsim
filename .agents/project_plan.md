@@ -38,7 +38,11 @@ private arithmetic backends
 
 That is not a naming-only refactor. It changes module responsibility, API shape, testing strategy, and dependency ordering.
 
-Arithmetic remediation is tracked in the [review audit chain](../docs/reviews/).
+Arithmetic remediation is tracked in the [V2-M1 review audit chain](../docs/reviews/README.md):
+[main review](../docs/reviews/v2-m1-main-review.md),
+[remediation review](../docs/reviews/v2-m1-fix-review.md), and
+[rereview](../docs/reviews/v2-m1-fix-rereview.r1.md); archive governance is
+defined in [`.agents/review_policy.md`](review_policy.md).
 V2 keeps an accepted `arith` boundary as the prerequisite for executor
 integration.
 
@@ -496,6 +500,11 @@ V2-M1 arithmetic conformance
 
 V2-M2 consumes only the stabilized `arith` API established by V2-M1.
 
+Legacy review artifacts and the retained `fix/m5-main-review` branch name
+predate the V2 milestone reorder. They identify this V2-M1 arithmetic
+remediation chain only; the branch remains unchanged to avoid pre-merge churn,
+and V2-M5 remains the future floating/conversion integration milestone.
+
 ---
 
 # 8. V2-M0 — Repository and build contract
@@ -530,12 +539,11 @@ V2-M2 consumes only the stabilized `arith` API established by V2-M1.
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Current remediation status:** the known MAIN fixes and later local fixes are
-recorded in the audit chain and map below: `05b0af2` projects F64 FTZ inputs,
-`419e2e6` saturates finite S2F6 conversions, `def4b8a` verifies the frontend
-snapshot, and this documentation commit restores audit governance. These are
-not V2-M1 acceptance evidence; final integrated-tree workflows, hosted CI, and
-final-head hosted CI remains the gating action.
+**Current remediation status:** the audit chain and map below record local
+fixes, including `05b0af2` (F64 FTZ projection), `419e2e6` (S2F6 finite
+saturation), `def4b8a` (frontend snapshot integrity), and `a407c8e`
+(pre-rounding S2F6 status). They are not V2-M1 acceptance evidence: the final
+integrated tree must pass the five workflows and receive final-head hosted CI.
 
 ## 9.1 Work packages
 
@@ -614,7 +622,9 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 | FIX-P0-002 + FIX-P1-001 | `419e2e6` | S2F6 finite saturation/status; `test_conversion.cpp` |
 | FIX-P2-002 | `def4b8a` | automatic snapshot integrity CTest + manual byte comparison |
 | REREVIEW-P1-001 | `a407c8e` | S2F6 pre-rounding finite-range status; `test_conversion.cpp` |
-| REREVIEW-P2-002 | this documentation commit | plan consistency search and diff check |
+| REREVIEW-P2-002 | `8dd6ef5` | plan consistency search and diff check |
+| REREVIEW-P3-001 | `d43cc2d` | pinned workflow action refs and YAML check |
+| REREVIEW-P2-003 | this archival commit | V2-M1 review audit-chain preservation/link checks |
 | FIX-P2-003 | `777ac67` | [`docs/reviews`](../docs/reviews/) provenance and archival links |
 
 ---

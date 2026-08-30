@@ -1,10 +1,15 @@
 # Historical / Superseded
 
-> **Archived review.** Original body below is preserved verbatim from `main@13bd652377b2256da05b1b8b4d106c365b9488b6`; it reviewed `refactor/arith-module@3b9ceb99a43e65beee38ce4248e6a5658c9f85a7` against `main@c7b2b31ae8d3e81198afaa6202506de35c77cde4`.
-> **Later records:** [m5-main provenance and closure](m5-main-review.md) · [m5 remediation review](m5-fix-review.md).
+> **Archive status:** Historical / Superseded.
+> **Original:** `m4-review.md`; original body SHA256
+> `3b656f1a3b6c26eae7199bb03908652ed99dcb375d18b4a43a329056c2dba9fc`.
+> **Reviewed:** `refactor/arith-module@3b9ceb99a43e65beee38ce4248e6a5658c9f85a7`;
+> baseline `main@c7b2b31ae8d3e81198afaa6202506de35c77cde4`.
+> **Milestone mapping:** legacy predecessor to V2-M1 arithmetic remediation.
+> **Supersedes:** [no earlier archived review](README.md#arithmetic-review-audit-chain).
+> **Superseded by:** [V2-M1 main review](v2-m1-main-review.md).
 
 ---
-
 # `refactor/arith-module` 全量 Review
 
 > **结论：NOT MERGE READY**  
