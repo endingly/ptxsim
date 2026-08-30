@@ -57,6 +57,12 @@ if(BUILD_TESTING)
     include(CTest)
     enable_testing()
     include(GoogleTest)
+    add_test(
+        NAME ptxsim_ptx_frontend_snapshot_integrity
+        COMMAND "${CMAKE_COMMAND}"
+            "-DPTXSIM_SNAPSHOT_DIR=${CMAKE_CURRENT_SOURCE_DIR}/.ports/ptx-frontend/generated"
+            "-DPTXSIM_PTX_FRONTEND_PORTFILE=${CMAKE_CURRENT_SOURCE_DIR}/.ports/ptx-frontend/portfile.cmake"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_ptx_frontend_snapshot.cmake")
 endif()
 
 add_subdirectory(submod)

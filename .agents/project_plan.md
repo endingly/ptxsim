@@ -604,7 +604,7 @@ closure gate; Luna runs them before this documentation commit.
 | MAIN-P1-010 | `2c59b86` | `test_packed.cpp` |
 | MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
 | MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
-| MAIN-P2-003 | `20e0e37` | `frontend-lowering` feature install; generated snapshot byte check |
+| MAIN-P2-003 | `20e0e37` + FIX-P2-002 follow-up | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
 | MAIN-P2-004 | external / pending | GitHub `main` branch protection and hosted CI checks |
 | MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
 | MAIN-P2-006 | this documentation commit | plan/document consistency searches |

@@ -5,6 +5,12 @@ These files were generated from `endingly/ptx_frontend` commit
 the adjacent portfile.  They replace that revision's Python/PyYAML/jsonschema
 code-generation step so the overlay build has no pip resolver or PyPI input.
 
+With `BUILD_TESTING=ON`, CTest runs an automatic snapshot integrity check. It
+verifies `SHA256SUMS` covers exactly the generated payloads and that this
+provenance revision matches the adjacent portfile's `REF`; it does not run the
+upstream generator. Changing a payload requires its hash update, and changing
+the pin requires the corresponding provenance update.
+
 The checked-in payloads deliberately use the generator's no-timestamp form:
 every generated file starts with
 `// Generated at: omitted (set SOURCE_DATE_EPOCH for a reproducible timestamp)`.
@@ -24,8 +30,10 @@ tmp=$(mktemp -d)
     --backend-spec instructions/ptx_cpp_backend_spec/ptx_frontend.yaml \
     --output "$tmp"
 )
-diff -ruN --exclude=README.md "$tmp" <overlay-generated-dir>
+diff -ruN --exclude=README.md --exclude=SHA256SUMS "$tmp" <overlay-generated-dir>
 ```
 
-An empty `diff` byte-reproduces the generated payloads; then update the
-snapshot and this provenance note in the same change.
+This documented manual regeneration/byte comparison is separate from the
+automatic snapshot integrity check. An empty `diff` byte-reproduces the
+generated payloads; then update the snapshot, `SHA256SUMS`, and this
+provenance note in the same change.
