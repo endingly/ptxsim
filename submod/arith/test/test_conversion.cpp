@@ -417,6 +417,49 @@ TEST(Conversion, S2F6FiniteSaturationClampsRoundedFiniteValues) {
   EXPECT_FALSE(relu_nan->status.inexact);
 }
 
+TEST(Conversion, S2F6FiniteSaturationReportsExactSourceRangeBeforeRounding) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  const auto expect = [&](auto input, std::int8_t expected, bool overflow) {
+    const auto result = cvt<fixed8_s2f6_t>(c, input, finite);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->value.rep, expected);
+    EXPECT_EQ(result->status.overflow, overflow);
+    EXPECT_EQ(result->status.inexact, overflow);
+    EXPECT_FALSE(result->status.invalid || result->status.divide_by_zero ||
+                 result->status.underflow || result->status.model_dependent);
+  };
+
+  expect(float32_t::from_bits(0x3ffe0000), 127, false);  // +127/64
+  expect(float32_t::from_bits(0xc0000000), -128, false);  // -128/64
+  expect(float32_t::from_bits(0x3ffe0001), 127, true);    // nextafter(+127/64)
+  expect(float32_t::from_bits(0xc0000001), -128, true);   // nextafter(-128/64)
+  expect(float64_t::from_bits(0x3fffc00000000000ULL), 127, false);
+  expect(float64_t::from_bits(0xc000000000000000ULL), -128, false);
+  expect(float64_t::from_bits(0x3fffc00000000001ULL), 127, true);
+  expect(float64_t::from_bits(0xc000000000000001ULL), -128, true);
+
+  for (const auto rounding : {rounding_mode::nearest_even,
+                              rounding_mode::toward_zero,
+                              rounding_mode::toward_positive,
+                              rounding_mode::toward_negative}) {
+    const conversion_control directed{.rounding = rounding,
+                                      .saturation = saturation_mode::finite};
+    for (const auto [input, expected] :
+         {std::pair{0x3ffe0001u, std::int8_t{127}},
+          std::pair{0xc0000001u, std::int8_t{-128}}}) {
+      const auto result =
+          cvt<fixed8_s2f6_t>(c, float32_t::from_bits(input), directed);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.rep, expected);
+      EXPECT_TRUE(result->status.overflow);
+      EXPECT_TRUE(result->status.inexact);
+      EXPECT_FALSE(result->status.invalid || result->status.divide_by_zero ||
+                   result->status.underflow || result->status.model_dependent);
+    }
+  }
+}
+
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   context c;
   // The capability is the canonical decode/encode matrix, not a list of

@@ -369,6 +369,28 @@ template <arithmetic_integer To>
 [[nodiscard]] constexpr result<fixed8_s2f6_t, floating_status> encode_fixed(
     number input, conversion_control control,
     std::uint32_t stochastic_bits = 0) noexcept {
+  const bool finite_outside_range = [&] {
+    if (control.saturation != saturation_mode::finite ||
+        input.classification != number_class::finite)
+      return false;
+
+    const auto limit = input.negative ? std::uint64_t{128} : std::uint64_t{127};
+    const int scaled_exponent = input.exponent + fixed8_s2f6_t::fraction_bits;
+    if (scaled_exponent >= 0) {
+      const auto bits = bit_length(input.significand);
+      if (scaled_exponent >= 64 ||
+          bits + static_cast<unsigned>(scaled_exponent) > 64)
+        return true;
+      return (input.significand << static_cast<unsigned>(scaled_exponent)) > limit;
+    }
+
+    const auto shift = static_cast<unsigned>(-scaled_exponent);
+    const auto limit_bits = bit_length(limit);
+    if (shift >= 64 || limit_bits + shift > 64)
+      return false;
+    return input.significand > (limit << shift);
+  }();
+
   if (control.saturation == saturation_mode::finite) {
     if (input.classification == number_class::nan)
       return {{std::numeric_limits<std::int8_t>::max()}, {.invalid = true}};
@@ -384,8 +406,10 @@ template <arithmetic_integer To>
     integer_control.saturation = saturation_mode::type_range;
   auto encoded =
       encode_integer<std::int8_t>(input, integer_control, stochastic_bits);
-  if (control.saturation == saturation_mode::finite && encoded.status.overflow) {
+  if (control.saturation == saturation_mode::finite &&
+      (finite_outside_range || encoded.status.overflow)) {
     encoded.status.invalid = false;
+    encoded.status.overflow = true;
     encoded.status.inexact = true;
   }
   return {{encoded.value}, encoded.status};
