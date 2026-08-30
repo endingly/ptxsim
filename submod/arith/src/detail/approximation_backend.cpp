@@ -34,6 +34,12 @@ using F32 = Result<float32_t>;
 [[nodiscard]] constexpr float32_t f32(std::uint32_t bits) {
   return float32_t::from_bits(bits);
 }
+[[nodiscard]] constexpr bool is_large_divisor(float32_t value) {
+  constexpr auto two_to_126 = 0x7e800000u;
+  constexpr auto two_to_128 = 0x7f800000u;
+  const auto magnitude = value.bits() & 0x7fffffffu;
+  return magnitude > two_to_126 && magnitude < two_to_128;
+}
 [[nodiscard]] F32 join(F32 a, F32 b, F32 value) {
   value.flags |= a.flags;
   value.flags |= b.flags;
@@ -322,6 +328,11 @@ Result<float32_t> div_approx(float32_t lhs, float32_t rhs,
   validate_approximation_control<Operation::DivApprox, float32_t>(control);
   if (!is_reference_profile(control))
     return canonical_invalid_nan<float32_t>();
+  if (is_large_divisor(rhs) && !is_nan(lhs)) {
+    if (is_infinity(lhs))
+      return canonical_invalid_nan<float32_t>();
+    return {f32((lhs.bits() ^ rhs.bits()) & 0x80000000u), {}};
+  }
   // PTX div.approx is specified through an approximate reciprocal path; keep
   // that composition explicit rather than accidentally making it an alias of
   // correctly rounded division.

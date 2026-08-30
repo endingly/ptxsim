@@ -98,6 +98,54 @@ TEST(SpecialFunctions, ApproximationCapabilityMatrix) {
                   {.approximation = approximation_mode::ptx_full}));
 }
 
+TEST(SpecialFunctions, DivApproxLargeDivisorPtxDomain) {
+  context c;
+  const special_function_control preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const special_function_control fio{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const auto f32 = [](std::uint32_t bits) { return float32_t::from_bits(bits); };
+
+  for (const auto control : {preserve, fio}) {
+    for (const auto [lhs, rhs, expected] :
+         std::array{std::array{0x3f800000u, 0x7f000000u, 0x00000000u},
+                    std::array{0x3f800000u, 0xff000000u, 0x80000000u},
+                    std::array{0xbf800000u, 0x7f000000u, 0x80000000u},
+                    std::array{0xbf800000u, 0xff000000u, 0x00000000u}}) {
+      const auto result = div(c, f32(lhs), f32(rhs), control);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected);
+    }
+  }
+
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7e800000), preserve)
+                ->value.bits(),
+            0x00800000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7e800001), preserve)
+                ->value.bits(),
+            0x00000000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7f7fffff), preserve)
+                ->value.bits(),
+            0x00000000u);
+  EXPECT_EQ(div(c, f32(0x3f800000), f32(0x7f800000), preserve)
+                ->value.bits(),
+            0x00000000u);
+
+  for (const auto lhs : {0x7f800000u, 0xff800000u})
+    for (const auto rhs : {0x7f000000u, 0xff000000u}) {
+      const auto result = div(c, f32(lhs), f32(rhs), preserve);
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), 0x7fc00000u);
+      EXPECT_TRUE(result->status.invalid);
+    }
+
+  EXPECT_TRUE(is_nan(div(c, f32(0x7fc00001), f32(0x7f000000), preserve)
+                         ->value));
+  EXPECT_TRUE(is_nan(div(c, f32(0x3f800000), f32(0x7fc00001), preserve)
+                         ->value));
+}
+
 TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
   context c;
   const special_function_control approx{
