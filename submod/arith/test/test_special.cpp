@@ -222,7 +222,7 @@ TEST(SpecialFunctions, F64ApproximateForms) {
                      true},
                     {0x7ff0000000000000ULL, 0x0000000000000000ULL},
                     {0x7ff8000100000000ULL, f64_ptx_nan},
-                    {0x7ff0000000000001ULL, f64_ptx_nan, true},
+                    {0x7ff0000000000001ULL, 0x0000000000000000ULL},
                     {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
                      true}});
   expect([&](float64_t x) { return rsqrt(c, x, rsqrt_preserve); },
@@ -245,7 +245,7 @@ TEST(SpecialFunctions, F64ApproximateForms) {
                     {0x7ff0000000000000ULL, 0x0000000000000000ULL},
                     {0xbff0000000000000ULL, f64_ptx_nan, true},
                     {0x7ff8000100000000ULL, f64_ptx_nan},
-                    {0x7ff0000000000001ULL, f64_ptx_nan, true},
+                    {0x7ff0000000000001ULL, 0x0000000000000000ULL},
                     {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
                      true}});
 
@@ -280,6 +280,81 @@ TEST(SpecialFunctions, F64ApproximateForms) {
                    .subnormal = subnormal_mode::flush_input})
                 .error(),
             arithmetic_error::unsupported_subnormal_mode);
+}
+
+TEST(SpecialFunctions, F64ApproximateFtzUsesOnlyUpperWord) {
+  context c;
+  const special_function_control rcp_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const special_function_control rsqrt_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+
+  struct expected_case {
+    std::uint64_t value;
+    bool invalid = false;
+    bool divide_by_zero = false;
+  };
+  const auto special_oracle = [](std::uint64_t input, bool rsqrt) {
+    const auto upper = static_cast<std::uint32_t>(input >> 32);
+    const auto exponent = (upper >> 20) & 0x7ffu;
+    const auto fraction = upper & 0x000f'ffffu;
+    const auto sign = upper & 0x8000'0000u;
+    constexpr auto ptx_nan = 0x7fff'ffff'0000'0000ULL;
+
+    if (exponent == 0x7ffu) {
+      if (fraction != 0)
+        return expected_case{ptx_nan, (fraction & 0x0008'0000u) == 0};
+      if (sign == 0)
+        return expected_case{};
+      return rsqrt ? expected_case{ptx_nan, true}
+                   : expected_case{0x8000'0000'0000'0000ULL};
+    }
+
+    // The inputs below have zero exponent, so 1.11.20 FTZ produces signed 0.
+    return expected_case{sign == 0 ? 0x7ff0'0000'0000'0000ULL
+                                   : 0xfff0'0000'0000'0000ULL,
+                         false, true};
+  };
+  const auto expect_special = [&]<typename Function>(Function function,
+                                                       bool rsqrt) {
+    for (const auto input :
+         std::array{0x00000000'cafe'babeULL, 0x80000000'1234'5678ULL,
+                    0x7ff00000'0000'0001ULL, 0xfff00000'0000'0001ULL,
+                    0x7ff00001'0000'0000ULL, 0x7ff80000'0000'0001ULL,
+                    0x00000001'0123'4567ULL, 0x80000001'89ab'cdefULL}) {
+      const auto expected = special_oracle(input, rsqrt);
+      const auto result = function(float64_t::from_bits(input));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected.value);
+      EXPECT_EQ(result->status.invalid, expected.invalid);
+      EXPECT_EQ(result->status.divide_by_zero, expected.divide_by_zero);
+      EXPECT_FALSE(result->status.overflow);
+      EXPECT_FALSE(result->status.underflow);
+      EXPECT_FALSE(result->status.inexact);
+      EXPECT_TRUE(result->status.model_dependent);
+    }
+  };
+
+  expect_special([&](float64_t x) { return rcp(c, x, rcp_ftz); }, false);
+  expect_special([&](float64_t x) { return rsqrt(c, x, rsqrt_ftz); }, true);
+
+  for (const auto [input, rcp_expected, rsqrt_expected, rsqrt_invalid] :
+       std::array{std::array{0x40080000'1234'5678ULL,
+                             0x3fd55555'0000'0000ULL,
+                             0x3fe279a7'0000'0000ULL, 0ULL},
+                  std::array{0xc0080000'dead'beefULL,
+                             0xbfd55555'0000'0000ULL,
+                             0x7fffffff'0000'0000ULL, 1ULL}}) {
+    const auto rcp_result = rcp(c, float64_t::from_bits(input), rcp_ftz);
+    const auto rsqrt_result =
+        rsqrt(c, float64_t::from_bits(input), rsqrt_ftz);
+    ASSERT_TRUE(rcp_result && rsqrt_result);
+    EXPECT_EQ(rcp_result->value.bits(), rcp_expected);
+    EXPECT_EQ(rsqrt_result->value.bits(), rsqrt_expected);
+    EXPECT_EQ(rsqrt_result->status.invalid, rsqrt_invalid != 0);
+  }
 }
 
 TEST(SpecialFunctions, TanhApproxIsPreserveOnly) {

@@ -302,13 +302,18 @@ template <typename T>
           ExceptionFlags{static_cast<std::uint8_t>(ExceptionFlag::Invalid)}};
 }
 
+[[nodiscard]] constexpr float64_t project_f64_to_ptx_1_11_20(
+    float64_t value) noexcept {
+  return float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
+}
+
 template <typename Function>
 [[nodiscard]] Result<float64_t> f64_ftz_approx(float64_t value,
                                                Function function) {
+  value = project_f64_to_ptx_1_11_20(value);
   value = flush_subnormal(value);
   if (is_nan(value))
     return canonical_nan_f64(value);
-  value = float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
   auto result = function(value);
   if (is_nan(result.value)) {
     auto canonical = canonical_nan_f64(result.value);
@@ -316,8 +321,7 @@ template <typename Function>
     return canonical;
   }
   result.value = flush_subnormal(result.value);
-  result.value =
-      float64_t::from_bits(result.value.bits() & 0xFFFFFFFF00000000ULL);
+  result.value = project_f64_to_ptx_1_11_20(result.value);
   return result;
 }
 
