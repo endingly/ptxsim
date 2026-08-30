@@ -4,7 +4,7 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M2 M2-08 module lowering. V2-M1 arithmetic
+> **Current gate:** V2-M2 M2 exit lifetime acceptance. V2-M1 arithmetic
 > remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
@@ -632,7 +632,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-08 Module lowering):** M2-00 pinned frontend baseline
+**Current phase (M2 exit lifetime acceptance):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
 feature-on compile/link smoke. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
@@ -663,6 +663,10 @@ lowering from AST placement/source facts and resolved-IR semantics into verified
 identity survives in `ProgramImage`. The supported M2-08 slice is scalar/pred
 mov, selected integer/bit/branch instructions, and selected explicit scalar
 global/constant memory operations; unsupported legal forms are diagnostics.
+The feature-on acceptance test destroys all frontend and temporary lowering
+objects before verifying/dumping the resulting image and creating a ready
+`ThreadState` from copied entry layouts; no production lowering-to-state
+dependency or install/export surface is introduced.
 
 ## 10.1 Exec IR principles
 

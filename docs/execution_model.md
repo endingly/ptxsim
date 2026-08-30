@@ -1,6 +1,6 @@
 # Execution model
 
-## M2-08 status
+## M2 lifetime-acceptance status
 
 The installed frontend-independent core has the following build graph:
 
@@ -23,6 +23,11 @@ it converts a parsed AST plus resolved module into a self-contained,
 `ProgramImage`-verified initial instruction subset. The AST supplies labels,
 nested ordering, and source ranges; resolved IR supplies semantics. No executor
 or state integration is added.
+The feature-on lifetime acceptance covers destruction of source, parser, AST,
+resolved IR, and temporary lowering context before walking, dumping and
+verifying the resulting `ProgramImage`, then copying an entry register layout
+into a standalone ready `ThreadState`. This is test-only wiring; production
+lowering does not depend on `state`.
 `state::RegisterFile` is a standalone,
 frontend-independent dense register store: callers provide its ordered
 `RawWidth` layout, reads of unwritten slots return a structured
@@ -35,7 +40,7 @@ is now an interface-only, mockable state boundary: it has no production values
 or launch configuration. Executor PC/status transitions are M4+ work, and call
 semantics are M7 work.
 
-## Non-goals in M2-08
+## Non-goals in M2 lifetime acceptance
 
 There is no ProgramImage adapter in production state, special-register production
 implementation, launch configuration, executor status/PC transition API (M4+),

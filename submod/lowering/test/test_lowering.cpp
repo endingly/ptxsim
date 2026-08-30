@@ -1,3 +1,4 @@
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -7,6 +8,7 @@
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 
 #include <ptxsim/lowering/lowering.hpp>
+#include <ptxsim/state/thread_state.hpp>
 
 namespace ptxsim::lowering {
 namespace {
@@ -309,6 +311,65 @@ TEST(ModuleLowering, RejectsParameterizedDataAddresses) {
   EXPECT_EQ(image.error().code,
             LoweringDiagnosticCode::unsupported_ptx_feature);
   EXPECT_EQ(image.error().function_context, "kernel");
+}
+
+TEST(ModuleLowering, LoweredImageOutlivesFrontendAndInitializesThreadState) {
+  std::optional<program::ProgramImage> image;
+  {
+    std::string source = R"ptx(
+.version 8.0
+.target sm_80
+.address_size 64
+.global .u32 value;
+.visible .entry kernel() {
+  .reg .pred %p;
+  .reg .u32 %r0;
+  ld.global.u32 %r0, [value];
+  loop:
+  @!%p bra loop;
+}
+)ptx";
+    ptx_frontend::PtxSyntaxParser parser(source);
+    auto ast = parser.parseModule();
+    ASSERT_TRUE(ast.has_value()) << ast.diagnostics.front().message;
+    auto resolved = ptx_frontend::resolved_ir::resolveModule(*ast);
+    ASSERT_TRUE(resolved.has_value()) << resolved.error().front().message;
+    auto lowered = lower_module(*ast, *resolved, "lifetime.ptx");
+    ASSERT_TRUE(lowered.has_value()) << to_string(lowered.error());
+    image.emplace(std::move(*lowered));
+  }
+
+  ASSERT_TRUE(image.has_value());
+  EXPECT_TRUE(program::verify(*image).has_value());
+  EXPECT_FALSE(image->instructions().empty());
+  EXPECT_FALSE(program::dump(*image).empty());
+  ASSERT_EQ(image->functions().size(), 1U);
+  ASSERT_EQ(image->entry_points().size(), 1U);
+  const auto& entry = image->functions()[image->entry_points()[0].value()];
+  EXPECT_EQ(entry.id, image->entry_points()[0]);
+  EXPECT_EQ(entry.begin_pc.value(), 0U);
+  EXPECT_EQ(entry.end_pc.value(), image->instructions().size());
+  EXPECT_EQ(image->source_locations_by_pc().size(),
+            image->instructions().size());
+  EXPECT_EQ(image->source_locations()[0].file, "lifetime.ptx");
+  ASSERT_EQ(image->symbols().size(), 1U);
+  const auto& branch =
+      std::get<exec_ir::BranchInst>(image->instructions().back());
+  EXPECT_EQ(branch.target.pc.value(), 1U);
+
+  std::vector<common::RawWidth> widths;
+  for (const auto& register_layout : entry.registers)
+    widths.push_back(register_layout.width);
+  const auto thread = state::ThreadState::create(
+      common::ThreadId{7}, entry.id, entry.begin_pc, std::move(widths));
+  ASSERT_TRUE(thread.has_value());
+  EXPECT_EQ(thread->status(), state::ThreadStatus::ready);
+  EXPECT_EQ(thread->current_function(), entry.id);
+  EXPECT_EQ(thread->current_pc(), entry.begin_pc);
+  EXPECT_EQ(thread->registers().size(), entry.registers.size());
+  ASSERT_FALSE(thread->registers().read(common::RegisterSlot{0}).has_value());
+  EXPECT_EQ(thread->registers().read(common::RegisterSlot{0}).error().code,
+            state::RegisterErrorCode::uninitialized_read);
 }
 
 }  // namespace

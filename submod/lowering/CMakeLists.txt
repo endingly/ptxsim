@@ -48,7 +48,8 @@ if(ptx_frontend_FOUND)
         target_link_libraries(test_ptxsim_lowering PRIVATE
             GTest::gtest
             GTest::gtest_main
-            ptxsim::lowering)
+            ptxsim::lowering
+            ptxsim::state)
         ptxsim_enable_sanitizers(test_ptxsim_lowering)
         gtest_discover_tests(test_ptxsim_lowering)
 
