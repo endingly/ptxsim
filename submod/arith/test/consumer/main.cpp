@@ -4,6 +4,7 @@
 #include <ptxsim/exec_ir/instruction.hpp>
 #include <ptxsim/exec_ir/operand.hpp>
 #include <ptxsim/program/program_image.hpp>
+#include <ptxsim/state/register_file.hpp>
 
 int main() {
   ptxsim::arith::context context;
@@ -29,6 +30,10 @@ int main() {
       .entry_points = {ptxsim::common::FunctionId{0}},
       .source_locations_by_pc = {std::nullopt},
   });
+  auto registers =
+      ptxsim::state::RegisterFile::create({ptxsim::common::RawWidth::b32});
+  if (!registers || !registers->write(ptxsim::common::RegisterSlot{0}, raw))
+    return 1;
   return value &&
                  ptxsim::common::to_string(ptxsim::common::ProgramCounter{7}) ==
                      "pc:7" &&
@@ -37,7 +42,10 @@ int main() {
                  ptxsim::exec_ir::to_string(operand) == "register:1:b32" &&
                  ptxsim::exec_ir::validate(instruction) && image &&
                  ptxsim::program::verify(*image) &&
-                 !ptxsim::program::dump(*image).empty()
+                 !ptxsim::program::dump(*image).empty() &&
+                 *registers->read(ptxsim::common::RegisterSlot{0}) == raw &&
+                 ptxsim::state::dump(*registers) ==
+                     "register:0 b32 b32:0x00000007\n"
              ? 0
              : 1;
 }

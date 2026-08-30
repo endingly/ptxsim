@@ -79,16 +79,19 @@ install_project_targets(
         ptxsim_common
         ptxsim_exec_ir
         ptxsim_program
+        ptxsim_state
         ptxsim_arith
         ptxsim_arith_validation
     INCLUDE_DIRS
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/program/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/state/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
     INCLUDE_DESTINATIONS
         "${PROJECT_NAME}/common"
         "${PROJECT_NAME}/exec_ir"
         "${PROJECT_NAME}/program"
+        "${PROJECT_NAME}/state"
         "${PROJECT_NAME}/arith"
     DEPENDENCIES "softfloat CONFIG REQUIRED")

@@ -8,7 +8,8 @@ target_link_libraries(ptxsim_arith_external_consumer PRIVATE
     ptxsim::arith
     ptxsim::common
     ptxsim::exec_ir
-    ptxsim::program)
+    ptxsim::program
+    ptxsim::state)
 
 if(PTXSIM_CONSUMER_ENABLE_SANITIZERS)
     target_compile_options(ptxsim_arith_external_consumer PRIVATE

@@ -631,7 +631,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-05 ProgramImage):** M2-00 pinned frontend baseline
+**Current phase (M2-09 RegisterFile):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
 feature-on compile/link smoke. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
@@ -643,7 +643,12 @@ global/constant loads and global stores. `ptxsim::program` now owns verified,
 frontend-independent `ProgramImage` data: instruction PC order, contiguous
 function ranges with dense register layouts, copied symbols/source metadata,
 entries, and a PC source side table. It has no executor, state, lowering, or
-symbol storage/address implementation.
+symbol storage/address implementation. `ptxsim::state` now exports a static,
+frontend-independent `RegisterFile` with caller-supplied, RegisterFile-owned
+dense `RawWidth` layout,
+exact-width writes, structured uninitialized reads, and deterministic dumps.
+It deliberately has no `ProgramImage` adapter or `ThreadState`; those remain
+later M2 work.
 
 ## 10.1 Exec IR principles
 
