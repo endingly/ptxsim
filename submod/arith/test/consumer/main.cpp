@@ -1,10 +1,15 @@
+#include <type_traits>
+
 #include <ptxsim/arith/arith.hpp>
 #include <ptxsim/common/ids.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir/instruction.hpp>
 #include <ptxsim/exec_ir/operand.hpp>
 #include <ptxsim/program/program_image.hpp>
+#include <ptxsim/state/special_register_provider.hpp>
 #include <ptxsim/state/thread_state.hpp>
+
+static_assert(std::is_abstract_v<ptxsim::state::SpecialRegisterProvider>);
 
 int main() {
   ptxsim::arith::context context;

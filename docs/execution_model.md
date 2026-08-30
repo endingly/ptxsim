@@ -1,6 +1,6 @@
 # Execution model
 
-## M2-10 status
+## M2-11 status
 
 The build graph has the following frontend-independent execution path:
 
@@ -22,13 +22,15 @@ frontend-independent dense register store: callers provide its ordered
 internal zero placeholders only satisfy `RawValue` storage and are never
 observable through `read`. `state::ThreadState` owns caller-supplied thread,
 function, initial-PC, and register-layout metadata with a ready status, its
-`RegisterFile`, and an empty call-frame placeholder. It has no execution
-transitions or call behavior: the special-register provider is M2-11, executor
-PC/status transitions are M4+ work, and call semantics are M7 work.
+`RegisterFile`, and an empty call-frame placeholder. `SpecialRegisterProvider`
+is now an interface-only, mockable state boundary: it has no production values
+or launch configuration. Executor PC/status transitions are M4+ work, and call
+semantics are M7 work.
 
-## Non-goals in M2-10
+## Non-goals in M2-11
 
-There is no ProgramImage adapter in production state, special-register provider
-(M2-11), executor status/PC transition API (M4+), call semantics (M7),
-scheduler, or memory model yet. Symbol storage addresses and lowering remain
-future work.
+There is no ProgramImage adapter in production state, special-register production
+implementation, launch configuration, executor status/PC transition API (M4+),
+call semantics (M7), scheduler, or memory model yet. `%tid`, `%ntid`, `%ctaid`,
+`%nctaid`, `%laneid`, and `%warpid` values are M6 work. Symbol storage addresses
+and lowering remain future work.

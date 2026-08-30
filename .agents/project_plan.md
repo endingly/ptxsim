@@ -631,7 +631,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-10 ThreadState):** M2-00 pinned frontend baseline
+**Current phase (M2-11 SpecialRegisterProvider):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
 feature-on compile/link smoke. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
@@ -650,8 +650,10 @@ and deterministic dumps.
 It now also exports a frontend-independent `ThreadState` that owns
 caller-supplied IDs, initial PC, RegisterFile, ready status, and an empty
 call-frame placeholder. It deliberately has no production `ProgramImage`
-adapter. The special-register provider alone is M2-11; executor PC/status
-transitions are M4+ work, and call semantics are M7 work.
+adapter. M2-11 now adds only the mockable `SpecialRegisterProvider` interface;
+its production values and launch configuration remain absent. Executor PC/status
+transitions are M4+ work, and call semantics are M7 work. `%tid`, `%ntid`,
+`%ctaid`, `%nctaid`, `%laneid`, and `%warpid` values are M6 work.
 
 ## 10.1 Exec IR principles
 

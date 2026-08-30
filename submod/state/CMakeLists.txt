@@ -28,7 +28,8 @@ add_custom_target(ptxsim_state_public_header_check ALL
 if(BUILD_TESTING)
     add_executable(test_ptxsim_state
         test/test_register_file.cpp
-        test/test_thread_state.cpp)
+        test/test_thread_state.cpp
+        test/test_special_register_provider.cpp)
     find_package(GTest CONFIG REQUIRED)
     target_link_libraries(test_ptxsim_state PRIVATE
         GTest::gtest
