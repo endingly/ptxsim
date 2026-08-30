@@ -1,6 +1,6 @@
 # Execution IR
 
-## M2-04 status
+## M2-05 status
 
 M2-01 provides frontend-independent strong IDs from `ptxsim::common`:
 `ProgramCounter`, `FunctionId`, `RegisterSlot`, `SymbolId`, `LabelId`,
@@ -41,14 +41,28 @@ for invalid controls, width mismatch, unsupported width, invalid multiply result
 relations, and read-only store. Legal PTX forms outside this slice remain future
 lowering rejections, not silently widened M2-04 records.
 
+M2-05 exports `ptxsim::program` as a real library. `ProgramImage::create`
+accepts one owning `ProgramImageData` input, verifies it, and moves its typed
+IR, copied function/symbol/source names, dense per-function register layouts,
+entry IDs, and `PC -> optional SourceLocationId` side table into an immutable
+image. Runtime access is vector/PC based only: no frontend references, string
+lookup, or mutation API is retained. Empty images are valid only with no
+function records or entry points.
+
+`verify(const ProgramImage&)` repeats the structural checks after construction:
+canonical vector IDs, contiguous function partitions, register widths and
+slots, symbols, entries, source side metadata, each `exec_ir::validate` result,
+and branch targets confined to their owning function. `dump` walks the stored
+vector order with ASCII ID formatting and stable escaped strings. Symbol
+addresses/storage are intentionally absent until M3.
+
 ## Boundary
 
 `exec_ir` owns typed execution facts after lowering. It will not retain
 `ptx_frontend` objects, PTX modifier spellings, arithmetic backend types, or
 SASS/timing details.
 
-## Non-goals in M2-04
+## Non-goals in M2-05
 
-M2-04 does not define execution semantics, `ProgramImage`, verifier passes,
-register files, memory objects or state spaces beyond the instruction fact,
-byte serialization, arithmetic, lowering, or a scheduler.
+M2-05 does not define execution semantics, register files, memory objects or
+symbol addresses, byte serialization, arithmetic, lowering, or a scheduler.
