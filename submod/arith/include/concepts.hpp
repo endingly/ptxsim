@@ -347,7 +347,14 @@ struct conversion_control_capability<To, From,
 template <typename To, typename From>
 struct conversion_control_capability<To, From,
                                      conversion_control_feature::stochastic>
-    : conversion_narrowing_control_capability<To, From> {};
+    : std::bool_constant<
+          std::same_as<From, float32_t> &&
+          (std::same_as<To, float16_t> || std::same_as<To, bfloat16_t> ||
+           std::same_as<To, float8_e4m3_t> ||
+           std::same_as<To, float8_e5m2_t> ||
+           std::same_as<To, float6_e2m3_t> ||
+           std::same_as<To, float6_e3m2_t> ||
+           std::same_as<To, float4_e2m1_t>)> {};
 
 template <typename T>
 struct operation_capability<scalar_operation::add, T, T, T>

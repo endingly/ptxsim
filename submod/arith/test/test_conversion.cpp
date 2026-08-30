@@ -522,6 +522,50 @@ TEST(Conversion, DirectedControlsSpecialValuesAndDeterministicSamples) {
   }
 }
 
+TEST(Conversion, StochasticRoundingUsesSupportedF32Forms) {
+  context c;
+  constexpr conversion_control stochastic{.rounding = rounding_mode::stochastic};
+  constexpr stochastic_rounding_input zero{bits32_t{0}};
+  constexpr stochastic_rounding_input maximum{bits32_t{0xffffffffu}};
+  constexpr auto near_midpoint = float32_t::from_bits(0x3f800fff);
+  constexpr auto far_midpoint = float32_t::from_bits(0x3f800001);
+
+  static_assert(conversion_control_capability<
+                float16_t, float32_t,
+                conversion_control_feature::stochastic>::value);
+  static_assert(!conversion_control_capability<
+                float16_t, float64_t,
+                conversion_control_feature::stochastic>::value);
+  static_assert(!conversion_control_capability<
+                ufloat8_e8m0_t, float32_t,
+                conversion_control_feature::stochastic>::value);
+
+  EXPECT_EQ(cvt<float16_t>(c, near_midpoint, stochastic, zero)->value.bits(),
+            0x3c01);
+  EXPECT_EQ(cvt<float16_t>(c, near_midpoint, stochastic, maximum)->value.bits(),
+            0x3c00);
+  EXPECT_EQ(cvt<float16_t>(c, far_midpoint, stochastic, zero)->value.bits(),
+            0x3c01);
+  EXPECT_EQ(cvt<float16_t>(c, far_midpoint, stochastic, maximum)->value.bits(),
+            0x3c00);
+
+  const auto replay_a = cvt<float16_t>(
+      c, near_midpoint, stochastic, stochastic_rounding_input{bits32_t{0x12345678}});
+  const auto replay_b = cvt<float16_t>(
+      c, near_midpoint, stochastic, stochastic_rounding_input{bits32_t{0x12345678}});
+  ASSERT_TRUE(replay_a && replay_b);
+  EXPECT_EQ(replay_a->value.bits(), replay_b->value.bits());
+  EXPECT_EQ(replay_a->status.inexact, replay_b->status.inexact);
+
+  constexpr auto tiny_f64 = float64_t::from_bits(1);
+  EXPECT_EQ(cvt<float16_t>(c, tiny_f64, stochastic, zero).error(),
+            arithmetic_error::unsupported_rounding);
+  EXPECT_EQ(cvt<float16_t>(c, tiny_f64, stochastic, maximum).error(),
+            arithmetic_error::unsupported_rounding);
+  EXPECT_EQ(cvt<ufloat8_e8m0_t>(c, near_midpoint, stochastic, zero).error(),
+            arithmetic_error::unsupported_rounding);
+}
+
 TEST(Conversion, Bf16ParityTiesDirectedRoundingAndSpecials) {
   context c;
   constexpr auto halfway_even = float32_t::from_bits(0x3f808000);
