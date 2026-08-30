@@ -8,60 +8,26 @@ vcpkg_from_github(
     HEAD_REF main
 )
 
-vcpkg_find_acquire_program(PYTHON3)
 vcpkg_find_acquire_program(FLEX)
 
-#
-# Isolated Python build environment
-#
-set(
-    PTX_PYTHON_VENV
-    "${CURRENT_BUILDTREES_DIR}/python-venv"
-)
+# The source revision above generates these files from YAML with Python,
+# PyYAML and jsonschema.  Keep the generated output with this port instead:
+# it is tied to that exact source revision and removes pip, resolver and PyPI
+# availability from the build.
+file(COPY "${CMAKE_CURRENT_LIST_DIR}/generated/"
+     DESTINATION "${SOURCE_PATH}/generated")
+file(WRITE "${SOURCE_PATH}/cmake/generate_ptx_frontend.cmake" [=[
+include_guard(DIRECTORY)
 
-file(REMOVE_RECURSE "${PTX_PYTHON_VENV}")
-
-vcpkg_execute_required_process(
-    COMMAND
-    "${PYTHON3}"
-    -m venv
-    "${PTX_PYTHON_VENV}"
-
-    WORKING_DIRECTORY
-    "${CURRENT_BUILDTREES_DIR}"
-
-    LOGNAME
-    python-venv
-)
-
-if(VCPKG_HOST_IS_WINDOWS)
-    set(
-        PTX_PYTHON
-        "${PTX_PYTHON_VENV}/Scripts/python.exe"
-    )
-else()
-    set(
-        PTX_PYTHON
-        "${PTX_PYTHON_VENV}/bin/python"
-    )
-endif()
-
-#
-# Install all Python dependencies declared by ptx_frontend.
-#
-vcpkg_execute_required_process(
-    COMMAND
-    "${PTX_PYTHON}"
-    -m pip
-    install
-    -r "${SOURCE_PATH}/requirements.txt"
-
-    WORKING_DIRECTORY
-    "${SOURCE_PATH}"
-
-    LOGNAME
-    python-dependencies
-)
+set(PTX_RESOLVED_IR_GENERATED_DIR "${PROJECT_SOURCE_DIR}/generated")
+set(PTX_RESOLVED_IR_GENERATED_PUBLIC_INCLUDE_DIR
+    "${PTX_RESOLVED_IR_GENERATED_DIR}/public")
+set(PTX_RESOLVED_IR_GENERATED_PRIVATE_INCLUDE_DIR
+    "${PTX_RESOLVED_IR_GENERATED_DIR}/private")
+file(GLOB_RECURSE PTX_RESOLVED_IR_GENERATED_SRCS CONFIGURE_DEPENDS
+    "${PTX_RESOLVED_IR_GENERATED_PRIVATE_INCLUDE_DIR}/*.gen.cpp")
+add_custom_target(resolved_ir_codegen)
+]=])
 
 #
 # Configure / build / install
@@ -74,7 +40,6 @@ vcpkg_cmake_configure(
     -DBUILD_TESTING=OFF
     -DPTX_USE_CCACHE=OFF
 
-    "-DPython3_EXECUTABLE=${PTX_PYTHON}"
     "-DFLEX_EXECUTABLE=${FLEX}"
 )
 
