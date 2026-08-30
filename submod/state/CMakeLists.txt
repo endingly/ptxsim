@@ -1,4 +1,6 @@
-add_library(ptxsim_state STATIC src/register_file.cpp)
+add_library(ptxsim_state STATIC
+    src/register_file.cpp
+    src/thread_state.cpp)
 add_library(ptxsim::state ALIAS ptxsim_state)
 set_target_properties(ptxsim_state PROPERTIES EXPORT_NAME state)
 target_compile_features(ptxsim_state PUBLIC cxx_std_23)
@@ -24,12 +26,15 @@ add_custom_target(ptxsim_state_public_header_check ALL
     DEPENDS ptxsim_state_public_headers)
 
 if(BUILD_TESTING)
-    add_executable(test_ptxsim_state test/test_register_file.cpp)
+    add_executable(test_ptxsim_state
+        test/test_register_file.cpp
+        test/test_thread_state.cpp)
     find_package(GTest CONFIG REQUIRED)
     target_link_libraries(test_ptxsim_state PRIVATE
         GTest::gtest
         GTest::gtest_main
-        ptxsim::state)
+        ptxsim::state
+        ptxsim::program)
     target_include_directories(test_ptxsim_state PRIVATE src)
     ptxsim_enable_sanitizers(test_ptxsim_state)
     gtest_discover_tests(test_ptxsim_state)

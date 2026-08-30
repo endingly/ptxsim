@@ -4,7 +4,7 @@
 #include <ptxsim/exec_ir/instruction.hpp>
 #include <ptxsim/exec_ir/operand.hpp>
 #include <ptxsim/program/program_image.hpp>
-#include <ptxsim/state/register_file.hpp>
+#include <ptxsim/state/thread_state.hpp>
 
 int main() {
   ptxsim::arith::context context;
@@ -30,9 +30,11 @@ int main() {
       .entry_points = {ptxsim::common::FunctionId{0}},
       .source_locations_by_pc = {std::nullopt},
   });
-  auto registers =
-      ptxsim::state::RegisterFile::create({ptxsim::common::RawWidth::b32});
-  if (!registers || !registers->write(ptxsim::common::RegisterSlot{0}, raw))
+  auto thread = ptxsim::state::ThreadState::create(
+      ptxsim::common::ThreadId{0}, ptxsim::common::FunctionId{0},
+      ptxsim::common::ProgramCounter{0}, {ptxsim::common::RawWidth::b32});
+  if (!thread ||
+      !thread->registers().write(ptxsim::common::RegisterSlot{0}, raw))
     return 1;
   return value &&
                  ptxsim::common::to_string(ptxsim::common::ProgramCounter{7}) ==
@@ -43,8 +45,10 @@ int main() {
                  ptxsim::exec_ir::validate(instruction) && image &&
                  ptxsim::program::verify(*image) &&
                  !ptxsim::program::dump(*image).empty() &&
-                 *registers->read(ptxsim::common::RegisterSlot{0}) == raw &&
-                 ptxsim::state::dump(*registers) ==
+                 *thread->registers().read(ptxsim::common::RegisterSlot{0}) ==
+                     raw &&
+                 ptxsim::state::dump(*thread) ==
+                     "thread:0 function:0 pc:0 status:ready call-depth:0\n"
                      "register:0 b32 b32:0x00000007\n"
              ? 0
              : 1;

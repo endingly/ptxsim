@@ -1,6 +1,6 @@
 # Execution model
 
-## M2-09 status
+## M2-10 status
 
 The build graph has the following frontend-independent execution path:
 
@@ -20,10 +20,15 @@ frontend-independent dense register store: callers provide its ordered
 `RawWidth` layout, reads of unwritten slots return a structured
 `uninitialized_read` error, and writes require an exact declared width. Its
 internal zero placeholders only satisfy `RawValue` storage and are never
-observable through `read`.
+observable through `read`. `state::ThreadState` owns caller-supplied thread,
+function, initial-PC, and register-layout metadata with a ready status, its
+`RegisterFile`, and an empty call-frame placeholder. It has no execution
+transitions or call behavior: the special-register provider is M2-11, executor
+PC/status transitions are M4+ work, and call semantics are M7 work.
 
-## Non-goals in M2-09
+## Non-goals in M2-10
 
-There is no `ThreadState`, ProgramImage-to-RegisterFile adapter, special-register
-provider, executor, scheduler, or memory model yet. Symbol storage addresses and
-lowering remain future work.
+There is no ProgramImage adapter in production state, special-register provider
+(M2-11), executor status/PC transition API (M4+), call semantics (M7),
+scheduler, or memory model yet. Symbol storage addresses and lowering remain
+future work.
