@@ -39,6 +39,7 @@ TEST(CoreIds, ConstructCompareAndFormat) {
   check_properties<CtaId>();
   check_properties<WarpId>();
   check_properties<LaneId>();
+  check_properties<SpecialRegisterId>();
 
   static_assert(!std::is_constructible_v<FunctionId, ProgramCounter>);
   static_assert(!std::is_convertible_v<ProgramCounter, FunctionId>);
@@ -53,6 +54,7 @@ TEST(CoreIds, ConstructCompareAndFormat) {
   check_id<CtaId>("cta");
   check_id<WarpId>("warp");
   check_id<LaneId>("lane");
+  check_id<SpecialRegisterId>("special-register");
 
   EXPECT_EQ(
       to_string(ProgramCounter{std::numeric_limits<std::uint32_t>::max()}),

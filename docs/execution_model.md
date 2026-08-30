@@ -1,8 +1,8 @@
 # Execution model
 
-## M2-00 status
+## M2-03 status
 
-The build graph now reserves the frontend-independent execution path:
+The build graph has the following frontend-independent execution path:
 
 ```text
 ptx_frontend::resolved_ir -> ptxsim::lowering -> ptxsim::exec_ir
@@ -10,12 +10,13 @@ ptx_frontend::resolved_ir -> ptxsim::lowering -> ptxsim::exec_ir
                                                -> ptxsim::state
 ```
 
-Only the optional lowering target links `ptx_frontend`; `arith` remains
-independent. These new targets are build-tree-only in M2-00; package
-install/export remains the existing `arith` surface until a module has a public
-API. No PTX program is lowered or executed in M2-00.
+`ptxsim::common` and `ptxsim::exec_ir` are installed/exported public targets.
+`ptxsim::program`, `ptxsim::state`, and `ptxsim::lowering` remain build-tree
+skeletons. Only `ptxsim::lowering` links `ptx_frontend`; `arith` remains
+independent. M2-03 supplies typed operands, but no PTX program is lowered or
+executed yet.
 
-## Non-goals in M2-00
+## Non-goals in M2-03
 
 There is no `ProgramImage`, `ThreadState`, register file, executor, scheduler,
 or memory model yet.

@@ -6,7 +6,8 @@ find_package(ptxsim CONFIG REQUIRED)
 add_executable(ptxsim_arith_external_consumer main.cpp)
 target_link_libraries(ptxsim_arith_external_consumer PRIVATE
     ptxsim::arith
-    ptxsim::common)
+    ptxsim::common
+    ptxsim::exec_ir)
 
 if(PTXSIM_CONSUMER_ENABLE_SANITIZERS)
     target_compile_options(ptxsim_arith_external_consumer PRIVATE

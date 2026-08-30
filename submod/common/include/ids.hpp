@@ -55,6 +55,9 @@ struct WarpIdTag {
 struct LaneIdTag {
   static constexpr std::string_view prefix = "lane";
 };
+struct SpecialRegisterIdTag {
+  static constexpr std::string_view prefix = "special-register";
+};
 
 }  // namespace detail
 
@@ -68,6 +71,7 @@ using ThreadId = detail::Id<detail::ThreadIdTag>;
 using CtaId = detail::Id<detail::CtaIdTag>;
 using WarpId = detail::Id<detail::WarpIdTag>;
 using LaneId = detail::Id<detail::LaneIdTag>;
+using SpecialRegisterId = detail::Id<detail::SpecialRegisterIdTag>;
 
 template <typename Tag>
 [[nodiscard]] inline auto to_string(detail::Id<Tag> id) -> std::string {
