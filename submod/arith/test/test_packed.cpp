@@ -36,6 +36,7 @@ static_assert(operation_capability<
               std::array<float4_e2m1_t, 4>>::value);
 static_assert(!operation_capability<scalar_operation::add, float32x2_t,
                                     float32x2_t, float32x2_t>::value);
+static_assert(float16x2_t::from_bits(0x00121234u)[1].bits() == 0x12u);
 
 TEST(PackedFormats, StorageAliasesKeepCanonicalPaddingAndLaneZeroAtLsb) {
   const auto ue8 = ufloat8_e8m0x2_t::from_bits(0xff7fu);
@@ -67,6 +68,15 @@ TEST(PackedFormats, StorageAliasesKeepCanonicalPaddingAndLaneZeroAtLsb) {
   for (const auto lane : fp6_lanes)
     EXPECT_EQ(lane.bits(), 0x3fu);
   EXPECT_EQ(pack<float6_e3m2x4_t>(fp6_lanes).bits(), 0x3f3f3f3fu);
+}
+
+TEST(PackedFormats, LaneAccessChecksBoundsInDebug) {
+  const auto value = float16x2_t::from_bits(0x00121234u);
+  EXPECT_EQ(value[0].bits(), 0x1234u);
+  EXPECT_EQ(value[1].bits(), 0x12u);
+#ifndef NDEBUG
+  EXPECT_DEATH((void)value[2], "lane < Lanes");
+#endif
 }
 
 }  // namespace ptxsim::arith::test
