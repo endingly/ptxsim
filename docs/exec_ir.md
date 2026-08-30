@@ -1,10 +1,17 @@
 # Execution IR
 
-## M2-00 status
+## M2-01 status
 
-The build-tree `ptxsim::exec_ir` CMake target exists and is
-frontend-independent. It has no public instruction, operand, ID, or value
-types yet, so M2-00 does not install or export it.
+M2-01 provides frontend-independent strong IDs from `ptxsim::common`:
+`ProgramCounter`, `FunctionId`, `RegisterSlot`, `SymbolId`, `LabelId`,
+`SourceLocationId`, `ThreadId`, `CtaId`, `WarpId`, and `LaneId`. They have
+explicit `uint32_t` construction, ordering, and canonical strings such as
+`pc:7`. This ASCII `<kind>:<decimal>` form is the stable ID dump contract and
+does not use locale formatting.
+
+`ptxsim::exec_ir` remains build-tree-only and has no public instruction,
+operand, or value types. `ptxsim::common` is exported because IDs are now a
+public core API.
 
 ## Boundary
 
@@ -12,7 +19,6 @@ types yet, so M2-00 does not install or export it.
 `ptx_frontend` objects, PTX modifier spellings, arithmetic backend types, or
 SASS/timing details.
 
-## Non-goals in M2-00
+## Non-goals in M2-01
 
-M2-00 does not define instruction records, operands, strong IDs, raw values,
-or a verifier. Those types begin in M2-01.
+M2-01 does not define raw values, instruction records, operands, or a verifier.

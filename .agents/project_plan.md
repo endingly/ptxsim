@@ -631,14 +631,12 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-00):** the frontend baseline is pinned to
-`1c4547f65c888ee92b1933a20f9a74b380b96953`; its checked-in generated snapshot
-has an integrity gate and feature-on compile/link smoke. `common`, `exec_ir`,
-`program`, `state`, and optional `lowering` CMake targets now establish the
-build-tree dependency boundary only. They are not installed or exported until
-they have a public API; the package remains `arith`/`arith_validation`. No
-M2-01 IDs, raw values, execution records, `ProgramImage`, or state
-implementation is claimed by this bootstrap.
+**Current phase (M2-01 Core IDs):** M2-00 pinned frontend baseline
+`1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
+feature-on compile/link smoke. `ptxsim::common` now exports the stable,
+frontend-independent IDs; the remaining M2 targets are build-tree-only until
+they have public APIs. Raw values, instruction records, `ProgramImage`, and
+state implementation are not yet provided.
 
 ## 10.1 Exec IR principles
 
