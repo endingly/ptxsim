@@ -213,6 +213,91 @@ TEST(ScalarArithmetic, FmaControlRegressions) {
             arithmetic_error::unsupported_subnormal_mode);
 }
 
+TEST(ScalarArithmetic, FloatingControlCapabilityMatrix) {
+  static_assert(floating_operation_control_capability<
+                scalar_operation::add, float16_t>::supports(
+                saturation_mode::zero_to_one));
+  static_assert(floating_operation_control_capability<
+                scalar_operation::fma, bfloat16_t>::supports(
+                activation_mode::relu));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::fma, float16_t>::supports(
+                {.saturation = saturation_mode::zero_to_one,
+                 .activation = activation_mode::relu}));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::sqrt, float32_t>::supports(
+                saturation_mode::zero_to_one));
+  static_assert(!floating_operation_control_capability<
+                scalar_operation::div, float32_t>::supports(
+                saturation_mode::zero_to_one));
+
+  context c;
+  const auto h_one = float16_t::from_bits(0x3c00);
+  const auto h_two = float16_t::from_bits(0x4000);
+  EXPECT_EQ(add(c, h_one, h_two,
+                {.saturation = saturation_mode::zero_to_one})
+                ->value.bits(),
+            h_one.bits());
+  EXPECT_TRUE(add(c, h_one, h_one,
+                  {.subnormal = subnormal_mode::flush_input_and_output}));
+  EXPECT_EQ(add(c, h_one, h_one,
+                {.subnormal = subnormal_mode::flush_input})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  const auto bf_one = bfloat16_t::from_bits(0x3f80);
+  const auto bf_minus_two = bfloat16_t::from_bits(0xc000);
+  EXPECT_EQ(fma(c, bf_one, bf_one, bf_minus_two,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0u);
+  EXPECT_EQ(fma(c, float16_t::from_bits(0x7e01), h_one, h_one,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0x7e00u);
+  EXPECT_EQ(fma(c, bfloat16_t::from_bits(0x7fc1), bf_one, bf_one,
+                {.activation = activation_mode::relu})
+                ->value.bits(),
+            0x7fc0u);
+  EXPECT_EQ(fma(c, h_one, h_one, h_one,
+                {.saturation = saturation_mode::zero_to_one,
+                 .activation = activation_mode::relu})
+                .error(),
+            arithmetic_error::unsupported_activation);
+  EXPECT_EQ(add(c, bf_one, bf_one,
+                {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  const auto f_one = float32_t::from_bits(0x3f800000);
+  EXPECT_EQ(sqrt(c, f_one, {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(div(c, f_one, f_one,
+                {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+
+  const auto d_one = float64_t::from_bits(0x3ff0000000000000ULL);
+  EXPECT_EQ(add(c, d_one, d_one,
+                {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(add(c, d_one, d_one,
+                {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+
+  EXPECT_EQ(fma<float32_t>(c, h_one, h_one, f_one,
+                            {.subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(fma<float32_t>(c, h_one, h_one, f_one,
+                            {.saturation = saturation_mode::zero_to_one})
+                ->value.bits(),
+            f_one.bits());
+}
+
 TEST(ScalarArithmetic, MadIsFusedAndControlsAreTyped) {
   context c;
   const auto a = float32_t::from_bits(0x3f800001u);
@@ -307,29 +392,16 @@ void check_float_edges(T zero, T negative_zero, T one, T two, T half,
   ASSERT_TRUE(invalid);
   ASSERT_TRUE(overflow);
   ASSERT_TRUE(underflow);
-  if constexpr (std::same_as<T, float64_t> || std::same_as<T, float32_t>) {
-    EXPECT_EQ(input_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
-    EXPECT_EQ(output_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
-  } else {
-    ASSERT_TRUE(input_ftz);
-    ASSERT_TRUE(output_ftz);
-  }
+  EXPECT_EQ(input_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(output_ftz.error(), arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(signed_zero->value.bits(), negative_zero.bits());
   EXPECT_TRUE(is_nan(invalid->value));
   EXPECT_EQ(overflow->value.bits(), infinity.bits());
   EXPECT_EQ(underflow->value.bits(), zero.bits());
-  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
-    EXPECT_EQ(input_ftz->value.bits(), zero.bits());
-    EXPECT_EQ(output_ftz->value.bits(), zero.bits());
-  }
   expect_status(signed_zero->status);
   expect_status(invalid->status, true);
   expect_status(overflow->status, false, true, false, true);
   expect_status(underflow->status, false, false, true, true);
-  if constexpr (!std::same_as<T, float64_t> && !std::same_as<T, float32_t>) {
-    expect_status(input_ftz->status);
-    expect_status(output_ftz->status);
-  }
 }
 
 template <typename T>

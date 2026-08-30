@@ -63,8 +63,8 @@ TEST(SpecialFunctions, ControlledDeterministicModel) {
   EXPECT_EQ(sin(c, float32_t::from_bits(1),
                 {.approximation = approximation_mode::ptx_approximate,
                  .subnormal = subnormal_mode::flush_input})
-                ->value.bits(),
-            0u);
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
   EXPECT_EQ(sin(c, float32_t::from_bits(0x3f000000), {}).error(),
             arithmetic_error::unsupported_approximation_mode);
   EXPECT_EQ(rcp(c, float32_t::from_bits(0x3f800000),
@@ -81,6 +81,21 @@ TEST(SpecialFunctions, ControlledDeterministicModel) {
   ASSERT_TRUE(first && second);
   EXPECT_EQ(first->value, second->value);
   EXPECT_TRUE(first->status.model_dependent);
+}
+
+TEST(SpecialFunctions, ApproximationCapabilityMatrix) {
+  static_assert(special_function_operation_capability<
+                scalar_operation::div, float32_t>::supports(
+                approximation_mode::ptx_approximate));
+  static_assert(special_function_operation_capability<
+                scalar_operation::div, float32_t>::supports(
+                approximation_mode::ptx_full));
+  context c;
+  const auto one = float32_t::from_bits(0x3f800000);
+  EXPECT_TRUE(div(c, one, one,
+                  {.approximation = approximation_mode::ptx_approximate}));
+  EXPECT_TRUE(div(c, one, one,
+                  {.approximation = approximation_mode::ptx_full}));
 }
 
 TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {

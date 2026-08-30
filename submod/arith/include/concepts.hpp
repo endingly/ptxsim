@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ptxsim/arith/types.hpp>
+#include <ptxsim/arith/controls.hpp>
 
 #include <concepts>
 #include <type_traits>
@@ -23,6 +23,17 @@ enum class scalar_operation {
   unpack,
   mma,
   scaled_mma,
+  rcp,
+  abs,
+  neg,
+  min,
+  max,
+  compare,
+  rsqrt,
+  sin,
+  cos,
+  lg2,
+  ex2,
 };
 enum class arithmetic_family {
   signed_integer,
@@ -81,6 +92,167 @@ inline constexpr arithmetic_family arithmetic_family_v =
 
 template <scalar_operation Op, typename Result, typename... Operands>
 struct operation_capability : std::false_type {};
+
+// This is the public source of truth for controls on homogeneous scalar
+// floating-point operations.  Dispatch and the numerical backends both use
+// it, so a control cannot be accepted by one layer and rejected by another.
+template <bool Available, bool DirectedRounding = false, bool Ftz = false,
+          bool Saturation = false, bool Relu = false>
+struct floating_control_capability {
+  static constexpr bool supported = Available;
+
+  static constexpr bool supports(rounding_mode mode) {
+    return mode == rounding_mode::nearest_even ||
+           (DirectedRounding &&
+            (mode == rounding_mode::toward_zero ||
+             mode == rounding_mode::toward_negative ||
+             mode == rounding_mode::toward_positive));
+  }
+  static constexpr bool supports(subnormal_mode mode) {
+    return mode == subnormal_mode::preserve ||
+           (Ftz && mode == subnormal_mode::flush_input_and_output);
+  }
+  static constexpr bool supports(saturation_mode mode) {
+    return mode == saturation_mode::none ||
+           (Saturation && mode == saturation_mode::zero_to_one);
+  }
+  static constexpr bool supports(activation_mode mode) {
+    return mode == activation_mode::none ||
+           (Relu && mode == activation_mode::relu);
+  }
+  static constexpr bool supports(floating_control control) {
+    return Available && supports(control.rounding) && supports(control.subnormal) &&
+           supports(control.saturation) && supports(control.activation) &&
+           !(control.saturation != saturation_mode::none &&
+             control.activation != activation_mode::none);
+  }
+};
+
+template <scalar_operation Op, typename T, typename... Operands>
+struct floating_operation_control_capability
+    : floating_control_capability<false> {};
+
+template <bool Available = false, bool Exact = false, bool Approximate = false,
+          bool Full = false, bool Ftz = false, bool Preserve = true>
+struct special_function_control_capability {
+  static constexpr bool supported = Available;
+
+  static constexpr bool supports(approximation_mode mode) {
+    return Available && ((mode == approximation_mode::exact && Exact) ||
+           (mode == approximation_mode::ptx_approximate && Approximate) ||
+           (mode == approximation_mode::ptx_full && Full));
+  }
+  static constexpr bool supports(subnormal_mode mode) {
+    return Available && ((Preserve && mode == subnormal_mode::preserve) ||
+                         (Ftz &&
+                          mode == subnormal_mode::flush_input_and_output));
+  }
+};
+
+template <scalar_operation Op, typename T>
+struct special_function_operation_capability
+    : special_function_control_capability<> {};
+
+template <>
+struct special_function_operation_capability<scalar_operation::div, float32_t>
+    : special_function_control_capability<true, true, true, true, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::sqrt, float32_t>
+    : special_function_control_capability<true, true, true, false, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::rcp, float32_t>
+    : special_function_control_capability<true, true, true, false, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::sqrt, float64_t>
+    : special_function_control_capability<true, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::rcp, float64_t>
+    : special_function_control_capability<true, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::rsqrt, float32_t>
+    : special_function_control_capability<true, false, true, false, true> {};
+template <scalar_operation Op>
+  requires(Op == scalar_operation::sin || Op == scalar_operation::cos ||
+           Op == scalar_operation::lg2 || Op == scalar_operation::ex2)
+struct special_function_operation_capability<Op, float32_t>
+    : special_function_control_capability<true, false, true, false, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::ex2, float16_t>
+    : special_function_control_capability<true, false, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::ex2,
+                                             bfloat16_t>
+    : special_function_control_capability<true, false, true, false, true,
+                                          false> {};
+
+template <scalar_operation Op>
+  requires(Op == scalar_operation::add || Op == scalar_operation::sub ||
+           Op == scalar_operation::mul || Op == scalar_operation::fma ||
+           Op == scalar_operation::mad || Op == scalar_operation::div ||
+           Op == scalar_operation::sqrt || Op == scalar_operation::rcp)
+struct floating_operation_control_capability<Op, float32_t>
+    : floating_control_capability<true, true, true,
+                                  Op != scalar_operation::div &&
+                                      Op != scalar_operation::sqrt &&
+                                      Op != scalar_operation::rcp> {};
+
+template <scalar_operation Op>
+  requires(Op == scalar_operation::add || Op == scalar_operation::sub ||
+           Op == scalar_operation::mul || Op == scalar_operation::fma ||
+           Op == scalar_operation::mad || Op == scalar_operation::div ||
+           Op == scalar_operation::sqrt || Op == scalar_operation::rcp)
+struct floating_operation_control_capability<Op, float64_t>
+    : floating_control_capability<true, true> {};
+
+template <scalar_operation Op>
+  requires(Op == scalar_operation::add || Op == scalar_operation::sub ||
+           Op == scalar_operation::mul || Op == scalar_operation::fma)
+struct floating_operation_control_capability<Op, float16_t>
+    : floating_control_capability<true, false, true, true,
+                                  Op == scalar_operation::fma> {};
+
+template <scalar_operation Op>
+  requires(Op == scalar_operation::add || Op == scalar_operation::sub ||
+           Op == scalar_operation::mul || Op == scalar_operation::fma)
+struct floating_operation_control_capability<Op, bfloat16_t>
+    : floating_control_capability<true, false, false, false,
+                                  Op == scalar_operation::fma> {};
+
+template <scalar_operation Op>
+  requires(Op == scalar_operation::abs || Op == scalar_operation::neg ||
+           Op == scalar_operation::min || Op == scalar_operation::max ||
+           Op == scalar_operation::compare)
+struct floating_operation_control_capability<Op, float32_t>
+    : floating_control_capability<true, false, true> {};
+template <scalar_operation Op>
+  requires(Op == scalar_operation::abs || Op == scalar_operation::neg ||
+           Op == scalar_operation::min || Op == scalar_operation::max ||
+           Op == scalar_operation::compare)
+struct floating_operation_control_capability<Op, float64_t>
+    : floating_control_capability<true> {};
+template <scalar_operation Op>
+  requires(Op == scalar_operation::abs || Op == scalar_operation::neg ||
+           Op == scalar_operation::min || Op == scalar_operation::max ||
+           Op == scalar_operation::compare)
+struct floating_operation_control_capability<Op, float16_t>
+    : floating_control_capability<true, false, true> {};
+template <scalar_operation Op>
+  requires(Op == scalar_operation::abs || Op == scalar_operation::neg ||
+           Op == scalar_operation::min || Op == scalar_operation::max ||
+           Op == scalar_operation::compare)
+struct floating_operation_control_capability<Op, bfloat16_t>
+    : floating_control_capability<true> {};
+
+template <scalar_operation Op, typename Low>
+  requires((Op == scalar_operation::add || Op == scalar_operation::sub) &&
+           (std::same_as<Low, float16_t> || std::same_as<Low, bfloat16_t>))
+struct floating_operation_control_capability<Op, float32_t, Low, float32_t>
+    : floating_control_capability<true, true, false, true> {};
+template <typename Low>
+  requires(std::same_as<Low, float16_t> || std::same_as<Low, bfloat16_t>)
+struct floating_operation_control_capability<scalar_operation::fma, float32_t,
+                                             Low, Low, float32_t>
+    : floating_control_capability<true, true, false, true> {};
 
 // Conversion capability is intentionally sourced from one generic canonical
 // route: every supported type has a decode hook and an encode hook.  It is no
@@ -148,44 +320,52 @@ struct conversion_control_capability<To, From,
 template <typename T>
 struct operation_capability<scalar_operation::add, T, T, T>
     : std::bool_constant<std::integral<T> ||
-                         arithmetic_family_v<T> ==
-                             arithmetic_family::ieee_binary ||
-                         arithmetic_family_v<T> == arithmetic_family::bfloat> {
-};
+                         floating_operation_control_capability<
+                             scalar_operation::add, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::sub, T, T, T>
-    : operation_capability<scalar_operation::add, T, T, T> {};
+    : std::bool_constant<std::integral<T> ||
+                         floating_operation_control_capability<
+                             scalar_operation::sub, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::mul, T, T, T>
-    : operation_capability<scalar_operation::add, T, T, T> {};
+    : std::bool_constant<std::integral<T> ||
+                         floating_operation_control_capability<
+                             scalar_operation::mul, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::div, T, T, T>
-    : std::bool_constant<std::same_as<T, float32_t> ||
-                         std::same_as<T, float64_t>> {};
+    : std::bool_constant<floating_operation_control_capability<
+                             scalar_operation::div, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::sqrt, T, T>
-    : std::bool_constant<std::same_as<T, float32_t> ||
-                         std::same_as<T, float64_t>> {};
+    : std::bool_constant<floating_operation_control_capability<
+                             scalar_operation::sqrt, T>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::fma, T, T, T, T>
-    : std::bool_constant<arithmetic_family_v<T> ==
-                             arithmetic_family::ieee_binary ||
-                         arithmetic_family_v<T> == arithmetic_family::bfloat> {
-};
+    : std::bool_constant<floating_operation_control_capability<
+                             scalar_operation::fma, T>::supported> {};
 template <>
 struct operation_capability<scalar_operation::fma, float32_t, float16_t,
-                            float16_t, float32_t> : std::true_type {};
+                            float16_t, float32_t>
+    : std::bool_constant<floating_operation_control_capability<
+          scalar_operation::fma, float32_t, float16_t, float16_t,
+          float32_t>::supported> {};
 template <>
 struct operation_capability<scalar_operation::fma, float32_t, bfloat16_t,
-                            bfloat16_t, float32_t> : std::true_type {};
+                            bfloat16_t, float32_t>
+    : std::bool_constant<floating_operation_control_capability<
+          scalar_operation::fma, float32_t, bfloat16_t, bfloat16_t,
+          float32_t>::supported> {};
 template <typename T>
 struct operation_capability<scalar_operation::mad, T, T, T, T>
-    : std::bool_constant<std::same_as<T, float32_t> ||
-                         std::same_as<T, float64_t>> {};
+    : std::bool_constant<floating_operation_control_capability<
+                             scalar_operation::mad, T>::supported> {};
 #define PTXSIM_MIXED_F32_CAPABILITY(op, low)                               \
   template <>                                                               \
   struct operation_capability<scalar_operation::op, float32_t, low,        \
-                              float32_t> : std::true_type {}
+                              float32_t>                                   \
+      : std::bool_constant<floating_operation_control_capability<          \
+            scalar_operation::op, float32_t, low, float32_t>::supported> {}
 PTXSIM_MIXED_F32_CAPABILITY(add, float16_t);
 PTXSIM_MIXED_F32_CAPABILITY(sub, float16_t);
 PTXSIM_MIXED_F32_CAPABILITY(add, bfloat16_t);

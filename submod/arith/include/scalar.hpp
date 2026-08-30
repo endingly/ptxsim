@@ -24,14 +24,17 @@ constexpr bool special_subnormal_valid(special_function_control c) {
   (void)c;
   return true;
 }
-template <typename T>
-constexpr bool valid(floating_control c) {
-  return c.rounding != rounding_mode::nearest_away &&
-         c.rounding != rounding_mode::stochastic &&
-         c.saturation == saturation_mode::none &&
-         c.activation == activation_mode::none &&
-         !(std::same_as<T, float16_t> &&
-           c.rounding != rounding_mode::nearest_even);
+template <scalar_operation Op, typename T>
+constexpr std::expected<void, arithmetic_error> validate_special_control(
+    special_function_control control) {
+  using Capability = special_function_operation_capability<Op, T>;
+  if (!Capability::supported)
+    return std::unexpected(arithmetic_error::unsupported_operation);
+  if (!Capability::supports(control.approximation))
+    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
+  if (!Capability::supports(control.subnormal))
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  return {};
 }
 template <typename T>
 constexpr T wrap_add(T a, T b) {
@@ -351,35 +354,36 @@ inline std::expected<result<T, floating_status>, arithmetic_error> sqrt(
   return detail::dispatch::sqrt(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::rcp,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::rcp(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::abs,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> abs(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::abs(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::neg,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> neg(
     const context&, T a, floating_control c = {}) {
   return detail::dispatch::neg(a, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::min,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> min(
     const context&, T a, T b, floating_control c = {}) {
   return detail::dispatch::min(a, b, c);
 }
 template <typename T>
-  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t> ||
-           std::same_as<T, float32_t> || std::same_as<T, float64_t>)
+  requires floating_operation_control_capability<scalar_operation::max,
+                                                 T>::supported
 inline std::expected<result<T, floating_status>, arithmetic_error> max(
     const context&, T a, T b, floating_control c = {}) {
   return detail::dispatch::max(a, b, c);
@@ -396,8 +400,10 @@ constexpr result<T> copysign(const context&, T sign, T magnitude) noexcept {
 inline std::expected<result<float32_t, floating_status>, arithmetic_error> div(
     const context& ctx, float32_t a, float32_t b,
     special_function_control c) {
-  if (!detail::special_subnormal_valid<float32_t>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::div,
+                                                    float32_t>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return div(ctx, a, b, floating_control{.subnormal = c.subnormal});
   if (!detail::supported_approximation_profile(ctx))
@@ -410,27 +416,30 @@ template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> sqrt(
     const context& ctx, T a, special_function_control c) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::sqrt,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return sqrt(ctx, a, floating_control{.subnormal = c.subnormal});
-  if constexpr (!std::same_as<T, float32_t>)
-    return std::unexpected(arithmetic_error::unsupported_operation);
-  else if (!detail::supported_approximation_profile(ctx))
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  else
+  if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::sqrt_approx(a, c, ctx.profile().approximation);
+  else
+    return std::unexpected(arithmetic_error::unsupported_operation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
     const context& ctx, T a, special_function_control c) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (auto valid = detail::validate_special_control<scalar_operation::rcp,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
   if (c.approximation == approximation_mode::exact)
     return rcp(ctx, a, floating_control{.subnormal = c.subnormal});
-  if (c.approximation == approximation_mode::ptx_full ||
-      !detail::supported_approximation_profile(ctx))
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rcp_approx(a, c, ctx.profile().approximation);
@@ -441,38 +450,31 @@ template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> rsqrt(
     const context& ctx, T a, special_function_control c = {}) {
-  if (!detail::special_subnormal_valid<T>(c))
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
-  if (c.approximation == approximation_mode::exact) {
-    // sqrt followed by reciprocal double-rounds; do not label that sequence
-    // as an exact rsqrt implementation.
-    return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  }
-  if (c.approximation == approximation_mode::ptx_full ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::rsqrt,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
-  else if (c.subnormal == subnormal_mode::flush_input ||
-           c.subnormal == subnormal_mode::flush_input_and_output) {
-    return std::unexpected(arithmetic_error::unsupported_operation);
-  }
   else
-    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+    return std::unexpected(arithmetic_error::unsupported_operation);
 }
-#define PTXSIM_ARITH_APPROX_UNARY(name)                                   \
+#define PTXSIM_ARITH_APPROX_UNARY(name, operation)                        \
   inline std::expected<result<float32_t, floating_status>, arithmetic_error> \
   name(const context& ctx, float32_t a, special_function_control c = {}) { \
-    if (c.approximation != approximation_mode::ptx_approximate ||          \
-        !detail::special_subnormal_valid<float32_t>(c) ||                   \
-        !detail::supported_approximation_profile(ctx))                      \
+    if (auto valid = detail::validate_special_control<scalar_operation::operation, \
+                                                      float32_t>(c); !valid) \
+      return std::unexpected(valid.error());                                \
+    if (!detail::supported_approximation_profile(ctx))                      \
       return std::unexpected(arithmetic_error::unsupported_approximation_mode); \
     return detail::dispatch::name##_approx(a, c, ctx.profile().approximation); \
   }
-PTXSIM_ARITH_APPROX_UNARY(sin)
-PTXSIM_ARITH_APPROX_UNARY(cos)
-PTXSIM_ARITH_APPROX_UNARY(lg2)
-PTXSIM_ARITH_APPROX_UNARY(ex2)
+PTXSIM_ARITH_APPROX_UNARY(sin, sin)
+PTXSIM_ARITH_APPROX_UNARY(cos, cos)
+PTXSIM_ARITH_APPROX_UNARY(lg2, lg2)
+PTXSIM_ARITH_APPROX_UNARY(ex2, ex2)
 #undef PTXSIM_ARITH_APPROX_UNARY
 inline std::expected<result<float32_t, floating_status>, arithmetic_error> tanh(
     const context& ctx, float32_t a, special_function_control c = {}) {
@@ -504,12 +506,12 @@ template <typename T>
   requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
 inline std::expected<result<T, floating_status>, arithmetic_error> ex2(
     const context& ctx, T a, special_function_control c = {}) {
-  if (c.approximation != approximation_mode::ptx_approximate ||
-      !detail::supported_approximation_profile(ctx))
+  if (auto valid = detail::validate_special_control<scalar_operation::ex2,
+                                                    T>(c);
+      !valid)
+    return std::unexpected(valid.error());
+  if (!detail::supported_approximation_profile(ctx))
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
-  if constexpr (std::same_as<T, bfloat16_t>)
-    if (c.subnormal != subnormal_mode::flush_input_and_output)
-      return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   if (c.subnormal == subnormal_mode::flush_input ||
       c.subnormal == subnormal_mode::flush_input_and_output)
     a = flush_subnormal(a);
