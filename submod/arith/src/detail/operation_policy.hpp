@@ -158,15 +158,31 @@ struct OperationTraits<float32_t, Operation::TanhApprox> {
   static constexpr bool supports_directed_rounding = false;
 };
 template <>
+struct OperationTraits<float64_t, Operation::RcpApprox> {
+  static constexpr bool supported = false;
+  static constexpr bool supports_ftz = false;
+  static constexpr bool supports_directed_rounding = false;
+};
+template <>
 struct OperationTraits<float64_t, Operation::RsqrtApprox> {
-  static constexpr bool supported = true;
+  static constexpr bool supported =
+      special_function_operation_capability<scalar_operation::rsqrt,
+                                            float64_t>::supports(
+          {.approximation = approximation_mode::ptx_approximate,
+           .subnormal = subnormal_mode::preserve});
   static constexpr bool supports_ftz = false;
   static constexpr bool supports_directed_rounding = false;
 };
 template <Operation Op>
   requires(Op == Operation::RcpApproxFtz || Op == Operation::RsqrtApproxFtz)
 struct OperationTraits<float64_t, Op> {
-  static constexpr bool supported = true;
+  static constexpr auto operation = Op == Operation::RcpApproxFtz
+                                        ? scalar_operation::rcp
+                                        : scalar_operation::rsqrt;
+  static constexpr bool supported =
+      special_function_operation_capability<operation, float64_t>::supports(
+          {.approximation = approximation_mode::ptx_approximate,
+           .subnormal = subnormal_mode::flush_input_and_output});
   static constexpr bool supports_ftz = true;
   static constexpr bool supports_directed_rounding = false;
 };

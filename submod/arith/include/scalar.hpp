@@ -34,6 +34,8 @@ constexpr std::expected<void, arithmetic_error> validate_special_control(
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if (!Capability::supports(control.subnormal))
     return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
+  if (!Capability::supports(control))
+    return std::unexpected(arithmetic_error::unsupported_subnormal_mode);
   return {};
 }
 template <typename T>
@@ -457,7 +459,7 @@ inline std::expected<result<T, floating_status>, arithmetic_error> rcp(
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rcp_approx(a, c, ctx.profile().approximation);
   else
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return detail::dispatch::rcp_approx_ftz(a, c, ctx.profile().approximation);
 }
 template <typename T>
   requires(std::same_as<T, float32_t> || std::same_as<T, float64_t>)
@@ -471,8 +473,11 @@ inline std::expected<result<T, floating_status>, arithmetic_error> rsqrt(
     return std::unexpected(arithmetic_error::unsupported_approximation_mode);
   if constexpr (std::same_as<T, float32_t>)
     return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
+  else if (c.subnormal == subnormal_mode::preserve)
+    return detail::dispatch::rsqrt_approx(a, c, ctx.profile().approximation);
   else
-    return std::unexpected(arithmetic_error::unsupported_operation);
+    return detail::dispatch::rsqrt_approx_ftz(a, c,
+                                              ctx.profile().approximation);
 }
 #define PTXSIM_ARITH_APPROX_UNARY(name, operation)                        \
   inline std::expected<result<float32_t, floating_status>, arithmetic_error> \

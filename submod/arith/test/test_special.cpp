@@ -146,6 +146,120 @@ TEST(SpecialFunctions, DivApproxLargeDivisorPtxDomain) {
                          ->value));
 }
 
+TEST(SpecialFunctions, F64ApproximateForms) {
+  context c;
+  const special_function_control rcp_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  const special_function_control rsqrt_preserve{
+      .approximation = approximation_mode::ptx_approximate};
+  const special_function_control rsqrt_ftz{
+      .approximation = approximation_mode::ptx_approximate,
+      .subnormal = subnormal_mode::flush_input_and_output};
+  static_assert(special_function_operation_capability<
+                scalar_operation::rcp, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate,
+                 .subnormal = subnormal_mode::flush_input_and_output}));
+  static_assert(!special_function_operation_capability<
+                scalar_operation::rcp, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate}));
+  static_assert(special_function_operation_capability<
+                scalar_operation::rsqrt, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate}));
+  static_assert(special_function_operation_capability<
+                scalar_operation::rsqrt, float64_t>::supports(
+                {.approximation = approximation_mode::ptx_approximate,
+                 .subnormal = subnormal_mode::flush_input_and_output}));
+
+  struct f64_case {
+    std::uint64_t input, expected;
+    bool invalid = false, divide_by_zero = false;
+  };
+  const auto f64 = [](std::uint64_t bits) { return float64_t::from_bits(bits); };
+  const auto expect = [&]<std::size_t N>(const auto& function,
+                                         const std::array<f64_case, N>& cases) {
+    for (const auto [input, expected, invalid, divide_by_zero] : cases) {
+      const auto result = function(f64(input));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(result->value.bits(), expected);
+      EXPECT_EQ(result->status.invalid, invalid);
+      EXPECT_EQ(result->status.divide_by_zero, divide_by_zero);
+      EXPECT_FALSE(result->status.overflow);
+      EXPECT_FALSE(result->status.underflow);
+      EXPECT_FALSE(result->status.inexact);
+      EXPECT_TRUE(result->status.model_dependent);
+    }
+  };
+
+  constexpr auto f64_ptx_nan = 0x7fffffff00000000ULL;
+  expect([&](float64_t x) { return rcp(c, x, rcp_ftz); },
+         std::array<f64_case, 7>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0x7ff8000100000000ULL, f64_ptx_nan},
+                    {0x7ff0000000000001ULL, f64_ptx_nan, true},
+                    {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
+                     true}});
+  expect([&](float64_t x) { return rsqrt(c, x, rsqrt_preserve); },
+         std::array<f64_case, 8>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0xbff0000000000000ULL, 0x7ff8000000000000ULL, true},
+                    {0x7ff8000000000001ULL, 0x7ff8000000000001ULL},
+                    {0x7ff0000000000001ULL, 0x7ff8000000000001ULL, true},
+                    {0x0000000000000001ULL, 0x6180000000000000ULL}});
+  expect([&](float64_t x) { return rsqrt(c, x, rsqrt_ftz); },
+         std::array<f64_case, 8>{f64_case{0x3ff0000000000000ULL, 0x3ff0000000000000ULL},
+                    {0x0000000000000000ULL, 0x7ff0000000000000ULL, false,
+                     true},
+                    {0x8000000000000000ULL, 0xfff0000000000000ULL, false,
+                     true},
+                    {0x7ff0000000000000ULL, 0x0000000000000000ULL},
+                    {0xbff0000000000000ULL, f64_ptx_nan, true},
+                    {0x7ff8000100000000ULL, f64_ptx_nan},
+                    {0x7ff0000000000001ULL, f64_ptx_nan, true},
+                    {0x0000000000000001ULL, 0x7ff0000000000000ULL, false,
+                     true}});
+
+  const auto truncated = rcp(c, f64(0x4008000012345678ULL), rcp_ftz);
+  ASSERT_TRUE(truncated);
+  EXPECT_EQ(truncated->value.bits(), 0x3fd5555500000000ULL);
+  EXPECT_TRUE(truncated->status.inexact);
+  EXPECT_TRUE(truncated->status.model_dependent);
+
+  const auto one = f64(0x3ff0000000000000ULL);
+  EXPECT_TRUE(rcp(c, one, {.approximation = approximation_mode::exact}));
+  EXPECT_EQ(rcp(c, one, rsqrt_preserve).error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(rcp(c, one,
+                {.approximation = approximation_mode::exact,
+                 .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+  EXPECT_EQ(rcp(c, one,
+                {.approximation = approximation_mode::ptx_full,
+                 .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one).error(), arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one,
+                  {.approximation = approximation_mode::ptx_full,
+                   .subnormal = subnormal_mode::flush_input_and_output})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+  EXPECT_EQ(rsqrt(c, one,
+                  {.approximation = approximation_mode::ptx_approximate,
+                   .subnormal = subnormal_mode::flush_input})
+                .error(),
+            arithmetic_error::unsupported_subnormal_mode);
+}
+
 TEST(SpecialFunctions, LowPrecisionApproximationFtzCapabilities) {
   context c;
   const special_function_control approx{

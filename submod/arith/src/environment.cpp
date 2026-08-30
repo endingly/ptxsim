@@ -664,6 +664,22 @@ PTXSIM_APPROX_F32(cos_approx)
 PTXSIM_APPROX_F32(lg2_approx)
 PTXSIM_APPROX_F32(ex2_approx)
 #undef PTXSIM_APPROX_F32
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rcp_approx_ftz(float64_t v, special_function_control c,
+               const approximation_profile&) {
+  return approximate(v, c, [](float64_t x) { return backend::rcp_approx_ftz(x); });
+}
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx(float64_t v, special_function_control c,
+             const approximation_profile&) {
+  return approximate(v, c, [](float64_t x) { return backend::rsqrt_approx(x); });
+}
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx_ftz(float64_t v, special_function_control c,
+                 const approximation_profile&) {
+  return approximate(v, c,
+                     [](float64_t x) { return backend::rsqrt_approx_ftz(x); });
+}
 std::expected<result<float32_t, floating_status>, arithmetic_error> tanh_approx(
     float32_t v, special_function_control c, const approximation_profile& p) {
   return approximate(v, c, [&](float32_t x) { return backend::tanh_approx(x, legacy(c, p)); });

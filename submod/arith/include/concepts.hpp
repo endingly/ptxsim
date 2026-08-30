@@ -147,6 +147,9 @@ struct special_function_control_capability {
                          (Ftz &&
                           mode == subnormal_mode::flush_input_and_output));
   }
+  static constexpr bool supports(special_function_control control) {
+    return supports(control.approximation) && supports(control.subnormal);
+  }
 };
 
 template <scalar_operation Op, typename T>
@@ -167,10 +170,33 @@ struct special_function_operation_capability<scalar_operation::sqrt, float64_t>
     : special_function_control_capability<true, true> {};
 template <>
 struct special_function_operation_capability<scalar_operation::rcp, float64_t>
-    : special_function_control_capability<true, true> {};
+    : special_function_control_capability<true, true, true, false, true> {
+  using Base = special_function_control_capability<true, true, true, false,
+                                                   true>;
+  using Base::supports;
+  static constexpr bool supports(special_function_control control) {
+    return (control.approximation == approximation_mode::exact &&
+            control.subnormal == subnormal_mode::preserve) ||
+           (control.approximation == approximation_mode::ptx_approximate &&
+            control.subnormal == subnormal_mode::flush_input_and_output);
+  }
+};
 template <>
 struct special_function_operation_capability<scalar_operation::rsqrt, float32_t>
     : special_function_control_capability<true, false, true, false, true> {};
+template <>
+struct special_function_operation_capability<scalar_operation::rsqrt,
+                                             float64_t>
+    : special_function_control_capability<true, false, true, false, true> {
+  using Base = special_function_control_capability<true, false, true, false,
+                                                   true>;
+  using Base::supports;
+  static constexpr bool supports(special_function_control control) {
+    return control.approximation == approximation_mode::ptx_approximate &&
+           (control.subnormal == subnormal_mode::preserve ||
+            control.subnormal == subnormal_mode::flush_input_and_output);
+  }
+};
 template <scalar_operation Op>
   requires(Op == scalar_operation::sin || Op == scalar_operation::cos ||
            Op == scalar_operation::lg2 || Op == scalar_operation::ex2)

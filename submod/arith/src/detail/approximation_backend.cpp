@@ -306,9 +306,9 @@ template <typename Function>
 [[nodiscard]] Result<float64_t> f64_ftz_approx(float64_t value,
                                                Function function) {
   value = flush_subnormal(value);
-  value = float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
   if (is_nan(value))
     return canonical_nan_f64(value);
+  value = float64_t::from_bits(value.bits() & 0xFFFFFFFF00000000ULL);
   auto result = function(value);
   if (is_nan(result.value)) {
     auto canonical = canonical_nan_f64(result.value);

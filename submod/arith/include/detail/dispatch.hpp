@@ -98,6 +98,14 @@ PTXSIM_ARITH_DISPATCH_APPROX(lg2_approx);
 PTXSIM_ARITH_DISPATCH_APPROX(ex2_approx);
 PTXSIM_ARITH_DISPATCH_APPROX(tanh_approx);
 #undef PTXSIM_ARITH_DISPATCH_APPROX
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rcp_approx_ftz(float64_t, special_function_control,
+               const approximation_profile&);
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx(float64_t, special_function_control, const approximation_profile&);
+std::expected<result<float64_t, floating_status>, arithmetic_error>
+rsqrt_approx_ftz(float64_t, special_function_control,
+                 const approximation_profile&);
 std::expected<result<float16_t, floating_status>, arithmetic_error> tanh_approx(
     float16_t, special_function_control, const approximation_profile&);
 std::expected<result<bfloat16_t, floating_status>, arithmetic_error> tanh_approx(
