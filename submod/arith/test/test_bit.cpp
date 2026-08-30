@@ -46,6 +46,17 @@ TEST(BitOperations, BitExtractSignedUsesPtxSignBitBeyondSourceMsb) {
   EXPECT_EQ(bit_extract_signed(positive64, 64, 8), 0);
 }
 
+TEST(BitOperations, BitInsertUsesPtxOperandNormalizationAndBoundaryRules) {
+  constexpr std::uint32_t base = 0xaaaa'aaaau;
+  constexpr std::uint32_t field = 0xfu;
+  EXPECT_EQ(bit_insert(base, field, 256, 1), 0xaaaa'aaabu);
+  EXPECT_EQ(bit_insert(base, field, 0, 256), base);
+  EXPECT_EQ(bit_insert(std::uint32_t{}, field, 30, 4), 0xc000'0000u);
+  EXPECT_EQ(bit_insert(std::uint32_t{}, field, 31, 2), 0x8000'0000u);
+  EXPECT_EQ(bit_extract_unsigned(bit_insert(base, field, 256, 1), 256, 1),
+            1u);
+}
+
 TEST(BitOperations, BfindReturnsPtxNonSignPositionAndSentinel) {
   EXPECT_EQ(find_most_significant_non_sign(std::uint32_t{}), not_found);
   EXPECT_EQ(find_most_significant_non_sign(0x8000'1000u), 31u);
