@@ -130,6 +130,42 @@ TEST(ScalarArithmetic, IntegerControlsProductsAndExtendedPrecision) {
   EXPECT_EQ(distance->value, std::numeric_limits<int8_t>::max());
 }
 
+TEST(ScalarArithmetic, MadHighSaturatesOnlyFinalSignedResult) {
+  context c;
+  const product_control high_saturate{
+      .part = product_part::high,
+      .overflow = integer_overflow_mode::saturate};
+
+  const auto positive = mad(c, std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::max(), high_saturate);
+  ASSERT_TRUE(positive);
+  EXPECT_EQ(positive->value, std::numeric_limits<int32_t>::max());
+  EXPECT_TRUE(positive->status.overflow);
+
+  const auto negative = mad(c, std::numeric_limits<int32_t>::min(),
+                            std::numeric_limits<int32_t>::max(),
+                            std::numeric_limits<int32_t>::min(), high_saturate);
+  ASSERT_TRUE(negative);
+  EXPECT_EQ(negative->value, std::numeric_limits<int32_t>::min());
+  EXPECT_TRUE(negative->status.overflow);
+
+  EXPECT_EQ(mul(c, std::numeric_limits<int32_t>::max(),
+                std::numeric_limits<int32_t>::max(), high_saturate)
+                .error(),
+            arithmetic_error::unsupported_overflow_mode);
+
+  EXPECT_EQ(mad(c, int8_t{2}, int8_t{3}, int8_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(mad(c, int16_t{2}, int16_t{3}, int16_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(mad(c, int64_t{2}, int64_t{3}, int64_t{4}, high_saturate).error(),
+            arithmetic_error::unsupported_overflow_mode);
+  EXPECT_EQ(
+      mad(c, uint32_t{2}, uint32_t{3}, uint32_t{4}, high_saturate).error(),
+      arithmetic_error::unsupported_overflow_mode);
+}
+
 TEST(ScalarArithmetic, EightBitIntegerAndBitBoundaries) {
   context c;
   for (unsigned a = 0; a != 256; ++a) {

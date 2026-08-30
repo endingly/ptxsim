@@ -189,6 +189,19 @@ mad(const context& ctx, T a, T b, C c, product_control control = {}) {
   if constexpr (!std::same_as<C, R>) {
     return std::unexpected(arithmetic_error::unsupported_type_combination);
   } else {
+    if constexpr (std::same_as<R, std::int32_t> &&
+                  std::same_as<T, std::int32_t>) {
+      if (control.part == product_part::high &&
+          control.overflow == integer_overflow_mode::saturate) {
+        using U = detail::unsigned_integer_t<T>;
+        using W = detail::integer_wide_t<T>;
+        using UW = std::make_unsigned_t<W>;
+        constexpr unsigned n = std::numeric_limits<U>::digits;
+        const auto product = static_cast<UW>(W(a) * W(b));
+        const auto high = detail::from_bits<T>(U(product >> n));
+        return detail::saturate_from<T>(W(high) + W(c));
+      }
+    }
     auto p = mul<Result>(ctx, a, b, control);
     if (!p)
       return std::unexpected(p.error());
