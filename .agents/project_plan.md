@@ -4,7 +4,11 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current blocking gate:** accept the V2-M1 remediation against `m4-review.md` and pass hosted Clang CI
+> **Current gate:** all locally actionable MAIN P0/P1/P2 items are fixed.
+> Before this closure commit, Luna must run the five local CMake workflows on
+> the final integrated tree. `MAIN-P2-004` remains an external GitHub
+> branch-protection gate: `main` is currently unprotected and requires
+> repository settings, not a source commit.
 > **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
@@ -32,7 +36,9 @@ private arithmetic backends
 
 That is not a naming-only refactor. It changes module responsibility, API shape, testing strategy, and dependency ordering.
 
-The `refactor/arith-module` review also found that the arithmetic branch is not yet suitable for integration. Therefore v2 makes arithmetic conformance a formal blocking gate before executor work consumes its API.
+Arithmetic conformance is now complete for the locally actionable MAIN scope.
+V2 keeps that stabilized `arith` boundary as the prerequisite for executor
+integration.
 
 ### 1.1 Main changes from v0.4
 
@@ -486,7 +492,7 @@ V2-M1 arithmetic conformance
           V2-M9 advanced PTX
 ```
 
-`V2-M0` and `V2-M1` may run in parallel, but no execution integration should depend on the current `arith` API until V2-M1 passes.
+V2-M2 consumes only the stabilized `arith` API established by V2-M1.
 
 ---
 
@@ -522,7 +528,9 @@ V2-M1 arithmetic conformance
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Source of truth:** `m4-review.md`.
+**Current implementation status:** all locally actionable MAIN P0/P1/P2 items
+are fixed. The closure and regression map is recorded below; `MAIN-P2-004`
+remains an external repository-settings action.
 
 ## 9.1 Work packages
 
@@ -564,14 +572,42 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-V2-M1 is complete only when the merge checklist in `m4-review.md` passes and:
+For the MAIN arithmetic scope, implementation closure is complete, subject to
+the final integrated-tree gate below: all locally actionable P0, P1, and P2
+items are closed; public API stability is sufficient for semantics/executor
+integration; no old `ptxsim::fp` symbols or targets remain; independent goldens
+detect key format-trait mutations; and `arith` has no dependency on frontend,
+IR, machine state, or runtime. `MAIN-P2-004` is the separate external
+branch-protection action recorded in the map below.
 
-- all P0 are closed;
-- all P1 are closed or backed by an approved, narrowly scoped ADR with no false capability exposure;
-- public API stability is sufficient for semantics/executor integration;
-- no old `ptxsim::fp` symbols or targets remain;
-- independent goldens detect deliberate mutation of key format traits;
-- `arith` has no dependency on frontend, IR, machine state or runtime.
+## 9.4 MAIN closure and regression map
+
+The five local workflows are GCC Debug, GCC Release, Clang Debug, Clang
+Release, and GCC ASan+UBSan. They are the required final integrated-tree
+closure gate; Luna runs them before this documentation commit.
+
+| Issue | Fix commit | Regression target / check |
+|---|---|---|
+| MAIN-P0-004 | `173a951` | `test_scalar.cpp`, `test_special.cpp` |
+| MAIN-P0-001 | `04c67c1` | `test_scalar.cpp` |
+| MAIN-P0-002 | `6adc5f7` | `test_special.cpp` |
+| MAIN-P0-003 | `6be18ec` | `test_special.cpp` |
+| MAIN-P1-001 | `e48fba2` | `test_special.cpp` |
+| MAIN-P1-002 | `93147b9` | `test_conversion.cpp` |
+| MAIN-P1-003 | `1aa80f9` | `test_conversion.cpp` |
+| MAIN-P1-004 | `7dd0e71` | `test_conversion.cpp` |
+| MAIN-P1-005 | `97eab10` | `test_bit.cpp` |
+| MAIN-P1-006 | `ad44346` | `test_special.cpp` |
+| MAIN-P1-007 | `3b50b45` | `test_scalar.cpp` |
+| MAIN-P1-008 | `de1ab28` | `test_bit.cpp`, `test_scalar.cpp` |
+| MAIN-P1-009 | `35873ec` | `test_tensor.cpp` |
+| MAIN-P1-010 | `2c59b86` | `test_packed.cpp` |
+| MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
+| MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
+| MAIN-P2-003 | `20e0e37` | `frontend-lowering` feature install; generated snapshot byte check |
+| MAIN-P2-004 | external / pending | GitHub `main` branch protection and hosted CI checks |
+| MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
+| MAIN-P2-006 | this documentation commit | plan/document consistency searches |
 
 ---
 
@@ -902,20 +938,10 @@ A passing implementation test without a support-matrix update is not complete.
 
 # 19. Branch and PR strategy
 
-## 19.1 Arithmetic remediation
+## 19.1 Arithmetic integration
 
-Use the lane split defined in `m4-review.md`:
-
-```text
-Lane A format/conversion
-Lane B scalar/bit
-Lane C packed/tensor
-Lane D profile/approximation
-Lane E tests/build
-Integration Agent
-```
-
-No single PR should mix a new oracle, a rewritten production core and rewritten expected values without a clearly reviewable red-to-green sequence.
+No single PR should mix a new oracle, a rewritten production core, and
+rewritten expected values without a clearly reviewable red-to-green sequence.
 
 ## 19.2 General PR size
 
@@ -987,14 +1013,11 @@ A feature is complete only when all applicable boxes are checked:
 
 # 22. Immediate next actions
 
-The V2-M1 implementation work and local GCC Debug/Release/ASan+UBSan gates
-are complete. The next development actions, in order, are:
-
-1. Review the remediation diff against every item in `m4-review.md` and record closure evidence.
-2. Run the hosted GCC/Clang Debug/Release and sanitizer matrix; local Clang was unavailable during remediation.
-3. Publish/update the public arithmetic support matrix from the centralized capability traits.
-4. Merge the stabilized `arith` API only after review acceptance and hosted CI pass.
-5. Begin V2-M2 exec IR/lowering work without bypassing the established `arith` boundary.
+1. Configure GitHub `main` branch protection for `MAIN-P2-004`, requiring the
+   five hosted Linux CI checks before merge.
+2. Confirm those hosted CI checks on the protected branch.
+3. Begin V2-M2 exec IR/lowering work without bypassing the established
+   `arith` boundary.
 
 ---
 
