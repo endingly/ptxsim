@@ -631,14 +631,16 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M2-03 Operand Model):** M2-00 pinned frontend baseline
+**Current phase (M2-04 Initial Instruction Records):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
 feature-on compile/link smoke. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
 `ptxsim::exec_ir` now exports typed register, immediate, special-register,
 address, branch, and function operands, with no frontend or arith dependency.
-Instruction records, `ProgramImage`, and state implementation are not yet
-provided.
+It now also exports the validated initial data-only instruction slice: mov,
+integer add/sub/mul, b32 and/or/xor, direct branch, and selected scalar
+global/constant loads and global stores. `ProgramImage` and state
+implementation are not yet provided.
 
 ## 10.1 Exec IR principles
 

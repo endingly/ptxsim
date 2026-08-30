@@ -23,7 +23,9 @@ add_custom_target(ptxsim_exec_ir_public_header_check ALL
     DEPENDS ptxsim_exec_ir_public_headers)
 
 if(BUILD_TESTING)
-    add_executable(test_ptxsim_exec_ir test/test_operand.cpp)
+    add_executable(test_ptxsim_exec_ir
+        test/test_instruction.cpp
+        test/test_operand.cpp)
     find_package(GTest CONFIG REQUIRED)
     target_link_libraries(test_ptxsim_exec_ir PRIVATE
         GTest::gtest

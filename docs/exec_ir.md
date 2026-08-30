@@ -1,6 +1,6 @@
 # Execution IR
 
-## M2-03 status
+## M2-04 status
 
 M2-01 provides frontend-independent strong IDs from `ptxsim::common`:
 `ProgramCounter`, `FunctionId`, `RegisterSlot`, `SymbolId`, `LabelId`,
@@ -27,14 +27,28 @@ depends only on `ptxsim::common` and is part of the installed package.
 `SpecialRegisterId` is added in M2-03 specifically as the stable simulator
 identity required by `SpecialRegisterOperand`.
 
+M2-04 adds validated data-only instruction records: `MovInst`, signed or
+unsigned `IntegerBinaryInst` add/sub, `IntegerMulInst`, `BitInst`, direct
+`BranchInst`, and scalar `LoadInst`/`StoreInst`. This initial slice is
+deliberately narrow: mov supports pred/b16/b32/b64; integer add/sub use
+b32/b64; mul uses b32 inputs, b32 unsigned low/high results, or b64 signed or
+unsigned wide results; and/or/xor use b32; loads use b32 values and b64
+addresses in global or constant space; stores use b32 values and b64 global
+addresses. Constant stores are structurally rejected as read-only.
+
+`Instruction` is a bounded variant. `validate` returns structured error codes
+for invalid controls, width mismatch, unsupported width, invalid multiply result
+relations, and read-only store. Legal PTX forms outside this slice remain future
+lowering rejections, not silently widened M2-04 records.
+
 ## Boundary
 
 `exec_ir` owns typed execution facts after lowering. It will not retain
 `ptx_frontend` objects, PTX modifier spellings, arithmetic backend types, or
 SASS/timing details.
 
-## Non-goals in M2-03
+## Non-goals in M2-04
 
-M2-03 does not define instruction records, predication, register files, memory
-objects or state spaces, byte serialization, arithmetic, lowering, or a
-verifier.
+M2-04 does not define execution semantics, `ProgramImage`, verifier passes,
+register files, memory objects or state spaces beyond the instruction fact,
+byte serialization, arithmetic, lowering, or a scheduler.

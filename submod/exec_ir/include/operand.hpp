@@ -153,6 +153,26 @@ inline void append_offset(std::string& output, std::int64_t offset) {
   return "function-target:" + common::to_string(target.function);
 }
 
+[[nodiscard]] constexpr auto width(const RegisterOperand& operand) noexcept
+    -> common::RawWidth {
+  return operand.width;
+}
+
+[[nodiscard]] constexpr auto width(const ImmediateOperand& operand) noexcept
+    -> common::RawWidth {
+  return operand.value.width();
+}
+
+[[nodiscard]] constexpr auto width(
+    const SpecialRegisterOperand& operand) noexcept -> common::RawWidth {
+  return operand.width;
+}
+
+[[nodiscard]] constexpr auto width(const ValueOperand& operand) noexcept
+    -> common::RawWidth {
+  return std::visit([](const auto& value) { return width(value); }, operand);
+}
+
 [[nodiscard]] inline auto to_string(const ValueOperand& operand)
     -> std::string {
   return std::visit([](const auto& value) { return to_string(value); },
