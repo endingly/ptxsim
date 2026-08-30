@@ -3,12 +3,14 @@ find_package(ptx_frontend CONFIG QUIET)
 if(ptx_frontend_FOUND)
     add_library(ptxsim_lowering STATIC
         src/context.cpp
-        src/diagnostic.cpp)
+        src/diagnostic.cpp
+        src/lowering.cpp)
     add_library(ptxsim::lowering ALIAS ptxsim_lowering)
     set_target_properties(ptxsim_lowering PROPERTIES EXPORT_NAME lowering)
     target_compile_features(ptxsim_lowering PUBLIC cxx_std_23)
     target_link_libraries(ptxsim_lowering
         PUBLIC ptxsim::common
+               ptxsim::program
         PRIVATE ptx_frontend::resolved_ir)
     target_include_directories(ptxsim_lowering PUBLIC
         $<TARGET_PROPERTY:ptx_frontend::resolved_ir,INTERFACE_INCLUDE_DIRECTORIES>)
@@ -40,7 +42,8 @@ if(ptx_frontend_FOUND)
     if(BUILD_TESTING)
         add_executable(test_ptxsim_lowering
             test/test_context.cpp
-            test/test_diagnostic.cpp)
+            test/test_diagnostic.cpp
+            test/test_lowering.cpp)
         find_package(GTest CONFIG REQUIRED)
         target_link_libraries(test_ptxsim_lowering PRIVATE
             GTest::gtest

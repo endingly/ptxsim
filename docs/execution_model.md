@@ -1,6 +1,6 @@
 # Execution model
 
-## M2-07 status
+## M2-08 status
 
 The installed frontend-independent core has the following build graph:
 
@@ -18,7 +18,11 @@ is an optional `frontend-lowering` feature-on build-tree diagnostics/context
 target; it is not installed or exported. Only that target privately links
 `ptx_frontend`; `arith` remains independent. Its `LoweringContext` is a
 temporary frontend-ID-to-simulator-ID/PC map, never `ProgramImage` data. No
-PTX program is lowered or executed yet.
+PTX program lowering is available only through the optional build-tree target:
+it converts a parsed AST plus resolved module into a self-contained,
+`ProgramImage`-verified initial instruction subset. The AST supplies labels,
+nested ordering, and source ranges; resolved IR supplies semantics. No executor
+or state integration is added.
 `state::RegisterFile` is a standalone,
 frontend-independent dense register store: callers provide its ordered
 `RawWidth` layout, reads of unwritten slots return a structured
@@ -31,11 +35,10 @@ is now an interface-only, mockable state boundary: it has no production values
 or launch configuration. Executor PC/status transitions are M4+ work, and call
 semantics are M7 work.
 
-## Non-goals in M2-07
+## Non-goals in M2-08
 
 There is no ProgramImage adapter in production state, special-register production
 implementation, launch configuration, executor status/PC transition API (M4+),
 call semantics (M7), scheduler, or memory model yet. `%tid`, `%ntid`, `%ctaid`,
 `%nctaid`, `%laneid`, and `%warpid` values are M6 work. Symbol storage addresses
-remain future work. There is no module or instruction lowering, or lowering
-install/export surface yet.
+remain future work. There is no lowering install/export surface yet.
