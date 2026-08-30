@@ -98,6 +98,28 @@ TEST(SpecialFunctions, ApproximationCapabilityMatrix) {
                   {.approximation = approximation_mode::ptx_full}));
 }
 
+TEST(SpecialFunctions, ApproximateDivisionMarksOnlySuccessfulResults) {
+  context c;
+  constexpr auto one = float32_t::from_bits(0x3f800000);
+  const auto approx = div(c, one, one,
+                          {.approximation = approximation_mode::ptx_approximate});
+  const auto full = div(c, one, one,
+                        {.approximation = approximation_mode::ptx_full});
+  const auto exact = div(c, one, one,
+                         {.approximation = approximation_mode::exact});
+  ASSERT_TRUE(approx && full && exact);
+  EXPECT_TRUE(approx->status.model_dependent);
+  EXPECT_TRUE(full->status.model_dependent);
+  EXPECT_FALSE(exact->status.model_dependent);
+
+  model_profile unavailable{};
+  unavailable.approximation.model = approximation_model::unavailable;
+  EXPECT_EQ(div(context{unavailable}, one, one,
+                {.approximation = approximation_mode::ptx_approximate})
+                .error(),
+            arithmetic_error::unsupported_approximation_mode);
+}
+
 TEST(SpecialFunctions, DivApproxLargeDivisorPtxDomain) {
   context c;
   const special_function_control preserve{

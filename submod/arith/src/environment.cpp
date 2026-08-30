@@ -627,6 +627,13 @@ ApproximationControl legacy(special_function_control control,
   result.profile = profile;
   return result;
 }
+template <typename T>
+std::expected<result<T, floating_status>, arithmetic_error> model_dependent(
+    std::expected<result<T, floating_status>, arithmetic_error> out) {
+  if (out)
+    out->status.model_dependent = true;
+  return out;
+}
 template <typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> approximate(
     T value, special_function_control control, F&& operation) {
@@ -634,24 +641,23 @@ std::expected<result<T, floating_status>, arithmetic_error> approximate(
   auto raw = operation(input);
   auto out = result<T, floating_status>{output_ftz(raw.value, control.subnormal),
                                         status(raw.flags)};
-  out.status.model_dependent = true;
-  return out;
+  return model_dependent<T>(out);
 }
 }  // namespace
 
 std::expected<result<float32_t, floating_status>, arithmetic_error> div_approx(
     float32_t a, float32_t b, special_function_control c,
     const approximation_profile& profile) {
-  return execute<scalar_operation::div, float32_t>(
+  return model_dependent(execute<scalar_operation::div, float32_t>(
       {.subnormal = c.subnormal}, [&](auto x, auto y) {
-    return backend::div_approx(x, y, legacy(c, profile)); }, a, b);
+    return backend::div_approx(x, y, legacy(c, profile)); }, a, b));
 }
 std::expected<result<float32_t, floating_status>, arithmetic_error> div_full(
     float32_t a, float32_t b, special_function_control c,
     const approximation_profile& profile) {
-  return execute<scalar_operation::div, float32_t>(
+  return model_dependent(execute<scalar_operation::div, float32_t>(
       {.subnormal = c.subnormal}, [&](auto x, auto y) {
-    return backend::div_full(x, y, legacy(c, profile)); }, a, b);
+    return backend::div_full(x, y, legacy(c, profile)); }, a, b));
 }
 #define PTXSIM_APPROX_F32(name)                                            \
   std::expected<result<float32_t, floating_status>, arithmetic_error> name(\
