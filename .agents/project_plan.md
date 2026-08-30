@@ -4,11 +4,10 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** all locally actionable MAIN P0/P1/P2 items are fixed.
-> Before this closure commit, Luna must run the five local CMake workflows on
-> the final integrated tree. `MAIN-P2-004` remains an external GitHub
-> branch-protection gate: `main` is currently unprotected and requires
-> repository settings, not a source commit.
+> **Current gate:** V2-M1 remains pending acceptance. The final integrated
+> tree must pass the five local CMake workflows and receive hosted CI evidence;
+> `MAIN-P2-004` remains an external GitHub branch-protection gate: `main` is
+> currently unprotected and requires repository settings, not a source commit.
 > **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
@@ -36,8 +35,8 @@ private arithmetic backends
 
 That is not a naming-only refactor. It changes module responsibility, API shape, testing strategy, and dependency ordering.
 
-Arithmetic conformance is now complete for the locally actionable MAIN scope.
-V2 keeps that stabilized `arith` boundary as the prerequisite for executor
+Arithmetic remediation is tracked in the [review audit chain](../docs/reviews/).
+V2 keeps an accepted `arith` boundary as the prerequisite for executor
 integration.
 
 ### 1.1 Main changes from v0.4
@@ -528,9 +527,12 @@ V2-M2 consumes only the stabilized `arith` API established by V2-M1.
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Current implementation status:** all locally actionable MAIN P0/P1/P2 items
-are fixed. The closure and regression map is recorded below; `MAIN-P2-004`
-remains an external repository-settings action.
+**Current remediation status:** the known MAIN fixes and later local fixes are
+recorded in the audit chain and map below: `05b0af2` projects F64 FTZ inputs,
+`419e2e6` saturates finite S2F6 conversions, `def4b8a` verifies the frontend
+snapshot, and this documentation commit restores audit governance. These are
+not V2-M1 acceptance evidence; final integrated-tree workflows, hosted CI, and
+`MAIN-P2-004` branch protection remain gating actions.
 
 ## 9.1 Work packages
 
@@ -572,19 +574,16 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-For the MAIN arithmetic scope, implementation closure is complete, subject to
-the final integrated-tree gate below: all locally actionable P0, P1, and P2
-items are closed; public API stability is sufficient for semantics/executor
-integration; no old `ptxsim::fp` symbols or targets remain; independent goldens
-detect key format-trait mutations; and `arith` has no dependency on frontend,
-IR, machine state, or runtime. `MAIN-P2-004` is the separate external
-branch-protection action recorded in the map below.
+V2-M1 remains pending acceptance. The final integrated tree must pass the five
+local workflows, receive hosted CI evidence, and have `MAIN-P2-004` branch
+protection configured. The map below records remediation targets and checks,
+not proof that those gates have closed.
 
-## 9.4 MAIN closure and regression map
+## 9.4 MAIN remediation and regression map
 
 The five local workflows are GCC Debug, GCC Release, Clang Debug, Clang
-Release, and GCC ASan+UBSan. They are the required final integrated-tree
-closure gate; Luna runs them before this documentation commit.
+Release, and GCC ASan+UBSan. They remain required final integrated-tree gates;
+the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 | Issue | Fix commit | Regression target / check |
 |---|---|---|
@@ -604,10 +603,14 @@ closure gate; Luna runs them before this documentation commit.
 | MAIN-P1-010 | `2c59b86` | `test_packed.cpp` |
 | MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
 | MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
-| MAIN-P2-003 | `20e0e37` + FIX-P2-002 follow-up | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
+| MAIN-P2-003 | `20e0e37` + `def4b8a` | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
 | MAIN-P2-004 | external / pending | GitHub `main` branch protection and hosted CI checks |
 | MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
-| MAIN-P2-006 | this documentation commit | plan/document consistency searches |
+| MAIN-P2-006 | `24dd230` | plan/document consistency searches |
+| FIX-P0-001 | `05b0af2` | F64 FTZ upper-word projection; `test_special.cpp` |
+| FIX-P0-002 + FIX-P1-001 | `419e2e6` | S2F6 finite saturation/status; `test_conversion.cpp` |
+| FIX-P2-002 | `def4b8a` | automatic snapshot integrity CTest + manual byte comparison |
+| FIX-P2-003 | this documentation commit | [`docs/reviews`](../docs/reviews/) provenance and archival links |
 
 ---
 
