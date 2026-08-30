@@ -95,3 +95,24 @@ install_project_targets(
         "${PROJECT_NAME}/state"
         "${PROJECT_NAME}/arith"
     DEPENDENCIES "softfloat CONFIG REQUIRED")
+
+# Lowering is intentionally a separate export: loading the default core package
+# must not require the optional frontend dependency.
+if(TARGET ptxsim_lowering)
+    install(TARGETS ptxsim_lowering
+        EXPORT ptxsimLoweringTargets
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/submod/lowering/include/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ptxsim/lowering"
+        FILES_MATCHING PATTERN "*.hpp")
+    export(EXPORT ptxsimLoweringTargets
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/ptxsimLoweringTargets.cmake"
+        NAMESPACE ptxsim::)
+    install(EXPORT ptxsimLoweringTargets
+        FILE ptxsimLoweringTargets.cmake
+        NAMESPACE ptxsim::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ptxsim")
+endif()

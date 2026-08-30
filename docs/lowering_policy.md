@@ -1,12 +1,11 @@
 # Lowering policy
 
-## M2 lifetime-acceptance status
+## M2 package-acceptance status
 
 `ptxsim::lowering` is created only when the `frontend-lowering` dependency is
-available. It owns build-tree-only structured diagnostics, `LoweringContext`,
-and `lower_module`. Its smoke executable compiles generated `resolved_ir`
-declarations and links a generated descriptor through that target. It is not
-installed or exported yet; install/export remains later feature work.
+available. It owns structured diagnostics, `LoweringContext`, and
+`lower_module`. It is installed/exported only as the explicit `lowering`
+package component; the default package remains frontend-free.
 
 ## Boundary
 
@@ -35,9 +34,10 @@ the four selected `mul` variants, b32 `and`/`or`/`xor`, direct non-`.uni`
 `bra`, scalar explicit global/constant b32 loads, scalar explicit global b32
 stores, and execution predicates. All other legal resolved forms fail with a
 structured diagnostic. The target does not add storage, state, module traversal
-abstractions, special-register values, calls, returns, or an install surface.
+abstractions, special-register values, calls, or returns.
 
 The feature-on acceptance test proves that the resulting `ProgramImage` outlives
 all frontend and temporary lowering objects. It may copy an entry layout into
 `ThreadState`, but that is test-only: `ptxsim::lowering` has no production
-dependency on `state` and remains build-tree-only, not installed or exported.
+dependency on `state`. Public frontend types make `ptx_frontend` a public
+dependency of the explicit component only.

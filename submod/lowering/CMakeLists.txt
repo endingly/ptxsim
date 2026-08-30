@@ -11,9 +11,7 @@ if(ptx_frontend_FOUND)
     target_link_libraries(ptxsim_lowering
         PUBLIC ptxsim::common
                ptxsim::program
-        PRIVATE ptx_frontend::resolved_ir)
-    target_include_directories(ptxsim_lowering PUBLIC
-        $<TARGET_PROPERTY:ptx_frontend::resolved_ir,INTERFACE_INCLUDE_DIRECTORIES>)
+               ptx_frontend::resolved_ir)
     register_headers(ptxsim_lowering lowering PUBLIC
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     ptxsim_enable_sanitizers(ptxsim_lowering)
@@ -57,10 +55,28 @@ if(ptx_frontend_FOUND)
             test/frontend_lowering_smoke.cpp)
         target_link_libraries(test_ptxsim_frontend_lowering_smoke
             PRIVATE ptxsim::lowering)
-        target_include_directories(test_ptxsim_frontend_lowering_smoke PRIVATE
-            $<TARGET_PROPERTY:ptx_frontend::resolved_ir,INTERFACE_INCLUDE_DIRECTORIES>)
         ptxsim_enable_sanitizers(test_ptxsim_frontend_lowering_smoke)
         add_test(NAME ptxsim_frontend_lowering_smoke
             COMMAND test_ptxsim_frontend_lowering_smoke)
+
+        if(PTXSIM_BUILD_CONSUMER_TESTS)
+            foreach(ptxsim_lowering_consumer_mode IN ITEMS build-tree installed)
+                add_test(
+                    NAME ptxsim_lowering_${ptxsim_lowering_consumer_mode}_consumer
+                    COMMAND "${CMAKE_COMMAND}"
+                        "-DPTXSIM_CONSUMER_MODE=${ptxsim_lowering_consumer_mode}"
+                        "-DPTXSIM_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+                        "-DPTXSIM_BUILD_DIR=${PROJECT_BINARY_DIR}"
+                        "-DPTXSIM_PACKAGE_BUILD_DIR=${PROJECT_BINARY_DIR}"
+                        "-DPTXSIM_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}"
+                        "-DPTXSIM_CONSUMER_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/consumer-${ptxsim_lowering_consumer_mode}"
+                        "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
+                        "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+                        "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                        "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
+                        "-DPTXSIM_VCPKG_PREFIX=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}"
+                        -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
+            endforeach()
+        endif()
     endif()
 endif()
