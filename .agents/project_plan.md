@@ -5,9 +5,12 @@
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
 > **Current gate:** V2-M1 remains pending acceptance. The final integrated
-> tree must pass the five local CMake workflows and receive hosted CI evidence;
-> `MAIN-P2-004` remains an external GitHub branch-protection gate: `main` is
-> currently unprotected and requires repository settings, not a source commit.
+> tree must pass the five local CMake workflows and receive hosted CI evidence.
+> `MAIN-P2-004` is complete: active default-branch ruleset `21723631` requires
+> PRs and strict checks for exactly `GCC Debug`, `GCC Release`, `Clang Debug`,
+> `Clang Release`, and `GCC ASan + UBSan`. Hosted Linux CI run `33310952274`
+> succeeded for prior head `0f5ef9a`; evidence for the final current head is
+> still pending. The user owns that cloud execution.
 > **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
@@ -403,7 +406,7 @@ GCC Debug configure/build/test
 GCC Release configure/build/test
 Clang Debug configure/build/test
 Clang Release configure/build/test
-ASan+UBSan test run
+GCC ASan + UBSan configure/build/test
 public header self-contained compile
 build-tree consumer
 install/export consumer
@@ -532,7 +535,7 @@ recorded in the audit chain and map below: `05b0af2` projects F64 FTZ inputs,
 `419e2e6` saturates finite S2F6 conversions, `def4b8a` verifies the frontend
 snapshot, and this documentation commit restores audit governance. These are
 not V2-M1 acceptance evidence; final integrated-tree workflows, hosted CI, and
-`MAIN-P2-004` branch protection remain gating actions.
+final-head hosted CI remains the gating action.
 
 ## 9.1 Work packages
 
@@ -574,15 +577,15 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-V2-M1 remains pending acceptance. The final integrated tree must pass the five
-local workflows, receive hosted CI evidence, and have `MAIN-P2-004` branch
-protection configured. The map below records remediation targets and checks,
-not proof that those gates have closed.
+V2-M1 remains pending acceptance. `MAIN-P2-004` branch-protection
+configuration is complete; the final integrated tree must still pass the five
+local workflows and receive final-head hosted CI evidence. The map below
+records remediation targets and checks, not proof that those gates have closed.
 
 ## 9.4 MAIN remediation and regression map
 
 The five local workflows are GCC Debug, GCC Release, Clang Debug, Clang
-Release, and GCC ASan+UBSan. They remain required final integrated-tree gates;
+Release, and GCC ASan + UBSan. They remain required final integrated-tree gates;
 the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 | Issue | Fix commit | Regression target / check |
@@ -604,13 +607,15 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 | MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
 | MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
 | MAIN-P2-003 | `20e0e37` + `def4b8a` | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
-| MAIN-P2-004 | external / pending | GitHub `main` branch protection and hosted CI checks |
+| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33310952274` passed prior head `0f5ef9a`, final-head hosted CI pending |
 | MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
 | MAIN-P2-006 | `24dd230` | plan/document consistency searches |
 | FIX-P0-001 | `05b0af2` | F64 FTZ upper-word projection; `test_special.cpp` |
 | FIX-P0-002 + FIX-P1-001 | `419e2e6` | S2F6 finite saturation/status; `test_conversion.cpp` |
 | FIX-P2-002 | `def4b8a` | automatic snapshot integrity CTest + manual byte comparison |
-| FIX-P2-003 | this documentation commit | [`docs/reviews`](../docs/reviews/) provenance and archival links |
+| REREVIEW-P1-001 | `a407c8e` | S2F6 pre-rounding finite-range status; `test_conversion.cpp` |
+| REREVIEW-P2-002 | this documentation commit | plan consistency search and diff check |
+| FIX-P2-003 | `777ac67` | [`docs/reviews`](../docs/reviews/) provenance and archival links |
 
 ---
 
@@ -1016,9 +1021,10 @@ A feature is complete only when all applicable boxes are checked:
 
 # 22. Immediate next actions
 
-1. Configure GitHub `main` branch protection for `MAIN-P2-004`, requiring the
-   five hosted Linux CI checks before merge.
-2. Confirm those hosted CI checks on the protected branch.
+1. Create or update a pull request for the final current head and run hosted
+   Linux CI (user-owned cloud execution).
+2. Confirm its five required contexts: GCC Debug, GCC Release, Clang Debug,
+   Clang Release, and GCC ASan + UBSan.
 3. Begin V2-M2 exec IR/lowering work without bypassing the established
    `arith` boundary.
 
