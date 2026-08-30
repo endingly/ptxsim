@@ -105,6 +105,7 @@ template <arithmetic_integer T>
 using integer_wide_t = detail::integer_wide_t<T>;
 
 template <typename Result = void, arithmetic_integer T>
+  requires(std::same_as<Result, void> || std::same_as<Result, T>)
 constexpr std::expected<result<T, integer_status>, arithmetic_error> add(
     const context&, T a, T b, integer_control c = {}) {
   if (c.overflow == integer_overflow_mode::wrap)
@@ -119,6 +120,7 @@ constexpr std::expected<result<T, integer_status>, arithmetic_error> add(
   }
 }
 template <typename Result = void, arithmetic_integer T>
+  requires(std::same_as<Result, void> || std::same_as<Result, T>)
 constexpr std::expected<result<T, integer_status>, arithmetic_error> sub(
     const context&, T a, T b, integer_control c = {}) {
   if (c.overflow == integer_overflow_mode::wrap)
@@ -313,6 +315,7 @@ constexpr std::expected<result<T, integer_status>, arithmetic_error> sad(
 #define PTXSIM_ARITH_FLOAT_BINARY(name, capability)                        \
   template <typename Result = void, typename T>                            \
     requires scalar_float<T> &&                                            \
+             (std::same_as<Result, void> || std::same_as<Result, T>) &&    \
              operation_capability<scalar_operation::capability, T, T,      \
                                   T>::value                                \
   inline std::expected<result<T, floating_status>, arithmetic_error> name( \
@@ -339,7 +342,8 @@ inline std::expected<result<Result, floating_status>, arithmetic_error> sub(
   return detail::dispatch::sub(a, b, control);
 }
 template <typename Result = void, typename T>
-  requires operation_capability<scalar_operation::fma, T, T, T, T>::value
+  requires(std::same_as<Result, void> || std::same_as<Result, T>) &&
+          operation_capability<scalar_operation::fma, T, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> fma(
     const context&, T a, T b, T c, floating_control control = {}) {
   return detail::dispatch::fma(a, b, c, control);
@@ -354,7 +358,8 @@ inline std::expected<result<Result, floating_status>, arithmetic_error> fma(
   return detail::dispatch::fma(a, b, c, control);
 }
 template <typename Result = void, typename T>
-  requires operation_capability<scalar_operation::mad, T, T, T, T>::value
+  requires(std::same_as<Result, void> || std::same_as<Result, T>) &&
+          operation_capability<scalar_operation::mad, T, T, T, T>::value
 inline std::expected<result<T, floating_status>, arithmetic_error> mad(
     const context& ctx, T a, T b, T c, floating_control control = {}) {
   // The reference profile defines floating mad as fused.  Legacy separate

@@ -10,6 +10,53 @@
 
 namespace ptxsim::arith::test {
 
+template <typename Result, typename T>
+concept same_type_add_callable = requires(const context& c, T value) {
+  add<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_sub_callable = requires(const context& c, T value) {
+  sub<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_mul_callable = requires(const context& c, T value) {
+  mul<Result>(c, value, value);
+};
+template <typename Result, typename T>
+concept same_type_fma_callable = requires(const context& c, T value) {
+  fma<Result>(c, value, value, value);
+};
+template <typename Result, typename T>
+concept same_type_mad_callable = requires(const context& c, T value) {
+  mad<Result>(c, value, value, value);
+};
+
+TEST(ScalarArithmetic, SameTypeResultTemplateArgumentsAreConstrained) {
+  static_assert(same_type_add_callable<void, std::int32_t>);
+  static_assert(same_type_add_callable<std::int32_t, std::int32_t>);
+  static_assert(!same_type_add_callable<std::int64_t, std::int32_t>);
+  static_assert(same_type_sub_callable<void, std::int32_t>);
+  static_assert(same_type_sub_callable<std::int32_t, std::int32_t>);
+  static_assert(!same_type_sub_callable<std::int64_t, std::int32_t>);
+
+  static_assert(same_type_add_callable<void, float32_t>);
+  static_assert(same_type_add_callable<float32_t, float32_t>);
+  static_assert(!same_type_add_callable<float64_t, float32_t>);
+  static_assert(same_type_sub_callable<float32_t, float32_t>);
+  static_assert(!same_type_sub_callable<float64_t, float32_t>);
+  static_assert(same_type_mul_callable<float32_t, float32_t>);
+  static_assert(!same_type_mul_callable<float64_t, float32_t>);
+  static_assert(same_type_fma_callable<float32_t, float32_t>);
+  static_assert(!same_type_fma_callable<float64_t, float32_t>);
+  static_assert(same_type_mad_callable<float32_t, float32_t>);
+  static_assert(!same_type_mad_callable<float64_t, float32_t>);
+
+  static_assert(requires(const context& c, float16_t h, float32_t f) {
+    add<float32_t>(c, h, f);
+    fma<float32_t>(c, h, h, f);
+  });
+}
+
 TEST(ScalarArithmetic, GenericScalarAndInteger) {
   context c;
   auto f = add(c, float32_t::from_bits(0x3f800000),
