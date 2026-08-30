@@ -31,9 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Debug
+          - name: GCC Debug
             preset: ci-linux-gcc-debug
-          - name: Release
+          - name: GCC Release
             preset: ci-linux-gcc-release
           - name: Clang Debug
             preset: ci-linux-clang-debug
@@ -124,6 +124,15 @@ jobs:
       - name: Run CMake workflow preset
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
+
+      - name: Frontend-lowering vcpkg install smoke
+        if: matrix.name == 'GCC Debug'
+        shell: bash
+        run: |
+          "$VCPKG_ROOT/vcpkg" install \
+            --x-manifest-root="$GITHUB_WORKSPACE" \
+            --x-feature=frontend-lowering \
+            --x-install-root="$RUNNER_TEMP/ptxsim-frontend-lowering-installed"
 
       - name: Show compiler cache statistics
         if: always()
