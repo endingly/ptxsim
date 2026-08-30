@@ -635,7 +635,10 @@ constexpr void apply_destination_controls(canonical::number& value,
       value = {.classification = number_class::finite,
                .negative = value.classification == number_class::infinity &&
                            value.negative,
-               .significand = 127,
+               .significand = value.classification == number_class::infinity &&
+                                      value.negative
+                                  ? std::uint64_t{128}
+                                  : std::uint64_t{127},
                .exponent = -fixed8_s2f6_t::fraction_bits};
     }
   }

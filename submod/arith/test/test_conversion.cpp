@@ -330,6 +330,30 @@ TEST(Conversion, UE8M0MinimumFiniteEndpoint) {
   EXPECT_TRUE(negative->status.inexact);
 }
 
+TEST(Conversion, S2F6FiniteSaturationEndpoints) {
+  context c;
+  const conversion_control finite{.saturation = saturation_mode::finite};
+  const auto positive =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7f800000), finite);
+  const auto negative =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0xff800000), finite);
+  const auto nan =
+      cvt<fixed8_s2f6_t>(c, float32_t::from_bits(0x7fc00000), finite);
+  ASSERT_TRUE(positive && negative && nan);
+  EXPECT_EQ(positive->value.rep, 127);
+  EXPECT_EQ(negative->value.rep, -128);
+  EXPECT_EQ(nan->value.rep, 127);
+  EXPECT_FALSE(positive->status.invalid);
+  EXPECT_FALSE(negative->status.invalid);
+  EXPECT_FALSE(nan->status.invalid);
+  EXPECT_FALSE(positive->status.overflow);
+  EXPECT_FALSE(negative->status.overflow);
+  EXPECT_FALSE(nan->status.overflow);
+  EXPECT_FALSE(positive->status.inexact);
+  EXPECT_FALSE(negative->status.inexact);
+  EXPECT_FALSE(nan->status.inexact);
+}
+
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   context c;
   // The capability is the canonical decode/encode matrix, not a list of
