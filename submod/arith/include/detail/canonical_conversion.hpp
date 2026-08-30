@@ -239,6 +239,11 @@ template <FloatingFormat To>
   const int maximum_normal =
       static_cast<int>(traits::maximum_finite_exponent_field) - traits::exponent_bias;
 
+  if constexpr (!traits::has_zero && !traits::has_subnormal) {
+    if (leading_exponent < minimum_normal)
+      return {pack(false, 0, 0), {.underflow = true, .inexact = true}};
+  }
+
   std::uint64_t rounded_significand{};
   bool inexact = false;
   unsigned target_exponent{};

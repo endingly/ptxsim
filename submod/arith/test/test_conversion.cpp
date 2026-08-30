@@ -291,6 +291,45 @@ TEST(Conversion, Ptx93UnsignedScaleRawBitGoldens) {
             0x7f);
 }
 
+TEST(Conversion, UE8M0MinimumFiniteEndpoint) {
+  context c;
+  const auto expect_endpoint = [&](std::uint32_t bits, conversion_control control) {
+    const auto encoded = cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(bits), control);
+    ASSERT_TRUE(encoded);
+    EXPECT_EQ(encoded->value.bits(), 0x00);
+    EXPECT_FALSE(encoded->status.invalid);
+    EXPECT_FALSE(encoded->status.divide_by_zero);
+    EXPECT_FALSE(encoded->status.overflow);
+    EXPECT_TRUE(encoded->status.underflow);
+    EXPECT_TRUE(encoded->status.inexact);
+  };
+
+  const auto exact_min = cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x00400000));
+  ASSERT_TRUE(exact_min);
+  EXPECT_EQ(exact_min->value.bits(), 0x00);
+  EXPECT_FALSE(exact_min->status.invalid);
+  EXPECT_FALSE(exact_min->status.underflow);
+  EXPECT_FALSE(exact_min->status.inexact);
+
+  expect_endpoint(0x00300000, {});  // 0.75 * 2^-127
+  expect_endpoint(0x00200000, {});  // 0.5 * 2^-127
+  expect_endpoint(0x003fffff, {});  // just below 2^-127
+  for (const auto mode : {rounding_mode::toward_zero,
+                          rounding_mode::toward_positive,
+                          rounding_mode::toward_negative,
+                          rounding_mode::nearest_away})
+    expect_endpoint(0x00300000, {.rounding = mode});
+
+  expect_endpoint(0x00000000, {});
+  const auto negative =
+      cvt<ufloat8_e8m0_t>(c, float32_t::from_bits(0x80400000));
+  ASSERT_TRUE(negative);
+  EXPECT_EQ(negative->value.bits(), 0x00);
+  EXPECT_TRUE(negative->status.invalid);
+  EXPECT_FALSE(negative->status.underflow);
+  EXPECT_TRUE(negative->status.inexact);
+}
+
 TEST(Conversion, CapabilityDrivenFamilyConversionRoutes) {
   context c;
   // The capability is the canonical decode/encode matrix, not a list of
