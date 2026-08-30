@@ -1,15 +1,18 @@
 # PTX frontend generated snapshot
 
 These files were generated from `endingly/ptx_frontend` commit
-`bf3538f6243dcef72e6e7d2db3e209a93114f35c`, the exact revision fetched by
-the adjacent portfile.  They replace that revision's Python/PyYAML/jsonschema
+`1c4547f65c888ee92b1933a20f9a74b380b96953`, the exact revision fetched by
+the adjacent portfile. They replace that revision's Python/PyYAML/jsonschema
 code-generation step so the overlay build has no pip resolver or PyPI input.
+This revision adds the matrix generated payload
+`private/resolved_ir_matrix.gen.cpp`.
 
 With `BUILD_TESTING=ON`, CTest runs an automatic snapshot integrity check. It
-verifies `SHA256SUMS` covers exactly the generated payloads and that this
-provenance revision matches the adjacent portfile's `REF`; it does not run the
-upstream generator. Changing a payload requires its hash update, and changing
-the pin requires the corresponding provenance update.
+verifies `SHA256SUMS` covers exactly the generated payloads, all payloads use
+LF and the no-timestamp form, and this provenance revision matches the adjacent
+portfile's `REF`; it does not run the upstream generator. Changing a payload
+requires its hash update, and changing the pin requires the corresponding
+provenance update.
 
 The checked-in payloads deliberately use the generator's no-timestamp form:
 every generated file starts with

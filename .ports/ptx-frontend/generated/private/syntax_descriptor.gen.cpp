@@ -7,1117 +7,6 @@ namespace ptx_frontend::resolved_ir {
 
 namespace {
 
-struct CallDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 1>
-      call_direct_modifier_0_allowed_values = {
-          ".uni",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
-      call_direct_modifiers = {check_end::SyntaxModifierDescriptor{
-          .allowed_values = call_direct_modifier_0_allowed_values,
-          .presence = check_end::PresenceRequirement::Optional,
-          .kind_id = "uni",
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
-      call_direct_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
-          .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-          .presence = check_end::OperandPresence::Required,
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      call_direct_layout_1_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
-      call_direct_layout_2_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      call_direct_layout_3_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
-      call_direct_layout_4_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
-      call_direct_layout_5_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Group,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     6>
-      call_direct_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "target",
-              .kind = check_end::OperandLayoutKind::Call,
-              .slots = call_direct_layout_0_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "target_input",
-              .kind = check_end::OperandLayoutKind::Call,
-              .slots = call_direct_layout_1_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "return_target_input",
-              .kind = check_end::OperandLayoutKind::Call,
-              .slots = call_direct_layout_2_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "target_metadata",
-              .kind = check_end::OperandLayoutKind::IndirectCall,
-              .slots = call_direct_layout_3_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "target_input_metadata",
-              .kind = check_end::OperandLayoutKind::IndirectCall,
-              .slots = call_direct_layout_4_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "return_target_input_metadata",
-              .kind = check_end::OperandLayoutKind::IndirectCall,
-              .slots = call_direct_layout_5_slots,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
-      variants = {check_end::SyntaxVariantDescriptor{
-          .variant_name = "Direct",
-          .modifiers = call_direct_modifiers,
-          .operand_layouts = call_direct_operand_layouts,
-      }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "call",
-      .variants = variants,
-  };
-};
-
-struct BraDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 1>
-      bra_direct_modifier_0_allowed_values = {
-          ".uni",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
-      bra_direct_modifiers = {check_end::SyntaxModifierDescriptor{
-          .allowed_values = bra_direct_modifier_0_allowed_values,
-          .presence = check_end::PresenceRequirement::Optional,
-          .kind_id = "uni",
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
-      bra_direct_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
-          .allowed_shapes = check_end::OperandSyntaxShape::BranchTarget,
-          .presence = check_end::OperandPresence::Required,
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      bra_direct_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
-          .layout_id = "default",
-          .kind = check_end::OperandLayoutKind::Flat,
-          .slots = bra_direct_layout_0_slots,
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
-      variants = {check_end::SyntaxVariantDescriptor{
-          .variant_name = "Direct",
-          .modifiers = bra_direct_modifiers,
-          .operand_layouts = bra_direct_operand_layouts,
-      }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "bra",
-      .variants = variants,
-  };
-};
-
-struct BrxDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 1>
-      brx_idx_modifier_0_allowed_values = {
-          ".idx",
-  };
-
-  inline static constexpr std::array<std::string_view, 1>
-      brx_idx_modifier_1_allowed_values = {
-          ".uni",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
-      brx_idx_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = brx_idx_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "idx",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = brx_idx_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "uni",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      brx_idx_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::BranchTargetSet,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      brx_idx_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
-          .layout_id = "default",
-          .kind = check_end::OperandLayoutKind::Flat,
-          .slots = brx_idx_layout_0_slots,
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
-      variants = {check_end::SyntaxVariantDescriptor{
-          .variant_name = "Idx",
-          .modifiers = brx_idx_modifiers,
-          .operand_layouts = brx_idx_operand_layouts,
-      }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "brx",
-      .variants = variants,
-  };
-};
-
-struct MovDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 12>
-      mov_scalar_modifier_0_allowed_values = {
-          ".b16", ".u16", ".s16", ".b32", ".u32",  ".s32",
-          ".f32", ".b64", ".u64", ".s64", ".b128", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
-      mov_scalar_modifiers = {check_end::SyntaxModifierDescriptor{
-          .allowed_values = mov_scalar_modifier_0_allowed_values,
-          .presence = check_end::PresenceRequirement::Required,
-          .kind_id = "type",
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      mov_scalar_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
-                                check_end::OperandSyntaxShape::Immediate |
-                                check_end::OperandSyntaxShape::Address |
-                                check_end::OperandSyntaxShape::VectorMember,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      mov_scalar_layout_1_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      mov_scalar_layout_2_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     3>
-      mov_scalar_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "scalar",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = mov_scalar_layout_0_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "pack",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = mov_scalar_layout_1_slots,
-          },
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "unpack",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = mov_scalar_layout_2_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 1>
-      mov_pred_modifier_0_allowed_values = {
-          ".pred",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
-      mov_pred_modifiers = {check_end::SyntaxModifierDescriptor{
-          .allowed_values = mov_pred_modifier_0_allowed_values,
-          .presence = check_end::PresenceRequirement::Required,
-          .kind_id = "type",
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      mov_pred_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      mov_pred_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
-          .layout_id = "default",
-          .kind = check_end::OperandLayoutKind::Flat,
-          .slots = mov_pred_layout_0_slots,
-      }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
-      variants = {check_end::SyntaxVariantDescriptor{
-                      .variant_name = "Scalar",
-                      .modifiers = mov_scalar_modifiers,
-                      .operand_layouts = mov_scalar_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "Pred",
-                      .modifiers = mov_pred_modifiers,
-                      .operand_layouts = mov_pred_operand_layouts,
-                  }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "mov",
-      .variants = variants,
-  };
-};
-
-struct LdDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 4>
-      ld_generic_scalar_modifier_0_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".acquire",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_generic_scalar_modifier_1_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 1>
-      ld_generic_scalar_modifier_2_allowed_values = {
-          ".mmio",
-  };
-
-  inline static constexpr std::array<std::string_view, 5>
-      ld_generic_scalar_modifier_3_allowed_values = {
-          ".ca", ".cg", ".cs", ".lu", ".cv",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      ld_generic_scalar_modifier_4_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
-      ld_generic_scalar_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_scalar_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_scalar_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_scalar_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "mmio",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_scalar_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_scalar_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      ld_generic_scalar_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      ld_generic_scalar_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = ld_generic_scalar_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 7>
-      ld_explicit_scalar_modifier_0_allowed_values = {
-          ".const",        ".global",      ".local",  ".param",
-          ".param::entry", ".param::func", ".shared",
-  };
-
-  inline static constexpr std::array<std::string_view, 5>
-      ld_explicit_scalar_modifier_1_allowed_values = {
-          ".ca", ".cg", ".cs", ".lu", ".cv",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_explicit_scalar_modifier_2_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".acquire",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_explicit_scalar_modifier_3_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 1>
-      ld_explicit_scalar_modifier_4_allowed_values = {
-          ".mmio",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      ld_explicit_scalar_modifier_5_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
-      ld_explicit_scalar_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "state_space",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "mmio",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_scalar_modifier_5_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      ld_explicit_scalar_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      ld_explicit_scalar_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = ld_explicit_scalar_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_generic_vector_modifier_0_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".acquire",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_generic_vector_modifier_1_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 5>
-      ld_generic_vector_modifier_2_allowed_values = {
-          ".ca", ".cg", ".cs", ".lu", ".cv",
-  };
-
-  inline static constexpr std::array<std::string_view, 3>
-      ld_generic_vector_modifier_3_allowed_values = {
-          ".v2",
-          ".v4",
-          ".v8",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      ld_generic_vector_modifier_4_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
-      ld_generic_vector_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_vector_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_vector_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_vector_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_vector_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "vector",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_generic_vector_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      ld_generic_vector_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      ld_generic_vector_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = ld_generic_vector_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 7>
-      ld_explicit_vector_modifier_0_allowed_values = {
-          ".const",        ".global",      ".local",  ".param",
-          ".param::entry", ".param::func", ".shared",
-  };
-
-  inline static constexpr std::array<std::string_view, 5>
-      ld_explicit_vector_modifier_1_allowed_values = {
-          ".ca", ".cg", ".cs", ".lu", ".cv",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_explicit_vector_modifier_2_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".acquire",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      ld_explicit_vector_modifier_3_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 3>
-      ld_explicit_vector_modifier_4_allowed_values = {
-          ".v2",
-          ".v4",
-          ".v8",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      ld_explicit_vector_modifier_5_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
-      ld_explicit_vector_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "state_space",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "vector",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = ld_explicit_vector_modifier_5_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      ld_explicit_vector_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      ld_explicit_vector_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = ld_explicit_vector_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 4>
-      variants = {check_end::SyntaxVariantDescriptor{
-                      .variant_name = "GenericScalar",
-                      .modifiers = ld_generic_scalar_modifiers,
-                      .operand_layouts = ld_generic_scalar_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "ExplicitScalar",
-                      .modifiers = ld_explicit_scalar_modifiers,
-                      .operand_layouts = ld_explicit_scalar_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "GenericVector",
-                      .modifiers = ld_generic_vector_modifiers,
-                      .operand_layouts = ld_generic_vector_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "ExplicitVector",
-                      .modifiers = ld_explicit_vector_modifiers,
-                      .operand_layouts = ld_explicit_vector_operand_layouts,
-                  }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "ld",
-      .variants = variants,
-  };
-};
-
-struct StDescriptorStorage {
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_scalar_modifier_0_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".release",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_scalar_modifier_1_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 1>
-      st_generic_scalar_modifier_2_allowed_values = {
-          ".mmio",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_scalar_modifier_3_allowed_values = {
-          ".wb",
-          ".cg",
-          ".cs",
-          ".wt",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      st_generic_scalar_modifier_4_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
-      st_generic_scalar_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_scalar_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_scalar_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_scalar_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "mmio",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_scalar_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_scalar_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      st_generic_scalar_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      st_generic_scalar_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = st_generic_scalar_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 5>
-      st_explicit_scalar_modifier_0_allowed_values = {
-          ".global", ".local", ".param", ".param::func", ".shared",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_scalar_modifier_1_allowed_values = {
-          ".wb",
-          ".cg",
-          ".cs",
-          ".wt",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_scalar_modifier_2_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".release",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_scalar_modifier_3_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 1>
-      st_explicit_scalar_modifier_4_allowed_values = {
-          ".mmio",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      st_explicit_scalar_modifier_5_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
-      st_explicit_scalar_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "state_space",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "mmio",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_scalar_modifier_5_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      st_explicit_scalar_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      st_explicit_scalar_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = st_explicit_scalar_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_vector_modifier_0_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".release",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_vector_modifier_1_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_generic_vector_modifier_2_allowed_values = {
-          ".wb",
-          ".cg",
-          ".cs",
-          ".wt",
-  };
-
-  inline static constexpr std::array<std::string_view, 3>
-      st_generic_vector_modifier_3_allowed_values = {
-          ".v2",
-          ".v4",
-          ".v8",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      st_generic_vector_modifier_4_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
-      st_generic_vector_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_vector_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_vector_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_vector_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_vector_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "vector",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_generic_vector_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      st_generic_vector_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      st_generic_vector_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = st_generic_vector_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<std::string_view, 5>
-      st_explicit_vector_modifier_0_allowed_values = {
-          ".global", ".local", ".param", ".param::func", ".shared",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_vector_modifier_1_allowed_values = {
-          ".wb",
-          ".cg",
-          ".cs",
-          ".wt",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_vector_modifier_2_allowed_values = {
-          ".weak",
-          ".volatile",
-          ".relaxed",
-          ".release",
-  };
-
-  inline static constexpr std::array<std::string_view, 4>
-      st_explicit_vector_modifier_3_allowed_values = {
-          ".cta",
-          ".cluster",
-          ".gpu",
-          ".sys",
-  };
-
-  inline static constexpr std::array<std::string_view, 3>
-      st_explicit_vector_modifier_4_allowed_values = {
-          ".v2",
-          ".v4",
-          ".v8",
-  };
-
-  inline static constexpr std::array<std::string_view, 14>
-      st_explicit_vector_modifier_5_allowed_values = {
-          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
-          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
-  };
-
-  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
-      st_explicit_vector_modifiers = {
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_0_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "state_space",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_1_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "cache",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_2_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "semantics",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_3_allowed_values,
-              .presence = check_end::PresenceRequirement::Optional,
-              .kind_id = "scope",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_4_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "vector",
-          },
-          check_end::SyntaxModifierDescriptor{
-              .allowed_values = st_explicit_vector_modifier_5_allowed_values,
-              .presence = check_end::PresenceRequirement::Required,
-              .kind_id = "type",
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
-      st_explicit_vector_layout_0_slots = {
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::Address,
-              .presence = check_end::OperandPresence::Required,
-          },
-          check_end::SyntaxOperandSlotDescriptor{
-              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
-              .presence = check_end::OperandPresence::Required,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
-                                     1>
-      st_explicit_vector_operand_layouts = {
-          check_end::SyntaxOperandLayoutDescriptor{
-              .layout_id = "default",
-              .kind = check_end::OperandLayoutKind::Flat,
-              .slots = st_explicit_vector_layout_0_slots,
-          }};
-
-  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 4>
-      variants = {check_end::SyntaxVariantDescriptor{
-                      .variant_name = "GenericScalar",
-                      .modifiers = st_generic_scalar_modifiers,
-                      .operand_layouts = st_generic_scalar_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "ExplicitScalar",
-                      .modifiers = st_explicit_scalar_modifiers,
-                      .operand_layouts = st_explicit_scalar_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "GenericVector",
-                      .modifiers = st_generic_vector_modifiers,
-                      .operand_layouts = st_generic_vector_operand_layouts,
-                  },
-                  check_end::SyntaxVariantDescriptor{
-                      .variant_name = "ExplicitVector",
-                      .modifiers = st_explicit_vector_modifiers,
-                      .operand_layouts = st_explicit_vector_operand_layouts,
-                  }};
-
-  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
-      .Opcode_name = "st",
-      .variants = variants,
-  };
-};
-
 struct AddDescriptorStorage {
   inline static constexpr std::array<std::string_view, 4>
       add_float_f32_modifier_0_allowed_values = {
@@ -1170,16 +59,19 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1236,14 +128,17 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1296,16 +191,19 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1365,14 +263,17 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1422,14 +323,17 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1497,14 +401,17 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1538,16 +445,19 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1590,16 +500,19 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1641,16 +554,19 @@ struct AddDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1768,16 +684,19 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1834,14 +753,17 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1894,16 +816,19 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -1963,14 +888,17 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2020,14 +948,17 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2095,14 +1026,17 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2136,16 +1070,19 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2187,16 +1124,19 @@ struct SubDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2256,6 +1196,6181 @@ struct SubDescriptorStorage {
   };
 };
 
+struct MulDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      mul_rn_f32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_rn_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mul_rn_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_rn_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_rn_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      mul_rn_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mul_rn_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mul_rn_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_lo_u32_modifier_0_allowed_values = {
+          ".lo",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_lo_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mul_lo_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_lo_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "lo",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_lo_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      mul_lo_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mul_lo_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mul_lo_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_hi_u32_modifier_0_allowed_values = {
+          ".hi",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_hi_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mul_hi_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_hi_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "hi",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_hi_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      mul_hi_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mul_hi_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mul_hi_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_wide_u32_modifier_0_allowed_values = {
+          ".wide",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_wide_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mul_wide_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_wide_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wide",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_wide_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      mul_wide_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mul_wide_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mul_wide_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_wide_s32_modifier_0_allowed_values = {
+          ".wide",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mul_wide_s32_modifier_1_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mul_wide_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_wide_s32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wide",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mul_wide_s32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      mul_wide_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mul_wide_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mul_wide_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 5>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .modifiers = mul_rn_f32_modifiers,
+                      .operand_layouts = mul_rn_f32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LoU32",
+                      .modifiers = mul_lo_u32_modifiers,
+                      .operand_layouts = mul_lo_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "HiU32",
+                      .modifiers = mul_hi_u32_modifiers,
+                      .operand_layouts = mul_hi_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "WideU32",
+                      .modifiers = mul_wide_u32_modifiers,
+                      .operand_layouts = mul_wide_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "WideS32",
+                      .modifiers = mul_wide_s32_modifiers,
+                      .operand_layouts = mul_wide_s32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "mul",
+      .variants = variants,
+  };
+};
+
+struct FmaDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      fma_rn_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      fma_rn_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      fma_rn_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = fma_rn_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f64_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f64_modifier_1_allowed_values = {
+          ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      fma_rn_f64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      fma_rn_f64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      fma_rn_f64_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = fma_rn_f64_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f16_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      fma_rn_f16_modifier_1_allowed_values = {
+          ".f16",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      fma_rn_f16_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f16_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fma_rn_f16_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      fma_rn_f16_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      fma_rn_f16_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = fma_rn_f16_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 3>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .modifiers = fma_rn_f32_modifiers,
+                      .operand_layouts = fma_rn_f32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF64",
+                      .modifiers = fma_rn_f64_modifiers,
+                      .operand_layouts = fma_rn_f64_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF16",
+                      .modifiers = fma_rn_f16_modifiers,
+                      .operand_layouts = fma_rn_f16_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "fma",
+      .variants = variants,
+  };
+};
+
+struct MadDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      mad_rn_f32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_rn_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mad_rn_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_rn_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_rn_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      mad_rn_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mad_rn_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mad_rn_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_lo_u32_modifier_0_allowed_values = {
+          ".lo",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_lo_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mad_lo_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_lo_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "lo",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_lo_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      mad_lo_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mad_lo_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mad_lo_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_lo_s32_modifier_0_allowed_values = {
+          ".lo",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_lo_s32_modifier_1_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mad_lo_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_lo_s32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "lo",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_lo_s32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      mad_lo_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mad_lo_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mad_lo_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_wide_u32_modifier_0_allowed_values = {
+          ".wide",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mad_wide_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mad_wide_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_wide_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wide",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mad_wide_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      mad_wide_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mad_wide_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mad_wide_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 4>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .modifiers = mad_rn_f32_modifiers,
+                      .operand_layouts = mad_rn_f32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LoU32",
+                      .modifiers = mad_lo_u32_modifiers,
+                      .operand_layouts = mad_lo_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LoS32",
+                      .modifiers = mad_lo_s32_modifiers,
+                      .operand_layouts = mad_lo_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "WideU32",
+                      .modifiers = mad_wide_u32_modifiers,
+                      .operand_layouts = mad_wide_u32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "mad",
+      .variants = variants,
+  };
+};
+
+struct DivDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      div_rn_f32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      div_rn_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      div_rn_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = div_rn_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = div_rn_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      div_rn_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      div_rn_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = div_rn_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      div_rn_f64_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      div_rn_f64_modifier_1_allowed_values = {
+          ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      div_rn_f64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = div_rn_f64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = div_rn_f64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      div_rn_f64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      div_rn_f64_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = div_rn_f64_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      div_u32_modifier_0_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      div_u32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = div_u32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      div_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      div_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = div_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      div_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      div_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = div_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      div_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      div_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = div_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 4>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .modifiers = div_rn_f32_modifiers,
+                      .operand_layouts = div_rn_f32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RnF64",
+                      .modifiers = div_rn_f64_modifiers,
+                      .operand_layouts = div_rn_f64_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "U32",
+                      .modifiers = div_u32_modifiers,
+                      .operand_layouts = div_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = div_s32_modifiers,
+                      .operand_layouts = div_s32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "div",
+      .variants = variants,
+  };
+};
+
+struct RemDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      rem_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      rem_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = rem_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      rem_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      rem_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = rem_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      rem_u32_modifier_0_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      rem_u32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = rem_u32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      rem_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      rem_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = rem_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = rem_s32_modifiers,
+                      .operand_layouts = rem_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "U32",
+                      .modifiers = rem_u32_modifiers,
+                      .operand_layouts = rem_u32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "rem",
+      .variants = variants,
+  };
+};
+
+struct MinDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      min_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      min_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = min_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      min_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      min_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = min_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      min_nan_f32_modifier_0_allowed_values = {
+          ".NaN",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      min_nan_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      min_nan_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = min_nan_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "nan",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = min_nan_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      min_nan_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      min_nan_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = min_nan_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = min_s32_modifiers,
+                      .operand_layouts = min_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "NanF32",
+                      .modifiers = min_nan_f32_modifiers,
+                      .operand_layouts = min_nan_f32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "min",
+      .variants = variants,
+  };
+};
+
+struct MaxDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      max_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      max_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = max_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      max_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      max_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = max_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      max_nan_f32_modifier_0_allowed_values = {
+          ".NaN",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      max_nan_f32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      max_nan_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = max_nan_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "nan",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = max_nan_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      max_nan_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      max_nan_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = max_nan_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = max_s32_modifiers,
+                      .operand_layouts = max_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "NanF32",
+                      .modifiers = max_nan_f32_modifiers,
+                      .operand_layouts = max_nan_f32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "max",
+      .variants = variants,
+  };
+};
+
+struct AbsDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      abs_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      abs_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = abs_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      abs_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      abs_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = abs_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      abs_f32_modifier_0_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      abs_f32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = abs_f32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      abs_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      abs_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = abs_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = abs_s32_modifiers,
+                      .operand_layouts = abs_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "F32",
+                      .modifiers = abs_f32_modifiers,
+                      .operand_layouts = abs_f32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "abs",
+      .variants = variants,
+  };
+};
+
+struct NegDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      neg_s32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      neg_s32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = neg_s32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      neg_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      neg_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = neg_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      neg_f32_modifier_0_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      neg_f32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = neg_f32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      neg_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      neg_f32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = neg_f32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      neg_f16x2_modifier_0_allowed_values = {
+          ".f16x2",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      neg_f16x2_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = neg_f16x2_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      neg_f16x2_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      neg_f16x2_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = neg_f16x2_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 3>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "S32",
+                      .modifiers = neg_s32_modifiers,
+                      .operand_layouts = neg_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "F32",
+                      .modifiers = neg_f32_modifiers,
+                      .operand_layouts = neg_f32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "F16x2",
+                      .modifiers = neg_f16x2_modifiers,
+                      .operand_layouts = neg_f16x2_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "neg",
+      .variants = variants,
+  };
+};
+
+struct PopcDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      popc_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      popc_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = popc_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      popc_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      popc_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = popc_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = popc_b32_modifiers,
+          .operand_layouts = popc_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "popc",
+      .variants = variants,
+  };
+};
+
+struct ClzDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      clz_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      clz_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = clz_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      clz_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      clz_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = clz_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      clz_b64_modifier_0_allowed_values = {
+          ".b64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      clz_b64_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = clz_b64_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      clz_b64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      clz_b64_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = clz_b64_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "B32",
+                      .modifiers = clz_b32_modifiers,
+                      .operand_layouts = clz_b32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "B64",
+                      .modifiers = clz_b64_modifiers,
+                      .operand_layouts = clz_b64_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "clz",
+      .variants = variants,
+  };
+};
+
+struct BfindDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      bfind_shiftamt_u32_modifier_0_allowed_values = {
+          ".shiftamt",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      bfind_shiftamt_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      bfind_shiftamt_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = bfind_shiftamt_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "shiftamt",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = bfind_shiftamt_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      bfind_shiftamt_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      bfind_shiftamt_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = bfind_shiftamt_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "ShiftamtU32",
+          .modifiers = bfind_shiftamt_u32_modifiers,
+          .operand_layouts = bfind_shiftamt_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "bfind",
+      .variants = variants,
+  };
+};
+
+struct BfeDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      bfe_u32_modifier_0_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      bfe_u32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = bfe_u32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      bfe_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      bfe_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = bfe_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "U32",
+          .modifiers = bfe_u32_modifiers,
+          .operand_layouts = bfe_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "bfe",
+      .variants = variants,
+  };
+};
+
+struct BfiDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      bfi_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      bfi_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = bfi_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 5>
+      bfi_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      bfi_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = bfi_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = bfi_b32_modifiers,
+          .operand_layouts = bfi_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "bfi",
+      .variants = variants,
+  };
+};
+
+struct BrevDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      brev_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      brev_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = brev_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      brev_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      brev_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = brev_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = brev_b32_modifiers,
+          .operand_layouts = brev_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "brev",
+      .variants = variants,
+  };
+};
+
+struct SetDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      set_eq_u32_u32_modifier_0_allowed_values = {
+          ".eq",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_eq_u32_u32_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_eq_u32_u32_modifier_3_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 4>
+      set_eq_u32_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_eq_u32_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = {},
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_eq_u32_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dtype",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_eq_u32_u32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "stype",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      set_eq_u32_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      set_eq_u32_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = set_eq_u32_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_lt_and_f32_s32_modifier_0_allowed_values = {
+          ".lt",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_lt_and_f32_s32_modifier_1_allowed_values = {
+          ".and",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_lt_and_f32_s32_modifier_2_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      set_lt_and_f32_s32_modifier_3_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 4>
+      set_lt_and_f32_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_lt_and_f32_s32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_lt_and_f32_s32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_lt_and_f32_s32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dtype",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = set_lt_and_f32_s32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "stype",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      set_lt_and_f32_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Predicate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      set_lt_and_f32_s32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = set_lt_and_f32_s32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "EqU32U32",
+                      .modifiers = set_eq_u32_u32_modifiers,
+                      .operand_layouts = set_eq_u32_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LtAndF32S32",
+                      .modifiers = set_lt_and_f32_s32_modifiers,
+                      .operand_layouts = set_lt_and_f32_s32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "set",
+      .variants = variants,
+  };
+};
+
+struct SetpDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_u32_modifier_0_allowed_values = {
+          ".lt",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_u32_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      setp_lt_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = {},
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      setp_lt_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setp_lt_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = setp_lt_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_ge_s32_modifier_0_allowed_values = {
+          ".ge",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_ge_s32_modifier_2_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      setp_ge_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_ge_s32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = {},
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_ge_s32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      setp_ge_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setp_ge_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = setp_ge_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_u32_modifier_0_allowed_values = {
+          ".lt",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_u32_modifier_1_allowed_values = {
+          ".and",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_u32_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      setp_lt_and_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      setp_lt_and_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Predicate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setp_lt_and_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = setp_lt_and_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_eq_u32_pair_modifier_0_allowed_values = {
+          ".eq",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_eq_u32_pair_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      setp_eq_u32_pair_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_eq_u32_pair_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = {},
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_eq_u32_pair_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      setp_eq_u32_pair_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes =
+                  check_end::OperandSyntaxShape::RegisterPredicatePair,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setp_eq_u32_pair_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = setp_eq_u32_pair_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_s32_pair_modifier_0_allowed_values = {
+          ".lt",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_s32_pair_modifier_1_allowed_values = {
+          ".and",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setp_lt_and_s32_pair_modifier_2_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      setp_lt_and_s32_pair_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_s32_pair_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "comparison",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_s32_pair_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "boolean",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = setp_lt_and_s32_pair_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      setp_lt_and_s32_pair_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes =
+                  check_end::OperandSyntaxShape::RegisterPredicatePair,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setp_lt_and_s32_pair_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = setp_lt_and_s32_pair_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 5>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LtU32",
+                      .modifiers = setp_lt_u32_modifiers,
+                      .operand_layouts = setp_lt_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "GeS32",
+                      .modifiers = setp_ge_s32_modifiers,
+                      .operand_layouts = setp_ge_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LtAndU32",
+                      .modifiers = setp_lt_and_u32_modifiers,
+                      .operand_layouts = setp_lt_and_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "EqU32Pair",
+                      .modifiers = setp_eq_u32_pair_modifiers,
+                      .operand_layouts = setp_eq_u32_pair_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LtAndS32Pair",
+                      .modifiers = setp_lt_and_s32_pair_modifiers,
+                      .operand_layouts = setp_lt_and_s32_pair_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "setp",
+      .variants = variants,
+  };
+};
+
+struct SelpDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      selp_u32_modifier_0_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      selp_u32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = selp_u32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      selp_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      selp_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = selp_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "U32",
+          .modifiers = selp_u32_modifiers,
+          .operand_layouts = selp_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "selp",
+      .variants = variants,
+  };
+};
+
+struct SlctDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      slct_u32_s32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      slct_u32_s32_modifier_2_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      slct_u32_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = {},
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "ftz",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = slct_u32_s32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dtype",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = slct_u32_s32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "stype",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      slct_u32_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      slct_u32_s32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = slct_u32_s32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      slct_ftz_u64_f32_modifier_0_allowed_values = {
+          ".ftz",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      slct_ftz_u64_f32_modifier_1_allowed_values = {
+          ".u64",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      slct_ftz_u64_f32_modifier_2_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      slct_ftz_u64_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = slct_ftz_u64_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "ftz",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = slct_ftz_u64_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dtype",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = slct_ftz_u64_f32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "stype",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      slct_ftz_u64_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      slct_ftz_u64_f32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = slct_ftz_u64_f32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "U32S32",
+                      .modifiers = slct_u32_s32_modifiers,
+                      .operand_layouts = slct_u32_s32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "FtzU64F32",
+                      .modifiers = slct_ftz_u64_f32_modifiers,
+                      .operand_layouts = slct_ftz_u64_f32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "slct",
+      .variants = variants,
+  };
+};
+
+struct CallDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      call_direct_modifier_0_allowed_values = {
+          ".uni",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      call_direct_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = call_direct_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Optional,
+          .kind_id = "uni",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      call_direct_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
+          .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+          .presence = check_end::OperandPresence::Required,
+
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      call_direct_layout_1_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      call_direct_layout_2_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      call_direct_layout_3_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      call_direct_layout_4_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      call_direct_layout_5_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTarget,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Group,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::CallTargetSet,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     6>
+      call_direct_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "target",
+              .kind = check_end::OperandLayoutKind::Call,
+              .slots = call_direct_layout_0_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "target_input",
+              .kind = check_end::OperandLayoutKind::Call,
+              .slots = call_direct_layout_1_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "return_target_input",
+              .kind = check_end::OperandLayoutKind::Call,
+              .slots = call_direct_layout_2_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "target_metadata",
+              .kind = check_end::OperandLayoutKind::IndirectCall,
+              .slots = call_direct_layout_3_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "target_input_metadata",
+              .kind = check_end::OperandLayoutKind::IndirectCall,
+              .slots = call_direct_layout_4_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "return_target_input_metadata",
+              .kind = check_end::OperandLayoutKind::IndirectCall,
+              .slots = call_direct_layout_5_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Direct",
+          .modifiers = call_direct_modifiers,
+          .operand_layouts = call_direct_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "call",
+      .variants = variants,
+  };
+};
+
+struct BraDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      bra_direct_modifier_0_allowed_values = {
+          ".uni",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      bra_direct_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = bra_direct_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Optional,
+          .kind_id = "uni",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      bra_direct_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
+          .allowed_shapes = check_end::OperandSyntaxShape::BranchTarget,
+          .presence = check_end::OperandPresence::Required,
+
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      bra_direct_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = bra_direct_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Direct",
+          .modifiers = bra_direct_modifiers,
+          .operand_layouts = bra_direct_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "bra",
+      .variants = variants,
+  };
+};
+
+struct BrxDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      brx_idx_modifier_0_allowed_values = {
+          ".idx",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      brx_idx_modifier_1_allowed_values = {
+          ".uni",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      brx_idx_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = brx_idx_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "idx",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = brx_idx_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "uni",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      brx_idx_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::BranchTargetSet,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      brx_idx_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = brx_idx_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Idx",
+          .modifiers = brx_idx_modifiers,
+          .operand_layouts = brx_idx_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "brx",
+      .variants = variants,
+  };
+};
+
+struct RetDescriptorStorage {
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 0>
+      ret_bare_modifiers = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      ret_bare_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ret_bare_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = ret_bare_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Bare",
+          .modifiers = ret_bare_modifiers,
+          .operand_layouts = ret_bare_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "ret",
+      .variants = variants,
+  };
+};
+
+struct ExitDescriptorStorage {
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 0>
+      exit_bare_modifiers = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      exit_bare_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      exit_bare_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = exit_bare_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Bare",
+          .modifiers = exit_bare_modifiers,
+          .operand_layouts = exit_bare_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "exit",
+      .variants = variants,
+  };
+};
+
+struct IsspacepDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      isspacep_global_u64_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      isspacep_global_u64_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = isspacep_global_u64_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "state_space",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      isspacep_global_u64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      isspacep_global_u64_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = isspacep_global_u64_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalU64",
+          .modifiers = isspacep_global_u64_modifiers,
+          .operand_layouts = isspacep_global_u64_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "isspacep",
+      .variants = variants,
+  };
+};
+
+struct CvtaDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_global_u64_modifier_0_allowed_values = {
+          ".to",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_global_u64_modifier_1_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_global_u64_modifier_2_allowed_values = {
+          ".u64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvta_global_u64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_global_u64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Absent,
+              .kind_id = "to",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_global_u64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_global_u64_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvta_global_u64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvta_global_u64_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvta_global_u64_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_to_global_u64_modifier_0_allowed_values = {
+          ".to",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_to_global_u64_modifier_1_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvta_to_global_u64_modifier_2_allowed_values = {
+          ".u64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvta_to_global_u64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_to_global_u64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "to",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_to_global_u64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvta_to_global_u64_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvta_to_global_u64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvta_to_global_u64_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvta_to_global_u64_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "GlobalU64",
+                      .modifiers = cvta_global_u64_modifiers,
+                      .operand_layouts = cvta_global_u64_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "ToGlobalU64",
+                      .modifiers = cvta_to_global_u64_modifiers,
+                      .operand_layouts = cvta_to_global_u64_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "cvta",
+      .variants = variants,
+  };
+};
+
+struct CvtDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_s32_u32_modifier_0_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_s32_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      cvt_s32_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_s32_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_s32_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvt_s32_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_s32_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = cvt_s32_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_f64_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_f64_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_f64_modifier_2_allowed_values = {
+          ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvt_rn_f32_f64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_f64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_f64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_f64_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvt_rn_f32_f64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_rn_f32_f64_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_rn_f32_f64_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_u32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_u32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_u32_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvt_rn_f32_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvt_rn_f32_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_rn_f32_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_rn_f32_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_s32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_s32_modifier_1_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f32_s32_modifier_2_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvt_rn_f32_s32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_s32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_s32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f32_s32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvt_rn_f32_s32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_rn_f32_s32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_rn_f32_s32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rzi_u32_f32_modifier_0_allowed_values = {
+          ".rzi",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rzi_u32_f32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rzi_u32_f32_modifier_2_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvt_rzi_u32_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rzi_u32_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rzi_u32_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rzi_u32_f32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      cvt_rzi_u32_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_rzi_u32_f32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_rzi_u32_f32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f16x2_f32_modifier_0_allowed_values = {
+          ".rn",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f16x2_f32_modifier_1_allowed_values = {
+          ".f16x2",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_rn_f16x2_f32_modifier_2_allowed_values = {
+          ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      cvt_rn_f16x2_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f16x2_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "rounding",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f16x2_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cvt_rn_f16x2_f32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      cvt_rn_f16x2_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_rn_f16x2_f32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_rn_f16x2_f32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_pack_sat_u8_s32_b32_modifier_0_allowed_values = {
+          ".pack",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_pack_sat_u8_s32_b32_modifier_1_allowed_values = {
+          ".sat",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_pack_sat_u8_s32_b32_modifier_2_allowed_values = {
+          ".u8",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_pack_sat_u8_s32_b32_modifier_3_allowed_values = {
+          ".s32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cvt_pack_sat_u8_s32_b32_modifier_4_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      cvt_pack_sat_u8_s32_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cvt_pack_sat_u8_s32_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "pack",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cvt_pack_sat_u8_s32_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sat",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cvt_pack_sat_u8_s32_b32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "dst_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cvt_pack_sat_u8_s32_b32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "src_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cvt_pack_sat_u8_s32_b32_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "carry_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      cvt_pack_sat_u8_s32_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cvt_pack_sat_u8_s32_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cvt_pack_sat_u8_s32_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 7>
+      variants = {
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "S32U32",
+              .modifiers = cvt_s32_u32_modifiers,
+              .operand_layouts = cvt_s32_u32_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "RnF32F64",
+              .modifiers = cvt_rn_f32_f64_modifiers,
+              .operand_layouts = cvt_rn_f32_f64_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "RnF32U32",
+              .modifiers = cvt_rn_f32_u32_modifiers,
+              .operand_layouts = cvt_rn_f32_u32_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "RnF32S32",
+              .modifiers = cvt_rn_f32_s32_modifiers,
+              .operand_layouts = cvt_rn_f32_s32_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "RziU32F32",
+              .modifiers = cvt_rzi_u32_f32_modifiers,
+              .operand_layouts = cvt_rzi_u32_f32_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "RnF16x2F32",
+              .modifiers = cvt_rn_f16x2_f32_modifiers,
+              .operand_layouts = cvt_rn_f16x2_f32_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "PackSatU8S32B32",
+              .modifiers = cvt_pack_sat_u8_s32_b32_modifiers,
+              .operand_layouts = cvt_pack_sat_u8_s32_b32_operand_layouts,
+          }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "cvt",
+      .variants = variants,
+  };
+};
+
+struct MovDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 12>
+      mov_scalar_modifier_0_allowed_values = {
+          ".b16", ".u16", ".s16", ".b32", ".u32",  ".s32",
+          ".f32", ".b64", ".u64", ".s64", ".b128", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      mov_scalar_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = mov_scalar_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      mov_scalar_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate |
+                                check_end::OperandSyntaxShape::Address |
+                                check_end::OperandSyntaxShape::VectorMember,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      mov_scalar_layout_1_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      mov_scalar_layout_2_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     3>
+      mov_scalar_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "scalar",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = mov_scalar_layout_0_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "pack",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = mov_scalar_layout_1_slots,
+          },
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "unpack",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = mov_scalar_layout_2_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mov_v4_u32_modifier_0_allowed_values = {
+          ".v4",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mov_v4_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      mov_v4_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mov_v4_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "vector",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = mov_v4_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      mov_v4_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mov_v4_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mov_v4_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      mov_pred_modifier_0_allowed_values = {
+          ".pred",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      mov_pred_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = mov_pred_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      mov_pred_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mov_pred_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = mov_pred_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 3>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "Scalar",
+                      .modifiers = mov_scalar_modifiers,
+                      .operand_layouts = mov_scalar_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "V4U32",
+                      .modifiers = mov_v4_u32_modifiers,
+                      .operand_layouts = mov_v4_u32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "Pred",
+                      .modifiers = mov_pred_modifiers,
+                      .operand_layouts = mov_pred_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "mov",
+      .variants = variants,
+  };
+};
+
+struct LdDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 4>
+      ld_generic_scalar_modifier_0_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".acquire",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_generic_scalar_modifier_1_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_generic_scalar_modifier_2_allowed_values = {
+          ".mmio",
+  };
+
+  inline static constexpr std::array<std::string_view, 5>
+      ld_generic_scalar_modifier_3_allowed_values = {
+          ".ca", ".cg", ".cs", ".lu", ".cv",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      ld_generic_scalar_modifier_4_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      ld_generic_scalar_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_scalar_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_scalar_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_scalar_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "mmio",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_scalar_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_scalar_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_generic_scalar_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_generic_scalar_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_generic_scalar_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 7>
+      ld_explicit_scalar_modifier_0_allowed_values = {
+          ".const",        ".global",      ".local",  ".param",
+          ".param::entry", ".param::func", ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 5>
+      ld_explicit_scalar_modifier_1_allowed_values = {
+          ".ca", ".cg", ".cs", ".lu", ".cv",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_explicit_scalar_modifier_2_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".acquire",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_explicit_scalar_modifier_3_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_explicit_scalar_modifier_4_allowed_values = {
+          ".mmio",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      ld_explicit_scalar_modifier_5_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
+      ld_explicit_scalar_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "mmio",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_scalar_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_explicit_scalar_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_explicit_scalar_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_explicit_scalar_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_u32_l1_evict_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 2>
+      ld_global_u32_l1_evict_modifier_1_allowed_values = {
+          ".L1::evict_first",
+          ".L1::evict_last",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_u32_l1_evict_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      ld_global_u32_l1_evict_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l1_evict_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l1_evict_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "eviction_priority",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l1_evict_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_global_u32_l1_evict_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_global_u32_l1_evict_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_global_u32_l1_evict_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_u32_l2_cache_hint_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_u32_l2_cache_hint_modifier_1_allowed_values = {
+          ".L2::cache_hint",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_u32_l2_cache_hint_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      ld_global_u32_l2_cache_hint_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l2_cache_hint_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l2_cache_hint_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "cache_hint",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_u32_l2_cache_hint_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      ld_global_u32_l2_cache_hint_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_global_u32_l2_cache_hint_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_global_u32_l2_cache_hint_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_generic_vector_modifier_0_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".acquire",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_generic_vector_modifier_1_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 5>
+      ld_generic_vector_modifier_2_allowed_values = {
+          ".ca", ".cg", ".cs", ".lu", ".cv",
+  };
+
+  inline static constexpr std::array<std::string_view, 3>
+      ld_generic_vector_modifier_3_allowed_values = {
+          ".v2",
+          ".v4",
+          ".v8",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      ld_generic_vector_modifier_4_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      ld_generic_vector_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_vector_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_vector_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_vector_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_vector_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "vector",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_generic_vector_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_generic_vector_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_generic_vector_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_generic_vector_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 7>
+      ld_explicit_vector_modifier_0_allowed_values = {
+          ".const",        ".global",      ".local",  ".param",
+          ".param::entry", ".param::func", ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 5>
+      ld_explicit_vector_modifier_1_allowed_values = {
+          ".ca", ".cg", ".cs", ".lu", ".cv",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_explicit_vector_modifier_2_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".acquire",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      ld_explicit_vector_modifier_3_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 3>
+      ld_explicit_vector_modifier_4_allowed_values = {
+          ".v2",
+          ".v4",
+          ".v8",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      ld_explicit_vector_modifier_5_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
+      ld_explicit_vector_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "vector",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ld_explicit_vector_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_explicit_vector_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_explicit_vector_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_explicit_vector_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_nc_l1_no_allocate_u32_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_nc_l1_no_allocate_u32_modifier_1_allowed_values = {
+          ".nc",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_nc_l1_no_allocate_u32_modifier_2_allowed_values = {
+          ".L1::no_allocate",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ld_global_nc_l1_no_allocate_u32_modifier_3_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 4>
+      ld_global_nc_l1_no_allocate_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_nc_l1_no_allocate_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_nc_l1_no_allocate_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "nc",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_nc_l1_no_allocate_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "eviction_priority",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ld_global_nc_l1_no_allocate_u32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ld_global_nc_l1_no_allocate_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ld_global_nc_l1_no_allocate_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ld_global_nc_l1_no_allocate_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 7>
+      variants = {
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GenericScalar",
+              .modifiers = ld_generic_scalar_modifiers,
+              .operand_layouts = ld_generic_scalar_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "ExplicitScalar",
+              .modifiers = ld_explicit_scalar_modifiers,
+              .operand_layouts = ld_explicit_scalar_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GlobalU32L1Evict",
+              .modifiers = ld_global_u32_l1_evict_modifiers,
+              .operand_layouts = ld_global_u32_l1_evict_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GlobalU32L2CacheHint",
+              .modifiers = ld_global_u32_l2_cache_hint_modifiers,
+              .operand_layouts = ld_global_u32_l2_cache_hint_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GenericVector",
+              .modifiers = ld_generic_vector_modifiers,
+              .operand_layouts = ld_generic_vector_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "ExplicitVector",
+              .modifiers = ld_explicit_vector_modifiers,
+              .operand_layouts = ld_explicit_vector_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GlobalNcL1NoAllocateU32",
+              .modifiers = ld_global_nc_l1_no_allocate_u32_modifiers,
+              .operand_layouts =
+                  ld_global_nc_l1_no_allocate_u32_operand_layouts,
+          }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "ld",
+      .variants = variants,
+  };
+};
+
+struct LduDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      ldu_global_u32_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldu_global_u32_modifier_1_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      ldu_global_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ldu_global_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = ldu_global_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ldu_global_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ldu_global_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ldu_global_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalU32",
+          .modifiers = ldu_global_u32_modifiers,
+          .operand_layouts = ldu_global_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "ldu",
+      .variants = variants,
+  };
+};
+
+struct ShflDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      shfl_sync_idx_b32_modifier_0_allowed_values = {
+          ".sync",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shfl_sync_idx_b32_modifier_1_allowed_values = {
+          ".idx",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shfl_sync_idx_b32_modifier_2_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      shfl_sync_idx_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shfl_sync_idx_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sync",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shfl_sync_idx_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "idx",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shfl_sync_idx_b32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 5>
+      shfl_sync_idx_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes =
+                  check_end::OperandSyntaxShape::RegisterPredicatePair,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      shfl_sync_idx_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = shfl_sync_idx_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "SyncIdxB32",
+          .modifiers = shfl_sync_idx_b32_modifiers,
+          .operand_layouts = shfl_sync_idx_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "shfl",
+      .variants = variants,
+  };
+};
+
+struct PrefetchDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      prefetch_global_l1_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      prefetch_global_l1_modifier_1_allowed_values = {
+          ".L1",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      prefetch_global_l1_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = prefetch_global_l1_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = prefetch_global_l1_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "l1",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      prefetch_global_l1_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      prefetch_global_l1_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = prefetch_global_l1_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalL1",
+          .modifiers = prefetch_global_l1_modifiers,
+          .operand_layouts = prefetch_global_l1_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "prefetch",
+      .variants = variants,
+  };
+};
+
+struct PrefetchuDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      prefetchu_l1_modifier_0_allowed_values = {
+          ".L1",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      prefetchu_l1_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = prefetchu_l1_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "l1",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      prefetchu_l1_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
+          .allowed_shapes = check_end::OperandSyntaxShape::Address,
+          .presence = check_end::OperandPresence::Required,
+
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      prefetchu_l1_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = prefetchu_l1_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "L1",
+          .modifiers = prefetchu_l1_modifiers,
+          .operand_layouts = prefetchu_l1_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "prefetchu",
+      .variants = variants,
+  };
+};
+
+struct CreatepolicyDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      createpolicy_fractional_l2_evict_last_b64_modifier_0_allowed_values = {
+          ".fractional",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      createpolicy_fractional_l2_evict_last_b64_modifier_1_allowed_values = {
+          ".L2::evict_last",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      createpolicy_fractional_l2_evict_last_b64_modifier_2_allowed_values = {
+          ".b64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      createpolicy_fractional_l2_evict_last_b64_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  createpolicy_fractional_l2_evict_last_b64_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "fractional",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  createpolicy_fractional_l2_evict_last_b64_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "eviction_priority",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  createpolicy_fractional_l2_evict_last_b64_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      createpolicy_fractional_l2_evict_last_b64_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      createpolicy_fractional_l2_evict_last_b64_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = createpolicy_fractional_l2_evict_last_b64_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "FractionalL2EvictLastB64",
+          .modifiers = createpolicy_fractional_l2_evict_last_b64_modifiers,
+          .operand_layouts =
+              createpolicy_fractional_l2_evict_last_b64_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "createpolicy",
+      .variants = variants,
+  };
+};
+
+struct ApplypriorityDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      applypriority_global_l2_evict_normal_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      applypriority_global_l2_evict_normal_modifier_1_allowed_values = {
+          ".L2::evict_normal",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      applypriority_global_l2_evict_normal_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  applypriority_global_l2_evict_normal_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  applypriority_global_l2_evict_normal_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "eviction_priority",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      applypriority_global_l2_evict_normal_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      applypriority_global_l2_evict_normal_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = applypriority_global_l2_evict_normal_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalL2EvictNormal",
+          .modifiers = applypriority_global_l2_evict_normal_modifiers,
+          .operand_layouts =
+              applypriority_global_l2_evict_normal_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "applypriority",
+      .variants = variants,
+  };
+};
+
+struct DiscardDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      discard_global_l2_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      discard_global_l2_modifier_1_allowed_values = {
+          ".L2",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      discard_global_l2_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = discard_global_l2_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = discard_global_l2_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "l2",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      discard_global_l2_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      discard_global_l2_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = discard_global_l2_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalL2",
+          .modifiers = discard_global_l2_modifiers,
+          .operand_layouts = discard_global_l2_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "discard",
+      .variants = variants,
+  };
+};
+
+struct CpDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_ca_shared_global_modifier_0_allowed_values = {
+          ".async",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_ca_shared_global_modifier_1_allowed_values = {
+          ".ca",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_ca_shared_global_modifier_2_allowed_values = {
+          ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_ca_shared_global_modifier_3_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 4>
+      cp_async_ca_shared_global_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cp_async_ca_shared_global_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "async",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cp_async_ca_shared_global_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "ca",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cp_async_ca_shared_global_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "shared",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  cp_async_ca_shared_global_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "global",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      cp_async_ca_shared_global_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cp_async_ca_shared_global_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cp_async_ca_shared_global_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_commit_group_modifier_0_allowed_values = {
+          ".async",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_commit_group_modifier_1_allowed_values = {
+          ".commit_group",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      cp_async_commit_group_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_commit_group_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "async",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_commit_group_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "commit_group",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      cp_async_commit_group_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cp_async_commit_group_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cp_async_commit_group_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_wait_group_modifier_0_allowed_values = {
+          ".async",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_wait_group_modifier_1_allowed_values = {
+          ".wait_group",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      cp_async_wait_group_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_wait_group_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "async",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_wait_group_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wait_group",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      cp_async_wait_group_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cp_async_wait_group_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cp_async_wait_group_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_wait_all_modifier_0_allowed_values = {
+          ".async",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      cp_async_wait_all_modifier_1_allowed_values = {
+          ".wait_all",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      cp_async_wait_all_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_wait_all_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "async",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = cp_async_wait_all_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wait_all",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      cp_async_wait_all_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      cp_async_wait_all_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = cp_async_wait_all_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 4>
+      variants = {
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "AsyncCaSharedGlobal",
+              .modifiers = cp_async_ca_shared_global_modifiers,
+              .operand_layouts = cp_async_ca_shared_global_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "AsyncCommitGroup",
+              .modifiers = cp_async_commit_group_modifiers,
+              .operand_layouts = cp_async_commit_group_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "AsyncWaitGroup",
+              .modifiers = cp_async_wait_group_modifiers,
+              .operand_layouts = cp_async_wait_group_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "AsyncWaitAll",
+              .modifiers = cp_async_wait_all_modifiers,
+              .operand_layouts = cp_async_wait_all_operand_layouts,
+          }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "cp",
+      .variants = variants,
+  };
+};
+
+struct StDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_scalar_modifier_0_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".release",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_scalar_modifier_1_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_generic_scalar_modifier_2_allowed_values = {
+          ".mmio",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_scalar_modifier_3_allowed_values = {
+          ".wb",
+          ".cg",
+          ".cs",
+          ".wt",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      st_generic_scalar_modifier_4_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      st_generic_scalar_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_scalar_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_scalar_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_scalar_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "mmio",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_scalar_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_scalar_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      st_generic_scalar_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_generic_scalar_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_generic_scalar_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 5>
+      st_explicit_scalar_modifier_0_allowed_values = {
+          ".global", ".local", ".param", ".param::func", ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_scalar_modifier_1_allowed_values = {
+          ".wb",
+          ".cg",
+          ".cs",
+          ".wt",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_scalar_modifier_2_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".release",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_scalar_modifier_3_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_explicit_scalar_modifier_4_allowed_values = {
+          ".mmio",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      st_explicit_scalar_modifier_5_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
+      st_explicit_scalar_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "mmio",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_scalar_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      st_explicit_scalar_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_explicit_scalar_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_explicit_scalar_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_global_u32_l1_evict_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 2>
+      st_global_u32_l1_evict_modifier_1_allowed_values = {
+          ".L1::evict_first",
+          ".L1::evict_last",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_global_u32_l1_evict_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      st_global_u32_l1_evict_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l1_evict_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l1_evict_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "eviction_priority",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l1_evict_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      st_global_u32_l1_evict_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_global_u32_l1_evict_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_global_u32_l1_evict_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_global_u32_l2_cache_hint_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_global_u32_l2_cache_hint_modifier_1_allowed_values = {
+          ".L2::cache_hint",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      st_global_u32_l2_cache_hint_modifier_2_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      st_global_u32_l2_cache_hint_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l2_cache_hint_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l2_cache_hint_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "cache_hint",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  st_global_u32_l2_cache_hint_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      st_global_u32_l2_cache_hint_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_global_u32_l2_cache_hint_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_global_u32_l2_cache_hint_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_vector_modifier_0_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".release",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_vector_modifier_1_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_generic_vector_modifier_2_allowed_values = {
+          ".wb",
+          ".cg",
+          ".cs",
+          ".wt",
+  };
+
+  inline static constexpr std::array<std::string_view, 3>
+      st_generic_vector_modifier_3_allowed_values = {
+          ".v2",
+          ".v4",
+          ".v8",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      st_generic_vector_modifier_4_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      st_generic_vector_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_vector_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_vector_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_vector_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_vector_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "vector",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_generic_vector_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      st_generic_vector_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_generic_vector_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_generic_vector_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 5>
+      st_explicit_vector_modifier_0_allowed_values = {
+          ".global", ".local", ".param", ".param::func", ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_vector_modifier_1_allowed_values = {
+          ".wb",
+          ".cg",
+          ".cs",
+          ".wt",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_vector_modifier_2_allowed_values = {
+          ".weak",
+          ".volatile",
+          ".relaxed",
+          ".release",
+  };
+
+  inline static constexpr std::array<std::string_view, 4>
+      st_explicit_vector_modifier_3_allowed_values = {
+          ".cta",
+          ".cluster",
+          ".gpu",
+          ".sys",
+  };
+
+  inline static constexpr std::array<std::string_view, 3>
+      st_explicit_vector_modifier_4_allowed_values = {
+          ".v2",
+          ".v4",
+          ".v8",
+  };
+
+  inline static constexpr std::array<std::string_view, 14>
+      st_explicit_vector_modifier_5_allowed_values = {
+          ".b8",  ".b16", ".b32", ".b64", ".u8",  ".u16", ".u32",
+          ".u64", ".s8",  ".s16", ".s32", ".s64", ".f32", ".f64",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
+      st_explicit_vector_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "cache",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Optional,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "vector",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = st_explicit_vector_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      st_explicit_vector_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      st_explicit_vector_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = st_explicit_vector_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 6>
+      variants = {
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GenericScalar",
+              .modifiers = st_generic_scalar_modifiers,
+              .operand_layouts = st_generic_scalar_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "ExplicitScalar",
+              .modifiers = st_explicit_scalar_modifiers,
+              .operand_layouts = st_explicit_scalar_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GlobalU32L1Evict",
+              .modifiers = st_global_u32_l1_evict_modifiers,
+              .operand_layouts = st_global_u32_l1_evict_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GlobalU32L2CacheHint",
+              .modifiers = st_global_u32_l2_cache_hint_modifiers,
+              .operand_layouts = st_global_u32_l2_cache_hint_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "GenericVector",
+              .modifiers = st_generic_vector_modifiers,
+              .operand_layouts = st_generic_vector_operand_layouts,
+          },
+          check_end::SyntaxVariantDescriptor{
+              .variant_name = "ExplicitVector",
+              .modifiers = st_explicit_vector_modifiers,
+              .operand_layouts = st_explicit_vector_operand_layouts,
+          }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "st",
+      .variants = variants,
+  };
+};
+
+struct PrmtDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      prmt_generic_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      prmt_generic_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = prmt_generic_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      prmt_generic_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      prmt_generic_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = prmt_generic_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      prmt_f4e_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      prmt_f4e_b32_modifier_1_allowed_values = {
+          ".f4e",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      prmt_f4e_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = prmt_f4e_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = prmt_f4e_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "f4e",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      prmt_f4e_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      prmt_f4e_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = prmt_f4e_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "GenericB32",
+                      .modifiers = prmt_generic_b32_modifiers,
+                      .operand_layouts = prmt_generic_b32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "F4eB32",
+                      .modifiers = prmt_f4e_b32_modifiers,
+                      .operand_layouts = prmt_f4e_b32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "prmt",
+      .variants = variants,
+  };
+};
+
+struct AndDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      and_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      and_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = and_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      and_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      and_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = and_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = and_b32_modifiers,
+          .operand_layouts = and_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "and",
+      .variants = variants,
+  };
+};
+
+struct OrDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      or_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      or_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = or_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      or_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      or_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = or_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = or_b32_modifiers,
+          .operand_layouts = or_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "or",
+      .variants = variants,
+  };
+};
+
+struct XorDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      xor_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      xor_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = xor_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      xor_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      xor_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = xor_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = xor_b32_modifiers,
+          .operand_layouts = xor_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "xor",
+      .variants = variants,
+  };
+};
+
+struct NotDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      not_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      not_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = not_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      not_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      not_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = not_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = not_b32_modifiers,
+          .operand_layouts = not_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "not",
+      .variants = variants,
+  };
+};
+
+struct Lop3DescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      lop3_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      lop3_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = lop3_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 5>
+      lop3_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      lop3_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = lop3_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = lop3_b32_modifiers,
+          .operand_layouts = lop3_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "lop3",
+      .variants = variants,
+  };
+};
+
+struct ShfDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      shf_l_clamp_b32_modifier_0_allowed_values = {
+          ".l",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shf_l_clamp_b32_modifier_1_allowed_values = {
+          ".clamp",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shf_l_clamp_b32_modifier_2_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      shf_l_clamp_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_l_clamp_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "left",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_l_clamp_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "clamp",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_l_clamp_b32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      shf_l_clamp_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      shf_l_clamp_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = shf_l_clamp_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<std::string_view, 1>
+      shf_r_wrap_b32_modifier_0_allowed_values = {
+          ".r",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shf_r_wrap_b32_modifier_1_allowed_values = {
+          ".wrap",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      shf_r_wrap_b32_modifier_2_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      shf_r_wrap_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_r_wrap_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "right",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_r_wrap_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "wrap",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = shf_r_wrap_b32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      shf_r_wrap_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      shf_r_wrap_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = shf_r_wrap_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 2>
+      variants = {check_end::SyntaxVariantDescriptor{
+                      .variant_name = "LClampB32",
+                      .modifiers = shf_l_clamp_b32_modifiers,
+                      .operand_layouts = shf_l_clamp_b32_operand_layouts,
+                  },
+                  check_end::SyntaxVariantDescriptor{
+                      .variant_name = "RWrapB32",
+                      .modifiers = shf_r_wrap_b32_modifiers,
+                      .operand_layouts = shf_r_wrap_b32_operand_layouts,
+                  }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "shf",
+      .variants = variants,
+  };
+};
+
+struct ShlDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      shl_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      shl_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = shl_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      shl_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      shl_b32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = shl_b32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = shl_b32_modifiers,
+          .operand_layouts = shl_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "shl",
+      .variants = variants,
+  };
+};
+
+struct ShrDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      shr_u32_modifier_0_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      shr_u32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = shr_u32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      shr_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      shr_u32_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = shr_u32_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "U32",
+          .modifiers = shr_u32_modifiers,
+          .operand_layouts = shr_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "shr",
+      .variants = variants,
+  };
+};
+
+struct TrapDescriptorStorage {
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 0>
+      trap_bare_modifiers = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      trap_bare_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      trap_bare_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = trap_bare_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Bare",
+          .modifiers = trap_bare_modifiers,
+          .operand_layouts = trap_bare_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "trap",
+      .variants = variants,
+  };
+};
+
+struct SetmaxnregDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      setmaxnreg_inc_sync_aligned_u32_modifier_0_allowed_values = {
+          ".inc",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setmaxnreg_inc_sync_aligned_u32_modifier_1_allowed_values = {
+          ".sync",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setmaxnreg_inc_sync_aligned_u32_modifier_2_allowed_values = {
+          ".aligned",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      setmaxnreg_inc_sync_aligned_u32_modifier_3_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 4>
+      setmaxnreg_inc_sync_aligned_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  setmaxnreg_inc_sync_aligned_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "inc",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  setmaxnreg_inc_sync_aligned_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sync",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  setmaxnreg_inc_sync_aligned_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "aligned",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  setmaxnreg_inc_sync_aligned_u32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      setmaxnreg_inc_sync_aligned_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      setmaxnreg_inc_sync_aligned_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = setmaxnreg_inc_sync_aligned_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "IncSyncAlignedU32",
+          .modifiers = setmaxnreg_inc_sync_aligned_u32_modifiers,
+          .operand_layouts = setmaxnreg_inc_sync_aligned_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "setmaxnreg",
+      .variants = variants,
+  };
+};
+
 struct BarDescriptorStorage {
   inline static constexpr std::array<std::string_view, 1>
       bar_sync_modifier_0_allowed_values = {
@@ -2284,6 +7399,7 @@ struct BarDescriptorStorage {
       bar_sync_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
           .allowed_shapes = check_end::OperandSyntaxShape::Immediate,
           .presence = check_end::OperandPresence::Required,
+
       }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
@@ -2291,6 +7407,7 @@ struct BarDescriptorStorage {
           .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                             check_end::OperandSyntaxShape::Immediate,
           .presence = check_end::OperandPresence::Required,
+
       }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
@@ -2299,11 +7416,13 @@ struct BarDescriptorStorage {
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2353,6 +7472,7 @@ struct BarDescriptorStorage {
           .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                             check_end::OperandSyntaxShape::Immediate,
           .presence = check_end::OperandPresence::Required,
+
       }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
@@ -2361,11 +7481,13 @@ struct BarDescriptorStorage {
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2411,11 +7533,13 @@ struct BarDescriptorStorage {
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2455,11 +7579,13 @@ struct BarDescriptorStorage {
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2519,16 +7645,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -2536,21 +7665,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2615,16 +7748,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -2632,21 +7768,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2711,16 +7851,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -2728,21 +7871,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2807,16 +7954,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -2824,21 +7974,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2903,16 +8057,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -2920,21 +8077,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -2999,16 +8160,19 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
@@ -3016,21 +8180,25 @@ struct BarDescriptorStorage {
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Immediate,
               .presence = check_end::OperandPresence::Required,
+
           },
           check_end::SyntaxOperandSlotDescriptor{
               .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
                                 check_end::OperandSyntaxShape::Predicate,
               .presence = check_end::OperandPresence::Required,
+
           }};
 
   inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
@@ -3105,7 +8273,778 @@ struct BarDescriptorStorage {
   };
 };
 
+struct MembarDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      membar_cta_modifier_0_allowed_values = {
+          ".cta",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      membar_cta_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = membar_cta_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "scope",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      membar_cta_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      membar_cta_operand_layouts = {check_end::SyntaxOperandLayoutDescriptor{
+          .layout_id = "default",
+          .kind = check_end::OperandLayoutKind::Flat,
+          .slots = membar_cta_layout_0_slots,
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "Cta",
+          .modifiers = membar_cta_modifiers,
+          .operand_layouts = membar_cta_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "membar",
+      .variants = variants,
+  };
+};
+
+struct FenceDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      fence_acq_rel_cta_modifier_0_allowed_values = {
+          ".acq_rel",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      fence_acq_rel_cta_modifier_1_allowed_values = {
+          ".cta",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 2>
+      fence_acq_rel_cta_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fence_acq_rel_cta_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = fence_acq_rel_cta_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "scope",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 0>
+      fence_acq_rel_cta_layout_0_slots = {
+
+  };
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      fence_acq_rel_cta_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = fence_acq_rel_cta_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "AcqRelCta",
+          .modifiers = fence_acq_rel_cta_modifiers,
+          .operand_layouts = fence_acq_rel_cta_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "fence",
+      .variants = variants,
+  };
+};
+
+struct AtomDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      atom_global_relaxed_cta_add_u32_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      atom_global_relaxed_cta_add_u32_modifier_1_allowed_values = {
+          ".relaxed",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      atom_global_relaxed_cta_add_u32_modifier_2_allowed_values = {
+          ".cta",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      atom_global_relaxed_cta_add_u32_modifier_3_allowed_values = {
+          ".add",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      atom_global_relaxed_cta_add_u32_modifier_4_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      atom_global_relaxed_cta_add_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  atom_global_relaxed_cta_add_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  atom_global_relaxed_cta_add_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  atom_global_relaxed_cta_add_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  atom_global_relaxed_cta_add_u32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "add",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  atom_global_relaxed_cta_add_u32_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      atom_global_relaxed_cta_add_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      atom_global_relaxed_cta_add_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = atom_global_relaxed_cta_add_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .modifiers = atom_global_relaxed_cta_add_u32_modifiers,
+          .operand_layouts = atom_global_relaxed_cta_add_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "atom",
+      .variants = variants,
+  };
+};
+
+struct RedDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      red_global_relaxed_cta_add_u32_modifier_0_allowed_values = {
+          ".global",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      red_global_relaxed_cta_add_u32_modifier_1_allowed_values = {
+          ".relaxed",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      red_global_relaxed_cta_add_u32_modifier_2_allowed_values = {
+          ".cta",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      red_global_relaxed_cta_add_u32_modifier_3_allowed_values = {
+          ".add",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      red_global_relaxed_cta_add_u32_modifier_4_allowed_values = {
+          ".u32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 5>
+      red_global_relaxed_cta_add_u32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  red_global_relaxed_cta_add_u32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "state_space",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  red_global_relaxed_cta_add_u32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "semantics",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  red_global_relaxed_cta_add_u32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "scope",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  red_global_relaxed_cta_add_u32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "add",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  red_global_relaxed_cta_add_u32_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      red_global_relaxed_cta_add_u32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      red_global_relaxed_cta_add_u32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = red_global_relaxed_cta_add_u32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .modifiers = red_global_relaxed_cta_add_u32_modifiers,
+          .operand_layouts = red_global_relaxed_cta_add_u32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "red",
+      .variants = variants,
+  };
+};
+
+struct ActivemaskDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      activemask_b32_modifier_0_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 1>
+      activemask_b32_modifiers = {check_end::SyntaxModifierDescriptor{
+          .allowed_values = activemask_b32_modifier_0_allowed_values,
+          .presence = check_end::PresenceRequirement::Required,
+          .kind_id = "type",
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 1>
+      activemask_b32_layout_0_slots = {check_end::SyntaxOperandSlotDescriptor{
+          .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+          .presence = check_end::OperandPresence::Required,
+
+      }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      activemask_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = activemask_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "B32",
+          .modifiers = activemask_b32_modifiers,
+          .operand_layouts = activemask_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "activemask",
+      .variants = variants,
+  };
+};
+
+struct VoteDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      vote_sync_ballot_b32_modifier_0_allowed_values = {
+          ".sync",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      vote_sync_ballot_b32_modifier_1_allowed_values = {
+          ".ballot",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      vote_sync_ballot_b32_modifier_2_allowed_values = {
+          ".b32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 3>
+      vote_sync_ballot_b32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = vote_sync_ballot_b32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sync",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = vote_sync_ballot_b32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "ballot",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values = vote_sync_ballot_b32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 3>
+      vote_sync_ballot_b32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Identifier |
+                                check_end::OperandSyntaxShape::Immediate,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      vote_sync_ballot_b32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = vote_sync_ballot_b32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "SyncBallotB32",
+          .modifiers = vote_sync_ballot_b32_modifiers,
+          .operand_layouts = vote_sync_ballot_b32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "vote",
+      .variants = variants,
+  };
+};
+
+struct MmaDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_0_allowed_values =
+          {
+              ".sync",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_1_allowed_values =
+          {
+              ".aligned",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_2_allowed_values =
+          {
+              ".m16n8k8",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_3_allowed_values =
+          {
+              ".row",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_4_allowed_values =
+          {
+              ".col",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_5_allowed_values =
+          {
+              ".f32",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_6_allowed_values =
+          {
+              ".f16",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_7_allowed_values =
+          {
+              ".f16",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_8_allowed_values =
+          {
+              ".f32",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 9>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sync",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "aligned",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "m16n8k8",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "row",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "col",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "d_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_6_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "a_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_7_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "b_type",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_8_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "c_type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 4>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "SyncAlignedM16n8k8RowColF32F16F16F32",
+          .modifiers =
+              mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifiers,
+          .operand_layouts =
+              mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "mma",
+      .variants = variants,
+  };
+};
+
+struct LdmatrixDescriptorStorage {
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_0_allowed_values = {
+          ".sync",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_1_allowed_values = {
+          ".aligned",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_2_allowed_values = {
+          ".m8n8",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_3_allowed_values = {
+          ".x2",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_4_allowed_values = {
+          ".shared",
+  };
+
+  inline static constexpr std::array<std::string_view, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_5_allowed_values = {
+          ".b16",
+  };
+
+  inline static constexpr std::array<check_end::SyntaxModifierDescriptor, 6>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifiers = {
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_0_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "sync",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_1_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "aligned",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_2_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "m8n8",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_3_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "x2",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_4_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "shared",
+          },
+          check_end::SyntaxModifierDescriptor{
+              .allowed_values =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_5_allowed_values,
+              .presence = check_end::PresenceRequirement::Required,
+              .kind_id = "type",
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandSlotDescriptor, 2>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_layout_0_slots = {
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::VectorPack,
+              .presence = check_end::OperandPresence::Required,
+
+          },
+          check_end::SyntaxOperandSlotDescriptor{
+              .allowed_shapes = check_end::OperandSyntaxShape::Address,
+              .presence = check_end::OperandPresence::Required,
+
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxOperandLayoutDescriptor,
+                                     1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layouts = {
+          check_end::SyntaxOperandLayoutDescriptor{
+              .layout_id = "default",
+              .kind = check_end::OperandLayoutKind::Flat,
+              .slots = ldmatrix_sync_aligned_m8n8_x2_shared_b16_layout_0_slots,
+          }};
+
+  inline static constexpr std::array<check_end::SyntaxVariantDescriptor, 1>
+      variants = {check_end::SyntaxVariantDescriptor{
+          .variant_name = "SyncAlignedM8n8X2SharedB16",
+          .modifiers = ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifiers,
+          .operand_layouts =
+              ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layouts,
+      }};
+
+  inline static constexpr check_end::SyntaxInstructionDescriptor descriptor{
+      .Opcode_name = "ldmatrix",
+      .variants = variants,
+  };
+};
+
 } // namespace
+
+const check_end::SyntaxInstructionDescriptor &
+Add::get_syntax_descriptor() noexcept {
+  return AddDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Sub::get_syntax_descriptor() noexcept {
+  return SubDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Mul::get_syntax_descriptor() noexcept {
+  return MulDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Fma::get_syntax_descriptor() noexcept {
+  return FmaDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Mad::get_syntax_descriptor() noexcept {
+  return MadDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Div::get_syntax_descriptor() noexcept {
+  return DivDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Rem::get_syntax_descriptor() noexcept {
+  return RemDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Min::get_syntax_descriptor() noexcept {
+  return MinDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Max::get_syntax_descriptor() noexcept {
+  return MaxDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Abs::get_syntax_descriptor() noexcept {
+  return AbsDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Neg::get_syntax_descriptor() noexcept {
+  return NegDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Popc::get_syntax_descriptor() noexcept {
+  return PopcDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Clz::get_syntax_descriptor() noexcept {
+  return ClzDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Bfind::get_syntax_descriptor() noexcept {
+  return BfindDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Bfe::get_syntax_descriptor() noexcept {
+  return BfeDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Bfi::get_syntax_descriptor() noexcept {
+  return BfiDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Brev::get_syntax_descriptor() noexcept {
+  return BrevDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Set::get_syntax_descriptor() noexcept {
+  return SetDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Setp::get_syntax_descriptor() noexcept {
+  return SetpDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Selp::get_syntax_descriptor() noexcept {
+  return SelpDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Slct::get_syntax_descriptor() noexcept {
+  return SlctDescriptorStorage::descriptor;
+}
 
 const check_end::SyntaxInstructionDescriptor &
 Call::get_syntax_descriptor() noexcept {
@@ -3123,6 +9062,31 @@ Brx::get_syntax_descriptor() noexcept {
 }
 
 const check_end::SyntaxInstructionDescriptor &
+Ret::get_syntax_descriptor() noexcept {
+  return RetDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Exit::get_syntax_descriptor() noexcept {
+  return ExitDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Isspacep::get_syntax_descriptor() noexcept {
+  return IsspacepDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Cvta::get_syntax_descriptor() noexcept {
+  return CvtaDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Cvt::get_syntax_descriptor() noexcept {
+  return CvtDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
 Mov::get_syntax_descriptor() noexcept {
   return MovDescriptorStorage::descriptor;
 }
@@ -3133,23 +9097,148 @@ Ld::get_syntax_descriptor() noexcept {
 }
 
 const check_end::SyntaxInstructionDescriptor &
+Ldu::get_syntax_descriptor() noexcept {
+  return LduDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Shfl::get_syntax_descriptor() noexcept {
+  return ShflDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Prefetch::get_syntax_descriptor() noexcept {
+  return PrefetchDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Prefetchu::get_syntax_descriptor() noexcept {
+  return PrefetchuDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Createpolicy::get_syntax_descriptor() noexcept {
+  return CreatepolicyDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Applypriority::get_syntax_descriptor() noexcept {
+  return ApplypriorityDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Discard::get_syntax_descriptor() noexcept {
+  return DiscardDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Cp::get_syntax_descriptor() noexcept {
+  return CpDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
 St::get_syntax_descriptor() noexcept {
   return StDescriptorStorage::descriptor;
 }
 
 const check_end::SyntaxInstructionDescriptor &
-Add::get_syntax_descriptor() noexcept {
-  return AddDescriptorStorage::descriptor;
+Prmt::get_syntax_descriptor() noexcept {
+  return PrmtDescriptorStorage::descriptor;
 }
 
 const check_end::SyntaxInstructionDescriptor &
-Sub::get_syntax_descriptor() noexcept {
-  return SubDescriptorStorage::descriptor;
+And::get_syntax_descriptor() noexcept {
+  return AndDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Or::get_syntax_descriptor() noexcept {
+  return OrDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Xor::get_syntax_descriptor() noexcept {
+  return XorDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Not::get_syntax_descriptor() noexcept {
+  return NotDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Lop3::get_syntax_descriptor() noexcept {
+  return Lop3DescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Shf::get_syntax_descriptor() noexcept {
+  return ShfDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Shl::get_syntax_descriptor() noexcept {
+  return ShlDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Shr::get_syntax_descriptor() noexcept {
+  return ShrDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Trap::get_syntax_descriptor() noexcept {
+  return TrapDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Setmaxnreg::get_syntax_descriptor() noexcept {
+  return SetmaxnregDescriptorStorage::descriptor;
 }
 
 const check_end::SyntaxInstructionDescriptor &
 Bar::get_syntax_descriptor() noexcept {
   return BarDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Membar::get_syntax_descriptor() noexcept {
+  return MembarDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Fence::get_syntax_descriptor() noexcept {
+  return FenceDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Atom::get_syntax_descriptor() noexcept {
+  return AtomDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Red::get_syntax_descriptor() noexcept {
+  return RedDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Activemask::get_syntax_descriptor() noexcept {
+  return ActivemaskDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Vote::get_syntax_descriptor() noexcept {
+  return VoteDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Mma::get_syntax_descriptor() noexcept {
+  return MmaDescriptorStorage::descriptor;
+}
+
+const check_end::SyntaxInstructionDescriptor &
+Ldmatrix::get_syntax_descriptor() noexcept {
+  return LdmatrixDescriptorStorage::descriptor;
 }
 
 } // namespace ptx_frontend::resolved_ir

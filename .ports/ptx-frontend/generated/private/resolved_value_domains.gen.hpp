@@ -33,11 +33,22 @@ inline constexpr std::array<PtxSuffixEntry<ScalarType>, 30> kScalarTypes = {
      {"pred", ScalarType::Pred},     {"tf32", ScalarType::TF32},
      {"e4m3", ScalarType::E4m3},     {"e5m2", ScalarType::E5m2}}};
 
-inline constexpr std::array<PtxSuffixEntry<RoundingMode>, 4> kRoundingModes = {
+inline constexpr std::array<PtxSuffixEntry<RoundingMode>, 5> kRoundingModes = {
     {{"rn", RoundingMode::Rn},
      {"rz", RoundingMode::Rz},
      {"rm", RoundingMode::Rm},
-     {"rp", RoundingMode::Rp}}};
+     {"rp", RoundingMode::Rp},
+     {"rzi", RoundingMode::Rzi}}};
+
+inline constexpr std::array<PtxSuffixEntry<ComparisonOperator>, 3>
+    kComparisonOperators = {{{"eq", ComparisonOperator::Eq},
+                             {"lt", ComparisonOperator::Lt},
+                             {"ge", ComparisonOperator::Ge}}};
+
+inline constexpr std::array<PtxSuffixEntry<BooleanOperator>, 3>
+    kBooleanOperators = {{{"and", BooleanOperator::And},
+                          {"or", BooleanOperator::Or},
+                          {"xor", BooleanOperator::Xor}}};
 
 inline constexpr std::array<PtxSuffixEntry<CacheOperator>, 8> kCacheOperators =
     {{{"unspecified", CacheOperator::Unspecified},
@@ -49,13 +60,20 @@ inline constexpr std::array<PtxSuffixEntry<CacheOperator>, 8> kCacheOperators =
       {"wb", CacheOperator::Wb},
       {"wt", CacheOperator::Wt}}};
 
-inline constexpr std::array<PtxSuffixEntry<MemoryConsistency>, 6>
+inline constexpr std::array<PtxSuffixEntry<EvictionPriority>, 4>
+    kEvictionPriorities = {{{"evict_normal", EvictionPriority::EvictNormal},
+                            {"evict_first", EvictionPriority::EvictFirst},
+                            {"evict_last", EvictionPriority::EvictLast},
+                            {"no_allocate", EvictionPriority::NoAllocate}}};
+
+inline constexpr std::array<PtxSuffixEntry<MemoryConsistency>, 7>
     kMemoryConsistencies = {{{"omitted", MemoryConsistency::Omitted},
                              {"weak", MemoryConsistency::Weak},
                              {"volatile", MemoryConsistency::Volatile},
                              {"relaxed", MemoryConsistency::Relaxed},
                              {"acquire", MemoryConsistency::Acquire},
-                             {"release", MemoryConsistency::Release}}};
+                             {"release", MemoryConsistency::Release},
+                             {"acq_rel", MemoryConsistency::AcqRel}}};
 
 inline constexpr std::array<PtxSuffixEntry<MemoryScope>, 5> kMemoryScopes = {
     {{"none", MemoryScope::None},

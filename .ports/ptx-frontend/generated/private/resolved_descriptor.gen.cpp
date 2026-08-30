@@ -7,2056 +7,6 @@ namespace ptx_frontend::resolved_ir {
 
 namespace generated_detail {
 
-struct CallResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      call_direct_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "uni",
-          .value_kind = check_end::ResolvedValueKind::Bool,
-      }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
-      call_direct_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "uni",
-              .target_field_id = "uni",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      call_direct_operand_layout_0_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "target",
-          .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
-      }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
-      call_direct_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      call_direct_operand_layout_1_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "target",
-              .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "arguments",
-              .value_kind = check_end::ResolvedValueKind::CallArguments,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      call_direct_operand_layout_1_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "arguments",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::CallArguments,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
-      call_direct_operand_layout_2_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "return_value",
-              .value_kind = check_end::ResolvedValueKind::CallReturnParameter,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "target",
-              .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "arguments",
-              .value_kind = check_end::ResolvedValueKind::CallArguments,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
-      call_direct_operand_layout_2_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "return_value",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::CallReturnParameter,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "arguments",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::CallArguments,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      call_direct_operand_layout_3_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "target",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "metadata",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      call_direct_operand_layout_3_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "metadata",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
-      call_direct_operand_layout_4_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "target",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "arguments",
-              .value_kind = check_end::ResolvedValueKind::CallArguments,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "metadata",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
-      call_direct_operand_layout_4_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "arguments",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::CallArguments,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "metadata",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
-      call_direct_operand_layout_5_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "return_value",
-              .value_kind = check_end::ResolvedValueKind::CallReturnParameter,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "target",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "arguments",
-              .value_kind = check_end::ResolvedValueKind::CallArguments,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "metadata",
-              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
-      call_direct_operand_layout_5_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "return_value",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::CallReturnParameter,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "arguments",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::CallArguments,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "metadata",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::IndirectCallee,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 6>
-      call_direct_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "target",
-              .fields = call_direct_operand_layout_0_fields,
-              .bindings = call_direct_operand_layout_0_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "target_input",
-              .fields = call_direct_operand_layout_1_fields,
-              .bindings = call_direct_operand_layout_1_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "return_target_input",
-              .fields = call_direct_operand_layout_2_fields,
-              .bindings = call_direct_operand_layout_2_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "target_metadata",
-              .fields = call_direct_operand_layout_3_fields,
-              .bindings = call_direct_operand_layout_3_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "target_input_metadata",
-              .fields = call_direct_operand_layout_4_fields,
-              .bindings = call_direct_operand_layout_4_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "return_target_input_metadata",
-              .fields = call_direct_operand_layout_5_fields,
-              .bindings = call_direct_operand_layout_5_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
-      variants = {check_end::ResolvedVariantDescriptor{
-          .variant_name = "Direct",
-          .fields = call_direct_fields,
-          .modifier_bindings = call_direct_modifier_bindings,
-          .operand_layouts = call_direct_operand_layouts,
-      }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "call",
-      .variants = variants,
-  };
-};
-
-struct BraResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      bra_direct_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "uni",
-          .value_kind = check_end::ResolvedValueKind::Bool,
-      }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
-      bra_direct_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "uni",
-              .target_field_id = "uni",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      bra_direct_operand_layout_0_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "target",
-          .value_kind = check_end::ResolvedValueKind::BranchTarget,
-      }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
-      bra_direct_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "target",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::BranchTarget,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      bra_direct_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
-          .layout_id = "default",
-          .fields = bra_direct_operand_layout_0_fields,
-          .bindings = bra_direct_operand_layout_0_bindings,
-      }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
-      variants = {check_end::ResolvedVariantDescriptor{
-          .variant_name = "Direct",
-          .fields = bra_direct_fields,
-          .modifier_bindings = bra_direct_modifier_bindings,
-          .operand_layouts = bra_direct_operand_layouts,
-      }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "bra",
-      .variants = variants,
-  };
-};
-
-struct BrxResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      brx_idx_fields = {check_end::ResolvedFieldDescriptor{
-                            .field_id = "idx",
-                            .value_kind = check_end::ResolvedValueKind::Bool,
-                        },
-                        check_end::ResolvedFieldDescriptor{
-                            .field_id = "uni",
-                            .value_kind = check_end::ResolvedValueKind::Bool,
-                        }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
-      brx_idx_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "idx",
-              .target_field_id = "idx",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "uni",
-              .target_field_id = "uni",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      brx_idx_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "index",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "tlist",
-              .value_kind = check_end::ResolvedValueKind::BranchTargetSet,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      brx_idx_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "index",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
-                      .fixed_scalar_type = ScalarType::U32,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Register,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "tlist",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::BranchTarget,
-              .access = check_end::OperandAccess::Control,
-              .allowed_shapes = check_end::OperandShape::BranchTargetSet,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      brx_idx_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
-          .layout_id = "default",
-          .fields = brx_idx_operand_layout_0_fields,
-          .bindings = brx_idx_operand_layout_0_bindings,
-      }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
-      variants = {check_end::ResolvedVariantDescriptor{
-          .variant_name = "Idx",
-          .fields = brx_idx_fields,
-          .modifier_bindings = brx_idx_modifier_bindings,
-          .operand_layouts = brx_idx_operand_layouts,
-      }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "brx",
-      .variants = variants,
-  };
-};
-
-struct MovResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      mov_scalar_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "type",
-          .value_kind = check_end::ResolvedValueKind::ScalarType,
-      }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
-      mov_scalar_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      mov_scalar_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::MovSource,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      mov_scalar_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Register,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Register |
-                                check_end::OperandShape::Immediate |
-                                check_end::OperandShape::SpecialRegister |
-                                check_end::OperandShape::Symbol |
-                                check_end::OperandShape::Address,
-          }};
-
-  static constexpr std::array<uint8_t, 2>
-      mov_scalar_operand_layout_1_binding_1_vector_arities = {{2, 4}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      mov_scalar_operand_layout_1_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      mov_scalar_operand_layout_1_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Register,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .allowed_vector_arities =
-                  mov_scalar_operand_layout_1_binding_1_vector_arities,
-              .vector_type_policy = checker::VectorTypePolicy::Aggregate,
-              .allow_vector_sink = false,
-          }};
-
-  static constexpr std::array<uint8_t, 2>
-      mov_scalar_operand_layout_2_binding_0_vector_arities = {{2, 4}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      mov_scalar_operand_layout_2_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      mov_scalar_operand_layout_2_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .allowed_vector_arities =
-                  mov_scalar_operand_layout_2_binding_0_vector_arities,
-              .vector_type_policy = checker::VectorTypePolicy::Aggregate,
-              .allow_vector_sink = true,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 3>
-      mov_scalar_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "scalar",
-              .fields = mov_scalar_operand_layout_0_fields,
-              .bindings = mov_scalar_operand_layout_0_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "pack",
-              .fields = mov_scalar_operand_layout_1_fields,
-              .bindings = mov_scalar_operand_layout_1_bindings,
-          },
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "unpack",
-              .fields = mov_scalar_operand_layout_2_fields,
-              .bindings = mov_scalar_operand_layout_2_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
-      mov_pred_fields = {check_end::ResolvedFieldDescriptor{
-          .field_id = "type",
-          .value_kind = check_end::ResolvedValueKind::ScalarType,
-      }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
-      mov_pred_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      mov_pred_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::Predicate,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::Predicate,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      mov_pred_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
-                      .fixed_scalar_type = ScalarType::Pred,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Predicate,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
-                      .fixed_scalar_type = ScalarType::Pred,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Predicate,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      mov_pred_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
-          .layout_id = "default",
-          .fields = mov_pred_operand_layout_0_fields,
-          .bindings = mov_pred_operand_layout_0_bindings,
-      }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
-      variants = {check_end::ResolvedVariantDescriptor{
-                      .variant_name = "Scalar",
-                      .fields = mov_scalar_fields,
-                      .modifier_bindings = mov_scalar_modifier_bindings,
-                      .operand_layouts = mov_scalar_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "Pred",
-                      .fields = mov_pred_fields,
-                      .modifier_bindings = mov_pred_modifier_bindings,
-                      .operand_layouts = mov_pred_operand_layouts,
-                  }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "mov",
-      .variants = variants,
-  };
-};
-
-struct LdResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
-      ld_generic_scalar_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "mmio",
-              .value_kind = check_end::ResolvedValueKind::Bool,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
-      ld_generic_scalar_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "mmio",
-              .target_field_id = "mmio",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<checker::AddressStateSpaceDescriptor, 4>
-      ld_generic_scalar_operand_layout_0_binding_1_address_state_spaces = {
-          {checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Constant,
-               .availability =
-                   {
-                       .minimum_ptx_version = {3, 1},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Global,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Local,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Shared,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           }}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      ld_generic_scalar_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      ld_generic_scalar_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Register,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .allowed_address_state_spaces =
-                  ld_generic_scalar_operand_layout_0_binding_1_address_state_spaces,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      ld_generic_scalar_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = ld_generic_scalar_operand_layout_0_fields,
-              .bindings = ld_generic_scalar_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
-      ld_explicit_scalar_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "state_space",
-              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "mmio",
-              .value_kind = check_end::ResolvedValueKind::Bool,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
-      ld_explicit_scalar_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "state_space",
-              .target_field_id = "state_space",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "mmio",
-              .target_field_id = "mmio",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      ld_explicit_scalar_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      ld_explicit_scalar_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Register,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .state_space_modifier_field_id = "state_space",
-              .parameter_constraint =
-                  {
-                      .direction = ParameterDirection::Input,
-                      .function_availability =
-                          {
-                              .minimum_ptx_version = {2, 0},
-                              .minimum_sm_version = 20,
-                              .required_family = "",
-                          },
-                  },
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      ld_explicit_scalar_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = ld_explicit_scalar_operand_layout_0_fields,
-              .bindings = ld_explicit_scalar_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
-      ld_generic_vector_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "vector",
-              .value_kind = check_end::ResolvedValueKind::VectorArity,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
-      ld_generic_vector_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "vector",
-              .target_field_id = "vector",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<checker::AddressStateSpaceDescriptor, 4>
-      ld_generic_vector_operand_layout_0_binding_1_address_state_spaces = {
-          {checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Constant,
-               .availability =
-                   {
-                       .minimum_ptx_version = {3, 1},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Global,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Local,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Shared,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           }}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      ld_generic_vector_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      ld_generic_vector_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .vector_arity_modifier_field_id = "vector",
-              .vector_type_policy = checker::VectorTypePolicy::Element,
-              .allow_vector_sink = true,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .allowed_address_state_spaces =
-                  ld_generic_vector_operand_layout_0_binding_1_address_state_spaces,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      ld_generic_vector_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = ld_generic_vector_operand_layout_0_fields,
-              .bindings = ld_generic_vector_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
-      ld_explicit_vector_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "state_space",
-              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "vector",
-              .value_kind = check_end::ResolvedValueKind::VectorArity,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
-      ld_explicit_vector_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "state_space",
-              .target_field_id = "state_space",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "vector",
-              .target_field_id = "vector",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      ld_explicit_vector_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "dst",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      ld_explicit_vector_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "dst",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Destination,
-              .access = check_end::OperandAccess::Write,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .vector_arity_modifier_field_id = "vector",
-              .vector_type_policy = checker::VectorTypePolicy::Element,
-              .allow_vector_sink = true,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .state_space_modifier_field_id = "state_space",
-              .parameter_constraint =
-                  {
-                      .direction = ParameterDirection::Input,
-                      .function_availability =
-                          {
-                              .minimum_ptx_version = {2, 0},
-                              .minimum_sm_version = 20,
-                              .required_family = "",
-                          },
-                  },
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      ld_explicit_vector_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = ld_explicit_vector_operand_layout_0_fields,
-              .bindings = ld_explicit_vector_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 4>
-      variants = {check_end::ResolvedVariantDescriptor{
-                      .variant_name = "GenericScalar",
-                      .fields = ld_generic_scalar_fields,
-                      .modifier_bindings = ld_generic_scalar_modifier_bindings,
-                      .operand_layouts = ld_generic_scalar_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "ExplicitScalar",
-                      .fields = ld_explicit_scalar_fields,
-                      .modifier_bindings = ld_explicit_scalar_modifier_bindings,
-                      .operand_layouts = ld_explicit_scalar_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "GenericVector",
-                      .fields = ld_generic_vector_fields,
-                      .modifier_bindings = ld_generic_vector_modifier_bindings,
-                      .operand_layouts = ld_generic_vector_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "ExplicitVector",
-                      .fields = ld_explicit_vector_fields,
-                      .modifier_bindings = ld_explicit_vector_modifier_bindings,
-                      .operand_layouts = ld_explicit_vector_operand_layouts,
-                  }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "ld",
-      .variants = variants,
-  };
-};
-
-struct StResolvedDescriptorStorage {
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
-      st_generic_scalar_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "mmio",
-              .value_kind = check_end::ResolvedValueKind::Bool,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
-      st_generic_scalar_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "mmio",
-              .target_field_id = "mmio",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<checker::AddressStateSpaceDescriptor, 3>
-      st_generic_scalar_operand_layout_0_binding_0_address_state_spaces = {
-          {checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Global,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Local,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Shared,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           }}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      st_generic_scalar_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      st_generic_scalar_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .allowed_address_state_spaces =
-                  st_generic_scalar_operand_layout_0_binding_0_address_state_spaces,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      st_generic_scalar_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = st_generic_scalar_operand_layout_0_fields,
-              .bindings = st_generic_scalar_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
-      st_explicit_scalar_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "state_space",
-              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "mmio",
-              .value_kind = check_end::ResolvedValueKind::Bool,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
-      st_explicit_scalar_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "state_space",
-              .target_field_id = "state_space",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "mmio",
-              .target_field_id = "mmio",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      st_explicit_scalar_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      st_explicit_scalar_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .state_space_modifier_field_id = "state_space",
-              .parameter_constraint =
-                  {
-                      .direction = ParameterDirection::Return,
-                      .function_availability =
-                          {
-                              .minimum_ptx_version = {2, 0},
-                              .minimum_sm_version = 20,
-                              .required_family = "",
-                          },
-                  },
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Register,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      st_explicit_scalar_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = st_explicit_scalar_operand_layout_0_fields,
-              .bindings = st_explicit_scalar_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
-      st_generic_vector_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "vector",
-              .value_kind = check_end::ResolvedValueKind::VectorArity,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
-      st_generic_vector_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "vector",
-              .target_field_id = "vector",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<checker::AddressStateSpaceDescriptor, 3>
-      st_generic_vector_operand_layout_0_binding_0_address_state_spaces = {
-          {checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Global,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Local,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::AddressStateSpaceDescriptor{
-               .state_space = MemoryStateSpace::Shared,
-               .availability =
-                   {
-                       .minimum_ptx_version = {0, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           }}};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      st_generic_vector_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      st_generic_vector_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .allowed_address_state_spaces =
-                  st_generic_vector_operand_layout_0_binding_0_address_state_spaces,
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .vector_arity_modifier_field_id = "vector",
-              .vector_type_policy = checker::VectorTypePolicy::Element,
-              .allow_vector_sink = true,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      st_generic_vector_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = st_generic_vector_operand_layout_0_fields,
-              .bindings = st_generic_vector_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
-      st_explicit_vector_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "state_space",
-              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "cache",
-              .value_kind = check_end::ResolvedValueKind::CacheOperator,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "semantics",
-              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "scope",
-              .value_kind = check_end::ResolvedValueKind::MemoryScope,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "vector",
-              .value_kind = check_end::ResolvedValueKind::VectorArity,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "type",
-              .value_kind = check_end::ResolvedValueKind::ScalarType,
-          }};
-
-  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
-      st_explicit_vector_modifier_bindings = {
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "state_space",
-              .target_field_id = "state_space",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "cache",
-              .target_field_id = "cache",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::CacheOperator,
-                      .bool_value = false,
-                      .scalar_type = ScalarType::Invalid,
-                      .rounding_mode = RoundingMode::Invalid,
-                      .cache_operator = CacheOperator::Unspecified,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "semantics",
-              .target_field_id = "semantics",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind = check_end::ResolvedModifierDefaultKind::
-                          MemoryConsistency,
-                      .memory_consistency = MemoryConsistency::Omitted,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "scope",
-              .target_field_id = "scope",
-              .default_value =
-                  check_end::ResolvedModifierDefaultDescriptor{
-                      .kind =
-                          check_end::ResolvedModifierDefaultKind::MemoryScope,
-                      .memory_scope = MemoryScope::None,
-                  },
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "vector",
-              .target_field_id = "vector",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          },
-          check_end::ResolvedModifierBindingDescriptor{
-              .source_kind_id = "type",
-              .target_field_id = "type",
-              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
-          }};
-
-  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
-      st_explicit_vector_operand_layout_0_fields = {
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "address",
-              .value_kind = check_end::ResolvedValueKind::Address,
-          },
-          check_end::ResolvedFieldDescriptor{
-              .field_id = "src",
-              .value_kind = check_end::ResolvedValueKind::RegisterVector,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
-      st_explicit_vector_operand_layout_0_bindings = {
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "address",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind = check_end::OperandTypeExpressionKind::None,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
-              .role = check_end::OperandRole::Address,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Address,
-              .state_space_modifier_field_id = "state_space",
-              .parameter_constraint =
-                  {
-                      .direction = ParameterDirection::Return,
-                      .function_availability =
-                          {
-                              .minimum_ptx_version = {2, 0},
-                              .minimum_sm_version = 20,
-                              .required_family = "",
-                          },
-                  },
-          },
-          check_end::ResolvedOperandBindingDescriptor{
-              .target_field_id = "src",
-              .type_expression =
-                  check_end::TypeExpressionDescriptor{
-                      .kind =
-                          check_end::OperandTypeExpressionKind::ModifierField,
-                      .fixed_scalar_type = ScalarType::Invalid,
-                      .modifier_field_id = "type",
-                  },
-              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
-              .role = check_end::OperandRole::Source,
-              .access = check_end::OperandAccess::Read,
-              .allowed_shapes = check_end::OperandShape::Vector,
-              .vector_arity_modifier_field_id = "vector",
-              .vector_type_policy = checker::VectorTypePolicy::Element,
-              .allow_vector_sink = true,
-          }};
-
-  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
-      st_explicit_vector_operand_layouts = {
-          check_end::ResolvedOperandLayoutDescriptor{
-              .layout_id = "default",
-              .fields = st_explicit_vector_operand_layout_0_fields,
-              .bindings = st_explicit_vector_operand_layout_0_bindings,
-          }};
-
-  static constexpr std::array<check_end::ResolvedVariantDescriptor, 4>
-      variants = {check_end::ResolvedVariantDescriptor{
-                      .variant_name = "GenericScalar",
-                      .fields = st_generic_scalar_fields,
-                      .modifier_bindings = st_generic_scalar_modifier_bindings,
-                      .operand_layouts = st_generic_scalar_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "ExplicitScalar",
-                      .fields = st_explicit_scalar_fields,
-                      .modifier_bindings = st_explicit_scalar_modifier_bindings,
-                      .operand_layouts = st_explicit_scalar_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "GenericVector",
-                      .fields = st_generic_vector_fields,
-                      .modifier_bindings = st_generic_vector_modifier_bindings,
-                      .operand_layouts = st_generic_vector_operand_layouts,
-                  },
-                  check_end::ResolvedVariantDescriptor{
-                      .variant_name = "ExplicitVector",
-                      .fields = st_explicit_vector_fields,
-                      .modifier_bindings = st_explicit_vector_modifier_bindings,
-                      .operand_layouts = st_explicit_vector_operand_layouts,
-                  }};
-
-  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
-      .opcode_name = "st",
-      .variants = variants,
-  };
-};
-
 struct AddResolvedDescriptorStorage {
   static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
       add_float_f32_fields = {
@@ -4055,6 +2005,10312 @@ struct SubResolvedDescriptorStorage {
   };
 };
 
+struct MulResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mul_rn_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mul_rn_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      mul_rn_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      mul_rn_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mul_rn_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mul_rn_f32_operand_layout_0_fields,
+          .bindings = mul_rn_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mul_lo_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "lo",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mul_lo_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "lo",
+              .target_field_id = "lo",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      mul_lo_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      mul_lo_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mul_lo_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mul_lo_u32_operand_layout_0_fields,
+          .bindings = mul_lo_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mul_hi_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "hi",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mul_hi_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "hi",
+              .target_field_id = "hi",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      mul_hi_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      mul_hi_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mul_hi_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mul_hi_u32_operand_layout_0_fields,
+          .bindings = mul_hi_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mul_wide_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wide",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mul_wide_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wide",
+              .target_field_id = "wide",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      mul_wide_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      mul_wide_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mul_wide_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = mul_wide_u32_operand_layout_0_fields,
+              .bindings = mul_wide_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mul_wide_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wide",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mul_wide_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wide",
+              .target_field_id = "wide",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      mul_wide_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      mul_wide_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mul_wide_s32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = mul_wide_s32_operand_layout_0_fields,
+              .bindings = mul_wide_s32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 5>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .fields = mul_rn_f32_fields,
+                      .modifier_bindings = mul_rn_f32_modifier_bindings,
+                      .operand_layouts = mul_rn_f32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "LoU32",
+                      .fields = mul_lo_u32_fields,
+                      .modifier_bindings = mul_lo_u32_modifier_bindings,
+                      .operand_layouts = mul_lo_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "HiU32",
+                      .fields = mul_hi_u32_fields,
+                      .modifier_bindings = mul_hi_u32_modifier_bindings,
+                      .operand_layouts = mul_hi_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "WideU32",
+                      .fields = mul_wide_u32_fields,
+                      .modifier_bindings = mul_wide_u32_modifier_bindings,
+                      .operand_layouts = mul_wide_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "WideS32",
+                      .fields = mul_wide_s32_fields,
+                      .modifier_bindings = mul_wide_s32_modifier_bindings,
+                      .operand_layouts = mul_wide_s32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "mul",
+      .variants = variants,
+  };
+};
+
+struct FmaResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      fma_rn_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      fma_rn_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      fma_rn_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      fma_rn_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      fma_rn_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = fma_rn_f32_operand_layout_0_fields,
+          .bindings = fma_rn_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      fma_rn_f64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      fma_rn_f64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      fma_rn_f64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      fma_rn_f64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      fma_rn_f64_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = fma_rn_f64_operand_layout_0_fields,
+          .bindings = fma_rn_f64_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      fma_rn_f16_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      fma_rn_f16_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      fma_rn_f16_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      fma_rn_f16_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      fma_rn_f16_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = fma_rn_f16_operand_layout_0_fields,
+          .bindings = fma_rn_f16_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 3>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .fields = fma_rn_f32_fields,
+                      .modifier_bindings = fma_rn_f32_modifier_bindings,
+                      .operand_layouts = fma_rn_f32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF64",
+                      .fields = fma_rn_f64_fields,
+                      .modifier_bindings = fma_rn_f64_modifier_bindings,
+                      .operand_layouts = fma_rn_f64_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF16",
+                      .fields = fma_rn_f16_fields,
+                      .modifier_bindings = fma_rn_f16_modifier_bindings,
+                      .operand_layouts = fma_rn_f16_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "fma",
+      .variants = variants,
+  };
+};
+
+struct MadResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mad_rn_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mad_rn_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      mad_rn_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      mad_rn_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mad_rn_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mad_rn_f32_operand_layout_0_fields,
+          .bindings = mad_rn_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mad_lo_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "lo",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mad_lo_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "lo",
+              .target_field_id = "lo",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      mad_lo_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      mad_lo_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mad_lo_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mad_lo_u32_operand_layout_0_fields,
+          .bindings = mad_lo_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mad_lo_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "lo",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mad_lo_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "lo",
+              .target_field_id = "lo",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      mad_lo_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      mad_lo_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mad_lo_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mad_lo_s32_operand_layout_0_fields,
+          .bindings = mad_lo_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mad_wide_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wide",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mad_wide_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wide",
+              .target_field_id = "wide",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      mad_wide_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      mad_wide_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mad_wide_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = mad_wide_u32_operand_layout_0_fields,
+              .bindings = mad_wide_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 4>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .fields = mad_rn_f32_fields,
+                      .modifier_bindings = mad_rn_f32_modifier_bindings,
+                      .operand_layouts = mad_rn_f32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "LoU32",
+                      .fields = mad_lo_u32_fields,
+                      .modifier_bindings = mad_lo_u32_modifier_bindings,
+                      .operand_layouts = mad_lo_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "LoS32",
+                      .fields = mad_lo_s32_fields,
+                      .modifier_bindings = mad_lo_s32_modifier_bindings,
+                      .operand_layouts = mad_lo_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "WideU32",
+                      .fields = mad_wide_u32_fields,
+                      .modifier_bindings = mad_wide_u32_modifier_bindings,
+                      .operand_layouts = mad_wide_u32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "mad",
+      .variants = variants,
+  };
+};
+
+struct DivResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      div_rn_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      div_rn_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      div_rn_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      div_rn_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      div_rn_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = div_rn_f32_operand_layout_0_fields,
+          .bindings = div_rn_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      div_rn_f64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      div_rn_f64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      div_rn_f64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      div_rn_f64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      div_rn_f64_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = div_rn_f64_operand_layout_0_fields,
+          .bindings = div_rn_f64_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      div_u32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      div_u32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      div_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      div_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      div_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = div_u32_operand_layout_0_fields,
+          .bindings = div_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      div_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      div_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      div_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      div_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      div_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = div_s32_operand_layout_0_fields,
+          .bindings = div_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 4>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF32",
+                      .fields = div_rn_f32_fields,
+                      .modifier_bindings = div_rn_f32_modifier_bindings,
+                      .operand_layouts = div_rn_f32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RnF64",
+                      .fields = div_rn_f64_fields,
+                      .modifier_bindings = div_rn_f64_modifier_bindings,
+                      .operand_layouts = div_rn_f64_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "U32",
+                      .fields = div_u32_fields,
+                      .modifier_bindings = div_u32_modifier_bindings,
+                      .operand_layouts = div_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = div_s32_fields,
+                      .modifier_bindings = div_s32_modifier_bindings,
+                      .operand_layouts = div_s32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "div",
+      .variants = variants,
+  };
+};
+
+struct RemResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      rem_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      rem_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      rem_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      rem_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      rem_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = rem_s32_operand_layout_0_fields,
+          .bindings = rem_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      rem_u32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      rem_u32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      rem_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      rem_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      rem_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = rem_u32_operand_layout_0_fields,
+          .bindings = rem_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = rem_s32_fields,
+                      .modifier_bindings = rem_s32_modifier_bindings,
+                      .operand_layouts = rem_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "U32",
+                      .fields = rem_u32_fields,
+                      .modifier_bindings = rem_u32_modifier_bindings,
+                      .operand_layouts = rem_u32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "rem",
+      .variants = variants,
+  };
+};
+
+struct MinResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      min_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      min_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      min_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      min_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      min_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = min_s32_operand_layout_0_fields,
+          .bindings = min_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      min_nan_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "nan",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      min_nan_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "nan",
+              .target_field_id = "nan",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      min_nan_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      min_nan_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      min_nan_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = min_nan_f32_operand_layout_0_fields,
+          .bindings = min_nan_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = min_s32_fields,
+                      .modifier_bindings = min_s32_modifier_bindings,
+                      .operand_layouts = min_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "NanF32",
+                      .fields = min_nan_f32_fields,
+                      .modifier_bindings = min_nan_f32_modifier_bindings,
+                      .operand_layouts = min_nan_f32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "min",
+      .variants = variants,
+  };
+};
+
+struct MaxResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      max_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      max_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      max_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      max_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      max_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = max_s32_operand_layout_0_fields,
+          .bindings = max_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      max_nan_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "nan",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      max_nan_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "nan",
+              .target_field_id = "nan",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      max_nan_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      max_nan_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      max_nan_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = max_nan_f32_operand_layout_0_fields,
+          .bindings = max_nan_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = max_s32_fields,
+                      .modifier_bindings = max_s32_modifier_bindings,
+                      .operand_layouts = max_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "NanF32",
+                      .fields = max_nan_f32_fields,
+                      .modifier_bindings = max_nan_f32_modifier_bindings,
+                      .operand_layouts = max_nan_f32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "max",
+      .variants = variants,
+  };
+};
+
+struct AbsResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      abs_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      abs_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      abs_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      abs_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      abs_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = abs_s32_operand_layout_0_fields,
+          .bindings = abs_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      abs_f32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      abs_f32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      abs_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      abs_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      abs_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = abs_f32_operand_layout_0_fields,
+          .bindings = abs_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = abs_s32_fields,
+                      .modifier_bindings = abs_s32_modifier_bindings,
+                      .operand_layouts = abs_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "F32",
+                      .fields = abs_f32_fields,
+                      .modifier_bindings = abs_f32_modifier_bindings,
+                      .operand_layouts = abs_f32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "abs",
+      .variants = variants,
+  };
+};
+
+struct NegResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      neg_s32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      neg_s32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      neg_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      neg_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      neg_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = neg_s32_operand_layout_0_fields,
+          .bindings = neg_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      neg_f32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      neg_f32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      neg_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      neg_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      neg_f32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = neg_f32_operand_layout_0_fields,
+          .bindings = neg_f32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      neg_f16x2_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      neg_f16x2_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      neg_f16x2_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      neg_f16x2_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      neg_f16x2_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = neg_f16x2_operand_layout_0_fields,
+          .bindings = neg_f16x2_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 3>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "S32",
+                      .fields = neg_s32_fields,
+                      .modifier_bindings = neg_s32_modifier_bindings,
+                      .operand_layouts = neg_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "F32",
+                      .fields = neg_f32_fields,
+                      .modifier_bindings = neg_f32_modifier_bindings,
+                      .operand_layouts = neg_f32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "F16x2",
+                      .fields = neg_f16x2_fields,
+                      .modifier_bindings = neg_f16x2_modifier_bindings,
+                      .operand_layouts = neg_f16x2_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "neg",
+      .variants = variants,
+  };
+};
+
+struct PopcResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      popc_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      popc_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      popc_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      popc_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      popc_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = popc_b32_operand_layout_0_fields,
+          .bindings = popc_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = popc_b32_fields,
+          .modifier_bindings = popc_b32_modifier_bindings,
+          .operand_layouts = popc_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "popc",
+      .variants = variants,
+  };
+};
+
+struct ClzResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      clz_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      clz_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      clz_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      clz_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      clz_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = clz_b32_operand_layout_0_fields,
+          .bindings = clz_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      clz_b64_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      clz_b64_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      clz_b64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      clz_b64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      clz_b64_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = clz_b64_operand_layout_0_fields,
+          .bindings = clz_b64_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "B32",
+                      .fields = clz_b32_fields,
+                      .modifier_bindings = clz_b32_modifier_bindings,
+                      .operand_layouts = clz_b32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "B64",
+                      .fields = clz_b64_fields,
+                      .modifier_bindings = clz_b64_modifier_bindings,
+                      .operand_layouts = clz_b64_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "clz",
+      .variants = variants,
+  };
+};
+
+struct BfindResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      bfind_shiftamt_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "shiftamt",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      bfind_shiftamt_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "shiftamt",
+              .target_field_id = "shiftamt",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      bfind_shiftamt_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      bfind_shiftamt_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      bfind_shiftamt_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = bfind_shiftamt_u32_operand_layout_0_fields,
+              .bindings = bfind_shiftamt_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "ShiftamtU32",
+          .fields = bfind_shiftamt_u32_fields,
+          .modifier_bindings = bfind_shiftamt_u32_modifier_bindings,
+          .operand_layouts = bfind_shiftamt_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "bfind",
+      .variants = variants,
+  };
+};
+
+struct BfeResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      bfe_u32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      bfe_u32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      bfe_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "offset",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "width",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      bfe_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "offset",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "width",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      bfe_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = bfe_u32_operand_layout_0_fields,
+          .bindings = bfe_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "U32",
+          .fields = bfe_u32_fields,
+          .modifier_bindings = bfe_u32_modifier_bindings,
+          .operand_layouts = bfe_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "bfe",
+      .variants = variants,
+  };
+};
+
+struct BfiResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      bfi_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      bfi_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      bfi_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "insert",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "base",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "offset",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "width",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 5>
+      bfi_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "insert",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "base",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "offset",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "width",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      bfi_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = bfi_b32_operand_layout_0_fields,
+          .bindings = bfi_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = bfi_b32_fields,
+          .modifier_bindings = bfi_b32_modifier_bindings,
+          .operand_layouts = bfi_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "bfi",
+      .variants = variants,
+  };
+};
+
+struct BrevResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      brev_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      brev_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      brev_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      brev_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      brev_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = brev_b32_operand_layout_0_fields,
+          .bindings = brev_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = brev_b32_fields,
+          .modifier_bindings = brev_b32_modifier_bindings,
+          .operand_layouts = brev_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "brev",
+      .variants = variants,
+  };
+};
+
+struct SetResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      set_eq_u32_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dtype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "stype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      set_eq_u32_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dtype",
+              .target_field_id = "dtype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "stype",
+              .target_field_id = "stype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      set_eq_u32_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      set_eq_u32_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      set_eq_u32_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = set_eq_u32_u32_operand_layout_0_fields,
+              .bindings = set_eq_u32_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      set_lt_and_f32_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "boolean",
+              .value_kind = check_end::ResolvedValueKind::BooleanOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dtype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "stype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 4>
+      set_lt_and_f32_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "boolean",
+              .target_field_id = "boolean",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dtype",
+              .target_field_id = "dtype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "stype",
+              .target_field_id = "stype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      set_lt_and_f32_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "combine",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      set_lt_and_f32_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "combine",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Predicate,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      set_lt_and_f32_s32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = set_lt_and_f32_s32_operand_layout_0_fields,
+              .bindings = set_lt_and_f32_s32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "EqU32U32",
+                      .fields = set_eq_u32_u32_fields,
+                      .modifier_bindings = set_eq_u32_u32_modifier_bindings,
+                      .operand_layouts = set_eq_u32_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "LtAndF32S32",
+                      .fields = set_lt_and_f32_s32_fields,
+                      .modifier_bindings = set_lt_and_f32_s32_modifier_bindings,
+                      .operand_layouts = set_lt_and_f32_s32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "set",
+      .variants = variants,
+  };
+};
+
+struct SetpResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      setp_lt_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      setp_lt_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      setp_lt_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      setp_lt_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setp_lt_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = setp_lt_u32_operand_layout_0_fields,
+          .bindings = setp_lt_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      setp_ge_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      setp_ge_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      setp_ge_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      setp_ge_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setp_ge_s32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = setp_ge_s32_operand_layout_0_fields,
+          .bindings = setp_ge_s32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      setp_lt_and_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "boolean",
+              .value_kind = check_end::ResolvedValueKind::BooleanOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      setp_lt_and_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "boolean",
+              .target_field_id = "boolean",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      setp_lt_and_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "combine",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      setp_lt_and_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "combine",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Predicate,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setp_lt_and_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = setp_lt_and_u32_operand_layout_0_fields,
+              .bindings = setp_lt_and_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      setp_eq_u32_pair_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      setp_eq_u32_pair_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      setp_eq_u32_pair_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::PredicatePair,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      setp_eq_u32_pair_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::PredicatePair,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setp_eq_u32_pair_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = setp_eq_u32_pair_operand_layout_0_fields,
+              .bindings = setp_eq_u32_pair_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      setp_lt_and_s32_pair_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "comparison",
+              .value_kind = check_end::ResolvedValueKind::ComparisonOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "boolean",
+              .value_kind = check_end::ResolvedValueKind::BooleanOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      setp_lt_and_s32_pair_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "comparison",
+              .target_field_id = "comparison",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "boolean",
+              .target_field_id = "boolean",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      setp_lt_and_s32_pair_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::PredicatePair,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "combine",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      setp_lt_and_s32_pair_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::PredicatePair,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "combine",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Predicate,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setp_lt_and_s32_pair_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = setp_lt_and_s32_pair_operand_layout_0_fields,
+              .bindings = setp_lt_and_s32_pair_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 5>
+      variants = {
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "LtU32",
+              .fields = setp_lt_u32_fields,
+              .modifier_bindings = setp_lt_u32_modifier_bindings,
+              .operand_layouts = setp_lt_u32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GeS32",
+              .fields = setp_ge_s32_fields,
+              .modifier_bindings = setp_ge_s32_modifier_bindings,
+              .operand_layouts = setp_ge_s32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "LtAndU32",
+              .fields = setp_lt_and_u32_fields,
+              .modifier_bindings = setp_lt_and_u32_modifier_bindings,
+              .operand_layouts = setp_lt_and_u32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "EqU32Pair",
+              .fields = setp_eq_u32_pair_fields,
+              .modifier_bindings = setp_eq_u32_pair_modifier_bindings,
+              .operand_layouts = setp_eq_u32_pair_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "LtAndS32Pair",
+              .fields = setp_lt_and_s32_pair_fields,
+              .modifier_bindings = setp_lt_and_s32_pair_modifier_bindings,
+              .operand_layouts = setp_lt_and_s32_pair_operand_layouts,
+          }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "setp",
+      .variants = variants,
+  };
+};
+
+struct SelpResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      selp_u32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      selp_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      selp_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_true",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_false",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "predicate",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      selp_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_true",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_false",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "predicate",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Predicate,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      selp_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = selp_u32_operand_layout_0_fields,
+          .bindings = selp_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "U32",
+          .fields = selp_u32_fields,
+          .modifier_bindings = selp_u32_modifier_bindings,
+          .operand_layouts = selp_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "selp",
+      .variants = variants,
+  };
+};
+
+struct SlctResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      slct_u32_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dtype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "stype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      slct_u32_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dtype",
+              .target_field_id = "dtype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "stype",
+              .target_field_id = "stype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      slct_u32_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_true",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_false",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "selector",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      slct_u32_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_true",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_false",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "selector",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      slct_u32_s32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = slct_u32_s32_operand_layout_0_fields,
+              .bindings = slct_u32_s32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      slct_ftz_u64_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "ftz",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dtype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "stype",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      slct_ftz_u64_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "ftz",
+              .target_field_id = "ftz",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dtype",
+              .target_field_id = "dtype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "stype",
+              .target_field_id = "stype",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      slct_ftz_u64_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_true",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_false",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "selector",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      slct_ftz_u64_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_true",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src_false",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "selector",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      slct_ftz_u64_f32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = slct_ftz_u64_f32_operand_layout_0_fields,
+              .bindings = slct_ftz_u64_f32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "U32S32",
+                      .fields = slct_u32_s32_fields,
+                      .modifier_bindings = slct_u32_s32_modifier_bindings,
+                      .operand_layouts = slct_u32_s32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "FtzU64F32",
+                      .fields = slct_ftz_u64_f32_fields,
+                      .modifier_bindings = slct_ftz_u64_f32_modifier_bindings,
+                      .operand_layouts = slct_ftz_u64_f32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "slct",
+      .variants = variants,
+  };
+};
+
+struct CallResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      call_direct_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "uni",
+          .value_kind = check_end::ResolvedValueKind::Bool,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      call_direct_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "uni",
+              .target_field_id = "uni",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      call_direct_operand_layout_0_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "target",
+          .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
+      }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      call_direct_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      call_direct_operand_layout_1_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "target",
+              .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "arguments",
+              .value_kind = check_end::ResolvedValueKind::CallArguments,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      call_direct_operand_layout_1_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "arguments",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::CallArguments,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      call_direct_operand_layout_2_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "return_value",
+              .value_kind = check_end::ResolvedValueKind::CallReturnParameter,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "target",
+              .value_kind = check_end::ResolvedValueKind::DirectCallTarget,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "arguments",
+              .value_kind = check_end::ResolvedValueKind::CallArguments,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      call_direct_operand_layout_2_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "return_value",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::CallReturnParameter,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::DirectCallTarget,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "arguments",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::CallArguments,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      call_direct_operand_layout_3_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "target",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "metadata",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      call_direct_operand_layout_3_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "metadata",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      call_direct_operand_layout_4_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "target",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "arguments",
+              .value_kind = check_end::ResolvedValueKind::CallArguments,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "metadata",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      call_direct_operand_layout_4_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "arguments",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::CallArguments,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "metadata",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      call_direct_operand_layout_5_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "return_value",
+              .value_kind = check_end::ResolvedValueKind::CallReturnParameter,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "target",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "arguments",
+              .value_kind = check_end::ResolvedValueKind::CallArguments,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "metadata",
+              .value_kind = check_end::ResolvedValueKind::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      call_direct_operand_layout_5_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "return_value",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::CallReturnParameter,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "arguments",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::CallArguments,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "metadata",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::IndirectCallee,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 6>
+      call_direct_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "target",
+              .fields = call_direct_operand_layout_0_fields,
+              .bindings = call_direct_operand_layout_0_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "target_input",
+              .fields = call_direct_operand_layout_1_fields,
+              .bindings = call_direct_operand_layout_1_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "return_target_input",
+              .fields = call_direct_operand_layout_2_fields,
+              .bindings = call_direct_operand_layout_2_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "target_metadata",
+              .fields = call_direct_operand_layout_3_fields,
+              .bindings = call_direct_operand_layout_3_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "target_input_metadata",
+              .fields = call_direct_operand_layout_4_fields,
+              .bindings = call_direct_operand_layout_4_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "return_target_input_metadata",
+              .fields = call_direct_operand_layout_5_fields,
+              .bindings = call_direct_operand_layout_5_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Direct",
+          .fields = call_direct_fields,
+          .modifier_bindings = call_direct_modifier_bindings,
+          .operand_layouts = call_direct_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "call",
+      .variants = variants,
+  };
+};
+
+struct BraResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      bra_direct_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "uni",
+          .value_kind = check_end::ResolvedValueKind::Bool,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      bra_direct_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "uni",
+              .target_field_id = "uni",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      bra_direct_operand_layout_0_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "target",
+          .value_kind = check_end::ResolvedValueKind::BranchTarget,
+      }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      bra_direct_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "target",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::BranchTarget,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      bra_direct_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = bra_direct_operand_layout_0_fields,
+          .bindings = bra_direct_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Direct",
+          .fields = bra_direct_fields,
+          .modifier_bindings = bra_direct_modifier_bindings,
+          .operand_layouts = bra_direct_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "bra",
+      .variants = variants,
+  };
+};
+
+struct BrxResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      brx_idx_fields = {check_end::ResolvedFieldDescriptor{
+                            .field_id = "idx",
+                            .value_kind = check_end::ResolvedValueKind::Bool,
+                        },
+                        check_end::ResolvedFieldDescriptor{
+                            .field_id = "uni",
+                            .value_kind = check_end::ResolvedValueKind::Bool,
+                        }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      brx_idx_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "idx",
+              .target_field_id = "idx",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "uni",
+              .target_field_id = "uni",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      brx_idx_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "index",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "tlist",
+              .value_kind = check_end::ResolvedValueKind::BranchTargetSet,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      brx_idx_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "index",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "tlist",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::BranchTarget,
+              .access = check_end::OperandAccess::Control,
+              .allowed_shapes = check_end::OperandShape::BranchTargetSet,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      brx_idx_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = brx_idx_operand_layout_0_fields,
+          .bindings = brx_idx_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Idx",
+          .fields = brx_idx_fields,
+          .modifier_bindings = brx_idx_modifier_bindings,
+          .operand_layouts = brx_idx_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "brx",
+      .variants = variants,
+  };
+};
+
+struct RetResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      ret_bare_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 0>
+      ret_bare_modifier_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      ret_bare_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      ret_bare_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ret_bare_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = ret_bare_operand_layout_0_fields,
+          .bindings = ret_bare_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Bare",
+          .fields = ret_bare_fields,
+          .modifier_bindings = ret_bare_modifier_bindings,
+          .operand_layouts = ret_bare_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "ret",
+      .variants = variants,
+  };
+};
+
+struct ExitResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      exit_bare_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 0>
+      exit_bare_modifier_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      exit_bare_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      exit_bare_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      exit_bare_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = exit_bare_operand_layout_0_fields,
+          .bindings = exit_bare_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Bare",
+          .fields = exit_bare_fields,
+          .modifier_bindings = exit_bare_modifier_bindings,
+          .operand_layouts = exit_bare_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "exit",
+      .variants = variants,
+  };
+};
+
+struct IsspacepResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      isspacep_global_u64_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "state_space",
+          .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      isspacep_global_u64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      isspacep_global_u64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      isspacep_global_u64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      isspacep_global_u64_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = isspacep_global_u64_operand_layout_0_fields,
+              .bindings = isspacep_global_u64_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalU64",
+          .fields = isspacep_global_u64_fields,
+          .modifier_bindings = isspacep_global_u64_modifier_bindings,
+          .operand_layouts = isspacep_global_u64_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "isspacep",
+      .variants = variants,
+  };
+};
+
+struct CvtaResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvta_global_u64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      cvta_global_u64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvta_global_u64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvta_global_u64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvta_global_u64_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvta_global_u64_operand_layout_0_fields,
+              .bindings = cvta_global_u64_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvta_to_global_u64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "to",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvta_to_global_u64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "to",
+              .target_field_id = "to",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvta_to_global_u64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvta_to_global_u64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvta_to_global_u64_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvta_to_global_u64_operand_layout_0_fields,
+              .bindings = cvta_to_global_u64_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "GlobalU64",
+                      .fields = cvta_global_u64_fields,
+                      .modifier_bindings = cvta_global_u64_modifier_bindings,
+                      .operand_layouts = cvta_global_u64_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "ToGlobalU64",
+                      .fields = cvta_to_global_u64_fields,
+                      .modifier_bindings = cvta_to_global_u64_modifier_bindings,
+                      .operand_layouts = cvta_to_global_u64_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "cvta",
+      .variants = variants,
+  };
+};
+
+struct CvtResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_s32_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      cvt_s32_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_s32_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvt_s32_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "dst_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "src_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_s32_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = cvt_s32_u32_operand_layout_0_fields,
+          .bindings = cvt_s32_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rn_f32_f64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvt_rn_f32_f64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_rn_f32_f64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvt_rn_f32_f64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "dst_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "src_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_rn_f32_f64_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_rn_f32_f64_operand_layout_0_fields,
+              .bindings = cvt_rn_f32_f64_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rn_f32_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvt_rn_f32_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_rn_f32_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvt_rn_f32_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "dst_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "src_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_rn_f32_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_rn_f32_u32_operand_layout_0_fields,
+              .bindings = cvt_rn_f32_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rn_f32_s32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvt_rn_f32_s32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_rn_f32_s32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvt_rn_f32_s32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_rn_f32_s32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_rn_f32_s32_operand_layout_0_fields,
+              .bindings = cvt_rn_f32_s32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rzi_u32_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvt_rzi_u32_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cvt_rzi_u32_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      cvt_rzi_u32_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "dst_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "src_type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_rzi_u32_f32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_rzi_u32_f32_operand_layout_0_fields,
+              .bindings = cvt_rzi_u32_f32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rn_f16x2_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "rounding",
+              .value_kind = check_end::ResolvedValueKind::RoundingMode,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      cvt_rn_f16x2_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "rounding",
+              .target_field_id = "rounding",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cvt_rn_f16x2_f32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      cvt_rn_f16x2_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_rn_f16x2_f32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_rn_f16x2_f32_operand_layout_0_fields,
+              .bindings = cvt_rn_f16x2_f32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      cvt_pack_sat_u8_s32_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "pack",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "saturate",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "carry_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      cvt_pack_sat_u8_s32_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "pack",
+              .target_field_id = "pack",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sat",
+              .target_field_id = "saturate",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "dst_type",
+              .target_field_id = "dst_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "src_type",
+              .target_field_id = "src_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "carry_type",
+              .target_field_id = "carry_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      cvt_pack_sat_u8_s32_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "carry",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      cvt_pack_sat_u8_s32_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::S32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "carry",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cvt_pack_sat_u8_s32_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cvt_pack_sat_u8_s32_b32_operand_layout_0_fields,
+              .bindings = cvt_pack_sat_u8_s32_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 7>
+      variants = {
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "S32U32",
+              .fields = cvt_s32_u32_fields,
+              .modifier_bindings = cvt_s32_u32_modifier_bindings,
+              .operand_layouts = cvt_s32_u32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "RnF32F64",
+              .fields = cvt_rn_f32_f64_fields,
+              .modifier_bindings = cvt_rn_f32_f64_modifier_bindings,
+              .operand_layouts = cvt_rn_f32_f64_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "RnF32U32",
+              .fields = cvt_rn_f32_u32_fields,
+              .modifier_bindings = cvt_rn_f32_u32_modifier_bindings,
+              .operand_layouts = cvt_rn_f32_u32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "RnF32S32",
+              .fields = cvt_rn_f32_s32_fields,
+              .modifier_bindings = cvt_rn_f32_s32_modifier_bindings,
+              .operand_layouts = cvt_rn_f32_s32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "RziU32F32",
+              .fields = cvt_rzi_u32_f32_fields,
+              .modifier_bindings = cvt_rzi_u32_f32_modifier_bindings,
+              .operand_layouts = cvt_rzi_u32_f32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "RnF16x2F32",
+              .fields = cvt_rn_f16x2_f32_fields,
+              .modifier_bindings = cvt_rn_f16x2_f32_modifier_bindings,
+              .operand_layouts = cvt_rn_f16x2_f32_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "PackSatU8S32B32",
+              .fields = cvt_pack_sat_u8_s32_b32_fields,
+              .modifier_bindings = cvt_pack_sat_u8_s32_b32_modifier_bindings,
+              .operand_layouts = cvt_pack_sat_u8_s32_b32_operand_layouts,
+          }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "cvt",
+      .variants = variants,
+  };
+};
+
+struct MovResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      mov_scalar_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      mov_scalar_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_scalar_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::MovSource,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      mov_scalar_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate |
+                                check_end::OperandShape::SpecialRegister |
+                                check_end::OperandShape::Symbol |
+                                check_end::OperandShape::Address,
+          }};
+
+  static constexpr std::array<uint8_t, 2>
+      mov_scalar_operand_layout_1_binding_1_vector_arities = {{2, 4}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_scalar_operand_layout_1_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      mov_scalar_operand_layout_1_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mov_scalar_operand_layout_1_binding_1_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Aggregate,
+              .allow_vector_sink = false,
+          }};
+
+  static constexpr std::array<uint8_t, 2>
+      mov_scalar_operand_layout_2_binding_0_vector_arities = {{2, 4}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_scalar_operand_layout_2_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      mov_scalar_operand_layout_2_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mov_scalar_operand_layout_2_binding_0_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Aggregate,
+              .allow_vector_sink = true,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 3>
+      mov_scalar_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "scalar",
+              .fields = mov_scalar_operand_layout_0_fields,
+              .bindings = mov_scalar_operand_layout_0_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "pack",
+              .fields = mov_scalar_operand_layout_1_fields,
+              .bindings = mov_scalar_operand_layout_1_bindings,
+          },
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "unpack",
+              .fields = mov_scalar_operand_layout_2_fields,
+              .bindings = mov_scalar_operand_layout_2_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_v4_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "vector",
+              .value_kind = check_end::ResolvedValueKind::VectorArity,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      mov_v4_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "vector",
+              .target_field_id = "vector",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_v4_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::VectorRegister,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::VectorSpecialRegister,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      mov_v4_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mov_v4_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mov_v4_u32_operand_layout_0_fields,
+          .bindings = mov_v4_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      mov_pred_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      mov_pred_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      mov_pred_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::PredicateSource,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      mov_pred_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate |
+                                check_end::OperandShape::SpecialRegister,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mov_pred_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = mov_pred_operand_layout_0_fields,
+          .bindings = mov_pred_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 3>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "Scalar",
+                      .fields = mov_scalar_fields,
+                      .modifier_bindings = mov_scalar_modifier_bindings,
+                      .operand_layouts = mov_scalar_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "V4U32",
+                      .fields = mov_v4_u32_fields,
+                      .modifier_bindings = mov_v4_u32_modifier_bindings,
+                      .operand_layouts = mov_v4_u32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "Pred",
+                      .fields = mov_pred_fields,
+                      .modifier_bindings = mov_pred_modifier_bindings,
+                      .operand_layouts = mov_pred_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "mov",
+      .variants = variants,
+  };
+};
+
+struct LdResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      ld_generic_scalar_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "mmio",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      ld_generic_scalar_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "mmio",
+              .target_field_id = "mmio",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 4>
+      ld_generic_scalar_operand_layout_0_binding_1_address_state_spaces = {
+          {checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Constant,
+               .availability =
+                   {
+                       .minimum_ptx_version = {3, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Global,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Local,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Shared,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_generic_scalar_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_generic_scalar_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  ld_generic_scalar_operand_layout_0_binding_1_address_state_spaces,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_generic_scalar_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_generic_scalar_operand_layout_0_fields,
+              .bindings = ld_generic_scalar_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
+      ld_explicit_scalar_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "mmio",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
+      ld_explicit_scalar_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "mmio",
+              .target_field_id = "mmio",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_explicit_scalar_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_explicit_scalar_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+              .parameter_constraint =
+                  {
+                      .direction = ParameterDirection::Input,
+                      .function_availability =
+                          {
+                              .minimum_ptx_version = {2, 0},
+                              .minimum_sm_version = 20,
+                              .required_family = "",
+                          },
+                  },
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_explicit_scalar_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_explicit_scalar_operand_layout_0_fields,
+              .bindings = ld_explicit_scalar_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      ld_global_u32_l1_evict_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "eviction_priority",
+              .value_kind = check_end::ResolvedValueKind::EvictionPriority,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      ld_global_u32_l1_evict_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "eviction_priority",
+              .target_field_id = "eviction_priority",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_global_u32_l1_evict_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_global_u32_l1_evict_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_global_u32_l1_evict_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_global_u32_l1_evict_operand_layout_0_fields,
+              .bindings = ld_global_u32_l1_evict_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      ld_global_u32_l2_cache_hint_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache_hint",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      ld_global_u32_l2_cache_hint_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache_hint",
+              .target_field_id = "cache_hint",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      ld_global_u32_l2_cache_hint_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache_policy",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      ld_global_u32_l2_cache_hint_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "cache_policy",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_global_u32_l2_cache_hint_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_global_u32_l2_cache_hint_operand_layout_0_fields,
+              .bindings = ld_global_u32_l2_cache_hint_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      ld_generic_vector_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "vector",
+              .value_kind = check_end::ResolvedValueKind::VectorArity,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      ld_generic_vector_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "vector",
+              .target_field_id = "vector",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 4>
+      ld_generic_vector_operand_layout_0_binding_1_address_state_spaces = {
+          {checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Constant,
+               .availability =
+                   {
+                       .minimum_ptx_version = {3, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Global,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Local,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Shared,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_generic_vector_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_generic_vector_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = true,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  ld_generic_vector_operand_layout_0_binding_1_address_state_spaces,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_generic_vector_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_generic_vector_operand_layout_0_fields,
+              .bindings = ld_generic_vector_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
+      ld_explicit_vector_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "vector",
+              .value_kind = check_end::ResolvedValueKind::VectorArity,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
+      ld_explicit_vector_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "vector",
+              .target_field_id = "vector",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_explicit_vector_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_explicit_vector_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = true,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+              .parameter_constraint =
+                  {
+                      .direction = ParameterDirection::Input,
+                      .function_availability =
+                          {
+                              .minimum_ptx_version = {2, 0},
+                              .minimum_sm_version = 20,
+                              .required_family = "",
+                          },
+                  },
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_explicit_vector_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_explicit_vector_operand_layout_0_fields,
+              .bindings = ld_explicit_vector_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      ld_global_nc_l1_no_allocate_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "nc",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "eviction_priority",
+              .value_kind = check_end::ResolvedValueKind::EvictionPriority,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 4>
+      ld_global_nc_l1_no_allocate_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "nc",
+              .target_field_id = "nc",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "eviction_priority",
+              .target_field_id = "eviction_priority",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ld_global_nc_l1_no_allocate_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ld_global_nc_l1_no_allocate_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ld_global_nc_l1_no_allocate_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ld_global_nc_l1_no_allocate_u32_operand_layout_0_fields,
+              .bindings =
+                  ld_global_nc_l1_no_allocate_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 7>
+      variants = {
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GenericScalar",
+              .fields = ld_generic_scalar_fields,
+              .modifier_bindings = ld_generic_scalar_modifier_bindings,
+              .operand_layouts = ld_generic_scalar_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "ExplicitScalar",
+              .fields = ld_explicit_scalar_fields,
+              .modifier_bindings = ld_explicit_scalar_modifier_bindings,
+              .operand_layouts = ld_explicit_scalar_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GlobalU32L1Evict",
+              .fields = ld_global_u32_l1_evict_fields,
+              .modifier_bindings = ld_global_u32_l1_evict_modifier_bindings,
+              .operand_layouts = ld_global_u32_l1_evict_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GlobalU32L2CacheHint",
+              .fields = ld_global_u32_l2_cache_hint_fields,
+              .modifier_bindings =
+                  ld_global_u32_l2_cache_hint_modifier_bindings,
+              .operand_layouts = ld_global_u32_l2_cache_hint_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GenericVector",
+              .fields = ld_generic_vector_fields,
+              .modifier_bindings = ld_generic_vector_modifier_bindings,
+              .operand_layouts = ld_generic_vector_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "ExplicitVector",
+              .fields = ld_explicit_vector_fields,
+              .modifier_bindings = ld_explicit_vector_modifier_bindings,
+              .operand_layouts = ld_explicit_vector_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GlobalNcL1NoAllocateU32",
+              .fields = ld_global_nc_l1_no_allocate_u32_fields,
+              .modifier_bindings =
+                  ld_global_nc_l1_no_allocate_u32_modifier_bindings,
+              .operand_layouts =
+                  ld_global_nc_l1_no_allocate_u32_operand_layouts,
+          }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "ld",
+      .variants = variants,
+  };
+};
+
+struct LduResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ldu_global_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      ldu_global_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ldu_global_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ldu_global_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ldu_global_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = ldu_global_u32_operand_layout_0_fields,
+              .bindings = ldu_global_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalU32",
+          .fields = ldu_global_u32_fields,
+          .modifier_bindings = ldu_global_u32_modifier_bindings,
+          .operand_layouts = ldu_global_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "ldu",
+      .variants = variants,
+  };
+};
+
+struct ShflResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      shfl_sync_idx_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "sync",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "idx",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      shfl_sync_idx_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sync",
+              .target_field_id = "sync",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "idx",
+              .target_field_id = "idx",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      shfl_sync_idx_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::ShflDestination,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "lane",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "clamp",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "membermask",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 5>
+      shfl_sync_idx_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::ShflDestination,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "lane",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "clamp",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "membermask",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      shfl_sync_idx_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = shfl_sync_idx_b32_operand_layout_0_fields,
+              .bindings = shfl_sync_idx_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "SyncIdxB32",
+          .fields = shfl_sync_idx_b32_fields,
+          .modifier_bindings = shfl_sync_idx_b32_modifier_bindings,
+          .operand_layouts = shfl_sync_idx_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "shfl",
+      .variants = variants,
+  };
+};
+
+struct PrefetchResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      prefetch_global_l1_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "l1",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      prefetch_global_l1_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "l1",
+              .target_field_id = "l1",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      prefetch_global_l1_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      prefetch_global_l1_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      prefetch_global_l1_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = prefetch_global_l1_operand_layout_0_fields,
+              .bindings = prefetch_global_l1_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalL1",
+          .fields = prefetch_global_l1_fields,
+          .modifier_bindings = prefetch_global_l1_modifier_bindings,
+          .operand_layouts = prefetch_global_l1_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "prefetch",
+      .variants = variants,
+  };
+};
+
+struct PrefetchuResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      prefetchu_l1_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "l1",
+          .value_kind = check_end::ResolvedValueKind::Bool,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      prefetchu_l1_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "l1",
+              .target_field_id = "l1",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 1>
+      prefetchu_l1_operand_layout_0_binding_0_address_state_spaces = {
+          {checker::AddressStateSpaceDescriptor{
+              .state_space = MemoryStateSpace::Generic,
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      prefetchu_l1_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      prefetchu_l1_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  prefetchu_l1_operand_layout_0_binding_0_address_state_spaces,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      prefetchu_l1_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = prefetchu_l1_operand_layout_0_fields,
+              .bindings = prefetchu_l1_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "L1",
+          .fields = prefetchu_l1_fields,
+          .modifier_bindings = prefetchu_l1_modifier_bindings,
+          .operand_layouts = prefetchu_l1_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "prefetchu",
+      .variants = variants,
+  };
+};
+
+struct CreatepolicyResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      createpolicy_fractional_l2_evict_last_b64_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "fractional",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "eviction_priority",
+              .value_kind = check_end::ResolvedValueKind::EvictionPriority,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      createpolicy_fractional_l2_evict_last_b64_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "fractional",
+              .target_field_id = "fractional",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "eviction_priority",
+              .target_field_id = "eviction_priority",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      createpolicy_fractional_l2_evict_last_b64_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "fraction",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      createpolicy_fractional_l2_evict_last_b64_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "fraction",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      createpolicy_fractional_l2_evict_last_b64_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields =
+                  createpolicy_fractional_l2_evict_last_b64_operand_layout_0_fields,
+              .bindings =
+                  createpolicy_fractional_l2_evict_last_b64_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "FractionalL2EvictLastB64",
+          .fields = createpolicy_fractional_l2_evict_last_b64_fields,
+          .modifier_bindings =
+              createpolicy_fractional_l2_evict_last_b64_modifier_bindings,
+          .operand_layouts =
+              createpolicy_fractional_l2_evict_last_b64_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "createpolicy",
+      .variants = variants,
+  };
+};
+
+struct ApplypriorityResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      applypriority_global_l2_evict_normal_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "eviction_priority",
+              .value_kind = check_end::ResolvedValueKind::EvictionPriority,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      applypriority_global_l2_evict_normal_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "eviction_priority",
+              .target_field_id = "eviction_priority",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      applypriority_global_l2_evict_normal_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "size",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      applypriority_global_l2_evict_normal_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "size",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      applypriority_global_l2_evict_normal_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields =
+                  applypriority_global_l2_evict_normal_operand_layout_0_fields,
+              .bindings =
+                  applypriority_global_l2_evict_normal_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalL2EvictNormal",
+          .fields = applypriority_global_l2_evict_normal_fields,
+          .modifier_bindings =
+              applypriority_global_l2_evict_normal_modifier_bindings,
+          .operand_layouts =
+              applypriority_global_l2_evict_normal_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "applypriority",
+      .variants = variants,
+  };
+};
+
+struct DiscardResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      discard_global_l2_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "l2",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      discard_global_l2_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "l2",
+              .target_field_id = "l2",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      discard_global_l2_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "size",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      discard_global_l2_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "size",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      discard_global_l2_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = discard_global_l2_operand_layout_0_fields,
+              .bindings = discard_global_l2_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalL2",
+          .fields = discard_global_l2_fields,
+          .modifier_bindings = discard_global_l2_modifier_bindings,
+          .operand_layouts = discard_global_l2_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "discard",
+      .variants = variants,
+  };
+};
+
+struct CpResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      cp_async_ca_shared_global_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "async",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "ca",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "shared",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "global",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 4>
+      cp_async_ca_shared_global_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "async",
+              .target_field_id = "async",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "ca",
+              .target_field_id = "ca",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "shared",
+              .target_field_id = "shared",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "global",
+              .target_field_id = "global",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 1>
+      cp_async_ca_shared_global_operand_layout_0_binding_0_address_state_spaces =
+          {{checker::AddressStateSpaceDescriptor{
+              .state_space = MemoryStateSpace::Shared,
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }}};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 1>
+      cp_async_ca_shared_global_operand_layout_0_binding_1_address_state_spaces =
+          {{checker::AddressStateSpaceDescriptor{
+              .state_space = MemoryStateSpace::Global,
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      cp_async_ca_shared_global_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cp_size",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      cp_async_ca_shared_global_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  cp_async_ca_shared_global_operand_layout_0_binding_0_address_state_spaces,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  cp_async_ca_shared_global_operand_layout_0_binding_1_address_state_spaces,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "cp_size",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cp_async_ca_shared_global_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cp_async_ca_shared_global_operand_layout_0_fields,
+              .bindings = cp_async_ca_shared_global_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cp_async_commit_group_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "async",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "commit_group",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      cp_async_commit_group_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "async",
+              .target_field_id = "async",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "commit_group",
+              .target_field_id = "commit_group",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      cp_async_commit_group_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      cp_async_commit_group_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cp_async_commit_group_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cp_async_commit_group_operand_layout_0_fields,
+              .bindings = cp_async_commit_group_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cp_async_wait_group_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "async",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wait_group",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      cp_async_wait_group_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "async",
+              .target_field_id = "async",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wait_group",
+              .target_field_id = "wait_group",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      cp_async_wait_group_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "n",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      cp_async_wait_group_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "n",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cp_async_wait_group_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cp_async_wait_group_operand_layout_0_fields,
+              .bindings = cp_async_wait_group_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      cp_async_wait_all_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "async",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wait_all",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      cp_async_wait_all_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "async",
+              .target_field_id = "async",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wait_all",
+              .target_field_id = "wait_all",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      cp_async_wait_all_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      cp_async_wait_all_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      cp_async_wait_all_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = cp_async_wait_all_operand_layout_0_fields,
+              .bindings = cp_async_wait_all_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 4>
+      variants = {
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "AsyncCaSharedGlobal",
+              .fields = cp_async_ca_shared_global_fields,
+              .modifier_bindings = cp_async_ca_shared_global_modifier_bindings,
+              .operand_layouts = cp_async_ca_shared_global_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "AsyncCommitGroup",
+              .fields = cp_async_commit_group_fields,
+              .modifier_bindings = cp_async_commit_group_modifier_bindings,
+              .operand_layouts = cp_async_commit_group_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "AsyncWaitGroup",
+              .fields = cp_async_wait_group_fields,
+              .modifier_bindings = cp_async_wait_group_modifier_bindings,
+              .operand_layouts = cp_async_wait_group_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "AsyncWaitAll",
+              .fields = cp_async_wait_all_fields,
+              .modifier_bindings = cp_async_wait_all_modifier_bindings,
+              .operand_layouts = cp_async_wait_all_operand_layouts,
+          }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "cp",
+      .variants = variants,
+  };
+};
+
+struct StResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      st_generic_scalar_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "mmio",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      st_generic_scalar_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "mmio",
+              .target_field_id = "mmio",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 3>
+      st_generic_scalar_operand_layout_0_binding_0_address_state_spaces = {
+          {checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Global,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Local,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Shared,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      st_generic_scalar_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      st_generic_scalar_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  st_generic_scalar_operand_layout_0_binding_0_address_state_spaces,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_generic_scalar_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_generic_scalar_operand_layout_0_fields,
+              .bindings = st_generic_scalar_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
+      st_explicit_scalar_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "mmio",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
+      st_explicit_scalar_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "mmio",
+              .target_field_id = "mmio",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::Bool,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      st_explicit_scalar_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      st_explicit_scalar_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+              .parameter_constraint =
+                  {
+                      .direction = ParameterDirection::Return,
+                      .function_availability =
+                          {
+                              .minimum_ptx_version = {2, 0},
+                              .minimum_sm_version = 20,
+                              .required_family = "",
+                          },
+                  },
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_explicit_scalar_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_explicit_scalar_operand_layout_0_fields,
+              .bindings = st_explicit_scalar_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      st_global_u32_l1_evict_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "eviction_priority",
+              .value_kind = check_end::ResolvedValueKind::EvictionPriority,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      st_global_u32_l1_evict_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "eviction_priority",
+              .target_field_id = "eviction_priority",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      st_global_u32_l1_evict_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      st_global_u32_l1_evict_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_global_u32_l1_evict_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_global_u32_l1_evict_operand_layout_0_fields,
+              .bindings = st_global_u32_l1_evict_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      st_global_u32_l2_cache_hint_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache_hint",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      st_global_u32_l2_cache_hint_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache_hint",
+              .target_field_id = "cache_hint",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      st_global_u32_l2_cache_hint_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache_policy",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      st_global_u32_l2_cache_hint_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "cache_policy",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B64,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_global_u32_l2_cache_hint_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_global_u32_l2_cache_hint_operand_layout_0_fields,
+              .bindings = st_global_u32_l2_cache_hint_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      st_generic_vector_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "vector",
+              .value_kind = check_end::ResolvedValueKind::VectorArity,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      st_generic_vector_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "vector",
+              .target_field_id = "vector",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 3>
+      st_generic_vector_operand_layout_0_binding_0_address_state_spaces = {
+          {checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Global,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Local,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::AddressStateSpaceDescriptor{
+               .state_space = MemoryStateSpace::Shared,
+               .availability =
+                   {
+                       .minimum_ptx_version = {0, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      st_generic_vector_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      st_generic_vector_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  st_generic_vector_operand_layout_0_binding_0_address_state_spaces,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = true,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_generic_vector_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_generic_vector_operand_layout_0_fields,
+              .bindings = st_generic_vector_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
+      st_explicit_vector_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "cache",
+              .value_kind = check_end::ResolvedValueKind::CacheOperator,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "vector",
+              .value_kind = check_end::ResolvedValueKind::VectorArity,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
+      st_explicit_vector_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "cache",
+              .target_field_id = "cache",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::CacheOperator,
+                      .bool_value = false,
+                      .scalar_type = ScalarType::Invalid,
+                      .rounding_mode = RoundingMode::Invalid,
+                      .cache_operator = CacheOperator::Unspecified,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind = check_end::ResolvedModifierDefaultKind::
+                          MemoryConsistency,
+                      .memory_consistency = MemoryConsistency::Omitted,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value =
+                  check_end::ResolvedModifierDefaultDescriptor{
+                      .kind =
+                          check_end::ResolvedModifierDefaultKind::MemoryScope,
+                      .memory_scope = MemoryScope::None,
+                  },
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "vector",
+              .target_field_id = "vector",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      st_explicit_vector_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      st_explicit_vector_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+              .parameter_constraint =
+                  {
+                      .direction = ParameterDirection::Return,
+                      .function_availability =
+                          {
+                              .minimum_ptx_version = {2, 0},
+                              .minimum_sm_version = 20,
+                              .required_family = "",
+                          },
+                  },
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::EqualOrWider,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .vector_arity_modifier_field_id = "vector",
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = true,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      st_explicit_vector_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = st_explicit_vector_operand_layout_0_fields,
+              .bindings = st_explicit_vector_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 6>
+      variants = {
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GenericScalar",
+              .fields = st_generic_scalar_fields,
+              .modifier_bindings = st_generic_scalar_modifier_bindings,
+              .operand_layouts = st_generic_scalar_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "ExplicitScalar",
+              .fields = st_explicit_scalar_fields,
+              .modifier_bindings = st_explicit_scalar_modifier_bindings,
+              .operand_layouts = st_explicit_scalar_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GlobalU32L1Evict",
+              .fields = st_global_u32_l1_evict_fields,
+              .modifier_bindings = st_global_u32_l1_evict_modifier_bindings,
+              .operand_layouts = st_global_u32_l1_evict_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GlobalU32L2CacheHint",
+              .fields = st_global_u32_l2_cache_hint_fields,
+              .modifier_bindings =
+                  st_global_u32_l2_cache_hint_modifier_bindings,
+              .operand_layouts = st_global_u32_l2_cache_hint_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "GenericVector",
+              .fields = st_generic_vector_fields,
+              .modifier_bindings = st_generic_vector_modifier_bindings,
+              .operand_layouts = st_generic_vector_operand_layouts,
+          },
+          check_end::ResolvedVariantDescriptor{
+              .variant_name = "ExplicitVector",
+              .fields = st_explicit_vector_fields,
+              .modifier_bindings = st_explicit_vector_modifier_bindings,
+              .operand_layouts = st_explicit_vector_operand_layouts,
+          }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "st",
+      .variants = variants,
+  };
+};
+
+struct PrmtResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      prmt_generic_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      prmt_generic_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      prmt_generic_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "selector",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      prmt_generic_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "selector",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      prmt_generic_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = prmt_generic_b32_operand_layout_0_fields,
+              .bindings = prmt_generic_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      prmt_f4e_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "f4e",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      prmt_f4e_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "f4e",
+              .target_field_id = "f4e",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      prmt_f4e_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "selector",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      prmt_f4e_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "selector",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      prmt_f4e_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = prmt_f4e_b32_operand_layout_0_fields,
+              .bindings = prmt_f4e_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "GenericB32",
+                      .fields = prmt_generic_b32_fields,
+                      .modifier_bindings = prmt_generic_b32_modifier_bindings,
+                      .operand_layouts = prmt_generic_b32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "F4eB32",
+                      .fields = prmt_f4e_b32_fields,
+                      .modifier_bindings = prmt_f4e_b32_modifier_bindings,
+                      .operand_layouts = prmt_f4e_b32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "prmt",
+      .variants = variants,
+  };
+};
+
+struct AndResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      and_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      and_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      and_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      and_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      and_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = and_b32_operand_layout_0_fields,
+          .bindings = and_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = and_b32_fields,
+          .modifier_bindings = and_b32_modifier_bindings,
+          .operand_layouts = and_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "and",
+      .variants = variants,
+  };
+};
+
+struct OrResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      or_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      or_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      or_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      or_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      or_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = or_b32_operand_layout_0_fields,
+          .bindings = or_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = or_b32_fields,
+          .modifier_bindings = or_b32_modifier_bindings,
+          .operand_layouts = or_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "or",
+      .variants = variants,
+  };
+};
+
+struct XorResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      xor_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      xor_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      xor_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      xor_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      xor_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = xor_b32_operand_layout_0_fields,
+          .bindings = xor_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = xor_b32_fields,
+          .modifier_bindings = xor_b32_modifier_bindings,
+          .operand_layouts = xor_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "xor",
+      .variants = variants,
+  };
+};
+
+struct NotResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      not_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      not_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      not_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      not_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      not_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = not_b32_operand_layout_0_fields,
+          .bindings = not_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = not_b32_fields,
+          .modifier_bindings = not_b32_modifier_bindings,
+          .operand_layouts = not_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "not",
+      .variants = variants,
+  };
+};
+
+struct Lop3ResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      lop3_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      lop3_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      lop3_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src3",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "lut",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 5>
+      lop3_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src3",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "lut",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      lop3_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = lop3_b32_operand_layout_0_fields,
+          .bindings = lop3_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = lop3_b32_fields,
+          .modifier_bindings = lop3_b32_modifier_bindings,
+          .operand_layouts = lop3_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "lop3",
+      .variants = variants,
+  };
+};
+
+struct ShfResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      shf_l_clamp_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "left",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "clamp",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      shf_l_clamp_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "left",
+              .target_field_id = "left",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "clamp",
+              .target_field_id = "clamp",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      shf_l_clamp_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "count",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      shf_l_clamp_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "count",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      shf_l_clamp_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = shf_l_clamp_b32_operand_layout_0_fields,
+              .bindings = shf_l_clamp_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      shf_r_wrap_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "right",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "wrap",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      shf_r_wrap_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "right",
+              .target_field_id = "right",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "wrap",
+              .target_field_id = "wrap",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      shf_r_wrap_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src1",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src2",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "count",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      shf_r_wrap_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src1",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src2",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "count",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      shf_r_wrap_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = shf_r_wrap_b32_operand_layout_0_fields,
+              .bindings = shf_r_wrap_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 2>
+      variants = {check_end::ResolvedVariantDescriptor{
+                      .variant_name = "LClampB32",
+                      .fields = shf_l_clamp_b32_fields,
+                      .modifier_bindings = shf_l_clamp_b32_modifier_bindings,
+                      .operand_layouts = shf_l_clamp_b32_operand_layouts,
+                  },
+                  check_end::ResolvedVariantDescriptor{
+                      .variant_name = "RWrapB32",
+                      .fields = shf_r_wrap_b32_fields,
+                      .modifier_bindings = shf_r_wrap_b32_modifier_bindings,
+                      .operand_layouts = shf_r_wrap_b32_operand_layouts,
+                  }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "shf",
+      .variants = variants,
+  };
+};
+
+struct ShlResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      shl_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      shl_b32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      shl_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "amount",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      shl_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "amount",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      shl_b32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = shl_b32_operand_layout_0_fields,
+          .bindings = shl_b32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = shl_b32_fields,
+          .modifier_bindings = shl_b32_modifier_bindings,
+          .operand_layouts = shl_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "shl",
+      .variants = variants,
+  };
+};
+
+struct ShrResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      shr_u32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      shr_u32_modifier_bindings = {check_end::ResolvedModifierBindingDescriptor{
+          .source_kind_id = "type",
+          .target_field_id = "type",
+          .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+      }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      shr_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "amount",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      shr_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "amount",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      shr_u32_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = shr_u32_operand_layout_0_fields,
+          .bindings = shr_u32_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "U32",
+          .fields = shr_u32_fields,
+          .modifier_bindings = shr_u32_modifier_bindings,
+          .operand_layouts = shr_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "shr",
+      .variants = variants,
+  };
+};
+
+struct TrapResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      trap_bare_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 0>
+      trap_bare_modifier_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      trap_bare_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      trap_bare_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      trap_bare_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = trap_bare_operand_layout_0_fields,
+          .bindings = trap_bare_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Bare",
+          .fields = trap_bare_fields,
+          .modifier_bindings = trap_bare_modifier_bindings,
+          .operand_layouts = trap_bare_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "trap",
+      .variants = variants,
+  };
+};
+
+struct SetmaxnregResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      setmaxnreg_inc_sync_aligned_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "inc",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "sync",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "aligned",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 4>
+      setmaxnreg_inc_sync_aligned_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "inc",
+              .target_field_id = "inc",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sync",
+              .target_field_id = "sync",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "aligned",
+              .target_field_id = "aligned",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      setmaxnreg_inc_sync_aligned_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "count",
+              .value_kind = check_end::ResolvedValueKind::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      setmaxnreg_inc_sync_aligned_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "count",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      setmaxnreg_inc_sync_aligned_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = setmaxnreg_inc_sync_aligned_u32_operand_layout_0_fields,
+              .bindings =
+                  setmaxnreg_inc_sync_aligned_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "IncSyncAlignedU32",
+          .fields = setmaxnreg_inc_sync_aligned_u32_fields,
+          .modifier_bindings =
+              setmaxnreg_inc_sync_aligned_u32_modifier_bindings,
+          .operand_layouts = setmaxnreg_inc_sync_aligned_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "setmaxnreg",
+      .variants = variants,
+  };
+};
+
 struct BarResolvedDescriptorStorage {
   static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
       bar_sync_fields = {check_end::ResolvedFieldDescriptor{
@@ -5591,7 +13847,1011 @@ struct BarResolvedDescriptorStorage {
   };
 };
 
+struct MembarResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      membar_cta_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "scope",
+          .value_kind = check_end::ResolvedValueKind::MemoryScope,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      membar_cta_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      membar_cta_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      membar_cta_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      membar_cta_operand_layouts = {check_end::ResolvedOperandLayoutDescriptor{
+          .layout_id = "default",
+          .fields = membar_cta_operand_layout_0_fields,
+          .bindings = membar_cta_operand_layout_0_bindings,
+      }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "Cta",
+          .fields = membar_cta_fields,
+          .modifier_bindings = membar_cta_modifier_bindings,
+          .operand_layouts = membar_cta_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "membar",
+      .variants = variants,
+  };
+};
+
+struct FenceResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      fence_acq_rel_cta_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 2>
+      fence_acq_rel_cta_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 0>
+      fence_acq_rel_cta_operand_layout_0_fields = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 0>
+      fence_acq_rel_cta_operand_layout_0_bindings = {
+
+  };
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      fence_acq_rel_cta_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = fence_acq_rel_cta_operand_layout_0_fields,
+              .bindings = fence_acq_rel_cta_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "AcqRelCta",
+          .fields = fence_acq_rel_cta_fields,
+          .modifier_bindings = fence_acq_rel_cta_modifier_bindings,
+          .operand_layouts = fence_acq_rel_cta_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "fence",
+      .variants = variants,
+  };
+};
+
+struct AtomResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      atom_global_relaxed_cta_add_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "add",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      atom_global_relaxed_cta_add_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "add",
+              .target_field_id = "add",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      atom_global_relaxed_cta_add_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      atom_global_relaxed_cta_add_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      atom_global_relaxed_cta_add_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = atom_global_relaxed_cta_add_u32_operand_layout_0_fields,
+              .bindings =
+                  atom_global_relaxed_cta_add_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .fields = atom_global_relaxed_cta_add_u32_fields,
+          .modifier_bindings =
+              atom_global_relaxed_cta_add_u32_modifier_bindings,
+          .operand_layouts = atom_global_relaxed_cta_add_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "atom",
+      .variants = variants,
+  };
+};
+
+struct RedResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 5>
+      red_global_relaxed_cta_add_u32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "state_space",
+              .value_kind = check_end::ResolvedValueKind::MemoryStateSpace,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "semantics",
+              .value_kind = check_end::ResolvedValueKind::MemoryConsistency,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "scope",
+              .value_kind = check_end::ResolvedValueKind::MemoryScope,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "add",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 5>
+      red_global_relaxed_cta_add_u32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "state_space",
+              .target_field_id = "state_space",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "semantics",
+              .target_field_id = "semantics",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "scope",
+              .target_field_id = "scope",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "add",
+              .target_field_id = "add",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      red_global_relaxed_cta_add_u32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "src",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      red_global_relaxed_cta_add_u32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .state_space_modifier_field_id = "state_space",
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "src",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind =
+                          check_end::OperandTypeExpressionKind::ModifierField,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "type",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      red_global_relaxed_cta_add_u32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = red_global_relaxed_cta_add_u32_operand_layout_0_fields,
+              .bindings =
+                  red_global_relaxed_cta_add_u32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .fields = red_global_relaxed_cta_add_u32_fields,
+          .modifier_bindings = red_global_relaxed_cta_add_u32_modifier_bindings,
+          .operand_layouts = red_global_relaxed_cta_add_u32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "red",
+      .variants = variants,
+  };
+};
+
+struct ActivemaskResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      activemask_b32_fields = {check_end::ResolvedFieldDescriptor{
+          .field_id = "type",
+          .value_kind = check_end::ResolvedValueKind::ScalarType,
+      }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 1>
+      activemask_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 1>
+      activemask_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 1>
+      activemask_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      activemask_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = activemask_b32_operand_layout_0_fields,
+              .bindings = activemask_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "B32",
+          .fields = activemask_b32_fields,
+          .modifier_bindings = activemask_b32_modifier_bindings,
+          .operand_layouts = activemask_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "activemask",
+      .variants = variants,
+  };
+};
+
+struct VoteResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      vote_sync_ballot_b32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "sync",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "ballot",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 3>
+      vote_sync_ballot_b32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sync",
+              .target_field_id = "sync",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "ballot",
+              .target_field_id = "ballot",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 3>
+      vote_sync_ballot_b32_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::Register,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "predicate",
+              .value_kind = check_end::ResolvedValueKind::Predicate,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "membermask",
+              .value_kind = check_end::ResolvedValueKind::RegOrImm,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 3>
+      vote_sync_ballot_b32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::Exact,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Register,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "predicate",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::Pred,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Predicate,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Predicate,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "membermask",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::U32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Register |
+                                check_end::OperandShape::Immediate,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      vote_sync_ballot_b32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields = vote_sync_ballot_b32_operand_layout_0_fields,
+              .bindings = vote_sync_ballot_b32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "SyncBallotB32",
+          .fields = vote_sync_ballot_b32_fields,
+          .modifier_bindings = vote_sync_ballot_b32_modifier_bindings,
+          .operand_layouts = vote_sync_ballot_b32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "vote",
+      .variants = variants,
+  };
+};
+
+struct MmaResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 9>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "sync",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "aligned",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "m16n8k8",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "row",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "col",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "d_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "a_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "b_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "c_type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 9>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sync",
+              .target_field_id = "sync",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "aligned",
+              .target_field_id = "aligned",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "m16n8k8",
+              .target_field_id = "m16n8k8",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "row",
+              .target_field_id = "row",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "col",
+              .target_field_id = "col",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "d_type",
+              .target_field_id = "d_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "a_type",
+              .target_field_id = "a_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "b_type",
+              .target_field_id = "b_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "c_type",
+              .target_field_id = "c_type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<uint8_t, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_0_vector_arities =
+          {{4}};
+
+  static constexpr std::array<uint8_t, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_1_vector_arities =
+          {{2}};
+
+  static constexpr std::array<uint8_t, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_2_vector_arities =
+          {{1}};
+
+  static constexpr std::array<uint8_t, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_3_vector_arities =
+          {{4}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 4>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_fields =
+          {check_end::ResolvedFieldDescriptor{
+               .field_id = "dst",
+               .value_kind = check_end::ResolvedValueKind::RegisterVector,
+           },
+           check_end::ResolvedFieldDescriptor{
+               .field_id = "a",
+               .value_kind = check_end::ResolvedValueKind::RegisterVector,
+           },
+           check_end::ResolvedFieldDescriptor{
+               .field_id = "b",
+               .value_kind = check_end::ResolvedValueKind::RegisterVector,
+           },
+           check_end::ResolvedFieldDescriptor{
+               .field_id = "c",
+               .value_kind = check_end::ResolvedValueKind::RegisterVector,
+           }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 4>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_0_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "a",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F16x2,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_1_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "b",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F16x2,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_2_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "c",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::F32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Source,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_binding_3_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_fields,
+              .bindings =
+                  mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "SyncAlignedM16n8k8RowColF32F16F16F32",
+          .fields = mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_fields,
+          .modifier_bindings =
+              mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_modifier_bindings,
+          .operand_layouts =
+              mma_sync_aligned_m16n8k8_row_col_f32_f16_f16_f32_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "mma",
+      .variants = variants,
+  };
+};
+
+struct LdmatrixResolvedDescriptorStorage {
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 6>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "sync",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "aligned",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "m8n8",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "x2",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "shared",
+              .value_kind = check_end::ResolvedValueKind::Bool,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "type",
+              .value_kind = check_end::ResolvedValueKind::ScalarType,
+          }};
+
+  static constexpr std::array<check_end::ResolvedModifierBindingDescriptor, 6>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_bindings = {
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "sync",
+              .target_field_id = "sync",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "aligned",
+              .target_field_id = "aligned",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "m8n8",
+              .target_field_id = "m8n8",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "x2",
+              .target_field_id = "x2",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "shared",
+              .target_field_id = "shared",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          },
+          check_end::ResolvedModifierBindingDescriptor{
+              .source_kind_id = "type",
+              .target_field_id = "type",
+              .default_value = check_end::ResolvedModifierDefaultDescriptor{},
+          }};
+
+  static constexpr std::array<uint8_t, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_binding_0_vector_arities =
+          {{2}};
+
+  static constexpr std::array<checker::AddressStateSpaceDescriptor, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_binding_1_address_state_spaces =
+          {{checker::AddressStateSpaceDescriptor{
+              .state_space = MemoryStateSpace::Shared,
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }}};
+
+  static constexpr std::array<check_end::ResolvedFieldDescriptor, 2>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_fields = {
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "dst",
+              .value_kind = check_end::ResolvedValueKind::RegisterVector,
+          },
+          check_end::ResolvedFieldDescriptor{
+              .field_id = "address",
+              .value_kind = check_end::ResolvedValueKind::Address,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandBindingDescriptor, 2>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_bindings = {
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "dst",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::FixedScalar,
+                      .fixed_scalar_type = ScalarType::B32,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Destination,
+              .access = check_end::OperandAccess::Write,
+              .allowed_shapes = check_end::OperandShape::Vector,
+              .allowed_vector_arities =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_binding_0_vector_arities,
+              .vector_type_policy = checker::VectorTypePolicy::Element,
+              .allow_vector_sink = false,
+          },
+          check_end::ResolvedOperandBindingDescriptor{
+              .target_field_id = "address",
+              .type_expression =
+                  check_end::TypeExpressionDescriptor{
+                      .kind = check_end::OperandTypeExpressionKind::None,
+                      .fixed_scalar_type = ScalarType::Invalid,
+                      .modifier_field_id = "",
+                  },
+              .register_width_policy = base::ScalarTypeSizePolicy::SameWidth,
+              .role = check_end::OperandRole::Address,
+              .access = check_end::OperandAccess::Read,
+              .allowed_shapes = check_end::OperandShape::Address,
+              .allowed_address_state_spaces =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_binding_1_address_state_spaces,
+          }};
+
+  static constexpr std::array<check_end::ResolvedOperandLayoutDescriptor, 1>
+      ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layouts = {
+          check_end::ResolvedOperandLayoutDescriptor{
+              .layout_id = "default",
+              .fields =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_fields,
+              .bindings =
+                  ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layout_0_bindings,
+          }};
+
+  static constexpr std::array<check_end::ResolvedVariantDescriptor, 1>
+      variants = {check_end::ResolvedVariantDescriptor{
+          .variant_name = "SyncAlignedM8n8X2SharedB16",
+          .fields = ldmatrix_sync_aligned_m8n8_x2_shared_b16_fields,
+          .modifier_bindings =
+              ldmatrix_sync_aligned_m8n8_x2_shared_b16_modifier_bindings,
+          .operand_layouts =
+              ldmatrix_sync_aligned_m8n8_x2_shared_b16_operand_layouts,
+      }};
+
+  static constexpr check_end::ResolvedInstructionDescriptor descriptor{
+      .opcode_name = "ldmatrix",
+      .variants = variants,
+  };
+};
+
 } // namespace generated_detail
+
+const check_end::ResolvedInstructionDescriptor &
+Add::get_resolved_descriptor() noexcept {
+  return generated_detail::AddResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Sub::get_resolved_descriptor() noexcept {
+  return generated_detail::SubResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Mul::get_resolved_descriptor() noexcept {
+  return generated_detail::MulResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Fma::get_resolved_descriptor() noexcept {
+  return generated_detail::FmaResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Mad::get_resolved_descriptor() noexcept {
+  return generated_detail::MadResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Div::get_resolved_descriptor() noexcept {
+  return generated_detail::DivResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Rem::get_resolved_descriptor() noexcept {
+  return generated_detail::RemResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Min::get_resolved_descriptor() noexcept {
+  return generated_detail::MinResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Max::get_resolved_descriptor() noexcept {
+  return generated_detail::MaxResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Abs::get_resolved_descriptor() noexcept {
+  return generated_detail::AbsResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Neg::get_resolved_descriptor() noexcept {
+  return generated_detail::NegResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Popc::get_resolved_descriptor() noexcept {
+  return generated_detail::PopcResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Clz::get_resolved_descriptor() noexcept {
+  return generated_detail::ClzResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Bfind::get_resolved_descriptor() noexcept {
+  return generated_detail::BfindResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Bfe::get_resolved_descriptor() noexcept {
+  return generated_detail::BfeResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Bfi::get_resolved_descriptor() noexcept {
+  return generated_detail::BfiResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Brev::get_resolved_descriptor() noexcept {
+  return generated_detail::BrevResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Set::get_resolved_descriptor() noexcept {
+  return generated_detail::SetResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Setp::get_resolved_descriptor() noexcept {
+  return generated_detail::SetpResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Selp::get_resolved_descriptor() noexcept {
+  return generated_detail::SelpResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Slct::get_resolved_descriptor() noexcept {
+  return generated_detail::SlctResolvedDescriptorStorage::descriptor;
+}
 
 const check_end::ResolvedInstructionDescriptor &
 Call::get_resolved_descriptor() noexcept {
@@ -5609,6 +14869,31 @@ Brx::get_resolved_descriptor() noexcept {
 }
 
 const check_end::ResolvedInstructionDescriptor &
+Ret::get_resolved_descriptor() noexcept {
+  return generated_detail::RetResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Exit::get_resolved_descriptor() noexcept {
+  return generated_detail::ExitResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Isspacep::get_resolved_descriptor() noexcept {
+  return generated_detail::IsspacepResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Cvta::get_resolved_descriptor() noexcept {
+  return generated_detail::CvtaResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Cvt::get_resolved_descriptor() noexcept {
+  return generated_detail::CvtResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
 Mov::get_resolved_descriptor() noexcept {
   return generated_detail::MovResolvedDescriptorStorage::descriptor;
 }
@@ -5619,23 +14904,148 @@ Ld::get_resolved_descriptor() noexcept {
 }
 
 const check_end::ResolvedInstructionDescriptor &
+Ldu::get_resolved_descriptor() noexcept {
+  return generated_detail::LduResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Shfl::get_resolved_descriptor() noexcept {
+  return generated_detail::ShflResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Prefetch::get_resolved_descriptor() noexcept {
+  return generated_detail::PrefetchResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Prefetchu::get_resolved_descriptor() noexcept {
+  return generated_detail::PrefetchuResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Createpolicy::get_resolved_descriptor() noexcept {
+  return generated_detail::CreatepolicyResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Applypriority::get_resolved_descriptor() noexcept {
+  return generated_detail::ApplypriorityResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Discard::get_resolved_descriptor() noexcept {
+  return generated_detail::DiscardResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Cp::get_resolved_descriptor() noexcept {
+  return generated_detail::CpResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
 St::get_resolved_descriptor() noexcept {
   return generated_detail::StResolvedDescriptorStorage::descriptor;
 }
 
 const check_end::ResolvedInstructionDescriptor &
-Add::get_resolved_descriptor() noexcept {
-  return generated_detail::AddResolvedDescriptorStorage::descriptor;
+Prmt::get_resolved_descriptor() noexcept {
+  return generated_detail::PrmtResolvedDescriptorStorage::descriptor;
 }
 
 const check_end::ResolvedInstructionDescriptor &
-Sub::get_resolved_descriptor() noexcept {
-  return generated_detail::SubResolvedDescriptorStorage::descriptor;
+And::get_resolved_descriptor() noexcept {
+  return generated_detail::AndResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Or::get_resolved_descriptor() noexcept {
+  return generated_detail::OrResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Xor::get_resolved_descriptor() noexcept {
+  return generated_detail::XorResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Not::get_resolved_descriptor() noexcept {
+  return generated_detail::NotResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Lop3::get_resolved_descriptor() noexcept {
+  return generated_detail::Lop3ResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Shf::get_resolved_descriptor() noexcept {
+  return generated_detail::ShfResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Shl::get_resolved_descriptor() noexcept {
+  return generated_detail::ShlResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Shr::get_resolved_descriptor() noexcept {
+  return generated_detail::ShrResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Trap::get_resolved_descriptor() noexcept {
+  return generated_detail::TrapResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Setmaxnreg::get_resolved_descriptor() noexcept {
+  return generated_detail::SetmaxnregResolvedDescriptorStorage::descriptor;
 }
 
 const check_end::ResolvedInstructionDescriptor &
 Bar::get_resolved_descriptor() noexcept {
   return generated_detail::BarResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Membar::get_resolved_descriptor() noexcept {
+  return generated_detail::MembarResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Fence::get_resolved_descriptor() noexcept {
+  return generated_detail::FenceResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Atom::get_resolved_descriptor() noexcept {
+  return generated_detail::AtomResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Red::get_resolved_descriptor() noexcept {
+  return generated_detail::RedResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Activemask::get_resolved_descriptor() noexcept {
+  return generated_detail::ActivemaskResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Vote::get_resolved_descriptor() noexcept {
+  return generated_detail::VoteResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Mma::get_resolved_descriptor() noexcept {
+  return generated_detail::MmaResolvedDescriptorStorage::descriptor;
+}
+
+const check_end::ResolvedInstructionDescriptor &
+Ldmatrix::get_resolved_descriptor() noexcept {
+  return generated_detail::LdmatrixResolvedDescriptorStorage::descriptor;
 }
 
 } // namespace ptx_frontend::resolved_ir

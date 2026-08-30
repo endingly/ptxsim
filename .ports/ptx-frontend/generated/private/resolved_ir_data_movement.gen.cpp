@@ -6,6 +6,149 @@
 namespace ptx_frontend::resolved_ir {
 
 template <>
+std::expected<Isspacep, ResolveDiagnostic>
+resolve<Isspacep>(const syntax_ast::AstInstruction &ast,
+                  const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Isspacep>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Isspacep::get_syntax_descriptor(),
+                     Isspacep::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalU64") {
+    return Isspacep{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Isspacep::GlobalU64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Isspacep variant in resolved field table.");
+}
+
+template <>
+std::expected<Cvta, ResolveDiagnostic>
+resolve<Cvta>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Cvta>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Cvta::get_syntax_descriptor(), Cvta::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalU64") {
+    return Cvta{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Cvta::GlobalU64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+  if (fields->variant_name == "ToGlobalU64") {
+    return Cvta{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Cvta::ToGlobalU64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Cvta variant in resolved field table.");
+}
+
+template <>
+std::expected<Cvt, ResolveDiagnostic>
+resolve<Cvt>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Cvt>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Cvt::get_syntax_descriptor(), Cvt::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32U32") {
+    return Cvt{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Cvt::S32U32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "RnF32F64") {
+    return Cvt{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Cvt::RnF32F64{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "RnF32U32") {
+    return Cvt{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Cvt::RnF32U32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "RnF32S32") {
+    return Cvt{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Cvt::RnF32S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "RziU32F32") {
+    return Cvt{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Cvt::RziU32F32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "RnF16x2F32") {
+    return Cvt{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Cvt::RnF16x2F32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+  if (fields->variant_name == "PackSatU8S32B32") {
+    return Cvt{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Cvt::PackSatU8S32B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .carry = resolved_operand<ResolvedRegisterRef>(*fields, "carry"),
+        }};
+  }
+
+  throw ResolveException("Unknown Cvt variant in resolved field table.");
+}
+
+template <>
 std::expected<Mov, ResolveDiagnostic>
 resolve<Mov>(const syntax_ast::AstInstruction &ast,
              const ResolveContext *context) {
@@ -72,13 +215,26 @@ resolve<Mov>(const syntax_ast::AstInstruction &ast,
     }
     throw ResolveException("Unknown Mov::Scalar operand layout.");
   }
+  if (fields->variant_name == "V4U32") {
+    return Mov{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Mov::V4U32{
+            .operand_layout = fields->operand_layout,
+            .vector = resolved_modifier<VectorArity>(*fields, "vector"),
+            .type = resolved_modifier<ScalarType>(*fields, "type"),
+            .dst = resolved_operand<ResolvedVectorRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedVectorSpecialRegisterRef>(*fields,
+                                                                      "src"),
+        }};
+  }
   if (fields->variant_name == "Pred") {
-    return Mov{.execution_predicate = std::move(fields->execution_predicate),
-               .variant = Mov::Pred{
-                   .operand_layout = fields->operand_layout,
-                   .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
-                   .src = resolved_operand<ResolvedPredicate>(*fields, "src"),
-               }};
+    return Mov{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Mov::Pred{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
+            .src = resolved_operand<ResolvedPredicateSource>(*fields, "src"),
+        }};
   }
 
   throw ResolveException("Unknown Mov variant in resolved field table.");
@@ -130,6 +286,28 @@ resolve<Ld>(const syntax_ast::AstInstruction &ast,
             .address = resolved_operand<ResolvedAddress>(*fields, "address"),
         }};
   }
+  if (fields->variant_name == "GlobalU32L1Evict") {
+    return Ld{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Ld::GlobalU32L1Evict{
+            .operand_layout = fields->operand_layout,
+            .eviction_priority = resolved_modifier<EvictionPriority>(
+                *fields, "eviction_priority"),
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+        }};
+  }
+  if (fields->variant_name == "GlobalU32L2CacheHint") {
+    return Ld{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Ld::GlobalU32L2CacheHint{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .cache_policy =
+                resolved_operand<ResolvedRegisterRef>(*fields, "cache_policy"),
+        }};
+  }
   if (fields->variant_name == "GenericVector") {
     return Ld{
         .execution_predicate = std::move(fields->execution_predicate),
@@ -162,8 +340,264 @@ resolve<Ld>(const syntax_ast::AstInstruction &ast,
             .address = resolved_operand<ResolvedAddress>(*fields, "address"),
         }};
   }
+  if (fields->variant_name == "GlobalNcL1NoAllocateU32") {
+    return Ld{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Ld::GlobalNcL1NoAllocateU32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+        }};
+  }
 
   throw ResolveException("Unknown Ld variant in resolved field table.");
+}
+
+template <>
+std::expected<Ldu, ResolveDiagnostic>
+resolve<Ldu>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Ldu>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Ldu::get_syntax_descriptor(), Ldu::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalU32") {
+    return Ldu{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Ldu::GlobalU32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+        }};
+  }
+
+  throw ResolveException("Unknown Ldu variant in resolved field table.");
+}
+
+template <>
+std::expected<Shfl, ResolveDiagnostic>
+resolve<Shfl>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Shfl>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Shfl::get_syntax_descriptor(), Shfl::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "SyncIdxB32") {
+    return Shfl{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Shfl::SyncIdxB32{
+            .operand_layout = fields->operand_layout,
+            .dst =
+                resolved_operand<ResolvedShflSyncDestination>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+            .lane = resolved_operand<RegOrImm>(*fields, "lane"),
+            .clamp = resolved_operand<RegOrImm>(*fields, "clamp"),
+            .membermask = resolved_operand<RegOrImm>(*fields, "membermask"),
+        }};
+  }
+
+  throw ResolveException("Unknown Shfl variant in resolved field table.");
+}
+
+template <>
+std::expected<Prefetch, ResolveDiagnostic>
+resolve<Prefetch>(const syntax_ast::AstInstruction &ast,
+                  const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Prefetch>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Prefetch::get_syntax_descriptor(),
+                     Prefetch::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalL1") {
+    return Prefetch{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Prefetch::GlobalL1{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+        }};
+  }
+
+  throw ResolveException("Unknown Prefetch variant in resolved field table.");
+}
+
+template <>
+std::expected<Prefetchu, ResolveDiagnostic>
+resolve<Prefetchu>(const syntax_ast::AstInstruction &ast,
+                   const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Prefetchu>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Prefetchu::get_syntax_descriptor(),
+                     Prefetchu::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "L1") {
+    return Prefetchu{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Prefetchu::L1{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+        }};
+  }
+
+  throw ResolveException("Unknown Prefetchu variant in resolved field table.");
+}
+
+template <>
+std::expected<Createpolicy, ResolveDiagnostic>
+resolve<Createpolicy>(const syntax_ast::AstInstruction &ast,
+                      const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Createpolicy>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Createpolicy::get_syntax_descriptor(),
+                     Createpolicy::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "FractionalL2EvictLastB64") {
+    return Createpolicy{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Createpolicy::FractionalL2EvictLastB64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .fraction =
+                resolved_operand<ResolvedImmediate>(*fields, "fraction"),
+        }};
+  }
+
+  throw ResolveException(
+      "Unknown Createpolicy variant in resolved field table.");
+}
+
+template <>
+std::expected<Applypriority, ResolveDiagnostic>
+resolve<Applypriority>(const syntax_ast::AstInstruction &ast,
+                       const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Applypriority>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Applypriority::get_syntax_descriptor(),
+                     Applypriority::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalL2EvictNormal") {
+    return Applypriority{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Applypriority::GlobalL2EvictNormal{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .size = resolved_operand<ResolvedImmediate>(*fields, "size"),
+        }};
+  }
+
+  throw ResolveException(
+      "Unknown Applypriority variant in resolved field table.");
+}
+
+template <>
+std::expected<Discard, ResolveDiagnostic>
+resolve<Discard>(const syntax_ast::AstInstruction &ast,
+                 const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Discard>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Discard::get_syntax_descriptor(), Discard::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalL2") {
+    return Discard{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Discard::GlobalL2{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .size = resolved_operand<ResolvedImmediate>(*fields, "size"),
+        }};
+  }
+
+  throw ResolveException("Unknown Discard variant in resolved field table.");
+}
+
+template <>
+std::expected<Cp, ResolveDiagnostic>
+resolve<Cp>(const syntax_ast::AstInstruction &ast,
+            const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Cp>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Cp::get_syntax_descriptor(), Cp::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "AsyncCaSharedGlobal") {
+    return Cp{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Cp::AsyncCaSharedGlobal{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedAddress>(*fields, "dst"),
+            .src = resolved_operand<ResolvedAddress>(*fields, "src"),
+            .cp_size = resolved_operand<ResolvedImmediate>(*fields, "cp_size"),
+        }};
+  }
+  if (fields->variant_name == "AsyncCommitGroup") {
+    return Cp{.execution_predicate = std::move(fields->execution_predicate),
+              .variant = Cp::AsyncCommitGroup{
+                  .operand_layout = fields->operand_layout,
+
+              }};
+  }
+  if (fields->variant_name == "AsyncWaitGroup") {
+    return Cp{.execution_predicate = std::move(fields->execution_predicate),
+              .variant = Cp::AsyncWaitGroup{
+                  .operand_layout = fields->operand_layout,
+                  .n = resolved_operand<ResolvedImmediate>(*fields, "n"),
+              }};
+  }
+  if (fields->variant_name == "AsyncWaitAll") {
+    return Cp{.execution_predicate = std::move(fields->execution_predicate),
+              .variant = Cp::AsyncWaitAll{
+                  .operand_layout = fields->operand_layout,
+
+              }};
+  }
+
+  throw ResolveException("Unknown Cp variant in resolved field table.");
 }
 
 template <>
@@ -212,6 +646,28 @@ resolve<St>(const syntax_ast::AstInstruction &ast,
             .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
         }};
   }
+  if (fields->variant_name == "GlobalU32L1Evict") {
+    return St{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = St::GlobalU32L1Evict{
+            .operand_layout = fields->operand_layout,
+            .eviction_priority = resolved_modifier<EvictionPriority>(
+                *fields, "eviction_priority"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+  if (fields->variant_name == "GlobalU32L2CacheHint") {
+    return St{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = St::GlobalU32L2CacheHint{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+            .cache_policy =
+                resolved_operand<ResolvedRegisterRef>(*fields, "cache_policy"),
+        }};
+  }
   if (fields->variant_name == "GenericVector") {
     return St{
         .execution_predicate = std::move(fields->execution_predicate),
@@ -248,7 +704,1645 @@ resolve<St>(const syntax_ast::AstInstruction &ast,
   throw ResolveException("Unknown St variant in resolved field table.");
 }
 
+template <>
+std::expected<Prmt, ResolveDiagnostic>
+resolve<Prmt>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Prmt>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Prmt::get_syntax_descriptor(), Prmt::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GenericB32") {
+    return Prmt{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Prmt::GenericB32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .selector =
+                resolved_operand<ResolvedImmediate>(*fields, "selector"),
+        }};
+  }
+  if (fields->variant_name == "F4eB32") {
+    return Prmt{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Prmt::F4eB32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .selector =
+                resolved_operand<ResolvedRegisterRef>(*fields, "selector"),
+        }};
+  }
+
+  throw ResolveException("Unknown Prmt variant in resolved field table.");
+}
+
 namespace checker {
+
+template <>
+CheckResult check<Isspacep>(const Isspacep &instruction,
+                            const Context &context) {
+  const auto check_global_u64 =
+      [&](const Isspacep::GlobalU64 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "state_space",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = Isspacep::GlobalU64::state_space,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "state_space",
+            .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+            .bool_value = false,
+            .scalar_type = ScalarType::Invalid,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = Isspacep::GlobalU64::state_space,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Isspacep::get_checker_descriptor(), "GlobalU64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Isspacep::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.register_ref.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Isspacep::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Isspacep::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Isspacep::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_global_u64),
+                                             Isspacep::GlobalU64>);
+
+  return std::visit(detail::Overloaded{check_global_u64}, instruction.variant);
+}
+
+template <>
+CheckResult check<Cvta>(const Cvta &instruction, const Context &context) {
+  const auto check_global_u64 =
+      [&](const Cvta::GlobalU64 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Cvta::GlobalU64::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvta::GlobalU64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Cvta::GlobalU64::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvta::GlobalU64::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvta::get_checker_descriptor(), "GlobalU64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Cvta::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvta::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvta::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvta::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_global_u64),
+                                             Cvta::GlobalU64>);
+
+  const auto check_to_global_u64 =
+      [&](const Cvta::ToGlobalU64 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "to",
+             .bool_value = Cvta::ToGlobalU64::to,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Cvta::ToGlobalU64::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvta::ToGlobalU64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "to",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cvta::ToGlobalU64::to,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Cvta::ToGlobalU64::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvta::ToGlobalU64::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvta::get_checker_descriptor(), "ToGlobalU64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Cvta::get_checker_descriptor()
+                                              .variants[1]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvta::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "ToGlobalU64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvta::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvta::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_to_global_u64),
+                                             Cvta::ToGlobalU64>);
+
+  return std::visit(detail::Overloaded{check_global_u64, check_to_global_u64},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Cvt>(const Cvt &instruction, const Context &context) {
+  const auto check_s32_u32 = [&](const Cvt::S32U32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::S32U32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::S32U32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::S32U32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::S32U32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "S32U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_s32_u32), Cvt::S32U32>);
+
+  const auto check_rn_f32_f64 =
+      [&](const Cvt::RnF32F64 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32F64::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32F64::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Cvt::RnF32F64::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32F64::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32F64::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "RnF32F64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32F64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32_f64), Cvt::RnF32F64>);
+
+  const auto check_rn_f32_u32 =
+      [&](const Cvt::RnF32U32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32U32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32U32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Cvt::RnF32U32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32U32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32U32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "RnF32U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32_u32), Cvt::RnF32U32>);
+
+  const auto check_rn_f32_s32 =
+      [&](const Cvt::RnF32S32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32S32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF32S32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Cvt::RnF32S32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32S32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF32S32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "RnF32S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[3]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32_s32), Cvt::RnF32S32>);
+
+  const auto check_rzi_u32_f32 =
+      [&](const Cvt::RziU32F32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RziU32F32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RziU32F32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Cvt::RziU32F32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RziU32F32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RziU32F32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "RziU32F32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[4].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[4].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RziU32F32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[4],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[4]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_rzi_u32_f32),
+                                             Cvt::RziU32F32>);
+
+  const auto check_rn_f16x2_f32 =
+      [&](const Cvt::RnF16x2F32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF16x2F32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::RnF16x2F32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Cvt::RnF16x2F32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF16x2F32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::RnF16x2F32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "RnF16x2F32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[5].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[5].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF16x2F32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[5],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[5]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_rn_f16x2_f32),
+                                             Cvt::RnF16x2F32>);
+
+  const auto check_pack_sat_u8_s32_b32 =
+      [&](const Cvt::PackSatU8S32B32 &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
+             .field_id = "pack",
+             .bool_value = Cvt::PackSatU8S32B32::pack,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "saturate",
+             .bool_value = Cvt::PackSatU8S32B32::saturate,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dst_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::PackSatU8S32B32::dst_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "src_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::PackSatU8S32B32::src_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "carry_type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Cvt::PackSatU8S32B32::carry_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 5> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "pack",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cvt::PackSatU8S32B32::pack,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "sat",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cvt::PackSatU8S32B32::saturate,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dst_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::PackSatU8S32B32::dst_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "src_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::PackSatU8S32B32::src_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "carry_type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Cvt::PackSatU8S32B32::carry_type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cvt::get_checker_descriptor(), "PackSatU8S32B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cvt::get_checker_descriptor().variants[6].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "carry",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.carry.value.declared_type,
+             .locations = selected.carry.locs,
+         }}};
+    const auto &layouts =
+        Cvt::get_resolved_descriptor().variants[6].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "PackSatU8S32B32", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cvt::get_checker_descriptor().variants[6],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cvt::get_checker_descriptor()
+              .variants[6]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_pack_sat_u8_s32_b32),
+                                   Cvt::PackSatU8S32B32>);
+
+  return std::visit(detail::Overloaded{check_s32_u32, check_rn_f32_f64,
+                                       check_rn_f32_u32, check_rn_f32_s32,
+                                       check_rzi_u32_f32, check_rn_f16x2_f32,
+                                       check_pack_sat_u8_s32_b32},
+                    instruction.variant);
+}
 
 template <>
 CheckResult check<Mov>(const Mov &instruction, const Context &context) {
@@ -257,7 +2351,10 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
         .field_id = "type",
         .bool_value = std::nullopt,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = selected.type.value,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -271,7 +2368,10 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
             .bool_value = false,
             .scalar_type = selected.type.value,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -319,6 +2419,8 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
                    .field_id = "src",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.src.locs,
                };
@@ -344,15 +2446,7 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
                    .register_type = std::nullopt,
                    .special_register_type = info.element_type,
                    .special_register_id = special_register->id,
-                   .value_availability =
-                       AvailabilityDescriptor{
-                           .minimum_ptx_version =
-                               {
-                                   info.minimum_ptx_major,
-                                   info.minimum_ptx_minor,
-                               },
-                           .minimum_sm_version = info.minimum_sm,
-                       },
+                   .value_availability = special_register_availability(info),
                    .value_name = special_register->spelling,
                    .locations = payload.src.locs,
                };
@@ -442,9 +2536,11 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
              };
              size_t index = 0;
              for (const auto &element : payload.src.value.elements) {
-               if (index >= view.vector_element_types.size())
+               if (index >= view.vector_element_shapes.size())
                  break;
                if (element) {
+                 view.vector_element_shapes[index] =
+                     check_end::OperandShape::Register;
                  view.vector_element_types[index] =
                      element->declared_type.value_or(ScalarType::Invalid);
                } else {
@@ -489,9 +2585,11 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
              };
              size_t index = 0;
              for (const auto &element : payload.dst.value.elements) {
-               if (index >= view.vector_element_types.size())
+               if (index >= view.vector_element_shapes.size())
                  break;
                if (element) {
+                 view.vector_element_shapes[index] =
+                     check_end::OperandShape::Register;
                  view.vector_element_types[index] =
                      element->declared_type.value_or(ScalarType::Invalid);
                } else {
@@ -555,36 +2653,74 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
   static_assert(
       detail::VariantCheckFunction<decltype(check_scalar), Mov::Scalar>);
 
-  const auto check_pred = [&](const Mov::Pred &selected) -> CheckResult {
-    const std::array<FieldView, 1> fields = {{FieldView{
-        .field_id = "type",
-        .bool_value = std::nullopt,
-        .cache_operator = std::nullopt,
-        .scalar_type = Mov::Pred::type,
-        .vector_arity = std::nullopt,
-        .memory_state_space = std::nullopt,
-        .memory_consistency = std::nullopt,
-        .memory_scope = std::nullopt,
-        .locations = std::span<const SourceRange>{},
-    }}};
-    const std::array<ModifierValueView, 1> modifier_values = {
+  const auto check_v4_u32 = [&](const Mov::V4U32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "vector",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = selected.vector.value,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.vector.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.type.locs,
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
         {ModifierValueView{
-            .kind_id = "type",
-            .value_kind = checker::ModifierValueKind::ScalarType,
-            .bool_value = false,
-            .scalar_type = Mov::Pred::type,
-            .rounding_mode = RoundingMode::Invalid,
-            .cache_operator = CacheOperator::Unspecified,
-            .vector_arity = VectorArity::Invalid,
-            .memory_state_space = MemoryStateSpace::Invalid,
-            .memory_consistency = MemoryConsistency::Omitted,
-            .memory_scope = MemoryScope::None,
-            .is_present = true,
-            .locations = std::span<const SourceRange>{},
-        }}};
+             .kind_id = "vector",
+             .value_kind = checker::ModifierValueKind::VectorArity,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = selected.vector.value,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.vector.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = selected.type.value,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.type.locs,
+         }}};
     CheckDiagnostics diagnostics;
     const auto common =
-        check_common(Mov::get_checker_descriptor(), "Pred", context);
+        check_common(Mov::get_checker_descriptor(), "V4U32", context);
     if (!common) {
       diagnostics.insert(diagnostics.end(), common.error().begin(),
                          common.error().end());
@@ -598,24 +2734,40 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
                          modifier_availability.error().end());
     }
     const std::array<OperandView, 2> operands = {
-        {OperandView{
-             .field_id = "dst",
-             .actual_shape = check_end::OperandShape::Predicate,
-             .immediate_type = std::nullopt,
-             .register_type = selected.dst.value.register_ref.declared_type,
-             .locations = selected.dst.locs,
-         },
-         OperandView{
-             .field_id = "src",
-             .actual_shape = check_end::OperandShape::Predicate,
-             .immediate_type = std::nullopt,
-             .register_type = selected.src.value.register_ref.declared_type,
-             .locations = selected.src.locs,
-         }}};
+        {[&]() -> OperandView {
+           const auto &register_ref = selected.dst.value.register_ref;
+           OperandView view{
+               .field_id = "dst",
+               .actual_shape = check_end::OperandShape::Vector,
+               .vector_arity = register_ref.vector_width.value_or(0),
+               .locations = selected.dst.locs,
+           };
+           for (uint8_t index = 0; index < view.vector_arity; ++index)
+             view.vector_element_types[index] =
+                 register_ref.declared_type.value_or(ScalarType::Invalid);
+           return view;
+         }(),
+         [&]() -> OperandView {
+           const auto &special_register = selected.src.value;
+           const auto info = base::metadata(special_register.id);
+           OperandView view{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Vector,
+               .special_register_type = info.element_type,
+               .special_register_id = special_register.id,
+               .vector_arity = info.vector_width,
+               .value_availability = special_register_availability(info),
+               .value_name = special_register.spelling,
+               .locations = selected.src.locs,
+           };
+           for (uint8_t index = 0; index < view.vector_arity; ++index)
+             view.vector_element_types[index] = info.element_type;
+           return view;
+         }()}};
     const auto &layouts =
         Mov::get_resolved_descriptor().variants[1].operand_layouts;
     const auto layout_check = check_operand_layout_tag(
-        "Pred", selected.operand_layout.value, layouts.size(), context);
+        "V4U32", selected.operand_layout.value, layouts.size(), context);
     if (!layout_check) {
       diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
                          layout_check.error().end());
@@ -643,9 +2795,123 @@ CheckResult check<Mov>(const Mov &instruction, const Context &context) {
       return CheckResult{};
     return std::unexpected(std::move(diagnostics));
   };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_v4_u32), Mov::V4U32>);
+
+  const auto check_pred = [&](const Mov::Pred &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Mov::Pred::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Mov::Pred::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mov::get_checker_descriptor(), "Pred", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mov::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.register_ref.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           const auto &source = selected.src.value;
+           if (const auto *special =
+                   std::get_if<ResolvedSpecialRegisterRef>(&source)) {
+             const auto info = base::metadata(special->id);
+             return OperandView{
+                 .field_id = "src",
+                 .actual_shape = check_end::OperandShape::SpecialRegister,
+                 .special_register_type = info.element_type,
+                 .special_register_id = special->id,
+                 .value_availability = special_register_availability(info),
+                 .value_name = special->spelling,
+                 .locations = selected.src.locs,
+             };
+           }
+           const auto &predicate = std::get<ResolvedPredicate>(source);
+           return OperandView{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Predicate,
+               .immediate_type = std::nullopt,
+               .register_type = predicate.register_ref.declared_type,
+               .locations = selected.src.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mov::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "Pred", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mov::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mov::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
   static_assert(detail::VariantCheckFunction<decltype(check_pred), Mov::Pred>);
 
-  return std::visit(detail::Overloaded{check_scalar, check_pred},
+  return std::visit(detail::Overloaded{check_scalar, check_v4_u32, check_pred},
                     instruction.variant);
 }
 
@@ -658,7 +2924,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -669,7 +2938,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -680,7 +2952,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "mmio",
              .bool_value = selected.mmio.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -691,7 +2966,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "cache",
              .bool_value = std::nullopt,
              .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -702,7 +2980,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -716,7 +2997,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -730,7 +3014,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -744,7 +3031,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = selected.mmio.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -758,7 +3048,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -772,7 +3065,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -933,7 +3229,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = selected.state_space.value,
              .memory_consistency = std::nullopt,
@@ -944,7 +3243,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "cache",
              .bool_value = std::nullopt,
              .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -955,7 +3257,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -966,7 +3271,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -977,7 +3285,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "mmio",
              .bool_value = selected.mmio.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -988,7 +3299,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1002,7 +3316,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = selected.state_space.value,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1016,7 +3333,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1030,7 +3350,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -1044,7 +3367,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1058,7 +3384,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = selected.mmio.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1072,7 +3401,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1226,138 +3558,106 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
   static_assert(detail::VariantCheckFunction<decltype(check_explicit_scalar),
                                              Ld::ExplicitScalar>);
 
-  const auto check_generic_vector =
-      [&](const Ld::GenericVector &selected) -> CheckResult {
-    const std::array<FieldView, 5> fields = {
+  const auto check_global_u32_l1_evict =
+      [&](const Ld::GlobalU32L1Evict &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
         {FieldView{
-             .field_id = "semantics",
+             .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
-             .memory_state_space = std::nullopt,
-             .memory_consistency = selected.semantics.value,
-             .memory_scope = std::nullopt,
-             .locations = selected.semantics.locs,
-         },
-         FieldView{
-             .field_id = "scope",
-             .bool_value = std::nullopt,
-             .cache_operator = std::nullopt,
-             .scalar_type = std::nullopt,
-             .vector_arity = std::nullopt,
-             .memory_state_space = std::nullopt,
+             .memory_state_space = Ld::GlobalU32L1Evict::state_space,
              .memory_consistency = std::nullopt,
-             .memory_scope = selected.scope.value,
-             .locations = selected.scope.locs,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
-             .field_id = "cache",
+             .field_id = "eviction_priority",
              .bool_value = std::nullopt,
-             .cache_operator = selected.cache.value,
+             .cache_operator = std::nullopt,
+             .eviction_priority = selected.eviction_priority.value,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.cache.locs,
-         },
-         FieldView{
-             .field_id = "vector",
-             .bool_value = std::nullopt,
-             .cache_operator = std::nullopt,
-             .scalar_type = std::nullopt,
-             .vector_arity = selected.vector.value,
-             .memory_state_space = std::nullopt,
-             .memory_consistency = std::nullopt,
-             .memory_scope = std::nullopt,
-             .locations = selected.vector.locs,
+             .locations = selected.eviction_priority.locs,
          },
          FieldView{
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
-             .scalar_type = selected.type.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Ld::GlobalU32L1Evict::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.type.locs,
+             .locations = std::span<const SourceRange>{},
          }}};
-    const std::array<ModifierValueView, 5> modifier_values = {
+    const std::array<ModifierValueView, 3> modifier_values = {
         {ModifierValueView{
-             .kind_id = "semantics",
-             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = selected.semantics.value,
+             .memory_state_space = Ld::GlobalU32L1Evict::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.semantics.locs,
+             .locations = std::span<const SourceRange>{},
          },
          ModifierValueView{
-             .kind_id = "scope",
-             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .kind_id = "eviction_priority",
+             .value_kind = checker::ModifierValueKind::EvictionPriority,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = selected.scope.value,
-             .is_present = true,
-             .locations = selected.scope.locs,
-         },
-         ModifierValueView{
-             .kind_id = "cache",
-             .value_kind = checker::ModifierValueKind::CacheOperator,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = selected.cache.value,
+             .eviction_priority = selected.eviction_priority.value,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
-             .is_present = selected.cache.value != CacheOperator::Unspecified,
-             .locations = selected.cache.locs,
-         },
-         ModifierValueView{
-             .kind_id = "vector",
-             .value_kind = checker::ModifierValueKind::VectorArity,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = selected.vector.value,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.vector.locs,
+             .locations = selected.eviction_priority.locs,
          },
          ModifierValueView{
              .kind_id = "type",
              .value_kind = checker::ModifierValueKind::ScalarType,
              .bool_value = false,
-             .scalar_type = selected.type.value,
+             .scalar_type = Ld::GlobalU32L1Evict::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.type.locs,
+             .locations = std::span<const SourceRange>{},
          }}};
     CheckDiagnostics diagnostics;
     const auto common =
-        check_common(Ld::get_checker_descriptor(), "GenericVector", context);
+        check_common(Ld::get_checker_descriptor(), "GlobalU32L1Evict", context);
     if (!common) {
       diagnostics.insert(diagnostics.end(), common.error().begin(),
                          common.error().end());
@@ -1371,28 +3671,13 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
                          modifier_availability.error().end());
     }
     const std::array<OperandView, 2> operands = {
-        {[&]() -> OperandView {
-           OperandView view{
-               .field_id = "dst",
-               .actual_shape = check_end::OperandShape::Vector,
-               .vector_arity =
-                   static_cast<uint8_t>(selected.dst.value.elements.size()),
-               .locations = selected.dst.locs,
-           };
-           size_t index = 0;
-           for (const auto &element : selected.dst.value.elements) {
-             if (index >= view.vector_element_types.size())
-               break;
-             if (element) {
-               view.vector_element_types[index] =
-                   element->declared_type.value_or(ScalarType::Invalid);
-             } else {
-               ++view.vector_sink_count;
-             }
-             ++index;
-           }
-           return view;
-         }(),
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
          [&]() -> OperandView {
            const auto *symbol =
                std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
@@ -1471,9 +3756,9 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
          }()}};
     const auto &layouts =
         Ld::get_resolved_descriptor().variants[2].operand_layouts;
-    const auto layout_check =
-        check_operand_layout_tag("GenericVector", selected.operand_layout.value,
-                                 layouts.size(), context);
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU32L1Evict", selected.operand_layout.value, layouts.size(),
+        context);
     if (!layout_check) {
       diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
                          layout_check.error().end());
@@ -1494,21 +3779,6 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
         diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
                            operand_check.error().end());
       }
-      const auto consistency_check = check_memory_consistency(
-          Ld::get_checker_descriptor().variants[2].memory_consistency, fields,
-          operands, context);
-      if (!consistency_check) {
-        diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
-                           consistency_check.error().end());
-      }
-      const auto memory_vector_check = check_memory_vector(
-          Ld::get_checker_descriptor().variants[2].memory_vector, fields,
-          operands, context);
-      if (!memory_vector_check) {
-        diagnostics.insert(diagnostics.end(),
-                           memory_vector_check.error().begin(),
-                           memory_vector_check.error().end());
-      }
       const auto alignment_check = check_address_alignment(
           Ld::get_checker_descriptor().variants[2].address_alignment, fields,
           operands, context);
@@ -1521,39 +3791,265 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
       return CheckResult{};
     return std::unexpected(std::move(diagnostics));
   };
-  static_assert(detail::VariantCheckFunction<decltype(check_generic_vector),
-                                             Ld::GenericVector>);
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_u32_l1_evict),
+                                   Ld::GlobalU32L1Evict>);
 
-  const auto check_explicit_vector =
-      [&](const Ld::ExplicitVector &selected) -> CheckResult {
-    const std::array<FieldView, 6> fields = {
+  const auto check_global_u32_l2_cache_hint =
+      [&](const Ld::GlobalU32L2CacheHint &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
         {FieldView{
              .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
-             .memory_state_space = selected.state_space.value,
+             .memory_state_space = Ld::GlobalU32L2CacheHint::state_space,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.state_space.locs,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
-             .field_id = "cache",
-             .bool_value = std::nullopt,
-             .cache_operator = selected.cache.value,
+             .field_id = "cache_hint",
+             .bool_value = Ld::GlobalU32L2CacheHint::cache_hint,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.cache.locs,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Ld::GlobalU32L2CacheHint::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Ld::GlobalU32L2CacheHint::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "cache_hint",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Ld::GlobalU32L2CacheHint::cache_hint,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Ld::GlobalU32L2CacheHint::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Ld::get_checker_descriptor(),
+                                     "GlobalU32L2CacheHint", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Ld::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "cache_policy",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.cache_policy.value.declared_type,
+             .locations = selected.cache_policy.locs,
+         }}};
+    const auto &layouts =
+        Ld::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU32L2CacheHint", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Ld::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Ld::get_checker_descriptor().variants[3].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Ld::get_checker_descriptor().variants[3].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_u32_l2_cache_hint),
+                                   Ld::GlobalU32L2CacheHint>);
+
+  const auto check_generic_vector =
+      [&](const Ld::GenericVector &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -1564,7 +4060,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1572,10 +4071,27 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .locations = selected.scope.locs,
          },
          FieldView{
+             .field_id = "cache",
+             .bool_value = std::nullopt,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.cache.locs,
+         },
+         FieldView{
              .field_id = "vector",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = selected.vector.value,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1586,49 +4102,27 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
              .locations = selected.type.locs,
          }}};
-    const std::array<ModifierValueView, 6> modifier_values = {
+    const std::array<ModifierValueView, 5> modifier_values = {
         {ModifierValueView{
-             .kind_id = "state_space",
-             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = selected.state_space.value,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
-             .is_present = true,
-             .locations = selected.state_space.locs,
-         },
-         ModifierValueView{
-             .kind_id = "cache",
-             .value_kind = checker::ModifierValueKind::CacheOperator,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = selected.cache.value,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
-             .is_present = selected.cache.value != CacheOperator::Unspecified,
-             .locations = selected.cache.locs,
-         },
-         ModifierValueView{
              .kind_id = "semantics",
              .value_kind = checker::ModifierValueKind::MemoryConsistency,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -1642,7 +4136,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1651,12 +4148,32 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .locations = selected.scope.locs,
          },
          ModifierValueView{
+             .kind_id = "cache",
+             .value_kind = checker::ModifierValueKind::CacheOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = selected.cache.value != CacheOperator::Unspecified,
+             .locations = selected.cache.locs,
+         },
+         ModifierValueView{
              .kind_id = "vector",
              .value_kind = checker::ModifierValueKind::VectorArity,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = selected.vector.value,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1670,7 +4187,10 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1680,13 +4200,13 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
          }}};
     CheckDiagnostics diagnostics;
     const auto common =
-        check_common(Ld::get_checker_descriptor(), "ExplicitVector", context);
+        check_common(Ld::get_checker_descriptor(), "GenericVector", context);
     if (!common) {
       diagnostics.insert(diagnostics.end(), common.error().begin(),
                          common.error().end());
     }
     const auto modifier_availability = check_modifier_value_availability(
-        Ld::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        Ld::get_checker_descriptor().variants[4].modifier_value_availabilities,
         modifier_values, context);
     if (!modifier_availability) {
       diagnostics.insert(diagnostics.end(),
@@ -1704,9 +4224,11 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
            };
            size_t index = 0;
            for (const auto &element : selected.dst.value.elements) {
-             if (index >= view.vector_element_types.size())
+             if (index >= view.vector_element_shapes.size())
                break;
              if (element) {
+               view.vector_element_shapes[index] =
+                   check_end::OperandShape::Register;
                view.vector_element_types[index] =
                    element->declared_type.value_or(ScalarType::Invalid);
              } else {
@@ -1793,16 +4315,16 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
            };
          }()}};
     const auto &layouts =
-        Ld::get_resolved_descriptor().variants[3].operand_layouts;
-    const auto layout_check = check_operand_layout_tag(
-        "ExplicitVector", selected.operand_layout.value, layouts.size(),
-        context);
+        Ld::get_resolved_descriptor().variants[4].operand_layouts;
+    const auto layout_check =
+        check_operand_layout_tag("GenericVector", selected.operand_layout.value,
+                                 layouts.size(), context);
     if (!layout_check) {
       diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
                          layout_check.error().end());
     } else {
       const auto availability_check = check_operand_layout_availability(
-          Ld::get_checker_descriptor().variants[3],
+          Ld::get_checker_descriptor().variants[4],
           selected.operand_layout.value, context);
       if (!availability_check) {
         diagnostics.insert(diagnostics.end(),
@@ -1811,21 +4333,21 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
       }
       const auto operand_check = check_operands(
           layouts[selected.operand_layout.value].bindings, fields, operands,
-          Ld::get_checker_descriptor().variants[3].operand_type_compatibilities,
+          Ld::get_checker_descriptor().variants[4].operand_type_compatibilities,
           context);
       if (!operand_check) {
         diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
                            operand_check.error().end());
       }
       const auto consistency_check = check_memory_consistency(
-          Ld::get_checker_descriptor().variants[3].memory_consistency, fields,
+          Ld::get_checker_descriptor().variants[4].memory_consistency, fields,
           operands, context);
       if (!consistency_check) {
         diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
                            consistency_check.error().end());
       }
       const auto memory_vector_check = check_memory_vector(
-          Ld::get_checker_descriptor().variants[3].memory_vector, fields,
+          Ld::get_checker_descriptor().variants[4].memory_vector, fields,
           operands, context);
       if (!memory_vector_check) {
         diagnostics.insert(diagnostics.end(),
@@ -1833,7 +4355,7 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
                            memory_vector_check.error().end());
       }
       const auto alignment_check = check_address_alignment(
-          Ld::get_checker_descriptor().variants[3].address_alignment, fields,
+          Ld::get_checker_descriptor().variants[4].address_alignment, fields,
           operands, context);
       if (!alignment_check) {
         diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
@@ -1844,25 +4366,48 @@ CheckResult check<Ld>(const Ld &instruction, const Context &context) {
       return CheckResult{};
     return std::unexpected(std::move(diagnostics));
   };
-  static_assert(detail::VariantCheckFunction<decltype(check_explicit_vector),
-                                             Ld::ExplicitVector>);
+  static_assert(detail::VariantCheckFunction<decltype(check_generic_vector),
+                                             Ld::GenericVector>);
 
-  return std::visit(
-      detail::Overloaded{check_generic_scalar, check_explicit_scalar,
-                         check_generic_vector, check_explicit_vector},
-      instruction.variant);
-}
-
-template <>
-CheckResult check<St>(const St &instruction, const Context &context) {
-  const auto check_generic_scalar =
-      [&](const St::GenericScalar &selected) -> CheckResult {
-    const std::array<FieldView, 5> fields = {
+  const auto check_explicit_vector =
+      [&](const Ld::ExplicitVector &selected) -> CheckResult {
+    const std::array<FieldView, 6> fields = {
         {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = selected.state_space.value,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.state_space.locs,
+         },
+         FieldView{
+             .field_id = "cache",
+             .bool_value = std::nullopt,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.cache.locs,
+         },
+         FieldView{
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -1873,7 +4418,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1881,46 +4429,78 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .locations = selected.scope.locs,
          },
          FieldView{
-             .field_id = "mmio",
-             .bool_value = selected.mmio.value,
-             .cache_operator = std::nullopt,
-             .scalar_type = std::nullopt,
-             .vector_arity = std::nullopt,
-             .memory_state_space = std::nullopt,
-             .memory_consistency = std::nullopt,
-             .memory_scope = std::nullopt,
-             .locations = selected.mmio.locs,
-         },
-         FieldView{
-             .field_id = "cache",
+             .field_id = "vector",
              .bool_value = std::nullopt,
-             .cache_operator = selected.cache.value,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
-             .vector_arity = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = selected.vector.value,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.cache.locs,
+             .locations = selected.vector.locs,
          },
          FieldView{
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
              .locations = selected.type.locs,
          }}};
-    const std::array<ModifierValueView, 5> modifier_values = {
+    const std::array<ModifierValueView, 6> modifier_values = {
         {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = selected.state_space.value,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.state_space.locs,
+         },
+         ModifierValueView{
+             .kind_id = "cache",
+             .value_kind = checker::ModifierValueKind::CacheOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = selected.cache.value != CacheOperator::Unspecified,
+             .locations = selected.cache.locs,
+         },
+         ModifierValueView{
              .kind_id = "semantics",
              .value_kind = checker::ModifierValueKind::MemoryConsistency,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -1934,7 +4514,2777 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = selected.scope.value,
+             .is_present = true,
+             .locations = selected.scope.locs,
+         },
+         ModifierValueView{
+             .kind_id = "vector",
+             .value_kind = checker::ModifierValueKind::VectorArity,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = selected.vector.value,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.vector.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = selected.type.value,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.type.locs,
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Ld::get_checker_descriptor(), "ExplicitVector", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Ld::get_checker_descriptor().variants[5].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {[&]() -> OperandView {
+           OperandView view{
+               .field_id = "dst",
+               .actual_shape = check_end::OperandShape::Vector,
+               .vector_arity =
+                   static_cast<uint8_t>(selected.dst.value.elements.size()),
+               .locations = selected.dst.locs,
+           };
+           size_t index = 0;
+           for (const auto &element : selected.dst.value.elements) {
+             if (index >= view.vector_element_shapes.size())
+               break;
+             if (element) {
+               view.vector_element_shapes[index] =
+                   check_end::OperandShape::Register;
+               view.vector_element_types[index] =
+                   element->declared_type.value_or(ScalarType::Invalid);
+             } else {
+               ++view.vector_sink_count;
+             }
+             ++index;
+           }
+           return view;
+         }(),
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Ld::get_resolved_descriptor().variants[5].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "ExplicitVector", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Ld::get_checker_descriptor().variants[5],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Ld::get_checker_descriptor().variants[5].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto consistency_check = check_memory_consistency(
+          Ld::get_checker_descriptor().variants[5].memory_consistency, fields,
+          operands, context);
+      if (!consistency_check) {
+        diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
+                           consistency_check.error().end());
+      }
+      const auto memory_vector_check = check_memory_vector(
+          Ld::get_checker_descriptor().variants[5].memory_vector, fields,
+          operands, context);
+      if (!memory_vector_check) {
+        diagnostics.insert(diagnostics.end(),
+                           memory_vector_check.error().begin(),
+                           memory_vector_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Ld::get_checker_descriptor().variants[5].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_explicit_vector),
+                                             Ld::ExplicitVector>);
+
+  const auto check_global_nc_l1_no_allocate_u32 =
+      [&](const Ld::GlobalNcL1NoAllocateU32 &selected) -> CheckResult {
+    const std::array<FieldView, 4> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Ld::GlobalNcL1NoAllocateU32::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "nc",
+             .bool_value = Ld::GlobalNcL1NoAllocateU32::nc,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "eviction_priority",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority =
+                 Ld::GlobalNcL1NoAllocateU32::eviction_priority,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Ld::GlobalNcL1NoAllocateU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 4> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Ld::GlobalNcL1NoAllocateU32::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "nc",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Ld::GlobalNcL1NoAllocateU32::nc,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "eviction_priority",
+             .value_kind = checker::ModifierValueKind::EvictionPriority,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority =
+                 Ld::GlobalNcL1NoAllocateU32::eviction_priority,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Ld::GlobalNcL1NoAllocateU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Ld::get_checker_descriptor(),
+                                     "GlobalNcL1NoAllocateU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Ld::get_checker_descriptor().variants[6].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Ld::get_resolved_descriptor().variants[6].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalNcL1NoAllocateU32", selected.operand_layout.value,
+        layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Ld::get_checker_descriptor().variants[6],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Ld::get_checker_descriptor().variants[6].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Ld::get_checker_descriptor().variants[6].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_nc_l1_no_allocate_u32),
+                                   Ld::GlobalNcL1NoAllocateU32>);
+
+  return std::visit(
+      detail::Overloaded{check_generic_scalar, check_explicit_scalar,
+                         check_global_u32_l1_evict,
+                         check_global_u32_l2_cache_hint, check_generic_vector,
+                         check_explicit_vector,
+                         check_global_nc_l1_no_allocate_u32},
+      instruction.variant);
+}
+
+template <>
+CheckResult check<Ldu>(const Ldu &instruction, const Context &context) {
+  const auto check_global_u32 =
+      [&](const Ldu::GlobalU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Ldu::GlobalU32::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Ldu::GlobalU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Ldu::GlobalU32::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Ldu::GlobalU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Ldu::get_checker_descriptor(), "GlobalU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Ldu::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Ldu::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Ldu::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Ldu::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Ldu::get_checker_descriptor().variants[0].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_u32), Ldu::GlobalU32>);
+
+  return std::visit(detail::Overloaded{check_global_u32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Shfl>(const Shfl &instruction, const Context &context) {
+  const auto check_sync_idx_b32 =
+      [&](const Shfl::SyncIdxB32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "sync",
+             .bool_value = Shfl::SyncIdxB32::sync,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "idx",
+             .bool_value = Shfl::SyncIdxB32::idx,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Shfl::SyncIdxB32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "sync",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shfl::SyncIdxB32::sync,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "idx",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shfl::SyncIdxB32::idx,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Shfl::SyncIdxB32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Shfl::get_checker_descriptor(), "SyncIdxB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Shfl::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 5> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::ShflDestination,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.data.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.lane.value)) {
+             return OperandView{
+                 .field_id = "lane",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.lane.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.lane.value);
+           return OperandView{
+               .field_id = "lane",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.lane.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.clamp.value)) {
+             return OperandView{
+                 .field_id = "clamp",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.clamp.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.clamp.value);
+           return OperandView{
+               .field_id = "clamp",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.clamp.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.membermask.value)) {
+             return OperandView{
+                 .field_id = "membermask",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.membermask.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.membermask.value);
+           return OperandView{
+               .field_id = "membermask",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.membermask.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Shfl::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "SyncIdxB32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Shfl::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Shfl::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_sync_idx_b32),
+                                             Shfl::SyncIdxB32>);
+
+  return std::visit(detail::Overloaded{check_sync_idx_b32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Prefetch>(const Prefetch &instruction,
+                            const Context &context) {
+  const auto check_global_l1 =
+      [&](const Prefetch::GlobalL1 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Prefetch::GlobalL1::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "l1",
+             .bool_value = Prefetch::GlobalL1::l1,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Prefetch::GlobalL1::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "l1",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Prefetch::GlobalL1::l1,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Prefetch::get_checker_descriptor(), "GlobalL1", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Prefetch::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 1> operands = {{[&]() -> OperandView {
+      const auto *symbol =
+          std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+      std::optional<MemoryStateSpace> effective_state_space;
+      ParameterDirection parameter_direction = ParameterDirection::None;
+      if (symbol != nullptr && symbol->address_state_space) {
+        // Preserve the declaration-derived effective space. In
+        // particular, device parameters may produce local rather
+        // than declaration-space addresses in other instructions.
+        switch (*symbol->address_state_space) {
+        case syntax_ast::AstStateSpace::Global:
+          effective_state_space = MemoryStateSpace::Global;
+          break;
+        case syntax_ast::AstStateSpace::Shared:
+          effective_state_space = MemoryStateSpace::Shared;
+          break;
+        case syntax_ast::AstStateSpace::Local:
+          effective_state_space = MemoryStateSpace::Local;
+          break;
+        case syntax_ast::AstStateSpace::Parameter:
+          effective_state_space = MemoryStateSpace::Parameter;
+          break;
+        case syntax_ast::AstStateSpace::Constant:
+          effective_state_space = MemoryStateSpace::Constant;
+          break;
+        case syntax_ast::AstStateSpace::Register:
+          break;
+        }
+      }
+      if (symbol != nullptr && symbol->declaration_kind) {
+        if (*symbol->declaration_kind == binding::SymbolKind::InputParameter) {
+          parameter_direction = ParameterDirection::Input;
+        } else if (*symbol->declaration_kind ==
+                   binding::SymbolKind::ReturnParameter) {
+          parameter_direction = ParameterDirection::Return;
+        } else if (*symbol->declaration_kind ==
+                   binding::SymbolKind::CallParameter) {
+          parameter_direction = ParameterDirection::CallArgument;
+        }
+      }
+      std::optional<uint64_t> address_alignment;
+      const auto low_bit = [](uint64_t value) {
+        return value == 0 ? uint64_t{0} : value & (~value + 1);
+      };
+      if (symbol != nullptr) {
+        address_alignment = symbol->address_alignment;
+      } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                     &selected.address.value.base)) {
+        address_alignment = low_bit(immediate->bits);
+      }
+      if (address_alignment && selected.address.value.offset) {
+        const uint64_t offset_alignment =
+            low_bit(selected.address.value.offset->value.bits);
+        if (offset_alignment != 0 &&
+            (*address_alignment == 0 || offset_alignment < *address_alignment))
+          address_alignment = offset_alignment;
+      }
+      // Register, immediate, and unresolved standalone address
+      // bases remain unknown; spelling is not semantic evidence.
+      return OperandView{
+          .field_id = "address",
+          .actual_shape = check_end::OperandShape::Address,
+          .immediate_type = std::nullopt,
+          .register_type = std::nullopt,
+          .address_state_space = effective_state_space,
+          .address_alignment = address_alignment,
+          .enclosing_function_kind =
+              selected.address.value.enclosing_function_kind,
+          .parameter_direction = parameter_direction,
+          .parameter_qualifier = selected.address.value.parameter_qualifier,
+          .locations = selected.address.locs,
+      };
+    }()}};
+    const auto &layouts =
+        Prefetch::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalL1", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Prefetch::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Prefetch::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_global_l1),
+                                             Prefetch::GlobalL1>);
+
+  return std::visit(detail::Overloaded{check_global_l1}, instruction.variant);
+}
+
+template <>
+CheckResult check<Prefetchu>(const Prefetchu &instruction,
+                             const Context &context) {
+  const auto check_l1 = [&](const Prefetchu::L1 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "l1",
+        .bool_value = Prefetchu::L1::l1,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "l1",
+            .value_kind = checker::ModifierValueKind::Bool,
+            .bool_value = Prefetchu::L1::l1,
+            .scalar_type = ScalarType::Invalid,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Prefetchu::get_checker_descriptor(), "L1", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Prefetchu::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 1> operands = {{[&]() -> OperandView {
+      const auto *symbol =
+          std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+      std::optional<MemoryStateSpace> effective_state_space;
+      ParameterDirection parameter_direction = ParameterDirection::None;
+      if (symbol != nullptr && symbol->address_state_space) {
+        // Preserve the declaration-derived effective space. In
+        // particular, device parameters may produce local rather
+        // than declaration-space addresses in other instructions.
+        switch (*symbol->address_state_space) {
+        case syntax_ast::AstStateSpace::Global:
+          effective_state_space = MemoryStateSpace::Global;
+          break;
+        case syntax_ast::AstStateSpace::Shared:
+          effective_state_space = MemoryStateSpace::Shared;
+          break;
+        case syntax_ast::AstStateSpace::Local:
+          effective_state_space = MemoryStateSpace::Local;
+          break;
+        case syntax_ast::AstStateSpace::Parameter:
+          effective_state_space = MemoryStateSpace::Parameter;
+          break;
+        case syntax_ast::AstStateSpace::Constant:
+          effective_state_space = MemoryStateSpace::Constant;
+          break;
+        case syntax_ast::AstStateSpace::Register:
+          break;
+        }
+      }
+      if (symbol != nullptr && symbol->declaration_kind) {
+        if (*symbol->declaration_kind == binding::SymbolKind::InputParameter) {
+          parameter_direction = ParameterDirection::Input;
+        } else if (*symbol->declaration_kind ==
+                   binding::SymbolKind::ReturnParameter) {
+          parameter_direction = ParameterDirection::Return;
+        } else if (*symbol->declaration_kind ==
+                   binding::SymbolKind::CallParameter) {
+          parameter_direction = ParameterDirection::CallArgument;
+        }
+      }
+      std::optional<uint64_t> address_alignment;
+      const auto low_bit = [](uint64_t value) {
+        return value == 0 ? uint64_t{0} : value & (~value + 1);
+      };
+      if (symbol != nullptr) {
+        address_alignment = symbol->address_alignment;
+      } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                     &selected.address.value.base)) {
+        address_alignment = low_bit(immediate->bits);
+      }
+      if (address_alignment && selected.address.value.offset) {
+        const uint64_t offset_alignment =
+            low_bit(selected.address.value.offset->value.bits);
+        if (offset_alignment != 0 &&
+            (*address_alignment == 0 || offset_alignment < *address_alignment))
+          address_alignment = offset_alignment;
+      }
+      // Register, immediate, and unresolved standalone address
+      // bases remain unknown; spelling is not semantic evidence.
+      return OperandView{
+          .field_id = "address",
+          .actual_shape = check_end::OperandShape::Address,
+          .immediate_type = std::nullopt,
+          .register_type = std::nullopt,
+          .address_state_space = effective_state_space,
+          .address_alignment = address_alignment,
+          .enclosing_function_kind =
+              selected.address.value.enclosing_function_kind,
+          .parameter_direction = parameter_direction,
+          .parameter_qualifier = selected.address.value.parameter_qualifier,
+          .locations = selected.address.locs,
+      };
+    }()}};
+    const auto &layouts =
+        Prefetchu::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "L1", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Prefetchu::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Prefetchu::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_l1), Prefetchu::L1>);
+
+  return std::visit(detail::Overloaded{check_l1}, instruction.variant);
+}
+
+template <>
+CheckResult check<Createpolicy>(const Createpolicy &instruction,
+                                const Context &context) {
+  const auto check_fractional_l2_evict_last_b64 =
+      [&](const Createpolicy::FractionalL2EvictLastB64 &selected)
+      -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "fractional",
+             .bool_value = Createpolicy::FractionalL2EvictLastB64::fractional,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "eviction_priority",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority =
+                 Createpolicy::FractionalL2EvictLastB64::eviction_priority,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Createpolicy::FractionalL2EvictLastB64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "fractional",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Createpolicy::FractionalL2EvictLastB64::fractional,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "eviction_priority",
+             .value_kind = checker::ModifierValueKind::EvictionPriority,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority =
+                 Createpolicy::FractionalL2EvictLastB64::eviction_priority,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Createpolicy::FractionalL2EvictLastB64::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Createpolicy::get_checker_descriptor(),
+                                     "FractionalL2EvictLastB64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Createpolicy::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "fraction",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.fraction.value.type,
+             .immediate_bits = selected.fraction.value.bits,
+             .immediate_is_negative = selected.fraction.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.fraction.locs,
+         }}};
+    const auto &layouts =
+        Createpolicy::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "FractionalL2EvictLastB64", selected.operand_layout.value,
+        layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Createpolicy::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Createpolicy::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto immediate_value_check = check_immediate_value(
+          Createpolicy::get_checker_descriptor().variants[0].immediate_value,
+          operands, context);
+      if (!immediate_value_check) {
+        diagnostics.insert(diagnostics.end(),
+                           immediate_value_check.error().begin(),
+                           immediate_value_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_fractional_l2_evict_last_b64),
+                                   Createpolicy::FractionalL2EvictLastB64>);
+
+  return std::visit(detail::Overloaded{check_fractional_l2_evict_last_b64},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Applypriority>(const Applypriority &instruction,
+                                 const Context &context) {
+  const auto check_global_l2_evict_normal =
+      [&](const Applypriority::GlobalL2EvictNormal &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space =
+                 Applypriority::GlobalL2EvictNormal::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "eviction_priority",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority =
+                 Applypriority::GlobalL2EvictNormal::eviction_priority,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space =
+                 Applypriority::GlobalL2EvictNormal::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "eviction_priority",
+             .value_kind = checker::ModifierValueKind::EvictionPriority,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority =
+                 Applypriority::GlobalL2EvictNormal::eviction_priority,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Applypriority::get_checker_descriptor(),
+                                     "GlobalL2EvictNormal", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Applypriority::get_checker_descriptor()
+            .variants[0]
+            .modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "size",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.size.value.type,
+             .immediate_bits = selected.size.value.bits,
+             .immediate_is_negative = selected.size.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.size.locs,
+         }}};
+    const auto &layouts =
+        Applypriority::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalL2EvictNormal", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Applypriority::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Applypriority::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Applypriority::get_checker_descriptor().variants[0].address_alignment,
+          fields, operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+      const auto immediate_value_check = check_immediate_value(
+          Applypriority::get_checker_descriptor().variants[0].immediate_value,
+          operands, context);
+      if (!immediate_value_check) {
+        diagnostics.insert(diagnostics.end(),
+                           immediate_value_check.error().begin(),
+                           immediate_value_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_l2_evict_normal),
+                                   Applypriority::GlobalL2EvictNormal>);
+
+  return std::visit(detail::Overloaded{check_global_l2_evict_normal},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Discard>(const Discard &instruction, const Context &context) {
+  const auto check_global_l2 =
+      [&](const Discard::GlobalL2 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Discard::GlobalL2::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "l2",
+             .bool_value = Discard::GlobalL2::l2,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Discard::GlobalL2::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "l2",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Discard::GlobalL2::l2,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Discard::get_checker_descriptor(), "GlobalL2", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Discard::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "size",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.size.value.type,
+             .immediate_bits = selected.size.value.bits,
+             .immediate_is_negative = selected.size.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.size.locs,
+         }}};
+    const auto &layouts =
+        Discard::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalL2", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Discard::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Discard::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Discard::get_checker_descriptor().variants[0].address_alignment,
+          fields, operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+      const auto immediate_value_check = check_immediate_value(
+          Discard::get_checker_descriptor().variants[0].immediate_value,
+          operands, context);
+      if (!immediate_value_check) {
+        diagnostics.insert(diagnostics.end(),
+                           immediate_value_check.error().begin(),
+                           immediate_value_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_global_l2),
+                                             Discard::GlobalL2>);
+
+  return std::visit(detail::Overloaded{check_global_l2}, instruction.variant);
+}
+
+template <>
+CheckResult check<Cp>(const Cp &instruction, const Context &context) {
+  const auto check_async_ca_shared_global =
+      [&](const Cp::AsyncCaSharedGlobal &selected) -> CheckResult {
+    const std::array<FieldView, 4> fields = {
+        {FieldView{
+             .field_id = "async",
+             .bool_value = Cp::AsyncCaSharedGlobal::async,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "ca",
+             .bool_value = Cp::AsyncCaSharedGlobal::ca,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "shared",
+             .bool_value = Cp::AsyncCaSharedGlobal::shared,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "global",
+             .bool_value = Cp::AsyncCaSharedGlobal::global,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 4> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "async",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCaSharedGlobal::async,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "ca",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCaSharedGlobal::ca,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "shared",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCaSharedGlobal::shared,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "global",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCaSharedGlobal::global,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Cp::get_checker_descriptor(),
+                                     "AsyncCaSharedGlobal", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cp::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.dst.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.dst.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.dst.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.dst.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "dst",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.dst.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier = selected.dst.value.parameter_qualifier,
+               .locations = selected.dst.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.src.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.src.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.src.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.src.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.src.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier = selected.src.value.parameter_qualifier,
+               .locations = selected.src.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "cp_size",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.cp_size.value.type,
+             .immediate_bits = selected.cp_size.value.bits,
+             .immediate_is_negative = selected.cp_size.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.cp_size.locs,
+         }}};
+    const auto &layouts =
+        Cp::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "AsyncCaSharedGlobal", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cp::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cp::get_checker_descriptor().variants[0].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Cp::get_checker_descriptor().variants[0].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+      const auto immediate_value_check = check_immediate_value(
+          Cp::get_checker_descriptor().variants[0].immediate_value, operands,
+          context);
+      if (!immediate_value_check) {
+        diagnostics.insert(diagnostics.end(),
+                           immediate_value_check.error().begin(),
+                           immediate_value_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_async_ca_shared_global),
+                                   Cp::AsyncCaSharedGlobal>);
+
+  const auto check_async_commit_group =
+      [&](const Cp::AsyncCommitGroup &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "async",
+             .bool_value = Cp::AsyncCommitGroup::async,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "commit_group",
+             .bool_value = Cp::AsyncCommitGroup::commit_group,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "async",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCommitGroup::async,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "commit_group",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncCommitGroup::commit_group,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cp::get_checker_descriptor(), "AsyncCommitGroup", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cp::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Cp::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "AsyncCommitGroup", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cp::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cp::get_checker_descriptor().variants[1].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_async_commit_group),
+                                             Cp::AsyncCommitGroup>);
+
+  const auto check_async_wait_group =
+      [&](const Cp::AsyncWaitGroup &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "async",
+             .bool_value = Cp::AsyncWaitGroup::async,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "wait_group",
+             .bool_value = Cp::AsyncWaitGroup::wait_group,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "async",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncWaitGroup::async,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "wait_group",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncWaitGroup::wait_group,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cp::get_checker_descriptor(), "AsyncWaitGroup", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cp::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 1> operands = {{OperandView{
+        .field_id = "n",
+        .actual_shape = check_end::OperandShape::Immediate,
+        .immediate_type = selected.n.value.type,
+        .immediate_bits = selected.n.value.bits,
+        .immediate_is_negative = selected.n.value.is_negative,
+        .register_type = std::nullopt,
+        .locations = selected.n.locs,
+    }}};
+    const auto &layouts =
+        Cp::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "AsyncWaitGroup", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cp::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cp::get_checker_descriptor().variants[2].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Cp::get_checker_descriptor().variants[2].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_async_wait_group),
+                                             Cp::AsyncWaitGroup>);
+
+  const auto check_async_wait_all =
+      [&](const Cp::AsyncWaitAll &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "async",
+             .bool_value = Cp::AsyncWaitAll::async,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "wait_all",
+             .bool_value = Cp::AsyncWaitAll::wait_all,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "async",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncWaitAll::async,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "wait_all",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Cp::AsyncWaitAll::wait_all,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Cp::get_checker_descriptor(), "AsyncWaitAll", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Cp::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Cp::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "AsyncWaitAll", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Cp::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Cp::get_checker_descriptor().variants[3].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_async_wait_all),
+                                             Cp::AsyncWaitAll>);
+
+  return std::visit(
+      detail::Overloaded{check_async_ca_shared_global, check_async_commit_group,
+                         check_async_wait_group, check_async_wait_all},
+      instruction.variant);
+}
+
+template <>
+CheckResult check<St>(const St &instruction, const Context &context) {
+  const auto check_generic_scalar =
+      [&](const St::GenericScalar &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
+             .field_id = "semantics",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = selected.semantics.value,
+             .memory_scope = std::nullopt,
+             .locations = selected.semantics.locs,
+         },
+         FieldView{
+             .field_id = "scope",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = selected.scope.value,
+             .locations = selected.scope.locs,
+         },
+         FieldView{
+             .field_id = "mmio",
+             .bool_value = selected.mmio.value,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.mmio.locs,
+         },
+         FieldView{
+             .field_id = "cache",
+             .bool_value = std::nullopt,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.cache.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.type.locs,
+         }}};
+    const std::array<ModifierValueView, 5> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "semantics",
+             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = selected.semantics.value,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.semantics.locs,
+         },
+         ModifierValueView{
+             .kind_id = "scope",
+             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1948,7 +7298,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = selected.mmio.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1962,7 +7315,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1976,7 +7332,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2137,7 +7496,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = selected.state_space.value,
              .memory_consistency = std::nullopt,
@@ -2148,7 +7510,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "cache",
              .bool_value = std::nullopt,
              .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2159,7 +7524,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -2170,7 +7538,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2181,7 +7552,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "mmio",
              .bool_value = selected.mmio.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2192,7 +7566,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2206,7 +7583,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = selected.state_space.value,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2220,7 +7600,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2234,7 +7617,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -2248,7 +7634,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2262,7 +7651,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = selected.mmio.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2276,7 +7668,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2430,138 +7825,106 @@ CheckResult check<St>(const St &instruction, const Context &context) {
   static_assert(detail::VariantCheckFunction<decltype(check_explicit_scalar),
                                              St::ExplicitScalar>);
 
-  const auto check_generic_vector =
-      [&](const St::GenericVector &selected) -> CheckResult {
-    const std::array<FieldView, 5> fields = {
+  const auto check_global_u32_l1_evict =
+      [&](const St::GlobalU32L1Evict &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
         {FieldView{
-             .field_id = "semantics",
+             .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
-             .memory_state_space = std::nullopt,
-             .memory_consistency = selected.semantics.value,
-             .memory_scope = std::nullopt,
-             .locations = selected.semantics.locs,
-         },
-         FieldView{
-             .field_id = "scope",
-             .bool_value = std::nullopt,
-             .cache_operator = std::nullopt,
-             .scalar_type = std::nullopt,
-             .vector_arity = std::nullopt,
-             .memory_state_space = std::nullopt,
+             .memory_state_space = St::GlobalU32L1Evict::state_space,
              .memory_consistency = std::nullopt,
-             .memory_scope = selected.scope.value,
-             .locations = selected.scope.locs,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
-             .field_id = "cache",
+             .field_id = "eviction_priority",
              .bool_value = std::nullopt,
-             .cache_operator = selected.cache.value,
+             .cache_operator = std::nullopt,
+             .eviction_priority = selected.eviction_priority.value,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.cache.locs,
-         },
-         FieldView{
-             .field_id = "vector",
-             .bool_value = std::nullopt,
-             .cache_operator = std::nullopt,
-             .scalar_type = std::nullopt,
-             .vector_arity = selected.vector.value,
-             .memory_state_space = std::nullopt,
-             .memory_consistency = std::nullopt,
-             .memory_scope = std::nullopt,
-             .locations = selected.vector.locs,
+             .locations = selected.eviction_priority.locs,
          },
          FieldView{
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
-             .scalar_type = selected.type.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = St::GlobalU32L1Evict::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.type.locs,
+             .locations = std::span<const SourceRange>{},
          }}};
-    const std::array<ModifierValueView, 5> modifier_values = {
+    const std::array<ModifierValueView, 3> modifier_values = {
         {ModifierValueView{
-             .kind_id = "semantics",
-             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = selected.semantics.value,
+             .memory_state_space = St::GlobalU32L1Evict::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.semantics.locs,
+             .locations = std::span<const SourceRange>{},
          },
          ModifierValueView{
-             .kind_id = "scope",
-             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .kind_id = "eviction_priority",
+             .value_kind = checker::ModifierValueKind::EvictionPriority,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = selected.scope.value,
-             .is_present = true,
-             .locations = selected.scope.locs,
-         },
-         ModifierValueView{
-             .kind_id = "cache",
-             .value_kind = checker::ModifierValueKind::CacheOperator,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = selected.cache.value,
+             .eviction_priority = selected.eviction_priority.value,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
-             .is_present = selected.cache.value != CacheOperator::Unspecified,
-             .locations = selected.cache.locs,
-         },
-         ModifierValueView{
-             .kind_id = "vector",
-             .value_kind = checker::ModifierValueKind::VectorArity,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = selected.vector.value,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.vector.locs,
+             .locations = selected.eviction_priority.locs,
          },
          ModifierValueView{
              .kind_id = "type",
              .value_kind = checker::ModifierValueKind::ScalarType,
              .bool_value = false,
-             .scalar_type = selected.type.value,
+             .scalar_type = St::GlobalU32L1Evict::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
              .memory_scope = MemoryScope::None,
              .is_present = true,
-             .locations = selected.type.locs,
+             .locations = std::span<const SourceRange>{},
          }}};
     CheckDiagnostics diagnostics;
     const auto common =
-        check_common(St::get_checker_descriptor(), "GenericVector", context);
+        check_common(St::get_checker_descriptor(), "GlobalU32L1Evict", context);
     if (!common) {
       diagnostics.insert(diagnostics.end(), common.error().begin(),
                          common.error().end());
@@ -2651,33 +8014,18 @@ CheckResult check<St>(const St &instruction, const Context &context) {
                .locations = selected.address.locs,
            };
          }(),
-         [&]() -> OperandView {
-           OperandView view{
-               .field_id = "src",
-               .actual_shape = check_end::OperandShape::Vector,
-               .vector_arity =
-                   static_cast<uint8_t>(selected.src.value.elements.size()),
-               .locations = selected.src.locs,
-           };
-           size_t index = 0;
-           for (const auto &element : selected.src.value.elements) {
-             if (index >= view.vector_element_types.size())
-               break;
-             if (element) {
-               view.vector_element_types[index] =
-                   element->declared_type.value_or(ScalarType::Invalid);
-             } else {
-               ++view.vector_sink_count;
-             }
-             ++index;
-           }
-           return view;
-         }()}};
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
     const auto &layouts =
         St::get_resolved_descriptor().variants[2].operand_layouts;
-    const auto layout_check =
-        check_operand_layout_tag("GenericVector", selected.operand_layout.value,
-                                 layouts.size(), context);
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU32L1Evict", selected.operand_layout.value, layouts.size(),
+        context);
     if (!layout_check) {
       diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
                          layout_check.error().end());
@@ -2698,21 +8046,6 @@ CheckResult check<St>(const St &instruction, const Context &context) {
         diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
                            operand_check.error().end());
       }
-      const auto consistency_check = check_memory_consistency(
-          St::get_checker_descriptor().variants[2].memory_consistency, fields,
-          operands, context);
-      if (!consistency_check) {
-        diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
-                           consistency_check.error().end());
-      }
-      const auto memory_vector_check = check_memory_vector(
-          St::get_checker_descriptor().variants[2].memory_vector, fields,
-          operands, context);
-      if (!memory_vector_check) {
-        diagnostics.insert(diagnostics.end(),
-                           memory_vector_check.error().begin(),
-                           memory_vector_check.error().end());
-      }
       const auto alignment_check = check_address_alignment(
           St::get_checker_descriptor().variants[2].address_alignment, fields,
           operands, context);
@@ -2725,39 +8058,265 @@ CheckResult check<St>(const St &instruction, const Context &context) {
       return CheckResult{};
     return std::unexpected(std::move(diagnostics));
   };
-  static_assert(detail::VariantCheckFunction<decltype(check_generic_vector),
-                                             St::GenericVector>);
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_u32_l1_evict),
+                                   St::GlobalU32L1Evict>);
 
-  const auto check_explicit_vector =
-      [&](const St::ExplicitVector &selected) -> CheckResult {
-    const std::array<FieldView, 6> fields = {
+  const auto check_global_u32_l2_cache_hint =
+      [&](const St::GlobalU32L2CacheHint &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
         {FieldView{
              .field_id = "state_space",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
-             .memory_state_space = selected.state_space.value,
+             .memory_state_space = St::GlobalU32L2CacheHint::state_space,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.state_space.locs,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
-             .field_id = "cache",
-             .bool_value = std::nullopt,
-             .cache_operator = selected.cache.value,
+             .field_id = "cache_hint",
+             .bool_value = St::GlobalU32L2CacheHint::cache_hint,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
-             .locations = selected.cache.locs,
+             .locations = std::span<const SourceRange>{},
          },
          FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = St::GlobalU32L2CacheHint::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = St::GlobalU32L2CacheHint::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "cache_hint",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = St::GlobalU32L2CacheHint::cache_hint,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = St::GlobalU32L2CacheHint::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(St::get_checker_descriptor(),
+                                     "GlobalU32L2CacheHint", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        St::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         },
+         OperandView{
+             .field_id = "cache_policy",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.cache_policy.value.declared_type,
+             .locations = selected.cache_policy.locs,
+         }}};
+    const auto &layouts =
+        St::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalU32L2CacheHint", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          St::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          St::get_checker_descriptor().variants[3].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          St::get_checker_descriptor().variants[3].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_u32_l2_cache_hint),
+                                   St::GlobalU32L2CacheHint>);
+
+  const auto check_generic_vector =
+      [&](const St::GenericVector &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
              .field_id = "semantics",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = selected.semantics.value,
@@ -2768,7 +8327,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "scope",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2776,10 +8338,27 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .locations = selected.scope.locs,
          },
          FieldView{
+             .field_id = "cache",
+             .bool_value = std::nullopt,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.cache.locs,
+         },
+         FieldView{
              .field_id = "vector",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = selected.vector.value,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2790,49 +8369,27 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
              .memory_scope = std::nullopt,
              .locations = selected.type.locs,
          }}};
-    const std::array<ModifierValueView, 6> modifier_values = {
+    const std::array<ModifierValueView, 5> modifier_values = {
         {ModifierValueView{
-             .kind_id = "state_space",
-             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = CacheOperator::Unspecified,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = selected.state_space.value,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
-             .is_present = true,
-             .locations = selected.state_space.locs,
-         },
-         ModifierValueView{
-             .kind_id = "cache",
-             .value_kind = checker::ModifierValueKind::CacheOperator,
-             .bool_value = false,
-             .scalar_type = ScalarType::Invalid,
-             .rounding_mode = RoundingMode::Invalid,
-             .cache_operator = selected.cache.value,
-             .vector_arity = VectorArity::Invalid,
-             .memory_state_space = MemoryStateSpace::Invalid,
-             .memory_consistency = MemoryConsistency::Omitted,
-             .memory_scope = MemoryScope::None,
-             .is_present = selected.cache.value != CacheOperator::Unspecified,
-             .locations = selected.cache.locs,
-         },
-         ModifierValueView{
              .kind_id = "semantics",
              .value_kind = checker::ModifierValueKind::MemoryConsistency,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = selected.semantics.value,
@@ -2846,7 +8403,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2855,12 +8415,32 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .locations = selected.scope.locs,
          },
          ModifierValueView{
+             .kind_id = "cache",
+             .value_kind = checker::ModifierValueKind::CacheOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = selected.cache.value != CacheOperator::Unspecified,
+             .locations = selected.cache.locs,
+         },
+         ModifierValueView{
              .kind_id = "vector",
              .value_kind = checker::ModifierValueKind::VectorArity,
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = selected.vector.value,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2874,7 +8454,10 @@ CheckResult check<St>(const St &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2884,13 +8467,13 @@ CheckResult check<St>(const St &instruction, const Context &context) {
          }}};
     CheckDiagnostics diagnostics;
     const auto common =
-        check_common(St::get_checker_descriptor(), "ExplicitVector", context);
+        check_common(St::get_checker_descriptor(), "GenericVector", context);
     if (!common) {
       diagnostics.insert(diagnostics.end(), common.error().begin(),
                          common.error().end());
     }
     const auto modifier_availability = check_modifier_value_availability(
-        St::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        St::get_checker_descriptor().variants[4].modifier_value_availabilities,
         modifier_values, context);
     if (!modifier_availability) {
       diagnostics.insert(diagnostics.end(),
@@ -2984,9 +8567,11 @@ CheckResult check<St>(const St &instruction, const Context &context) {
            };
            size_t index = 0;
            for (const auto &element : selected.src.value.elements) {
-             if (index >= view.vector_element_types.size())
+             if (index >= view.vector_element_shapes.size())
                break;
              if (element) {
+               view.vector_element_shapes[index] =
+                   check_end::OperandShape::Register;
                view.vector_element_types[index] =
                    element->declared_type.value_or(ScalarType::Invalid);
              } else {
@@ -2997,16 +8582,16 @@ CheckResult check<St>(const St &instruction, const Context &context) {
            return view;
          }()}};
     const auto &layouts =
-        St::get_resolved_descriptor().variants[3].operand_layouts;
-    const auto layout_check = check_operand_layout_tag(
-        "ExplicitVector", selected.operand_layout.value, layouts.size(),
-        context);
+        St::get_resolved_descriptor().variants[4].operand_layouts;
+    const auto layout_check =
+        check_operand_layout_tag("GenericVector", selected.operand_layout.value,
+                                 layouts.size(), context);
     if (!layout_check) {
       diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
                          layout_check.error().end());
     } else {
       const auto availability_check = check_operand_layout_availability(
-          St::get_checker_descriptor().variants[3],
+          St::get_checker_descriptor().variants[4],
           selected.operand_layout.value, context);
       if (!availability_check) {
         diagnostics.insert(diagnostics.end(),
@@ -3015,21 +8600,21 @@ CheckResult check<St>(const St &instruction, const Context &context) {
       }
       const auto operand_check = check_operands(
           layouts[selected.operand_layout.value].bindings, fields, operands,
-          St::get_checker_descriptor().variants[3].operand_type_compatibilities,
+          St::get_checker_descriptor().variants[4].operand_type_compatibilities,
           context);
       if (!operand_check) {
         diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
                            operand_check.error().end());
       }
       const auto consistency_check = check_memory_consistency(
-          St::get_checker_descriptor().variants[3].memory_consistency, fields,
+          St::get_checker_descriptor().variants[4].memory_consistency, fields,
           operands, context);
       if (!consistency_check) {
         diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
                            consistency_check.error().end());
       }
       const auto memory_vector_check = check_memory_vector(
-          St::get_checker_descriptor().variants[3].memory_vector, fields,
+          St::get_checker_descriptor().variants[4].memory_vector, fields,
           operands, context);
       if (!memory_vector_check) {
         diagnostics.insert(diagnostics.end(),
@@ -3037,7 +8622,368 @@ CheckResult check<St>(const St &instruction, const Context &context) {
                            memory_vector_check.error().end());
       }
       const auto alignment_check = check_address_alignment(
-          St::get_checker_descriptor().variants[3].address_alignment, fields,
+          St::get_checker_descriptor().variants[4].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_generic_vector),
+                                             St::GenericVector>);
+
+  const auto check_explicit_vector =
+      [&](const St::ExplicitVector &selected) -> CheckResult {
+    const std::array<FieldView, 6> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = selected.state_space.value,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.state_space.locs,
+         },
+         FieldView{
+             .field_id = "cache",
+             .bool_value = std::nullopt,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.cache.locs,
+         },
+         FieldView{
+             .field_id = "semantics",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = selected.semantics.value,
+             .memory_scope = std::nullopt,
+             .locations = selected.semantics.locs,
+         },
+         FieldView{
+             .field_id = "scope",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = selected.scope.value,
+             .locations = selected.scope.locs,
+         },
+         FieldView{
+             .field_id = "vector",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = selected.vector.value,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.vector.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.type.locs,
+         }}};
+    const std::array<ModifierValueView, 6> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = selected.state_space.value,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.state_space.locs,
+         },
+         ModifierValueView{
+             .kind_id = "cache",
+             .value_kind = checker::ModifierValueKind::CacheOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = selected.cache.value,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = selected.cache.value != CacheOperator::Unspecified,
+             .locations = selected.cache.locs,
+         },
+         ModifierValueView{
+             .kind_id = "semantics",
+             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = selected.semantics.value,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.semantics.locs,
+         },
+         ModifierValueView{
+             .kind_id = "scope",
+             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = selected.scope.value,
+             .is_present = true,
+             .locations = selected.scope.locs,
+         },
+         ModifierValueView{
+             .kind_id = "vector",
+             .value_kind = checker::ModifierValueKind::VectorArity,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = selected.vector.value,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.vector.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = selected.type.value,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.type.locs,
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(St::get_checker_descriptor(), "ExplicitVector", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        St::get_checker_descriptor().variants[5].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           OperandView view{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Vector,
+               .vector_arity =
+                   static_cast<uint8_t>(selected.src.value.elements.size()),
+               .locations = selected.src.locs,
+           };
+           size_t index = 0;
+           for (const auto &element : selected.src.value.elements) {
+             if (index >= view.vector_element_shapes.size())
+               break;
+             if (element) {
+               view.vector_element_shapes[index] =
+                   check_end::OperandShape::Register;
+               view.vector_element_types[index] =
+                   element->declared_type.value_or(ScalarType::Invalid);
+             } else {
+               ++view.vector_sink_count;
+             }
+             ++index;
+           }
+           return view;
+         }()}};
+    const auto &layouts =
+        St::get_resolved_descriptor().variants[5].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "ExplicitVector", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          St::get_checker_descriptor().variants[5],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          St::get_checker_descriptor().variants[5].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto consistency_check = check_memory_consistency(
+          St::get_checker_descriptor().variants[5].memory_consistency, fields,
+          operands, context);
+      if (!consistency_check) {
+        diagnostics.insert(diagnostics.end(), consistency_check.error().begin(),
+                           consistency_check.error().end());
+      }
+      const auto memory_vector_check = check_memory_vector(
+          St::get_checker_descriptor().variants[5].memory_vector, fields,
+          operands, context);
+      if (!memory_vector_check) {
+        diagnostics.insert(diagnostics.end(),
+                           memory_vector_check.error().begin(),
+                           memory_vector_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          St::get_checker_descriptor().variants[5].address_alignment, fields,
           operands, context);
       if (!alignment_check) {
         diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
@@ -3053,8 +8999,287 @@ CheckResult check<St>(const St &instruction, const Context &context) {
 
   return std::visit(
       detail::Overloaded{check_generic_scalar, check_explicit_scalar,
-                         check_generic_vector, check_explicit_vector},
+                         check_global_u32_l1_evict,
+                         check_global_u32_l2_cache_hint, check_generic_vector,
+                         check_explicit_vector},
       instruction.variant);
+}
+
+template <>
+CheckResult check<Prmt>(const Prmt &instruction, const Context &context) {
+  const auto check_generic_b32 =
+      [&](const Prmt::GenericB32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Prmt::GenericB32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Prmt::GenericB32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Prmt::get_checker_descriptor(), "GenericB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Prmt::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "selector",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.selector.value.type,
+             .immediate_bits = selected.selector.value.bits,
+             .immediate_is_negative = selected.selector.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.selector.locs,
+         }}};
+    const auto &layouts =
+        Prmt::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GenericB32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Prmt::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Prmt::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Prmt::get_checker_descriptor().variants[0].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_generic_b32),
+                                             Prmt::GenericB32>);
+
+  const auto check_f4e_b32 = [&](const Prmt::F4eB32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Prmt::F4eB32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "f4e",
+             .bool_value = Prmt::F4eB32::f4e,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Prmt::F4eB32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "f4e",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Prmt::F4eB32::f4e,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Prmt::get_checker_descriptor(), "F4eB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Prmt::get_checker_descriptor()
+                                              .variants[1]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "selector",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.selector.value.declared_type,
+             .locations = selected.selector.locs,
+         }}};
+    const auto &layouts =
+        Prmt::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "F4eB32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Prmt::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Prmt::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_f4e_b32), Prmt::F4eB32>);
+
+  return std::visit(detail::Overloaded{check_generic_b32, check_f4e_b32},
+                    instruction.variant);
 }
 
 } // namespace checker

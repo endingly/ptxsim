@@ -379,6 +379,167 @@ resolve<Bar>(const syntax_ast::AstInstruction &ast,
   throw ResolveException("Unknown Bar variant in resolved field table.");
 }
 
+template <>
+std::expected<Membar, ResolveDiagnostic>
+resolve<Membar>(const syntax_ast::AstInstruction &ast,
+                const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Membar>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Membar::get_syntax_descriptor(), Membar::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "Cta") {
+    return Membar{.execution_predicate = std::move(fields->execution_predicate),
+                  .variant = Membar::Cta{
+                      .operand_layout = fields->operand_layout,
+
+                  }};
+  }
+
+  throw ResolveException("Unknown Membar variant in resolved field table.");
+}
+
+template <>
+std::expected<Fence, ResolveDiagnostic>
+resolve<Fence>(const syntax_ast::AstInstruction &ast,
+               const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Fence>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Fence::get_syntax_descriptor(), Fence::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "AcqRelCta") {
+    return Fence{.execution_predicate = std::move(fields->execution_predicate),
+                 .variant = Fence::AcqRelCta{
+                     .operand_layout = fields->operand_layout,
+
+                 }};
+  }
+
+  throw ResolveException("Unknown Fence variant in resolved field table.");
+}
+
+template <>
+std::expected<Atom, ResolveDiagnostic>
+resolve<Atom>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Atom>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Atom::get_syntax_descriptor(), Atom::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalRelaxedCtaAddU32") {
+    return Atom{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Atom::GlobalRelaxedCtaAddU32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Atom variant in resolved field table.");
+}
+
+template <>
+std::expected<Red, ResolveDiagnostic>
+resolve<Red>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Red>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Red::get_syntax_descriptor(), Red::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "GlobalRelaxedCtaAddU32") {
+    return Red{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Red::GlobalRelaxedCtaAddU32{
+            .operand_layout = fields->operand_layout,
+            .address = resolved_operand<ResolvedAddress>(*fields, "address"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Red variant in resolved field table.");
+}
+
+template <>
+std::expected<Activemask, ResolveDiagnostic>
+resolve<Activemask>(const syntax_ast::AstInstruction &ast,
+                    const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Activemask>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Activemask::get_syntax_descriptor(),
+                     Activemask::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Activemask{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Activemask::B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+        }};
+  }
+
+  throw ResolveException("Unknown Activemask variant in resolved field table.");
+}
+
+template <>
+std::expected<Vote, ResolveDiagnostic>
+resolve<Vote>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Vote>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Vote::get_syntax_descriptor(), Vote::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "SyncBallotB32") {
+    return Vote{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Vote::SyncBallotB32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .predicate =
+                resolved_operand<ResolvedPredicate>(*fields, "predicate"),
+            .membermask = resolved_operand<RegOrImm>(*fields, "membermask"),
+        }};
+  }
+
+  throw ResolveException("Unknown Vote variant in resolved field table.");
+}
+
 namespace checker {
 
 template <>
@@ -388,7 +549,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
         .field_id = "sync",
         .bool_value = Bar::Sync::sync,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -402,7 +566,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
             .bool_value = Bar::Sync::sync,
             .scalar_type = ScalarType::Invalid,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -439,6 +606,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
           .field_id = "barrier",
           .actual_shape = check_end::OperandShape::Immediate,
           .immediate_type = payload.barrier.value.type,
+          .immediate_bits = payload.barrier.value.bits,
+          .immediate_is_negative = payload.barrier.value.is_negative,
           .register_type = std::nullopt,
           .locations = payload.barrier.locs,
       }}};
@@ -473,6 +642,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
               .field_id = "barrier",
               .actual_shape = check_end::OperandShape::Immediate,
               .immediate_type = immediate->type,
+              .immediate_bits = immediate->bits,
+              .immediate_is_negative = immediate->is_negative,
               .register_type = std::nullopt,
               .locations = payload.barrier.locs,
           };
@@ -520,6 +691,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -541,6 +714,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -607,7 +782,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "cta",
              .bool_value = Bar::CtaSync::cta,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -618,7 +796,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "sync",
              .bool_value = Bar::CtaSync::sync,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -632,7 +813,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaSync::cta,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -646,7 +830,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaSync::sync,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -686,6 +873,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
               .field_id = "barrier",
               .actual_shape = check_end::OperandShape::Immediate,
               .immediate_type = immediate->type,
+              .immediate_bits = immediate->bits,
+              .immediate_is_negative = immediate->is_negative,
               .register_type = std::nullopt,
               .locations = payload.barrier.locs,
           };
@@ -733,6 +922,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -754,6 +945,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -821,7 +1014,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
         .field_id = "arrive",
         .bool_value = Bar::Arrive::arrive,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -835,7 +1031,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
             .bool_value = Bar::Arrive::arrive,
             .scalar_type = ScalarType::Invalid,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -866,6 +1065,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                  .field_id = "barrier",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.barrier.locs,
              };
@@ -887,6 +1088,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                  .field_id = "thread_count",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.thread_count.locs,
              };
@@ -942,7 +1145,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "cta",
              .bool_value = Bar::CtaArrive::cta,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -953,7 +1159,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "arrive",
              .bool_value = Bar::CtaArrive::arrive,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -967,7 +1176,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaArrive::cta,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -981,7 +1193,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaArrive::arrive,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1012,6 +1227,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                  .field_id = "barrier",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.barrier.locs,
              };
@@ -1033,6 +1250,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                  .field_id = "thread_count",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.thread_count.locs,
              };
@@ -1088,7 +1307,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::RedPopcU32::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1099,7 +1321,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::RedPopcU32::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1110,7 +1335,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::RedPopcU32::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1124,7 +1352,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedPopcU32::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1138,7 +1369,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedPopcU32::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1152,7 +1386,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::RedPopcU32::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1201,6 +1438,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1264,6 +1503,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1285,6 +1526,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -1361,7 +1604,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "cta",
              .bool_value = Bar::CtaRedPopcU32::cta,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1372,7 +1618,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::CtaRedPopcU32::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1383,7 +1632,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::CtaRedPopcU32::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1394,7 +1646,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::CtaRedPopcU32::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1408,7 +1663,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedPopcU32::cta,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1422,7 +1680,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedPopcU32::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1436,7 +1697,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedPopcU32::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1450,7 +1714,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::CtaRedPopcU32::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1499,6 +1766,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1562,6 +1831,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1583,6 +1854,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -1661,7 +1934,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::RedAndPred::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1672,7 +1948,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::RedAndPred::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1683,7 +1962,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::RedAndPred::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1697,7 +1979,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedAndPred::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1711,7 +1996,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedAndPred::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1725,7 +2013,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::RedAndPred::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1774,6 +2065,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1837,6 +2130,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -1858,6 +2153,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -1934,7 +2231,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "cta",
              .bool_value = Bar::CtaRedAndPred::cta,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1945,7 +2245,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::CtaRedAndPred::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1956,7 +2259,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::CtaRedAndPred::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1967,7 +2273,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::CtaRedAndPred::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1981,7 +2290,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedAndPred::cta,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1995,7 +2307,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedAndPred::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2009,7 +2324,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedAndPred::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2023,7 +2341,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::CtaRedAndPred::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2072,6 +2393,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2135,6 +2458,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2156,6 +2481,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -2234,7 +2561,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::RedOrPred::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2245,7 +2575,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::RedOrPred::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2256,7 +2589,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::RedOrPred::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2270,7 +2606,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedOrPred::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2284,7 +2623,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::RedOrPred::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2298,7 +2640,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::RedOrPred::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2347,6 +2692,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2409,6 +2756,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2430,6 +2779,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -2506,7 +2857,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "cta",
              .bool_value = Bar::CtaRedOrPred::cta,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2517,7 +2871,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "red",
              .bool_value = Bar::CtaRedOrPred::red,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2528,7 +2885,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "reduction",
              .bool_value = Bar::CtaRedOrPred::reduction,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2539,7 +2899,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Bar::CtaRedOrPred::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2553,7 +2916,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedOrPred::cta,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2567,7 +2933,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedOrPred::red,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2581,7 +2950,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = Bar::CtaRedOrPred::reduction,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2595,7 +2967,10 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Bar::CtaRedOrPred::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2644,6 +3019,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2707,6 +3084,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "barrier",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.barrier.locs,
                };
@@ -2728,6 +3107,8 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
                    .field_id = "thread_count",
                    .actual_shape = check_end::OperandShape::Immediate,
                    .immediate_type = immediate->type,
+                   .immediate_bits = immediate->bits,
+                   .immediate_is_negative = immediate->is_negative,
                    .register_type = std::nullopt,
                    .locations = payload.thread_count.locs,
                };
@@ -2804,6 +3185,1136 @@ CheckResult check<Bar>(const Bar &instruction, const Context &context) {
           check_red_popc_u32, check_cta_red_popc_u32, check_red_and_pred,
           check_cta_red_and_pred, check_red_or_pred, check_cta_red_or_pred},
       instruction.variant);
+}
+
+template <>
+CheckResult check<Membar>(const Membar &instruction, const Context &context) {
+  const auto check_cta = [&](const Membar::Cta &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "scope",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = Membar::Cta::scope,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "scope",
+            .value_kind = checker::ModifierValueKind::MemoryScope,
+            .bool_value = false,
+            .scalar_type = ScalarType::Invalid,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = Membar::Cta::scope,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Membar::get_checker_descriptor(), "Cta", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Membar::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Membar::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "Cta", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Membar::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Membar::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_cta), Membar::Cta>);
+
+  return std::visit(detail::Overloaded{check_cta}, instruction.variant);
+}
+
+template <>
+CheckResult check<Fence>(const Fence &instruction, const Context &context) {
+  const auto check_acq_rel_cta =
+      [&](const Fence::AcqRelCta &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "semantics",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = Fence::AcqRelCta::semantics,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "scope",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = Fence::AcqRelCta::scope,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "semantics",
+             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = Fence::AcqRelCta::semantics,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "scope",
+             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = Fence::AcqRelCta::scope,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Fence::get_checker_descriptor(), "AcqRelCta", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Fence::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Fence::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "AcqRelCta", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Fence::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Fence::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_acq_rel_cta),
+                                             Fence::AcqRelCta>);
+
+  return std::visit(detail::Overloaded{check_acq_rel_cta}, instruction.variant);
+}
+
+template <>
+CheckResult check<Atom>(const Atom &instruction, const Context &context) {
+  const auto check_global_relaxed_cta_add_u32 =
+      [&](const Atom::GlobalRelaxedCtaAddU32 &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Atom::GlobalRelaxedCtaAddU32::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "semantics",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = Atom::GlobalRelaxedCtaAddU32::semantics,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "scope",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = Atom::GlobalRelaxedCtaAddU32::scope,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "add",
+             .bool_value = Atom::GlobalRelaxedCtaAddU32::add,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Atom::GlobalRelaxedCtaAddU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 5> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Atom::GlobalRelaxedCtaAddU32::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "semantics",
+             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = Atom::GlobalRelaxedCtaAddU32::semantics,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "scope",
+             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = Atom::GlobalRelaxedCtaAddU32::scope,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "add",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Atom::GlobalRelaxedCtaAddU32::add,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Atom::GlobalRelaxedCtaAddU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Atom::get_checker_descriptor(),
+                                     "GlobalRelaxedCtaAddU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Atom::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Atom::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalRelaxedCtaAddU32", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Atom::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Atom::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Atom::get_checker_descriptor().variants[0].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_relaxed_cta_add_u32),
+                                   Atom::GlobalRelaxedCtaAddU32>);
+
+  return std::visit(detail::Overloaded{check_global_relaxed_cta_add_u32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Red>(const Red &instruction, const Context &context) {
+  const auto check_global_relaxed_cta_add_u32 =
+      [&](const Red::GlobalRelaxedCtaAddU32 &selected) -> CheckResult {
+    const std::array<FieldView, 5> fields = {
+        {FieldView{
+             .field_id = "state_space",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = Red::GlobalRelaxedCtaAddU32::state_space,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "semantics",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = Red::GlobalRelaxedCtaAddU32::semantics,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "scope",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = Red::GlobalRelaxedCtaAddU32::scope,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "add",
+             .bool_value = Red::GlobalRelaxedCtaAddU32::add,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Red::GlobalRelaxedCtaAddU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 5> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "state_space",
+             .value_kind = checker::ModifierValueKind::MemoryStateSpace,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = Red::GlobalRelaxedCtaAddU32::state_space,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "semantics",
+             .value_kind = checker::ModifierValueKind::MemoryConsistency,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = Red::GlobalRelaxedCtaAddU32::semantics,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "scope",
+             .value_kind = checker::ModifierValueKind::MemoryScope,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = Red::GlobalRelaxedCtaAddU32::scope,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "add",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Red::GlobalRelaxedCtaAddU32::add,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Red::GlobalRelaxedCtaAddU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Red::get_checker_descriptor(),
+                                     "GlobalRelaxedCtaAddU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Red::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {[&]() -> OperandView {
+           const auto *symbol =
+               std::get_if<ResolvedSymbolRef>(&selected.address.value.base);
+           std::optional<MemoryStateSpace> effective_state_space;
+           ParameterDirection parameter_direction = ParameterDirection::None;
+           if (symbol != nullptr && symbol->address_state_space) {
+             // Preserve the declaration-derived effective space. In
+             // particular, device parameters may produce local rather
+             // than declaration-space addresses in other instructions.
+             switch (*symbol->address_state_space) {
+             case syntax_ast::AstStateSpace::Global:
+               effective_state_space = MemoryStateSpace::Global;
+               break;
+             case syntax_ast::AstStateSpace::Shared:
+               effective_state_space = MemoryStateSpace::Shared;
+               break;
+             case syntax_ast::AstStateSpace::Local:
+               effective_state_space = MemoryStateSpace::Local;
+               break;
+             case syntax_ast::AstStateSpace::Parameter:
+               effective_state_space = MemoryStateSpace::Parameter;
+               break;
+             case syntax_ast::AstStateSpace::Constant:
+               effective_state_space = MemoryStateSpace::Constant;
+               break;
+             case syntax_ast::AstStateSpace::Register:
+               break;
+             }
+           }
+           if (symbol != nullptr && symbol->declaration_kind) {
+             if (*symbol->declaration_kind ==
+                 binding::SymbolKind::InputParameter) {
+               parameter_direction = ParameterDirection::Input;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::ReturnParameter) {
+               parameter_direction = ParameterDirection::Return;
+             } else if (*symbol->declaration_kind ==
+                        binding::SymbolKind::CallParameter) {
+               parameter_direction = ParameterDirection::CallArgument;
+             }
+           }
+           std::optional<uint64_t> address_alignment;
+           const auto low_bit = [](uint64_t value) {
+             return value == 0 ? uint64_t{0} : value & (~value + 1);
+           };
+           if (symbol != nullptr) {
+             address_alignment = symbol->address_alignment;
+           } else if (const auto *immediate = std::get_if<ResolvedImmediate>(
+                          &selected.address.value.base)) {
+             address_alignment = low_bit(immediate->bits);
+           }
+           if (address_alignment && selected.address.value.offset) {
+             const uint64_t offset_alignment =
+                 low_bit(selected.address.value.offset->value.bits);
+             if (offset_alignment != 0 &&
+                 (*address_alignment == 0 ||
+                  offset_alignment < *address_alignment))
+               address_alignment = offset_alignment;
+           }
+           // Register, immediate, and unresolved standalone address
+           // bases remain unknown; spelling is not semantic evidence.
+           return OperandView{
+               .field_id = "address",
+               .actual_shape = check_end::OperandShape::Address,
+               .immediate_type = std::nullopt,
+               .register_type = std::nullopt,
+               .address_state_space = effective_state_space,
+               .address_alignment = address_alignment,
+               .enclosing_function_kind =
+                   selected.address.value.enclosing_function_kind,
+               .parameter_direction = parameter_direction,
+               .parameter_qualifier =
+                   selected.address.value.parameter_qualifier,
+               .locations = selected.address.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Red::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GlobalRelaxedCtaAddU32", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Red::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Red::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      const auto alignment_check = check_address_alignment(
+          Red::get_checker_descriptor().variants[0].address_alignment, fields,
+          operands, context);
+      if (!alignment_check) {
+        diagnostics.insert(diagnostics.end(), alignment_check.error().begin(),
+                           alignment_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_global_relaxed_cta_add_u32),
+                                   Red::GlobalRelaxedCtaAddU32>);
+
+  return std::visit(detail::Overloaded{check_global_relaxed_cta_add_u32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Activemask>(const Activemask &instruction,
+                              const Context &context) {
+  const auto check_b32 = [&](const Activemask::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Activemask::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Activemask::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Activemask::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Activemask::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 1> operands = {{OperandView{
+        .field_id = "dst",
+        .actual_shape = check_end::OperandShape::Register,
+        .immediate_type = std::nullopt,
+        .register_type = selected.dst.value.declared_type,
+        .locations = selected.dst.locs,
+    }}};
+    const auto &layouts =
+        Activemask::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Activemask::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Activemask::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_b32), Activemask::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Vote>(const Vote &instruction, const Context &context) {
+  const auto check_sync_ballot_b32 =
+      [&](const Vote::SyncBallotB32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "sync",
+             .bool_value = Vote::SyncBallotB32::sync,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "ballot",
+             .bool_value = Vote::SyncBallotB32::ballot,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Vote::SyncBallotB32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "sync",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Vote::SyncBallotB32::sync,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "ballot",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Vote::SyncBallotB32::ballot,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Vote::SyncBallotB32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Vote::get_checker_descriptor(), "SyncBallotB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Vote::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "predicate",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type =
+                 selected.predicate.value.register_ref.declared_type,
+             .locations = selected.predicate.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.membermask.value)) {
+             return OperandView{
+                 .field_id = "membermask",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.membermask.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.membermask.value);
+           return OperandView{
+               .field_id = "membermask",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.membermask.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Vote::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check =
+        check_operand_layout_tag("SyncBallotB32", selected.operand_layout.value,
+                                 layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Vote::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Vote::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_sync_ballot_b32),
+                                             Vote::SyncBallotB32>);
+
+  return std::visit(detail::Overloaded{check_sync_ballot_b32},
+                    instruction.variant);
 }
 
 } // namespace checker

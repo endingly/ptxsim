@@ -192,6 +192,108 @@ resolve<Brx>(const syntax_ast::AstInstruction &ast,
   throw ResolveException("Unknown Brx variant in resolved field table.");
 }
 
+template <>
+std::expected<Ret, ResolveDiagnostic>
+resolve<Ret>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Ret>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Ret::get_syntax_descriptor(), Ret::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "Bare") {
+    return Ret{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Ret::Bare{
+                   .operand_layout = fields->operand_layout,
+
+               }};
+  }
+
+  throw ResolveException("Unknown Ret variant in resolved field table.");
+}
+
+template <>
+std::expected<Exit, ResolveDiagnostic>
+resolve<Exit>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Exit>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Exit::get_syntax_descriptor(), Exit::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "Bare") {
+    return Exit{.execution_predicate = std::move(fields->execution_predicate),
+                .variant = Exit::Bare{
+                    .operand_layout = fields->operand_layout,
+
+                }};
+  }
+
+  throw ResolveException("Unknown Exit variant in resolved field table.");
+}
+
+template <>
+std::expected<Trap, ResolveDiagnostic>
+resolve<Trap>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Trap>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Trap::get_syntax_descriptor(), Trap::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "Bare") {
+    return Trap{.execution_predicate = std::move(fields->execution_predicate),
+                .variant = Trap::Bare{
+                    .operand_layout = fields->operand_layout,
+
+                }};
+  }
+
+  throw ResolveException("Unknown Trap variant in resolved field table.");
+}
+
+template <>
+std::expected<Setmaxnreg, ResolveDiagnostic>
+resolve<Setmaxnreg>(const syntax_ast::AstInstruction &ast,
+                    const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Setmaxnreg>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields =
+      resolve_fields(ast, Setmaxnreg::get_syntax_descriptor(),
+                     Setmaxnreg::get_resolved_descriptor(),
+                     magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "IncSyncAlignedU32") {
+    return Setmaxnreg{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Setmaxnreg::IncSyncAlignedU32{
+            .operand_layout = fields->operand_layout,
+            .count = resolved_operand<ResolvedImmediate>(*fields, "count"),
+        }};
+  }
+
+  throw ResolveException("Unknown Setmaxnreg variant in resolved field table.");
+}
+
 namespace checker {
 
 template <>
@@ -201,7 +303,10 @@ CheckResult check<Call>(const Call &instruction, const Context &context) {
         .field_id = "uni",
         .bool_value = selected.uni.value,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -215,7 +320,10 @@ CheckResult check<Call>(const Call &instruction, const Context &context) {
             .bool_value = selected.uni.value,
             .scalar_type = ScalarType::Invalid,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -518,7 +626,10 @@ CheckResult check<Bra>(const Bra &instruction, const Context &context) {
         .field_id = "uni",
         .bool_value = selected.uni.value,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = std::nullopt,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -532,7 +643,10 @@ CheckResult check<Bra>(const Bra &instruction, const Context &context) {
             .bool_value = selected.uni.value,
             .scalar_type = ScalarType::Invalid,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -607,7 +721,10 @@ CheckResult check<Brx>(const Brx &instruction, const Context &context) {
              .field_id = "idx",
              .bool_value = Brx::Idx::idx,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -618,7 +735,10 @@ CheckResult check<Brx>(const Brx &instruction, const Context &context) {
              .field_id = "uni",
              .bool_value = selected.uni.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -632,7 +752,10 @@ CheckResult check<Brx>(const Brx &instruction, const Context &context) {
              .bool_value = Brx::Idx::idx,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -646,7 +769,10 @@ CheckResult check<Brx>(const Brx &instruction, const Context &context) {
              .bool_value = selected.uni.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -718,6 +844,416 @@ CheckResult check<Brx>(const Brx &instruction, const Context &context) {
   static_assert(detail::VariantCheckFunction<decltype(check_idx), Brx::Idx>);
 
   return std::visit(detail::Overloaded{check_idx}, instruction.variant);
+}
+
+template <>
+CheckResult check<Ret>(const Ret &instruction, const Context &context) {
+  const auto check_bare = [&](const Ret::Bare &selected) -> CheckResult {
+    const std::array<FieldView, 0> fields = {{
+
+    }};
+    const std::array<ModifierValueView, 0> modifier_values = {{
+
+    }};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Ret::get_checker_descriptor(), "Bare", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Ret::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Ret::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "Bare", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Ret::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Ret::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_bare), Ret::Bare>);
+
+  return std::visit(detail::Overloaded{check_bare}, instruction.variant);
+}
+
+template <>
+CheckResult check<Exit>(const Exit &instruction, const Context &context) {
+  const auto check_bare = [&](const Exit::Bare &selected) -> CheckResult {
+    const std::array<FieldView, 0> fields = {{
+
+    }};
+    const std::array<ModifierValueView, 0> modifier_values = {{
+
+    }};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Exit::get_checker_descriptor(), "Bare", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Exit::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Exit::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "Bare", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Exit::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Exit::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_bare), Exit::Bare>);
+
+  return std::visit(detail::Overloaded{check_bare}, instruction.variant);
+}
+
+template <>
+CheckResult check<Trap>(const Trap &instruction, const Context &context) {
+  const auto check_bare = [&](const Trap::Bare &selected) -> CheckResult {
+    const std::array<FieldView, 0> fields = {{
+
+    }};
+    const std::array<ModifierValueView, 0> modifier_values = {{
+
+    }};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Trap::get_checker_descriptor(), "Bare", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Trap::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 0> operands = {{
+
+    }};
+    const auto &layouts =
+        Trap::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "Bare", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Trap::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Trap::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_bare), Trap::Bare>);
+
+  return std::visit(detail::Overloaded{check_bare}, instruction.variant);
+}
+
+template <>
+CheckResult check<Setmaxnreg>(const Setmaxnreg &instruction,
+                              const Context &context) {
+  const auto check_inc_sync_aligned_u32 =
+      [&](const Setmaxnreg::IncSyncAlignedU32 &selected) -> CheckResult {
+    const std::array<FieldView, 4> fields = {
+        {FieldView{
+             .field_id = "inc",
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::inc,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "sync",
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::sync,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "aligned",
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::aligned,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setmaxnreg::IncSyncAlignedU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 4> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "inc",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::inc,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "sync",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::sync,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "aligned",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Setmaxnreg::IncSyncAlignedU32::aligned,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setmaxnreg::IncSyncAlignedU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common = check_common(Setmaxnreg::get_checker_descriptor(),
+                                     "IncSyncAlignedU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setmaxnreg::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 1> operands = {{OperandView{
+        .field_id = "count",
+        .actual_shape = check_end::OperandShape::Immediate,
+        .immediate_type = selected.count.value.type,
+        .immediate_bits = selected.count.value.bits,
+        .immediate_is_negative = selected.count.value.is_negative,
+        .register_type = std::nullopt,
+        .locations = selected.count.locs,
+    }}};
+    const auto &layouts =
+        Setmaxnreg::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "IncSyncAlignedU32", selected.operand_layout.value, layouts.size(),
+        context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setmaxnreg::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setmaxnreg::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Setmaxnreg::get_checker_descriptor().variants[0].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+      const auto immediate_multiple_of_check =
+          check_immediate_multiple_of(Setmaxnreg::get_checker_descriptor()
+                                          .variants[0]
+                                          .immediate_multiple_of,
+                                      operands, context);
+      if (!immediate_multiple_of_check) {
+        diagnostics.insert(diagnostics.end(),
+                           immediate_multiple_of_check.error().begin(),
+                           immediate_multiple_of_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_inc_sync_aligned_u32),
+                                   Setmaxnreg::IncSyncAlignedU32>);
+
+  return std::visit(detail::Overloaded{check_inc_sync_aligned_u32},
+                    instruction.variant);
 }
 
 } // namespace checker

@@ -3,8 +3,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO endingly/ptx_frontend
-    REF bf3538f6243dcef72e6e7d2db3e209a93114f35c
-    SHA512 df510bf3701cf40d133e5ee20c63ee1ba899667aa00ae2e76a7cc56b6b18c2f2f1d02a4b63388300ebd7e7efa11fc7090da87b2d4643439a3f29913e28430fc8
+    REF 1c4547f65c888ee92b1933a20f9a74b380b96953
+    SHA512 9a90e6bd5f7b52d84fffda7340215eabfeec5103c04da2253e3d22142728301b70c1f7ae713c59f851500f8e37f6f0359209467cce8ce9c4df57dbc23ef2b2d9
     HEAD_REF main
 )
 
@@ -24,8 +24,31 @@ set(PTX_RESOLVED_IR_GENERATED_PUBLIC_INCLUDE_DIR
     "${PTX_RESOLVED_IR_GENERATED_DIR}/public")
 set(PTX_RESOLVED_IR_GENERATED_PRIVATE_INCLUDE_DIR
     "${PTX_RESOLVED_IR_GENERATED_DIR}/private")
-file(GLOB_RECURSE PTX_RESOLVED_IR_GENERATED_SRCS CONFIGURE_DEPENDS
-    "${PTX_RESOLVED_IR_GENERATED_PRIVATE_INCLUDE_DIR}/*.gen.cpp")
+
+# This revision asks CMake for the generated topology before adding resolved_ir
+# sources.  The overlay deliberately supplies the checked-in snapshot instead
+# of running Python generation, so return that fixed topology from the copied
+# payloads.
+function(ptx_resolved_ir_list_generated_outputs output_variable spec_dir output_dir)
+    set(_ptx_resolved_ir_generated_outputs
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/public/resolved_ir.gen.hpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_value_domains.gen.hpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_dispatch.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_arithmetic.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_control_flow.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_data_movement.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_matrix.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_parallel_synchronization_and_communication.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/syntax_descriptor.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_descriptor.gen.cpp"
+        "${PTX_RESOLVED_IR_GENERATED_DIR}/private/resolved_ir_checker_descriptor.gen.cpp")
+    set(${output_variable} "${_ptx_resolved_ir_generated_outputs}" PARENT_SCOPE)
+endfunction()
+
+ptx_resolved_ir_list_generated_outputs(
+    PTX_RESOLVED_IR_GENERATED_FILES "" "")
+set(PTX_RESOLVED_IR_GENERATED_SRCS ${PTX_RESOLVED_IR_GENERATED_FILES})
+list(FILTER PTX_RESOLVED_IR_GENERATED_SRCS INCLUDE REGEX "\\.gen\\.cpp$")
 add_custom_target(resolved_ir_codegen)
 ]=])
 

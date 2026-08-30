@@ -4,13 +4,13 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M1 remains pending acceptance. The final integrated
-> tree must pass the five local CMake workflows and receive hosted CI evidence.
-> `MAIN-P2-004` is complete: active default-branch ruleset `21723631` requires
-> PRs and strict checks for exactly `GCC Debug`, `GCC Release`, `Clang Debug`,
-> `Clang Release`, and `GCC ASan + UBSan`. Hosted Linux CI run `33310952274`
-> succeeded for prior head `0f5ef9a`; evidence for the final current head is
-> still pending. The user owns that cloud execution.
+> **Current gate:** V2-M2 M2-00 bootstrap. V2-M1 arithmetic remediation was
+> accepted when PR #3 merged with merge commit
+> `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
+> Linux CI run `33313368339` completed successfully for that exact head. The
+> required `GCC Debug`, `GCC Release`, `Clang Debug`, `Clang Release`, and
+> `GCC ASan + UBSan` jobs all succeeded. Active default-branch ruleset
+> `21723631` requires PRs and those exact strict checks.
 > **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
 
 ---
@@ -539,11 +539,11 @@ and V2-M5 remains the future floating/conversion integration milestone.
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Current remediation status:** the audit chain and map below record local
+**Accepted remediation status:** the audit chain and map below record local
 fixes, including `05b0af2` (F64 FTZ projection), `419e2e6` (S2F6 finite
 saturation), `def4b8a` (frontend snapshot integrity), and `a407c8e`
-(pre-rounding S2F6 status). They are not V2-M1 acceptance evidence: the final
-integrated tree must pass the five workflows and receive final-head hosted CI.
+(pre-rounding S2F6 status). Acceptance evidence is the exact merge and hosted
+CI run recorded at the top of this plan.
 
 ## 9.1 Work packages
 
@@ -585,10 +585,8 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-V2-M1 remains pending acceptance. `MAIN-P2-004` branch-protection
-configuration is complete; the final integrated tree must still pass the five
-local workflows and receive final-head hosted CI evidence. The map below
-records remediation targets and checks, not proof that those gates have closed.
+V2-M1 was accepted with the merge and exact-head hosted CI evidence recorded
+at the top of this plan. The map below records remediation targets and checks.
 
 ## 9.4 MAIN remediation and regression map
 
@@ -615,7 +613,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 | MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
 | MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
 | MAIN-P2-003 | `20e0e37` + `def4b8a` | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
-| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33310952274` passed prior head `0f5ef9a`, final-head hosted CI pending |
+| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33313368339` passed the merge head `7da3628c0463f586b190921b283b15ab059d2022` |
 | MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
 | MAIN-P2-006 | `24dd230` | plan/document consistency searches |
 | FIX-P0-001 | `05b0af2` | F64 FTZ upper-word projection; `test_special.cpp` |
@@ -632,6 +630,15 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 # 10. V2-M2 — Exec IR, lowering, ProgramImage and core state
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
+
+**Current phase (M2-00):** the frontend baseline is pinned to
+`1c4547f65c888ee92b1933a20f9a74b380b96953`; its checked-in generated snapshot
+has an integrity gate and feature-on compile/link smoke. `common`, `exec_ir`,
+`program`, `state`, and optional `lowering` CMake targets now establish the
+build-tree dependency boundary only. They are not installed or exported until
+they have a public API; the package remains `arith`/`arith_validation`. No
+M2-01 IDs, raw values, execution records, `ProgramImage`, or state
+implementation is claimed by this bootstrap.
 
 ## 10.1 Exec IR principles
 

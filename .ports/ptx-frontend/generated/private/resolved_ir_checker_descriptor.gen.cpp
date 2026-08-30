@@ -8,2807 +8,6 @@ namespace ptx_frontend::resolved_ir {
 
 namespace generated_detail {
 
-struct CallCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
-      Direct_modifier_value_availabilities = {
-
-  };
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 6>
-      Direct_operand_layouts = {
-          checker::OperandLayoutDescriptor{
-              .layout_name = "target",
-              .availability =
-                  {
-                      .minimum_ptx_version = {0, 0},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::OperandLayoutDescriptor{
-              .layout_name = "target_input",
-              .availability =
-                  {
-                      .minimum_ptx_version = {0, 0},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::OperandLayoutDescriptor{
-              .layout_name = "return_target_input",
-              .availability =
-                  {
-                      .minimum_ptx_version = {0, 0},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::OperandLayoutDescriptor{
-              .layout_name = "target_metadata",
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 1},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::OperandLayoutDescriptor{
-              .layout_name = "target_input_metadata",
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 1},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::OperandLayoutDescriptor{
-              .layout_name = "return_target_input_metadata",
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 1},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      Direct_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "Direct",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities = Direct_modifier_value_availabilities,
-          .operand_layouts = Direct_operand_layouts,
-          .operand_type_compatibilities = Direct_operand_type_compatibilities,
-          .rule_id = "",
-
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "call",
-      .variants = variants,
-  };
-};
-
-struct BraCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
-      Direct_modifier_value_availabilities = {
-
-  };
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      Direct_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      Direct_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "Direct",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities = Direct_modifier_value_availabilities,
-          .operand_layouts = Direct_operand_layouts,
-          .operand_type_compatibilities = Direct_operand_type_compatibilities,
-          .rule_id = "control_flow.bra",
-
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "bra",
-      .variants = variants,
-  };
-};
-
-struct BrxCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
-      Idx_modifier_value_availabilities = {
-
-  };
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      Idx_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      Idx_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "Idx",
-          .availability =
-              {
-                  .minimum_ptx_version = {6, 0},
-                  .minimum_sm_version = 30,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities = Idx_modifier_value_availabilities,
-          .operand_layouts = Idx_operand_layouts,
-          .operand_type_compatibilities = Idx_operand_type_compatibilities,
-          .rule_id = "control_flow.brx_idx",
-
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "brx",
-      .variants = variants,
-  };
-};
-
-struct MovCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 2>
-      Scalar_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "type",
-              .value_kind = checker::ModifierValueKind::ScalarType,
-              .bool_value = false,
-              .scalar_type = ScalarType::B128,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {8, 3},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "type",
-              .value_kind = checker::ModifierValueKind::ScalarType,
-              .bool_value = false,
-              .scalar_type = ScalarType::F64,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 0},
-                      .minimum_sm_version = 13,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
-      Pred_modifier_value_availabilities = {
-
-  };
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 3>
-      Scalar_operand_layouts = {checker::OperandLayoutDescriptor{
-                                    .layout_name = "scalar",
-                                    .availability =
-                                        {
-                                            .minimum_ptx_version = {0, 0},
-                                            .minimum_sm_version = 0,
-                                            .required_family = "",
-                                        },
-                                },
-                                checker::OperandLayoutDescriptor{
-                                    .layout_name = "pack",
-                                    .availability =
-                                        {
-                                            .minimum_ptx_version = {0, 0},
-                                            .minimum_sm_version = 0,
-                                            .required_family = "",
-                                        },
-                                },
-                                checker::OperandLayoutDescriptor{
-                                    .layout_name = "unpack",
-                                    .availability =
-                                        {
-                                            .minimum_ptx_version = {0, 0},
-                                            .minimum_sm_version = 0,
-                                            .required_family = "",
-                                        },
-                                }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      Pred_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 6>
-      Scalar_operand_type_compatibilities = {
-          {checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::Tid,
-               .instruction_width = 16,
-               .effective_type = ScalarType::U16,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::NTid,
-               .instruction_width = 16,
-               .effective_type = ScalarType::U16,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::CtaId,
-               .instruction_width = 16,
-               .effective_type = ScalarType::U16,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::NCtaId,
-               .instruction_width = 16,
-               .effective_type = ScalarType::U16,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::GridId,
-               .instruction_width = 16,
-               .effective_type = ScalarType::U16,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::OperandTypeCompatibilityDescriptor{
-               .target_field_id = "src",
-               .special_register_kind = base::SpecialRegisterKind::GridId,
-               .instruction_width = 32,
-               .effective_type = ScalarType::U32,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 3},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           }}};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      Pred_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "Scalar",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities = Scalar_modifier_value_availabilities,
-          .operand_layouts = Scalar_operand_layouts,
-          .operand_type_compatibilities = Scalar_operand_type_compatibilities,
-          .rule_id = "data_movement.mov",
-
-      },
-      checker::VariantDescriptor{
-          .variant_name = "Pred",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities = Pred_modifier_value_availabilities,
-          .operand_layouts = Pred_operand_layouts,
-          .operand_type_compatibilities = Pred_operand_type_compatibilities,
-          .rule_id = "data_movement.mov",
-
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "mov",
-      .variants = variants,
-  };
-};
-
-struct LdCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
-      GenericScalar_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Acquire,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "mmio",
-              .value_kind = checker::ModifierValueKind::Bool,
-              .bool_value = true,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {8, 2},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Ca,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Lu,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cv,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 15>
-      ExplicitScalar_modifier_value_availabilities =
-          {checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "cache",
-               .value_kind = checker::ModifierValueKind::CacheOperator,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Ca,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {2, 0},
-                       .minimum_sm_version = 20,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "cache",
-               .value_kind = checker::ModifierValueKind::CacheOperator,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Cg,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {2, 0},
-                       .minimum_sm_version = 20,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "cache",
-               .value_kind = checker::ModifierValueKind::CacheOperator,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Cs,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {2, 0},
-                       .minimum_sm_version = 20,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "cache",
-               .value_kind = checker::ModifierValueKind::CacheOperator,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Lu,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {2, 0},
-                       .minimum_sm_version = 20,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "cache",
-               .value_kind = checker::ModifierValueKind::CacheOperator,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Cv,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {2, 0},
-                       .minimum_sm_version = 20,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "semantics",
-               .value_kind = checker::ModifierValueKind::MemoryConsistency,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Weak,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "semantics",
-               .value_kind = checker::ModifierValueKind::MemoryConsistency,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Volatile,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 1},
-                       .minimum_sm_version = 0,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "semantics",
-               .value_kind = checker::ModifierValueKind::MemoryConsistency,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Relaxed,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "semantics",
-               .value_kind = checker::ModifierValueKind::MemoryConsistency,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Acquire,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "scope",
-               .value_kind = checker::ModifierValueKind::MemoryScope,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::Cta,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "scope",
-               .value_kind = checker::ModifierValueKind::MemoryScope,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::Cluster,
-               .availability =
-                   {
-                       .minimum_ptx_version = {7, 8},
-                       .minimum_sm_version = 90,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "scope",
-               .value_kind = checker::ModifierValueKind::MemoryScope,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::Gpu,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "scope",
-               .value_kind = checker::ModifierValueKind::MemoryScope,
-               .bool_value = false,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::Sys,
-               .availability =
-                   {
-                       .minimum_ptx_version = {6, 0},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "mmio",
-               .value_kind = checker::ModifierValueKind::Bool,
-               .bool_value = true,
-               .scalar_type = ScalarType::Invalid,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {8, 2},
-                       .minimum_sm_version = 70,
-                       .required_family = "",
-                   },
-           },
-           checker::ModifierValueAvailabilityDescriptor{
-               .kind_id = "type",
-               .value_kind = checker::ModifierValueKind::ScalarType,
-               .bool_value = false,
-               .scalar_type = ScalarType::F64,
-               .rounding_mode = RoundingMode::Invalid,
-               .cache_operator = CacheOperator::Unspecified,
-               .vector_arity = VectorArity::Invalid,
-               .memory_state_space = MemoryStateSpace::Invalid,
-               .memory_consistency = MemoryConsistency::Omitted,
-               .memory_scope = MemoryScope::None,
-               .availability =
-                   {
-                       .minimum_ptx_version = {1, 0},
-                       .minimum_sm_version = 13,
-                       .required_family = "",
-                   },
-           }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
-      GenericVector_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Acquire,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Ca,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Lu,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cv,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
-      ExplicitVector_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Ca,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Lu,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cv,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Acquire,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "type",
-              .value_kind = checker::ModifierValueKind::ScalarType,
-              .bool_value = false,
-              .scalar_type = ScalarType::F64,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 0},
-                      .minimum_sm_version = 13,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      GenericScalar_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      ExplicitScalar_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      GenericVector_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      ExplicitVector_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      GenericScalar_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      ExplicitScalar_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      GenericVector_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      ExplicitVector_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 4> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "GenericScalar",
-          .availability =
-              {
-                  .minimum_ptx_version = {2, 0},
-                  .minimum_sm_version = 20,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              GenericScalar_modifier_value_availabilities,
-          .operand_layouts = GenericScalar_operand_layouts,
-          .operand_type_compatibilities =
-              GenericScalar_operand_type_compatibilities,
-          .rule_id = "data_movement.ld_generic",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "mmio",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "",
-              },
-
-      },
-      checker::VariantDescriptor{
-          .variant_name = "ExplicitScalar",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              ExplicitScalar_modifier_value_availabilities,
-          .operand_layouts = ExplicitScalar_operand_layouts,
-          .operand_type_compatibilities =
-              ExplicitScalar_operand_type_compatibilities,
-          .rule_id = "data_movement.ld_explicit",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "mmio",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "",
-              },
-
-      },
-      checker::VariantDescriptor{
-          .variant_name = "GenericVector",
-          .availability =
-              {
-                  .minimum_ptx_version = {2, 0},
-                  .minimum_sm_version = 20,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              GenericVector_modifier_value_availabilities,
-          .operand_layouts = GenericVector_operand_layouts,
-          .operand_type_compatibilities =
-              GenericVector_operand_type_compatibilities,
-          .rule_id = "data_movement.ld_generic",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "vector",
-              },
-
-          .memory_vector =
-              {
-                  .type_field_id = "type",
-                  .vector_field_id = "dst",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-                  .availability =
-                      {
-                          .minimum_ptx_version = {8, 8},
-                          .minimum_sm_version = 100,
-                          .required_family = "",
-                      },
-              },
-      },
-      checker::VariantDescriptor{
-          .variant_name = "ExplicitVector",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              ExplicitVector_modifier_value_availabilities,
-          .operand_layouts = ExplicitVector_operand_layouts,
-          .operand_type_compatibilities =
-              ExplicitVector_operand_type_compatibilities,
-          .rule_id = "data_movement.ld_explicit",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "vector",
-              },
-
-          .memory_vector =
-              {
-                  .type_field_id = "type",
-                  .vector_field_id = "dst",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-                  .availability =
-                      {
-                          .minimum_ptx_version = {8, 8},
-                          .minimum_sm_version = 100,
-                          .required_family = "",
-                      },
-              },
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "ld",
-      .variants = variants,
-  };
-};
-
-struct StCheckerDescriptorStorage {
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
-      GenericScalar_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Release,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "mmio",
-              .value_kind = checker::ModifierValueKind::Bool,
-              .bool_value = true,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {8, 2},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wb,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wt,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
-      ExplicitScalar_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wb,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wt,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Release,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "mmio",
-              .value_kind = checker::ModifierValueKind::Bool,
-              .bool_value = true,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {8, 2},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "type",
-              .value_kind = checker::ModifierValueKind::ScalarType,
-              .bool_value = false,
-              .scalar_type = ScalarType::F64,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 0},
-                      .minimum_sm_version = 13,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 12>
-      GenericVector_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Release,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wb,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wt,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
-      ExplicitVector_modifier_value_availabilities = {
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wb,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cg,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Cs,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "cache",
-              .value_kind = checker::ModifierValueKind::CacheOperator,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Wt,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {2, 0},
-                      .minimum_sm_version = 20,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Weak,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Volatile,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 1},
-                      .minimum_sm_version = 0,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Relaxed,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "semantics",
-              .value_kind = checker::ModifierValueKind::MemoryConsistency,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Release,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cta,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Cluster,
-              .availability =
-                  {
-                      .minimum_ptx_version = {7, 8},
-                      .minimum_sm_version = 90,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Gpu,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "scope",
-              .value_kind = checker::ModifierValueKind::MemoryScope,
-              .bool_value = false,
-              .scalar_type = ScalarType::Invalid,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::Sys,
-              .availability =
-                  {
-                      .minimum_ptx_version = {6, 0},
-                      .minimum_sm_version = 70,
-                      .required_family = "",
-                  },
-          },
-          checker::ModifierValueAvailabilityDescriptor{
-              .kind_id = "type",
-              .value_kind = checker::ModifierValueKind::ScalarType,
-              .bool_value = false,
-              .scalar_type = ScalarType::F64,
-              .rounding_mode = RoundingMode::Invalid,
-              .cache_operator = CacheOperator::Unspecified,
-              .vector_arity = VectorArity::Invalid,
-              .memory_state_space = MemoryStateSpace::Invalid,
-              .memory_consistency = MemoryConsistency::Omitted,
-              .memory_scope = MemoryScope::None,
-              .availability =
-                  {
-                      .minimum_ptx_version = {1, 0},
-                      .minimum_sm_version = 13,
-                      .required_family = "",
-                  },
-          }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      GenericScalar_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      ExplicitScalar_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      GenericVector_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
-      ExplicitVector_operand_layouts = {checker::OperandLayoutDescriptor{
-          .layout_name = "default",
-          .availability =
-              {
-                  .minimum_ptx_version = {0, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      GenericScalar_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      ExplicitScalar_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      GenericVector_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
-      ExplicitVector_operand_type_compatibilities = {{
-
-      }};
-
-  static constexpr std::array<checker::VariantDescriptor, 4> variants = {
-      checker::VariantDescriptor{
-          .variant_name = "GenericScalar",
-          .availability =
-              {
-                  .minimum_ptx_version = {2, 0},
-                  .minimum_sm_version = 20,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              GenericScalar_modifier_value_availabilities,
-          .operand_layouts = GenericScalar_operand_layouts,
-          .operand_type_compatibilities =
-              GenericScalar_operand_type_compatibilities,
-          .rule_id = "data_movement.st_generic",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "mmio",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "",
-              },
-
-      },
-      checker::VariantDescriptor{
-          .variant_name = "ExplicitScalar",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              ExplicitScalar_modifier_value_availabilities,
-          .operand_layouts = ExplicitScalar_operand_layouts,
-          .operand_type_compatibilities =
-              ExplicitScalar_operand_type_compatibilities,
-          .rule_id = "data_movement.st_explicit",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "mmio",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "",
-              },
-
-      },
-      checker::VariantDescriptor{
-          .variant_name = "GenericVector",
-          .availability =
-              {
-                  .minimum_ptx_version = {2, 0},
-                  .minimum_sm_version = 20,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              GenericVector_modifier_value_availabilities,
-          .operand_layouts = GenericVector_operand_layouts,
-          .operand_type_compatibilities =
-              GenericVector_operand_type_compatibilities,
-          .rule_id = "data_movement.st_generic",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "vector",
-              },
-
-          .memory_vector =
-              {
-                  .type_field_id = "type",
-                  .vector_field_id = "src",
-                  .address_field_id = "address",
-                  .state_space_field_id = "",
-                  .availability =
-                      {
-                          .minimum_ptx_version = {8, 8},
-                          .minimum_sm_version = 100,
-                          .required_family = "",
-                      },
-              },
-      },
-      checker::VariantDescriptor{
-          .variant_name = "ExplicitVector",
-          .availability =
-              {
-                  .minimum_ptx_version = {1, 0},
-                  .minimum_sm_version = 0,
-                  .required_family = "",
-              },
-          .modifier_value_availabilities =
-              ExplicitVector_modifier_value_availabilities,
-          .operand_layouts = ExplicitVector_operand_layouts,
-          .operand_type_compatibilities =
-              ExplicitVector_operand_type_compatibilities,
-          .rule_id = "data_movement.st_explicit",
-
-          .memory_consistency =
-              {
-                  .semantics_field_id = "semantics",
-                  .scope_field_id = "scope",
-                  .mmio_field_id = "",
-                  .cache_field_id = "cache",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-              },
-          .address_alignment =
-              {
-                  .address_field_id = "address",
-                  .type_field_id = "type",
-                  .vector_field_id = "vector",
-              },
-
-          .memory_vector =
-              {
-                  .type_field_id = "type",
-                  .vector_field_id = "src",
-                  .address_field_id = "address",
-                  .state_space_field_id = "state_space",
-                  .availability =
-                      {
-                          .minimum_ptx_version = {8, 8},
-                          .minimum_sm_version = 100,
-                          .required_family = "",
-                      },
-              },
-      }};
-
-  static constexpr checker::InstructionDescriptor descriptor{
-      .opcode_name = "st",
-      .variants = variants,
-  };
-};
-
 struct AddCheckerDescriptorStorage {
   static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 2>
       FloatF32_modifier_value_availabilities = {
@@ -2818,7 +17,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::Invalid,
               .rounding_mode = RoundingMode::Rm,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2836,7 +38,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::Invalid,
               .rounding_mode = RoundingMode::Rp,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2882,7 +87,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::U16x2,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2900,7 +108,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::S16x2,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2921,7 +132,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::U16x2,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2939,7 +153,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::S16x2,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -2957,7 +174,10 @@ struct AddCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::U32,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -3271,7 +491,10 @@ struct SubCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::Invalid,
               .rounding_mode = RoundingMode::Rm,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -3289,7 +512,10 @@ struct SubCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::Invalid,
               .rounding_mode = RoundingMode::Rp,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -3340,7 +566,10 @@ struct SubCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::U8x4,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -3358,7 +587,10 @@ struct SubCheckerDescriptorStorage {
               .bool_value = false,
               .scalar_type = ScalarType::S8x4,
               .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
               .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
               .vector_arity = VectorArity::Invalid,
               .memory_state_space = MemoryStateSpace::Invalid,
               .memory_consistency = MemoryConsistency::Omitted,
@@ -3624,6 +856,6938 @@ struct SubCheckerDescriptorStorage {
 
   static constexpr checker::InstructionDescriptor descriptor{
       .opcode_name = "sub",
+      .variants = variants,
+  };
+};
+
+struct MulCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LoU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      HiU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      WideU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      WideS32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LoU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      HiU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      WideU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      WideS32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LoU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      HiU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      WideU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      WideS32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 5> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "RnF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF32_modifier_value_availabilities,
+          .operand_layouts = RnF32_operand_layouts,
+          .operand_type_compatibilities = RnF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LoU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = LoU32_modifier_value_availabilities,
+          .operand_layouts = LoU32_operand_layouts,
+          .operand_type_compatibilities = LoU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "HiU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = HiU32_modifier_value_availabilities,
+          .operand_layouts = HiU32_operand_layouts,
+          .operand_type_compatibilities = HiU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "WideU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              WideU32_modifier_value_availabilities,
+          .operand_layouts = WideU32_operand_layouts,
+          .operand_type_compatibilities = WideU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "WideS32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              WideS32_modifier_value_availabilities,
+          .operand_layouts = WideS32_operand_layouts,
+          .operand_type_compatibilities = WideS32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "mul",
+      .variants = variants,
+  };
+};
+
+struct FmaCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF16_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF16_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF16_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 3> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "RnF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF32_modifier_value_availabilities,
+          .operand_layouts = RnF32_operand_layouts,
+          .operand_type_compatibilities = RnF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF64",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 4},
+                  .minimum_sm_version = 13,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF64_modifier_value_availabilities,
+          .operand_layouts = RnF64_operand_layouts,
+          .operand_type_compatibilities = RnF64_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF16",
+          .availability =
+              {
+                  .minimum_ptx_version = {4, 2},
+                  .minimum_sm_version = 53,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF16_modifier_value_availabilities,
+          .operand_layouts = RnF16_operand_layouts,
+          .operand_type_compatibilities = RnF16_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "fma",
+      .variants = variants,
+  };
+};
+
+struct MadCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LoU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LoS32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      WideU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LoU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LoS32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      WideU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LoU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LoS32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      WideU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 4> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "RnF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF32_modifier_value_availabilities,
+          .operand_layouts = RnF32_operand_layouts,
+          .operand_type_compatibilities = RnF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LoU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = LoU32_modifier_value_availabilities,
+          .operand_layouts = LoU32_operand_layouts,
+          .operand_type_compatibilities = LoU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LoS32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = LoS32_modifier_value_availabilities,
+          .operand_layouts = LoS32_operand_layouts,
+          .operand_type_compatibilities = LoS32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "WideU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              WideU32_modifier_value_availabilities,
+          .operand_layouts = WideU32_operand_layouts,
+          .operand_type_compatibilities = WideU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "mad",
+      .variants = variants,
+  };
+};
+
+struct DivCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 4> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "RnF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 4},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF32_modifier_value_availabilities,
+          .operand_layouts = RnF32_operand_layouts,
+          .operand_type_compatibilities = RnF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF64",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 4},
+                  .minimum_sm_version = 13,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = RnF64_modifier_value_availabilities,
+          .operand_layouts = RnF64_operand_layouts,
+          .operand_type_compatibilities = RnF64_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32_modifier_value_availabilities,
+          .operand_layouts = U32_operand_layouts,
+          .operand_type_compatibilities = U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "div",
+      .variants = variants,
+  };
+};
+
+struct RemCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32_modifier_value_availabilities,
+          .operand_layouts = U32_operand_layouts,
+          .operand_type_compatibilities = U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "rem",
+      .variants = variants,
+  };
+};
+
+struct MinCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      NanF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      NanF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      NanF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "NanF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = NanF32_modifier_value_availabilities,
+          .operand_layouts = NanF32_operand_layouts,
+          .operand_type_compatibilities = NanF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "min",
+      .variants = variants,
+  };
+};
+
+struct MaxCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      NanF32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      NanF32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      NanF32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "NanF32",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = NanF32_modifier_value_availabilities,
+          .operand_layouts = NanF32_operand_layouts,
+          .operand_type_compatibilities = NanF32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "max",
+      .variants = variants,
+  };
+};
+
+struct AbsCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      F32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = F32_modifier_value_availabilities,
+          .operand_layouts = F32_operand_layouts,
+          .operand_type_compatibilities = F32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "abs",
+      .variants = variants,
+  };
+};
+
+struct NegCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      F16x2_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      F32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      F16x2_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      F16x2_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 3> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32_modifier_value_availabilities,
+          .operand_layouts = S32_operand_layouts,
+          .operand_type_compatibilities = S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = F32_modifier_value_availabilities,
+          .operand_layouts = F32_operand_layouts,
+          .operand_type_compatibilities = F32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "F16x2",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 53,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = F16x2_modifier_value_availabilities,
+          .operand_layouts = F16x2_operand_layouts,
+          .operand_type_compatibilities = F16x2_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "neg",
+      .variants = variants,
+  };
+};
+
+struct PopcCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "popc",
+      .variants = variants,
+  };
+};
+
+struct ClzCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "B64",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B64_modifier_value_availabilities,
+          .operand_layouts = B64_operand_layouts,
+          .operand_type_compatibilities = B64_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "clz",
+      .variants = variants,
+  };
+};
+
+struct BfindCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      ShiftamtU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ShiftamtU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ShiftamtU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "ShiftamtU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ShiftamtU32_modifier_value_availabilities,
+          .operand_layouts = ShiftamtU32_operand_layouts,
+          .operand_type_compatibilities =
+              ShiftamtU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "bfind",
+      .variants = variants,
+  };
+};
+
+struct BfeCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 2>
+      U32_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+               .operand_field_id = "offset",
+               .minimum = uint64_t{0ULL},
+               .has_maximum = true,
+               .maximum = uint64_t{255ULL},
+           },
+           checker::VariantDescriptor::ImmediateRangeDescriptor{
+               .operand_field_id = "width",
+               .minimum = uint64_t{0ULL},
+               .has_maximum = true,
+               .maximum = uint64_t{255ULL},
+           }}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32_modifier_value_availabilities,
+          .operand_layouts = U32_operand_layouts,
+          .operand_type_compatibilities = U32_operand_type_compatibilities,
+          .rule_id = "",
+
+          .immediate_ranges = U32_immediate_ranges,
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "bfe",
+      .variants = variants,
+  };
+};
+
+struct BfiCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 2>
+      B32_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+               .operand_field_id = "offset",
+               .minimum = uint64_t{0ULL},
+               .has_maximum = true,
+               .maximum = uint64_t{255ULL},
+           },
+           checker::VariantDescriptor::ImmediateRangeDescriptor{
+               .operand_field_id = "width",
+               .minimum = uint64_t{0ULL},
+               .has_maximum = true,
+               .maximum = uint64_t{255ULL},
+           }}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+          .immediate_ranges = B32_immediate_ranges,
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "bfi",
+      .variants = variants,
+  };
+};
+
+struct BrevCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "brev",
+      .variants = variants,
+  };
+};
+
+struct SetCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      EqU32U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LtAndF32S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      EqU32U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LtAndF32S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      EqU32U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LtAndF32S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "EqU32U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              EqU32U32_modifier_value_availabilities,
+          .operand_layouts = EqU32U32_operand_layouts,
+          .operand_type_compatibilities = EqU32U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LtAndF32S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              LtAndF32S32_modifier_value_availabilities,
+          .operand_layouts = LtAndF32S32_operand_layouts,
+          .operand_type_compatibilities =
+              LtAndF32S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "set",
+      .variants = variants,
+  };
+};
+
+struct SetpCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LtU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GeS32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LtAndU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      EqU32Pair_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LtAndS32Pair_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LtU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GeS32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LtAndU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      EqU32Pair_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LtAndS32Pair_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LtU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GeS32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LtAndU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      EqU32Pair_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LtAndS32Pair_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 5> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "LtU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = LtU32_modifier_value_availabilities,
+          .operand_layouts = LtU32_operand_layouts,
+          .operand_type_compatibilities = LtU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GeS32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = GeS32_modifier_value_availabilities,
+          .operand_layouts = GeS32_operand_layouts,
+          .operand_type_compatibilities = GeS32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LtAndU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              LtAndU32_modifier_value_availabilities,
+          .operand_layouts = LtAndU32_operand_layouts,
+          .operand_type_compatibilities = LtAndU32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "EqU32Pair",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              EqU32Pair_modifier_value_availabilities,
+          .operand_layouts = EqU32Pair_operand_layouts,
+          .operand_type_compatibilities =
+              EqU32Pair_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "LtAndS32Pair",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              LtAndS32Pair_modifier_value_availabilities,
+          .operand_layouts = LtAndS32Pair_operand_layouts,
+          .operand_type_compatibilities =
+              LtAndS32Pair_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "setp",
+      .variants = variants,
+  };
+};
+
+struct SelpCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32_modifier_value_availabilities,
+          .operand_layouts = U32_operand_layouts,
+          .operand_type_compatibilities = U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "selp",
+      .variants = variants,
+  };
+};
+
+struct SlctCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      FtzU64F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      FtzU64F32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      FtzU64F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "U32S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32S32_modifier_value_availabilities,
+          .operand_layouts = U32S32_operand_layouts,
+          .operand_type_compatibilities = U32S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "FtzU64F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              FtzU64F32_modifier_value_availabilities,
+          .operand_layouts = FtzU64F32_operand_layouts,
+          .operand_type_compatibilities =
+              FtzU64F32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "slct",
+      .variants = variants,
+  };
+};
+
+struct CallCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Direct_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 6>
+      Direct_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "target",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          },
+          checker::OperandLayoutDescriptor{
+              .layout_name = "target_input",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          },
+          checker::OperandLayoutDescriptor{
+              .layout_name = "return_target_input",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          },
+          checker::OperandLayoutDescriptor{
+              .layout_name = "target_metadata",
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 1},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          },
+          checker::OperandLayoutDescriptor{
+              .layout_name = "target_input_metadata",
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 1},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          },
+          checker::OperandLayoutDescriptor{
+              .layout_name = "return_target_input_metadata",
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 1},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Direct_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Direct",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Direct_modifier_value_availabilities,
+          .operand_layouts = Direct_operand_layouts,
+          .operand_type_compatibilities = Direct_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "call",
+      .variants = variants,
+  };
+};
+
+struct BraCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Direct_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Direct_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Direct_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Direct",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Direct_modifier_value_availabilities,
+          .operand_layouts = Direct_operand_layouts,
+          .operand_type_compatibilities = Direct_operand_type_compatibilities,
+          .rule_id = "control_flow.bra",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "bra",
+      .variants = variants,
+  };
+};
+
+struct BrxCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Idx_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Idx_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Idx_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Idx",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 30,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Idx_modifier_value_availabilities,
+          .operand_layouts = Idx_operand_layouts,
+          .operand_type_compatibilities = Idx_operand_type_compatibilities,
+          .rule_id = "control_flow.brx_idx",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "brx",
+      .variants = variants,
+  };
+};
+
+struct RetCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Bare_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Bare_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Bare_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Bare",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Bare_modifier_value_availabilities,
+          .operand_layouts = Bare_operand_layouts,
+          .operand_type_compatibilities = Bare_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "ret",
+      .variants = variants,
+  };
+};
+
+struct ExitCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Bare_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Bare_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Bare_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Bare",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Bare_modifier_value_availabilities,
+          .operand_layouts = Bare_operand_layouts,
+          .operand_type_compatibilities = Bare_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "exit",
+      .variants = variants,
+  };
+};
+
+struct IsspacepCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU64",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU64_modifier_value_availabilities,
+          .operand_layouts = GlobalU64_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU64_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "isspacep",
+      .variants = variants,
+  };
+};
+
+struct CvtaCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      ToGlobalU64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ToGlobalU64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ToGlobalU64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU64",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU64_modifier_value_availabilities,
+          .operand_layouts = GlobalU64_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU64_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "ToGlobalU64",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ToGlobalU64_modifier_value_availabilities,
+          .operand_layouts = ToGlobalU64_operand_layouts,
+          .operand_type_compatibilities =
+              ToGlobalU64_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "cvta",
+      .variants = variants,
+  };
+};
+
+struct CvtCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      S32U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32F64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF32S32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RziU32F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RnF16x2F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      PackSatU8S32B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      S32U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32F64_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF32S32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RziU32F32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RnF16x2F32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      PackSatU8S32B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      S32U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32F64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF32S32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RziU32F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RnF16x2F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      PackSatU8S32B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 7> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "S32U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = S32U32_modifier_value_availabilities,
+          .operand_layouts = S32U32_operand_layouts,
+          .operand_type_compatibilities = S32U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF32F64",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 13,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RnF32F64_modifier_value_availabilities,
+          .operand_layouts = RnF32F64_operand_layouts,
+          .operand_type_compatibilities = RnF32F64_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF32U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RnF32U32_modifier_value_availabilities,
+          .operand_layouts = RnF32U32_operand_layouts,
+          .operand_type_compatibilities = RnF32U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF32S32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RnF32S32_modifier_value_availabilities,
+          .operand_layouts = RnF32S32_operand_layouts,
+          .operand_type_compatibilities = RnF32S32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RziU32F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RziU32F32_modifier_value_availabilities,
+          .operand_layouts = RziU32F32_operand_layouts,
+          .operand_type_compatibilities =
+              RziU32F32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RnF16x2F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RnF16x2F32_modifier_value_availabilities,
+          .operand_layouts = RnF16x2F32_operand_layouts,
+          .operand_type_compatibilities =
+              RnF16x2F32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "PackSatU8S32B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 5},
+                  .minimum_sm_version = 72,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              PackSatU8S32B32_modifier_value_availabilities,
+          .operand_layouts = PackSatU8S32B32_operand_layouts,
+          .operand_type_compatibilities =
+              PackSatU8S32B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "cvt",
+      .variants = variants,
+  };
+};
+
+struct MovCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 2>
+      Scalar_modifier_value_availabilities = {
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "type",
+              .value_kind = checker::ModifierValueKind::ScalarType,
+              .bool_value = false,
+              .scalar_type = ScalarType::B128,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {8, 3},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "type",
+              .value_kind = checker::ModifierValueKind::ScalarType,
+              .bool_value = false,
+              .scalar_type = ScalarType::F64,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {1, 0},
+                      .minimum_sm_version = 13,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      V4U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Pred_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 3>
+      Scalar_operand_layouts = {checker::OperandLayoutDescriptor{
+                                    .layout_name = "scalar",
+                                    .availability =
+                                        {
+                                            .minimum_ptx_version = {0, 0},
+                                            .minimum_sm_version = 0,
+                                            .required_family = "",
+                                        },
+                                },
+                                checker::OperandLayoutDescriptor{
+                                    .layout_name = "pack",
+                                    .availability =
+                                        {
+                                            .minimum_ptx_version = {0, 0},
+                                            .minimum_sm_version = 0,
+                                            .required_family = "",
+                                        },
+                                },
+                                checker::OperandLayoutDescriptor{
+                                    .layout_name = "unpack",
+                                    .availability =
+                                        {
+                                            .minimum_ptx_version = {0, 0},
+                                            .minimum_sm_version = 0,
+                                            .required_family = "",
+                                        },
+                                }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      V4U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Pred_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 6>
+      Scalar_operand_type_compatibilities = {
+          {checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::Tid,
+               .instruction_width = 16,
+               .effective_type = ScalarType::U16,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::NTid,
+               .instruction_width = 16,
+               .effective_type = ScalarType::U16,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::CtaId,
+               .instruction_width = 16,
+               .effective_type = ScalarType::U16,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::NCtaId,
+               .instruction_width = 16,
+               .effective_type = ScalarType::U16,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::GridId,
+               .instruction_width = 16,
+               .effective_type = ScalarType::U16,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::OperandTypeCompatibilityDescriptor{
+               .target_field_id = "src",
+               .special_register_kind = base::SpecialRegisterKind::GridId,
+               .instruction_width = 32,
+               .effective_type = ScalarType::U32,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 3},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           }}};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      V4U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Pred_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 3> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Scalar",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Scalar_modifier_value_availabilities,
+          .operand_layouts = Scalar_operand_layouts,
+          .operand_type_compatibilities = Scalar_operand_type_compatibilities,
+          .rule_id = "data_movement.mov",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "V4U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = V4U32_modifier_value_availabilities,
+          .operand_layouts = V4U32_operand_layouts,
+          .operand_type_compatibilities = V4U32_operand_type_compatibilities,
+          .rule_id = "data_movement.mov",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "Pred",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Pred_modifier_value_availabilities,
+          .operand_layouts = Pred_operand_layouts,
+          .operand_type_compatibilities = Pred_operand_type_compatibilities,
+          .rule_id = "data_movement.mov",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "mov",
+      .variants = variants,
+  };
+};
+
+struct LdCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
+      GenericScalar_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Acquire,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "mmio",
+               .value_kind = checker::ModifierValueKind::Bool,
+               .bool_value = true,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {8, 2},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Ca,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Lu,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cv,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 15>
+      ExplicitScalar_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Ca,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Lu,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cv,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Acquire,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "mmio",
+               .value_kind = checker::ModifierValueKind::Bool,
+               .bool_value = true,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {8, 2},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "type",
+               .value_kind = checker::ModifierValueKind::ScalarType,
+               .bool_value = false,
+               .scalar_type = ScalarType::F64,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 13,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU32L1Evict_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU32L2CacheHint_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
+      GenericVector_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Acquire,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Ca,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Lu,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cv,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
+      ExplicitVector_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Ca,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Lu,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cv,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Acquire,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "type",
+               .value_kind = checker::ModifierValueKind::ScalarType,
+               .bool_value = false,
+               .scalar_type = ScalarType::F64,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 13,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalNcL1NoAllocateU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GenericScalar_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ExplicitScalar_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU32L1Evict_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU32L2CacheHint_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GenericVector_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ExplicitVector_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalNcL1NoAllocateU32_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GenericScalar_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ExplicitScalar_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU32L1Evict_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU32L2CacheHint_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GenericVector_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ExplicitVector_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalNcL1NoAllocateU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      GenericScalar_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      ExplicitScalar_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalU32L1Evict_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalU32L2CacheHint_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GenericVector_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      ExplicitVector_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalNcL1NoAllocateU32_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 7> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GenericScalar",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GenericScalar_modifier_value_availabilities,
+          .operand_layouts = GenericScalar_operand_layouts,
+          .operand_type_compatibilities =
+              GenericScalar_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_generic",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "mmio",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GenericScalar_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "ExplicitScalar",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ExplicitScalar_modifier_value_availabilities,
+          .operand_layouts = ExplicitScalar_operand_layouts,
+          .operand_type_compatibilities =
+              ExplicitScalar_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "mmio",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      ExplicitScalar_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU32L1Evict",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU32L1Evict_modifier_value_availabilities,
+          .operand_layouts = GlobalU32L1Evict_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU32L1Evict_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalU32L1Evict_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU32L2CacheHint",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU32L2CacheHint_modifier_value_availabilities,
+          .operand_layouts = GlobalU32L2CacheHint_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU32L2CacheHint_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalU32L2CacheHint_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GenericVector",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GenericVector_modifier_value_availabilities,
+          .operand_layouts = GenericVector_operand_layouts,
+          .operand_type_compatibilities =
+              GenericVector_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_generic",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GenericVector_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "vector",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+          .memory_vector =
+              {
+                  .type_field_id = "type",
+                  .vector_field_id = "dst",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+                  .availability =
+                      {
+                          .minimum_ptx_version = {8, 8},
+                          .minimum_sm_version = 100,
+                          .required_family = "",
+                      },
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "ExplicitVector",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ExplicitVector_modifier_value_availabilities,
+          .operand_layouts = ExplicitVector_operand_layouts,
+          .operand_type_compatibilities =
+              ExplicitVector_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      ExplicitVector_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "vector",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+          .memory_vector =
+              {
+                  .type_field_id = "type",
+                  .vector_field_id = "dst",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+                  .availability =
+                      {
+                          .minimum_ptx_version = {8, 8},
+                          .minimum_sm_version = 100,
+                          .required_family = "",
+                      },
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GlobalNcL1NoAllocateU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalNcL1NoAllocateU32_modifier_value_availabilities,
+          .operand_layouts = GlobalNcL1NoAllocateU32_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalNcL1NoAllocateU32_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalNcL1NoAllocateU32_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "ld",
+      .variants = variants,
+  };
+};
+
+struct LduCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalU32_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU32_modifier_value_availabilities,
+          .operand_layouts = GlobalU32_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU32_operand_type_compatibilities,
+          .rule_id = "data_movement.ld_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalU32_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "ldu",
+      .variants = variants,
+  };
+};
+
+struct ShflCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      SyncIdxB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      SyncIdxB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      SyncIdxB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "SyncIdxB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 30,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              SyncIdxB32_modifier_value_availabilities,
+          .operand_layouts = SyncIdxB32_operand_layouts,
+          .operand_type_compatibilities =
+              SyncIdxB32_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.shfl",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "shfl",
+      .variants = variants,
+  };
+};
+
+struct PrefetchCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalL1_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalL1_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalL1_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalL1",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalL1_modifier_value_availabilities,
+          .operand_layouts = GlobalL1_operand_layouts,
+          .operand_type_compatibilities = GlobalL1_operand_type_compatibilities,
+          .rule_id = "data_movement.prefetch",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "prefetch",
+      .variants = variants,
+  };
+};
+
+struct PrefetchuCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      L1_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      L1_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      L1_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "L1",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = L1_modifier_value_availabilities,
+          .operand_layouts = L1_operand_layouts,
+          .operand_type_compatibilities = L1_operand_type_compatibilities,
+          .rule_id = "data_movement.prefetch",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "prefetchu",
+      .variants = variants,
+  };
+};
+
+struct CreatepolicyCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      FractionalL2EvictLastB64_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      FractionalL2EvictLastB64_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      FractionalL2EvictLastB64_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<uint64_t, 1>
+      FractionalL2EvictLastB64_immediate_value_values = {
+          {uint64_t{1056964608ULL}}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "FractionalL2EvictLastB64",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              FractionalL2EvictLastB64_modifier_value_availabilities,
+          .operand_layouts = FractionalL2EvictLastB64_operand_layouts,
+          .operand_type_compatibilities =
+              FractionalL2EvictLastB64_operand_type_compatibilities,
+          .rule_id = "data_movement.createpolicy",
+
+          .immediate_value =
+              {
+                  .operand_field_id = "fraction",
+                  .allowed_values =
+                      FractionalL2EvictLastB64_immediate_value_values,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "createpolicy",
+      .variants = variants,
+  };
+};
+
+struct ApplypriorityCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalL2EvictNormal_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalL2EvictNormal_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalL2EvictNormal_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<uint64_t, 1>
+      GlobalL2EvictNormal_immediate_value_values = {{uint64_t{128ULL}}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalL2EvictNormal_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalL2EvictNormal",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalL2EvictNormal_modifier_value_availabilities,
+          .operand_layouts = GlobalL2EvictNormal_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalL2EvictNormal_operand_type_compatibilities,
+          .rule_id = "data_movement.applypriority",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalL2EvictNormal_address_alignment_address_fields,
+                  .type_field_id = "",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 128,
+              },
+
+          .immediate_value =
+              {
+                  .operand_field_id = "size",
+                  .allowed_values = GlobalL2EvictNormal_immediate_value_values,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "applypriority",
+      .variants = variants,
+  };
+};
+
+struct DiscardCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalL2_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalL2_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalL2_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<uint64_t, 1> GlobalL2_immediate_value_values = {
+      {uint64_t{128ULL}}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalL2_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalL2",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalL2_modifier_value_availabilities,
+          .operand_layouts = GlobalL2_operand_layouts,
+          .operand_type_compatibilities = GlobalL2_operand_type_compatibilities,
+          .rule_id = "data_movement.discard",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalL2_address_alignment_address_fields,
+                  .type_field_id = "",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 128,
+              },
+
+          .immediate_value =
+              {
+                  .operand_field_id = "size",
+                  .allowed_values = GlobalL2_immediate_value_values,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "discard",
+      .variants = variants,
+  };
+};
+
+struct CpCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      AsyncCaSharedGlobal_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      AsyncCommitGroup_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      AsyncWaitGroup_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      AsyncWaitAll_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      AsyncCaSharedGlobal_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      AsyncCommitGroup_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      AsyncWaitGroup_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      AsyncWaitAll_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      AsyncCaSharedGlobal_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      AsyncCommitGroup_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      AsyncWaitGroup_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      AsyncWaitAll_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<uint64_t, 3>
+      AsyncCaSharedGlobal_immediate_value_values = {
+          {uint64_t{4ULL}, uint64_t{8ULL}, uint64_t{16ULL}}};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 1>
+      AsyncWaitGroup_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+              .operand_field_id = "n",
+              .minimum = uint64_t{0ULL},
+              .has_maximum = false,
+              .maximum = ~uint64_t{0},
+          }}};
+
+  static constexpr std::array<std::string_view, 2>
+      AsyncCaSharedGlobal_address_alignment_address_fields = {{"dst", "src"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 4> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "AsyncCaSharedGlobal",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              AsyncCaSharedGlobal_modifier_value_availabilities,
+          .operand_layouts = AsyncCaSharedGlobal_operand_layouts,
+          .operand_type_compatibilities =
+              AsyncCaSharedGlobal_operand_type_compatibilities,
+          .rule_id = "data_movement.cp_async",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      AsyncCaSharedGlobal_address_alignment_address_fields,
+                  .type_field_id = "",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "cp_size",
+                  .alignment = 0,
+              },
+
+          .immediate_value =
+              {
+                  .operand_field_id = "cp_size",
+                  .allowed_values = AsyncCaSharedGlobal_immediate_value_values,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "AsyncCommitGroup",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              AsyncCommitGroup_modifier_value_availabilities,
+          .operand_layouts = AsyncCommitGroup_operand_layouts,
+          .operand_type_compatibilities =
+              AsyncCommitGroup_operand_type_compatibilities,
+          .rule_id = "data_movement.cp_async_commit_group",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "AsyncWaitGroup",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              AsyncWaitGroup_modifier_value_availabilities,
+          .operand_layouts = AsyncWaitGroup_operand_layouts,
+          .operand_type_compatibilities =
+              AsyncWaitGroup_operand_type_compatibilities,
+          .rule_id = "data_movement.cp_async_wait_group",
+
+          .immediate_ranges = AsyncWaitGroup_immediate_ranges,
+      },
+      checker::VariantDescriptor{
+          .variant_name = "AsyncWaitAll",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 0},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              AsyncWaitAll_modifier_value_availabilities,
+          .operand_layouts = AsyncWaitAll_operand_layouts,
+          .operand_type_compatibilities =
+              AsyncWaitAll_operand_type_compatibilities,
+          .rule_id = "data_movement.cp_async_wait_all",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "cp",
+      .variants = variants,
+  };
+};
+
+struct StCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
+      GenericScalar_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Release,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "mmio",
+               .value_kind = checker::ModifierValueKind::Bool,
+               .bool_value = true,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {8, 2},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wb,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wt,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 14>
+      ExplicitScalar_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wb,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wt,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Release,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "mmio",
+               .value_kind = checker::ModifierValueKind::Bool,
+               .bool_value = true,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {8, 2},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "type",
+               .value_kind = checker::ModifierValueKind::ScalarType,
+               .bool_value = false,
+               .scalar_type = ScalarType::F64,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 13,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU32L1Evict_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalU32L2CacheHint_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 12>
+      GenericVector_modifier_value_availabilities = {
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "semantics",
+              .value_kind = checker::ModifierValueKind::MemoryConsistency,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Weak,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "semantics",
+              .value_kind = checker::ModifierValueKind::MemoryConsistency,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Volatile,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {1, 1},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "semantics",
+              .value_kind = checker::ModifierValueKind::MemoryConsistency,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Relaxed,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "semantics",
+              .value_kind = checker::ModifierValueKind::MemoryConsistency,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Release,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "scope",
+              .value_kind = checker::ModifierValueKind::MemoryScope,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::Cta,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "scope",
+              .value_kind = checker::ModifierValueKind::MemoryScope,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::Cluster,
+              .availability =
+                  {
+                      .minimum_ptx_version = {7, 8},
+                      .minimum_sm_version = 90,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "scope",
+              .value_kind = checker::ModifierValueKind::MemoryScope,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::Gpu,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "scope",
+              .value_kind = checker::ModifierValueKind::MemoryScope,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Unspecified,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::Sys,
+              .availability =
+                  {
+                      .minimum_ptx_version = {6, 0},
+                      .minimum_sm_version = 70,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "cache",
+              .value_kind = checker::ModifierValueKind::CacheOperator,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Wb,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 0},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "cache",
+              .value_kind = checker::ModifierValueKind::CacheOperator,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Cg,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 0},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "cache",
+              .value_kind = checker::ModifierValueKind::CacheOperator,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Cs,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 0},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          },
+          checker::ModifierValueAvailabilityDescriptor{
+              .kind_id = "cache",
+              .value_kind = checker::ModifierValueKind::CacheOperator,
+              .bool_value = false,
+              .scalar_type = ScalarType::Invalid,
+              .rounding_mode = RoundingMode::Invalid,
+              .comparison_operator = ComparisonOperator::Invalid,
+              .boolean_operator = BooleanOperator::Invalid,
+              .cache_operator = CacheOperator::Wt,
+              .eviction_priority = EvictionPriority::Invalid,
+              .vector_arity = VectorArity::Invalid,
+              .memory_state_space = MemoryStateSpace::Invalid,
+              .memory_consistency = MemoryConsistency::Omitted,
+              .memory_scope = MemoryScope::None,
+              .availability =
+                  {
+                      .minimum_ptx_version = {2, 0},
+                      .minimum_sm_version = 20,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 13>
+      ExplicitVector_modifier_value_availabilities =
+          {checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wb,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cg,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Cs,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "cache",
+               .value_kind = checker::ModifierValueKind::CacheOperator,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Wt,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {2, 0},
+                       .minimum_sm_version = 20,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Weak,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Volatile,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 1},
+                       .minimum_sm_version = 0,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Relaxed,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "semantics",
+               .value_kind = checker::ModifierValueKind::MemoryConsistency,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Release,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cta,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Cluster,
+               .availability =
+                   {
+                       .minimum_ptx_version = {7, 8},
+                       .minimum_sm_version = 90,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Gpu,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "scope",
+               .value_kind = checker::ModifierValueKind::MemoryScope,
+               .bool_value = false,
+               .scalar_type = ScalarType::Invalid,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::Sys,
+               .availability =
+                   {
+                       .minimum_ptx_version = {6, 0},
+                       .minimum_sm_version = 70,
+                       .required_family = "",
+                   },
+           },
+           checker::ModifierValueAvailabilityDescriptor{
+               .kind_id = "type",
+               .value_kind = checker::ModifierValueKind::ScalarType,
+               .bool_value = false,
+               .scalar_type = ScalarType::F64,
+               .rounding_mode = RoundingMode::Invalid,
+               .comparison_operator = ComparisonOperator::Invalid,
+               .boolean_operator = BooleanOperator::Invalid,
+               .cache_operator = CacheOperator::Unspecified,
+               .eviction_priority = EvictionPriority::Invalid,
+               .vector_arity = VectorArity::Invalid,
+               .memory_state_space = MemoryStateSpace::Invalid,
+               .memory_consistency = MemoryConsistency::Omitted,
+               .memory_scope = MemoryScope::None,
+               .availability =
+                   {
+                       .minimum_ptx_version = {1, 0},
+                       .minimum_sm_version = 13,
+                       .required_family = "",
+                   },
+           }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GenericScalar_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ExplicitScalar_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU32L1Evict_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalU32L2CacheHint_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GenericVector_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      ExplicitVector_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GenericScalar_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ExplicitScalar_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU32L1Evict_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalU32L2CacheHint_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GenericVector_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      ExplicitVector_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      GenericScalar_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      ExplicitScalar_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalU32L1Evict_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalU32L2CacheHint_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      GenericVector_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<std::string_view, 1>
+      ExplicitVector_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 6> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GenericScalar",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GenericScalar_modifier_value_availabilities,
+          .operand_layouts = GenericScalar_operand_layouts,
+          .operand_type_compatibilities =
+              GenericScalar_operand_type_compatibilities,
+          .rule_id = "data_movement.st_generic",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "mmio",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GenericScalar_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "ExplicitScalar",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ExplicitScalar_modifier_value_availabilities,
+          .operand_layouts = ExplicitScalar_operand_layouts,
+          .operand_type_compatibilities =
+              ExplicitScalar_operand_type_compatibilities,
+          .rule_id = "data_movement.st_explicit",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "mmio",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      ExplicitScalar_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU32L1Evict",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU32L1Evict_modifier_value_availabilities,
+          .operand_layouts = GlobalU32L1Evict_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU32L1Evict_operand_type_compatibilities,
+          .rule_id = "data_movement.st_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalU32L1Evict_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GlobalU32L2CacheHint",
+          .availability =
+              {
+                  .minimum_ptx_version = {7, 4},
+                  .minimum_sm_version = 80,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalU32L2CacheHint_modifier_value_availabilities,
+          .operand_layouts = GlobalU32L2CacheHint_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalU32L2CacheHint_operand_type_compatibilities,
+          .rule_id = "data_movement.st_explicit",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalU32L2CacheHint_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "GenericVector",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GenericVector_modifier_value_availabilities,
+          .operand_layouts = GenericVector_operand_layouts,
+          .operand_type_compatibilities =
+              GenericVector_operand_type_compatibilities,
+          .rule_id = "data_movement.st_generic",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GenericVector_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "vector",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+          .memory_vector =
+              {
+                  .type_field_id = "type",
+                  .vector_field_id = "src",
+                  .address_field_id = "address",
+                  .state_space_field_id = "",
+                  .availability =
+                      {
+                          .minimum_ptx_version = {8, 8},
+                          .minimum_sm_version = 100,
+                          .required_family = "",
+                      },
+              },
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "ExplicitVector",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              ExplicitVector_modifier_value_availabilities,
+          .operand_layouts = ExplicitVector_operand_layouts,
+          .operand_type_compatibilities =
+              ExplicitVector_operand_type_compatibilities,
+          .rule_id = "data_movement.st_explicit",
+
+          .memory_consistency =
+              {
+                  .semantics_field_id = "semantics",
+                  .scope_field_id = "scope",
+                  .mmio_field_id = "",
+                  .cache_field_id = "cache",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+              },
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      ExplicitVector_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "vector",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+          .memory_vector =
+              {
+                  .type_field_id = "type",
+                  .vector_field_id = "src",
+                  .address_field_id = "address",
+                  .state_space_field_id = "state_space",
+                  .availability =
+                      {
+                          .minimum_ptx_version = {8, 8},
+                          .minimum_sm_version = 100,
+                          .required_family = "",
+                      },
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "st",
+      .variants = variants,
+  };
+};
+
+struct PrmtCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GenericB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      F4eB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GenericB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      F4eB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GenericB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      F4eB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 1>
+      GenericB32_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+              .operand_field_id = "selector",
+              .minimum = uint64_t{0ULL},
+              .has_maximum = true,
+              .maximum = uint64_t{65535ULL},
+          }}};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GenericB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GenericB32_modifier_value_availabilities,
+          .operand_layouts = GenericB32_operand_layouts,
+          .operand_type_compatibilities =
+              GenericB32_operand_type_compatibilities,
+          .rule_id = "",
+
+          .immediate_ranges = GenericB32_immediate_ranges,
+      },
+      checker::VariantDescriptor{
+          .variant_name = "F4eB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {2, 0},
+                  .minimum_sm_version = 20,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = F4eB32_modifier_value_availabilities,
+          .operand_layouts = F4eB32_operand_layouts,
+          .operand_type_compatibilities = F4eB32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "prmt",
+      .variants = variants,
+  };
+};
+
+struct AndCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "and",
+      .variants = variants,
+  };
+};
+
+struct OrCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "or",
+      .variants = variants,
+  };
+};
+
+struct XorCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "xor",
+      .variants = variants,
+  };
+};
+
+struct NotCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "not",
+      .variants = variants,
+  };
+};
+
+struct Lop3CheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 1>
+      B32_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+              .operand_field_id = "lut",
+              .minimum = uint64_t{0ULL},
+              .has_maximum = true,
+              .maximum = uint64_t{255ULL},
+          }}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {4, 3},
+                  .minimum_sm_version = 50,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+          .immediate_ranges = B32_immediate_ranges,
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "lop3",
+      .variants = variants,
+  };
+};
+
+struct ShfCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      LClampB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      RWrapB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      LClampB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      RWrapB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      LClampB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      RWrapB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 2> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "LClampB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {3, 1},
+                  .minimum_sm_version = 32,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              LClampB32_modifier_value_availabilities,
+          .operand_layouts = LClampB32_operand_layouts,
+          .operand_type_compatibilities =
+              LClampB32_operand_type_compatibilities,
+          .rule_id = "",
+
+      },
+      checker::VariantDescriptor{
+          .variant_name = "RWrapB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {3, 1},
+                  .minimum_sm_version = 32,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              RWrapB32_modifier_value_availabilities,
+          .operand_layouts = RWrapB32_operand_layouts,
+          .operand_type_compatibilities = RWrapB32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "shf",
+      .variants = variants,
+  };
+};
+
+struct ShlCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "shl",
+      .variants = variants,
+  };
+};
+
+struct ShrCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      U32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      U32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      U32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "U32",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = U32_modifier_value_availabilities,
+          .operand_layouts = U32_operand_layouts,
+          .operand_type_compatibilities = U32_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "shr",
+      .variants = variants,
+  };
+};
+
+struct TrapCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Bare_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Bare_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Bare_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Bare",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Bare_modifier_value_availabilities,
+          .operand_layouts = Bare_operand_layouts,
+          .operand_type_compatibilities = Bare_operand_type_compatibilities,
+          .rule_id = "",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "trap",
+      .variants = variants,
+  };
+};
+
+struct SetmaxnregCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      IncSyncAlignedU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      IncSyncAlignedU32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      IncSyncAlignedU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<
+      checker::VariantDescriptor::ImmediateRangeDescriptor, 1>
+      IncSyncAlignedU32_immediate_ranges = {
+          {checker::VariantDescriptor::ImmediateRangeDescriptor{
+              .operand_field_id = "count",
+              .minimum = uint64_t{24ULL},
+              .has_maximum = true,
+              .maximum = uint64_t{256ULL},
+          }}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1>
+      variants =
+          {checker::
+               VariantDescriptor{
+                   .variant_name = "IncSyncAlignedU32",
+                   .availability =
+                       {
+                           .any_of =
+                               {{checker::AvailabilityClause{
+                                     .minimum_ptx_version = {8, 0},
+                                     .minimum_sm_version = 90,
+                                     .has_exact_target = true,
+                                     .exact_target_architecture = {90},
+                                     .exact_target_flavor = base::TargetFlavor::
+                                         ArchitectureSpecific,
+                                     .required_family = "",
+                                     .capabilities = {{}},
+                                     .capability_count = 0,
+                                 },
+                                 checker::AvailabilityClause{
+                                     .minimum_ptx_version = {8, 6},
+                                     .minimum_sm_version = 100,
+                                     .has_exact_target = true,
+                                     .exact_target_architecture = {100},
+                                     .exact_target_flavor =
+                                         base::TargetFlavor::ArchitectureSpecific,
+                                     .required_family = "",
+                                     .capabilities = {{}},
+                                     .capability_count = 0,
+                                 },
+                                 checker::AvailabilityClause{
+                                     .minimum_ptx_version = {8, 8},
+                                     .minimum_sm_version = 100,
+                                     .has_exact_target = false,
+                                     .exact_target_architecture = {0},
+                                     .exact_target_flavor =
+                                         base::TargetFlavor::Generic,
+                                     .required_family = "sm_100f",
+                                     .capabilities = {{}},
+                                     .capability_count = 0,
+                                 },
+                                 checker::AvailabilityClause{
+                                     .minimum_ptx_version = {8, 8},
+                                     .minimum_sm_version = 120,
+                                     .has_exact_target = false,
+                                     .exact_target_architecture = {0},
+                                     .exact_target_flavor =
+                                         base::TargetFlavor::Generic,
+                                     .required_family = "sm_120f",
+                                     .capabilities = {{}},
+                                     .capability_count = 0,
+                                 }}},
+                           .any_of_count = 4,
+                       },
+                   .modifier_value_availabilities =
+                       IncSyncAlignedU32_modifier_value_availabilities,
+                   .operand_layouts = IncSyncAlignedU32_operand_layouts,
+                   .operand_type_compatibilities =
+                       IncSyncAlignedU32_operand_type_compatibilities,
+                   .rule_id = "",
+
+                   .immediate_multiple_of =
+                       {
+                           .operand_field_id = "count",
+                           .divisor = uint64_t{8ULL},
+                       },
+
+                   .immediate_ranges = IncSyncAlignedU32_immediate_ranges,
+               }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "setmaxnreg",
       .variants = variants,
   };
 };
@@ -4085,7 +8249,500 @@ struct BarCheckerDescriptorStorage {
   };
 };
 
+struct MembarCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      Cta_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      Cta_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      Cta_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "Cta",
+          .availability =
+              {
+                  .minimum_ptx_version = {1, 4},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = Cta_modifier_value_availabilities,
+          .operand_layouts = Cta_operand_layouts,
+          .operand_type_compatibilities = Cta_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.membar",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "membar",
+      .variants = variants,
+  };
+};
+
+struct FenceCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      AcqRelCta_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      AcqRelCta_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      AcqRelCta_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "AcqRelCta",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              AcqRelCta_modifier_value_availabilities,
+          .operand_layouts = AcqRelCta_operand_layouts,
+          .operand_type_compatibilities =
+              AcqRelCta_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.fence",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "fence",
+      .variants = variants,
+  };
+};
+
+struct AtomCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalRelaxedCtaAddU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalRelaxedCtaAddU32_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalRelaxedCtaAddU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalRelaxedCtaAddU32_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalRelaxedCtaAddU32_modifier_value_availabilities,
+          .operand_layouts = GlobalRelaxedCtaAddU32_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalRelaxedCtaAddU32_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.atom",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalRelaxedCtaAddU32_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "atom",
+      .variants = variants,
+  };
+};
+
+struct RedCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      GlobalRelaxedCtaAddU32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      GlobalRelaxedCtaAddU32_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      GlobalRelaxedCtaAddU32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      GlobalRelaxedCtaAddU32_address_alignment_address_fields = {{"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "GlobalRelaxedCtaAddU32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 70,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              GlobalRelaxedCtaAddU32_modifier_value_availabilities,
+          .operand_layouts = GlobalRelaxedCtaAddU32_operand_layouts,
+          .operand_type_compatibilities =
+              GlobalRelaxedCtaAddU32_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.red",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      GlobalRelaxedCtaAddU32_address_alignment_address_fields,
+                  .type_field_id = "type",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 0,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "red",
+      .variants = variants,
+  };
+};
+
+struct ActivemaskCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      B32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      B32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      B32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "B32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 2},
+                  .minimum_sm_version = 30,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities = B32_modifier_value_availabilities,
+          .operand_layouts = B32_operand_layouts,
+          .operand_type_compatibilities = B32_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.activemask",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "activemask",
+      .variants = variants,
+  };
+};
+
+struct VoteCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      SyncBallotB32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      SyncBallotB32_operand_layouts = {checker::OperandLayoutDescriptor{
+          .layout_name = "default",
+          .availability =
+              {
+                  .minimum_ptx_version = {0, 0},
+                  .minimum_sm_version = 0,
+                  .required_family = "",
+              },
+      }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      SyncBallotB32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "SyncBallotB32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 0},
+                  .minimum_sm_version = 30,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              SyncBallotB32_modifier_value_availabilities,
+          .operand_layouts = SyncBallotB32_operand_layouts,
+          .operand_type_compatibilities =
+              SyncBallotB32_operand_type_compatibilities,
+          .rule_id = "parallel_sync_and_communication.vote",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "vote",
+      .variants = variants,
+  };
+};
+
+struct MmaCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      SyncAlignedM16n8k8RowColF32F16F16F32_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      SyncAlignedM16n8k8RowColF32F16F16F32_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      SyncAlignedM16n8k8RowColF32F16F16F32_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "SyncAlignedM16n8k8RowColF32F16F16F32",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 5},
+                  .minimum_sm_version = 75,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              SyncAlignedM16n8k8RowColF32F16F16F32_modifier_value_availabilities,
+          .operand_layouts =
+              SyncAlignedM16n8k8RowColF32F16F16F32_operand_layouts,
+          .operand_type_compatibilities =
+              SyncAlignedM16n8k8RowColF32F16F16F32_operand_type_compatibilities,
+          .rule_id = "matrix.mma",
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "mma",
+      .variants = variants,
+  };
+};
+
+struct LdmatrixCheckerDescriptorStorage {
+  static constexpr std::array<checker::ModifierValueAvailabilityDescriptor, 0>
+      SyncAlignedM8n8X2SharedB16_modifier_value_availabilities = {
+
+  };
+
+  static constexpr std::array<checker::OperandLayoutDescriptor, 1>
+      SyncAlignedM8n8X2SharedB16_operand_layouts = {
+          checker::OperandLayoutDescriptor{
+              .layout_name = "default",
+              .availability =
+                  {
+                      .minimum_ptx_version = {0, 0},
+                      .minimum_sm_version = 0,
+                      .required_family = "",
+                  },
+          }};
+
+  static constexpr std::array<checker::OperandTypeCompatibilityDescriptor, 0>
+      SyncAlignedM8n8X2SharedB16_operand_type_compatibilities = {{
+
+      }};
+
+  static constexpr std::array<std::string_view, 1>
+      SyncAlignedM8n8X2SharedB16_address_alignment_address_fields = {
+          {"address"}};
+
+  static constexpr std::array<checker::VariantDescriptor, 1> variants = {
+      checker::VariantDescriptor{
+          .variant_name = "SyncAlignedM8n8X2SharedB16",
+          .availability =
+              {
+                  .minimum_ptx_version = {6, 5},
+                  .minimum_sm_version = 75,
+                  .required_family = "",
+              },
+          .modifier_value_availabilities =
+              SyncAlignedM8n8X2SharedB16_modifier_value_availabilities,
+          .operand_layouts = SyncAlignedM8n8X2SharedB16_operand_layouts,
+          .operand_type_compatibilities =
+              SyncAlignedM8n8X2SharedB16_operand_type_compatibilities,
+          .rule_id = "data_movement.ldmatrix",
+
+          .address_alignment =
+              {
+                  .address_field_ids =
+                      SyncAlignedM8n8X2SharedB16_address_alignment_address_fields,
+                  .type_field_id = "",
+                  .vector_field_id = "",
+                  .immediate_operand_field_id = "",
+                  .alignment = 16,
+              },
+
+      }};
+
+  static constexpr checker::InstructionDescriptor descriptor{
+      .opcode_name = "ldmatrix",
+      .variants = variants,
+  };
+};
+
 } // namespace generated_detail
+
+const checker::InstructionDescriptor &Add::get_checker_descriptor() noexcept {
+  return generated_detail::AddCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Sub::get_checker_descriptor() noexcept {
+  return generated_detail::SubCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Mul::get_checker_descriptor() noexcept {
+  return generated_detail::MulCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Fma::get_checker_descriptor() noexcept {
+  return generated_detail::FmaCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Mad::get_checker_descriptor() noexcept {
+  return generated_detail::MadCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Div::get_checker_descriptor() noexcept {
+  return generated_detail::DivCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Rem::get_checker_descriptor() noexcept {
+  return generated_detail::RemCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Min::get_checker_descriptor() noexcept {
+  return generated_detail::MinCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Max::get_checker_descriptor() noexcept {
+  return generated_detail::MaxCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Abs::get_checker_descriptor() noexcept {
+  return generated_detail::AbsCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Neg::get_checker_descriptor() noexcept {
+  return generated_detail::NegCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Popc::get_checker_descriptor() noexcept {
+  return generated_detail::PopcCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Clz::get_checker_descriptor() noexcept {
+  return generated_detail::ClzCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Bfind::get_checker_descriptor() noexcept {
+  return generated_detail::BfindCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Bfe::get_checker_descriptor() noexcept {
+  return generated_detail::BfeCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Bfi::get_checker_descriptor() noexcept {
+  return generated_detail::BfiCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Brev::get_checker_descriptor() noexcept {
+  return generated_detail::BrevCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Set::get_checker_descriptor() noexcept {
+  return generated_detail::SetCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Setp::get_checker_descriptor() noexcept {
+  return generated_detail::SetpCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Selp::get_checker_descriptor() noexcept {
+  return generated_detail::SelpCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Slct::get_checker_descriptor() noexcept {
+  return generated_detail::SlctCheckerDescriptorStorage::descriptor;
+}
 
 const checker::InstructionDescriptor &Call::get_checker_descriptor() noexcept {
   return generated_detail::CallCheckerDescriptorStorage::descriptor;
@@ -4099,6 +8756,27 @@ const checker::InstructionDescriptor &Brx::get_checker_descriptor() noexcept {
   return generated_detail::BrxCheckerDescriptorStorage::descriptor;
 }
 
+const checker::InstructionDescriptor &Ret::get_checker_descriptor() noexcept {
+  return generated_detail::RetCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Exit::get_checker_descriptor() noexcept {
+  return generated_detail::ExitCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Isspacep::get_checker_descriptor() noexcept {
+  return generated_detail::IsspacepCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Cvta::get_checker_descriptor() noexcept {
+  return generated_detail::CvtaCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Cvt::get_checker_descriptor() noexcept {
+  return generated_detail::CvtCheckerDescriptorStorage::descriptor;
+}
+
 const checker::InstructionDescriptor &Mov::get_checker_descriptor() noexcept {
   return generated_detail::MovCheckerDescriptorStorage::descriptor;
 }
@@ -4107,20 +8785,129 @@ const checker::InstructionDescriptor &Ld::get_checker_descriptor() noexcept {
   return generated_detail::LdCheckerDescriptorStorage::descriptor;
 }
 
+const checker::InstructionDescriptor &Ldu::get_checker_descriptor() noexcept {
+  return generated_detail::LduCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Shfl::get_checker_descriptor() noexcept {
+  return generated_detail::ShflCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Prefetch::get_checker_descriptor() noexcept {
+  return generated_detail::PrefetchCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Prefetchu::get_checker_descriptor() noexcept {
+  return generated_detail::PrefetchuCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Createpolicy::get_checker_descriptor() noexcept {
+  return generated_detail::CreatepolicyCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Applypriority::get_checker_descriptor() noexcept {
+  return generated_detail::ApplypriorityCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Discard::get_checker_descriptor() noexcept {
+  return generated_detail::DiscardCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Cp::get_checker_descriptor() noexcept {
+  return generated_detail::CpCheckerDescriptorStorage::descriptor;
+}
+
 const checker::InstructionDescriptor &St::get_checker_descriptor() noexcept {
   return generated_detail::StCheckerDescriptorStorage::descriptor;
 }
 
-const checker::InstructionDescriptor &Add::get_checker_descriptor() noexcept {
-  return generated_detail::AddCheckerDescriptorStorage::descriptor;
+const checker::InstructionDescriptor &Prmt::get_checker_descriptor() noexcept {
+  return generated_detail::PrmtCheckerDescriptorStorage::descriptor;
 }
 
-const checker::InstructionDescriptor &Sub::get_checker_descriptor() noexcept {
-  return generated_detail::SubCheckerDescriptorStorage::descriptor;
+const checker::InstructionDescriptor &And::get_checker_descriptor() noexcept {
+  return generated_detail::AndCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Or::get_checker_descriptor() noexcept {
+  return generated_detail::OrCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Xor::get_checker_descriptor() noexcept {
+  return generated_detail::XorCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Not::get_checker_descriptor() noexcept {
+  return generated_detail::NotCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Lop3::get_checker_descriptor() noexcept {
+  return generated_detail::Lop3CheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Shf::get_checker_descriptor() noexcept {
+  return generated_detail::ShfCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Shl::get_checker_descriptor() noexcept {
+  return generated_detail::ShlCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Shr::get_checker_descriptor() noexcept {
+  return generated_detail::ShrCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Trap::get_checker_descriptor() noexcept {
+  return generated_detail::TrapCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Setmaxnreg::get_checker_descriptor() noexcept {
+  return generated_detail::SetmaxnregCheckerDescriptorStorage::descriptor;
 }
 
 const checker::InstructionDescriptor &Bar::get_checker_descriptor() noexcept {
   return generated_detail::BarCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Membar::get_checker_descriptor() noexcept {
+  return generated_detail::MembarCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Fence::get_checker_descriptor() noexcept {
+  return generated_detail::FenceCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Atom::get_checker_descriptor() noexcept {
+  return generated_detail::AtomCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Red::get_checker_descriptor() noexcept {
+  return generated_detail::RedCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Activemask::get_checker_descriptor() noexcept {
+  return generated_detail::ActivemaskCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Vote::get_checker_descriptor() noexcept {
+  return generated_detail::VoteCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &Mma::get_checker_descriptor() noexcept {
+  return generated_detail::MmaCheckerDescriptorStorage::descriptor;
+}
+
+const checker::InstructionDescriptor &
+Ldmatrix::get_checker_descriptor() noexcept {
+  return generated_detail::LdmatrixCheckerDescriptorStorage::descriptor;
 }
 
 } // namespace ptx_frontend::resolved_ir

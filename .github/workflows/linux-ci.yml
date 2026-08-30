@@ -125,14 +125,16 @@ jobs:
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
 
-      - name: Frontend-lowering vcpkg install smoke
+      - name: Frontend-lowering compile/link smoke
         if: matrix.name == 'GCC Debug'
         shell: bash
         run: |
-          "$VCPKG_ROOT/vcpkg" install \
-            --x-manifest-root="$GITHUB_WORKSPACE" \
-            --x-feature=frontend-lowering \
-            --x-install-root="$RUNNER_TEMP/ptxsim-frontend-lowering-installed"
+          cmake --preset ci-linux-gcc-debug \
+            "-DVCPKG_MANIFEST_FEATURES=tests;frontend-lowering"
+          cmake --build out/build/ci-linux-gcc-debug \
+            --target test_ptxsim_frontend_lowering_smoke
+          ctest --test-dir out/build/ci-linux-gcc-debug --output-on-failure \
+            -R '^ptxsim_frontend_lowering_smoke$'
 
       - name: Show compiler cache statistics
         if: always()

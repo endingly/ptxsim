@@ -244,6 +244,1026 @@ resolve<Sub>(const syntax_ast::AstInstruction &ast,
   throw ResolveException("Unknown Sub variant in resolved field table.");
 }
 
+template <>
+std::expected<Mul, ResolveDiagnostic>
+resolve<Mul>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Mul>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Mul::get_syntax_descriptor(), Mul::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "RnF32") {
+    return Mul{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Mul::RnF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+  if (fields->variant_name == "LoU32") {
+    return Mul{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mul::LoU32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "HiU32") {
+    return Mul{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mul::HiU32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "WideU32") {
+    return Mul{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mul::WideU32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "WideS32") {
+    return Mul{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mul::WideS32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+
+  throw ResolveException("Unknown Mul variant in resolved field table.");
+}
+
+template <>
+std::expected<Fma, ResolveDiagnostic>
+resolve<Fma>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Fma>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Fma::get_syntax_descriptor(), Fma::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "RnF32") {
+    return Fma{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Fma::RnF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .src3 = resolved_operand<ResolvedRegisterRef>(*fields, "src3"),
+        }};
+  }
+  if (fields->variant_name == "RnF64") {
+    return Fma{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Fma::RnF64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .src3 = resolved_operand<ResolvedRegisterRef>(*fields, "src3"),
+        }};
+  }
+  if (fields->variant_name == "RnF16") {
+    return Fma{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Fma::RnF16{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .src3 = resolved_operand<ResolvedRegisterRef>(*fields, "src3"),
+        }};
+  }
+
+  throw ResolveException("Unknown Fma variant in resolved field table.");
+}
+
+template <>
+std::expected<Mad, ResolveDiagnostic>
+resolve<Mad>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Mad>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Mad::get_syntax_descriptor(), Mad::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "RnF32") {
+    return Mad{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Mad::RnF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .src3 = resolved_operand<ResolvedRegisterRef>(*fields, "src3"),
+        }};
+  }
+  if (fields->variant_name == "LoU32") {
+    return Mad{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mad::LoU32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+                   .src3 = resolved_operand<RegOrImm>(*fields, "src3"),
+               }};
+  }
+  if (fields->variant_name == "LoS32") {
+    return Mad{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mad::LoS32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+                   .src3 = resolved_operand<RegOrImm>(*fields, "src3"),
+               }};
+  }
+  if (fields->variant_name == "WideU32") {
+    return Mad{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Mad::WideU32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+                   .src3 = resolved_operand<RegOrImm>(*fields, "src3"),
+               }};
+  }
+
+  throw ResolveException("Unknown Mad variant in resolved field table.");
+}
+
+template <>
+std::expected<Div, ResolveDiagnostic>
+resolve<Div>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Div>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Div::get_syntax_descriptor(), Div::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "RnF32") {
+    return Div{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Div::RnF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+  if (fields->variant_name == "RnF64") {
+    return Div{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Div::RnF64{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+  if (fields->variant_name == "U32") {
+    return Div{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Div::U32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "S32") {
+    return Div{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Div::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+
+  throw ResolveException("Unknown Div variant in resolved field table.");
+}
+
+template <>
+std::expected<Rem, ResolveDiagnostic>
+resolve<Rem>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Rem>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Rem::get_syntax_descriptor(), Rem::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32") {
+    return Rem{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Rem::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "U32") {
+    return Rem{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Rem::U32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+
+  throw ResolveException("Unknown Rem variant in resolved field table.");
+}
+
+template <>
+std::expected<Min, ResolveDiagnostic>
+resolve<Min>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Min>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Min::get_syntax_descriptor(), Min::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32") {
+    return Min{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Min::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "NanF32") {
+    return Min{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Min::NanF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+
+  throw ResolveException("Unknown Min variant in resolved field table.");
+}
+
+template <>
+std::expected<Max, ResolveDiagnostic>
+resolve<Max>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Max>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Max::get_syntax_descriptor(), Max::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32") {
+    return Max{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Max::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "NanF32") {
+    return Max{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Max::NanF32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+        }};
+  }
+
+  throw ResolveException("Unknown Max variant in resolved field table.");
+}
+
+template <>
+std::expected<Abs, ResolveDiagnostic>
+resolve<Abs>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Abs>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Abs::get_syntax_descriptor(), Abs::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32") {
+    return Abs{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Abs::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "F32") {
+    return Abs{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Abs::F32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+
+  throw ResolveException("Unknown Abs variant in resolved field table.");
+}
+
+template <>
+std::expected<Neg, ResolveDiagnostic>
+resolve<Neg>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Neg>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Neg::get_syntax_descriptor(), Neg::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "S32") {
+    return Neg{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Neg::S32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "F32") {
+    return Neg{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Neg::F32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "F16x2") {
+    return Neg{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Neg::F16x2{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+
+  throw ResolveException("Unknown Neg variant in resolved field table.");
+}
+
+template <>
+std::expected<Popc, ResolveDiagnostic>
+resolve<Popc>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Popc>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Popc::get_syntax_descriptor(), Popc::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Popc{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Popc::B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Popc variant in resolved field table.");
+}
+
+template <>
+std::expected<Clz, ResolveDiagnostic>
+resolve<Clz>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Clz>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Clz::get_syntax_descriptor(), Clz::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Clz{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Clz::B32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+  if (fields->variant_name == "B64") {
+    return Clz{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Clz::B64{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+               }};
+  }
+
+  throw ResolveException("Unknown Clz variant in resolved field table.");
+}
+
+template <>
+std::expected<Bfind, ResolveDiagnostic>
+resolve<Bfind>(const syntax_ast::AstInstruction &ast,
+               const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Bfind>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Bfind::get_syntax_descriptor(), Bfind::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "ShiftamtU32") {
+    return Bfind{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Bfind::ShiftamtU32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Bfind variant in resolved field table.");
+}
+
+template <>
+std::expected<Bfe, ResolveDiagnostic>
+resolve<Bfe>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Bfe>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Bfe::get_syntax_descriptor(), Bfe::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "U32") {
+    return Bfe{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Bfe::U32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+            .offset = resolved_operand<ResolvedImmediate>(*fields, "offset"),
+            .width = resolved_operand<ResolvedImmediate>(*fields, "width"),
+        }};
+  }
+
+  throw ResolveException("Unknown Bfe variant in resolved field table.");
+}
+
+template <>
+std::expected<Bfi, ResolveDiagnostic>
+resolve<Bfi>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Bfi>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Bfi::get_syntax_descriptor(), Bfi::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Bfi{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Bfi::B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .insert = resolved_operand<ResolvedRegisterRef>(*fields, "insert"),
+            .base = resolved_operand<ResolvedRegisterRef>(*fields, "base"),
+            .offset = resolved_operand<ResolvedImmediate>(*fields, "offset"),
+            .width = resolved_operand<ResolvedImmediate>(*fields, "width"),
+        }};
+  }
+
+  throw ResolveException("Unknown Bfi variant in resolved field table.");
+}
+
+template <>
+std::expected<Brev, ResolveDiagnostic>
+resolve<Brev>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Brev>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Brev::get_syntax_descriptor(), Brev::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Brev{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Brev::B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src = resolved_operand<ResolvedRegisterRef>(*fields, "src"),
+        }};
+  }
+
+  throw ResolveException("Unknown Brev variant in resolved field table.");
+}
+
+template <>
+std::expected<Set, ResolveDiagnostic>
+resolve<Set>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Set>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Set::get_syntax_descriptor(), Set::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "EqU32U32") {
+    return Set{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Set::EqU32U32{
+                   .operand_layout = fields->operand_layout,
+                   .comparison = resolved_modifier<ComparisonOperator>(
+                       *fields, "comparison"),
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+  if (fields->variant_name == "LtAndF32S32") {
+    return Set{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Set::LtAndF32S32{
+            .operand_layout = fields->operand_layout,
+            .comparison =
+                resolved_modifier<ComparisonOperator>(*fields, "comparison"),
+            .boolean = resolved_modifier<BooleanOperator>(*fields, "boolean"),
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+            .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+            .combine = resolved_operand<ResolvedPredicate>(*fields, "combine"),
+        }};
+  }
+
+  throw ResolveException("Unknown Set variant in resolved field table.");
+}
+
+template <>
+std::expected<Setp, ResolveDiagnostic>
+resolve<Setp>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Setp>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Setp::get_syntax_descriptor(), Setp::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "LtU32") {
+    return Setp{.execution_predicate = std::move(fields->execution_predicate),
+                .variant = Setp::LtU32{
+                    .operand_layout = fields->operand_layout,
+                    .comparison = resolved_modifier<ComparisonOperator>(
+                        *fields, "comparison"),
+                    .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
+                    .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                    .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+                }};
+  }
+  if (fields->variant_name == "GeS32") {
+    return Setp{.execution_predicate = std::move(fields->execution_predicate),
+                .variant = Setp::GeS32{
+                    .operand_layout = fields->operand_layout,
+                    .comparison = resolved_modifier<ComparisonOperator>(
+                        *fields, "comparison"),
+                    .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
+                    .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                    .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+                }};
+  }
+  if (fields->variant_name == "LtAndU32") {
+    return Setp{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Setp::LtAndU32{
+            .operand_layout = fields->operand_layout,
+            .comparison =
+                resolved_modifier<ComparisonOperator>(*fields, "comparison"),
+            .boolean = resolved_modifier<BooleanOperator>(*fields, "boolean"),
+            .dst = resolved_operand<ResolvedPredicate>(*fields, "dst"),
+            .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+            .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+            .combine = resolved_operand<ResolvedPredicate>(*fields, "combine"),
+        }};
+  }
+  if (fields->variant_name == "EqU32Pair") {
+    return Setp{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Setp::EqU32Pair{
+            .operand_layout = fields->operand_layout,
+            .comparison =
+                resolved_modifier<ComparisonOperator>(*fields, "comparison"),
+            .dst = resolved_operand<ResolvedPredicatePair>(*fields, "dst"),
+            .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+            .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+        }};
+  }
+  if (fields->variant_name == "LtAndS32Pair") {
+    return Setp{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Setp::LtAndS32Pair{
+            .operand_layout = fields->operand_layout,
+            .comparison =
+                resolved_modifier<ComparisonOperator>(*fields, "comparison"),
+            .boolean = resolved_modifier<BooleanOperator>(*fields, "boolean"),
+            .dst = resolved_operand<ResolvedPredicatePair>(*fields, "dst"),
+            .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+            .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+            .combine = resolved_operand<ResolvedPredicate>(*fields, "combine"),
+        }};
+  }
+
+  throw ResolveException("Unknown Setp variant in resolved field table.");
+}
+
+template <>
+std::expected<Selp, ResolveDiagnostic>
+resolve<Selp>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Selp>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Selp::get_syntax_descriptor(), Selp::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "U32") {
+    return Selp{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Selp::U32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src_true = resolved_operand<RegOrImm>(*fields, "src_true"),
+            .src_false = resolved_operand<RegOrImm>(*fields, "src_false"),
+            .predicate =
+                resolved_operand<ResolvedPredicate>(*fields, "predicate"),
+        }};
+  }
+
+  throw ResolveException("Unknown Selp variant in resolved field table.");
+}
+
+template <>
+std::expected<Slct, ResolveDiagnostic>
+resolve<Slct>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Slct>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Slct::get_syntax_descriptor(), Slct::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "U32S32") {
+    return Slct{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Slct::U32S32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src_true =
+                resolved_operand<ResolvedRegisterRef>(*fields, "src_true"),
+            .src_false =
+                resolved_operand<ResolvedRegisterRef>(*fields, "src_false"),
+            .selector =
+                resolved_operand<ResolvedRegisterRef>(*fields, "selector"),
+        }};
+  }
+  if (fields->variant_name == "FtzU64F32") {
+    return Slct{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Slct::FtzU64F32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src_true =
+                resolved_operand<ResolvedRegisterRef>(*fields, "src_true"),
+            .src_false =
+                resolved_operand<ResolvedRegisterRef>(*fields, "src_false"),
+            .selector =
+                resolved_operand<ResolvedRegisterRef>(*fields, "selector"),
+        }};
+  }
+
+  throw ResolveException("Unknown Slct variant in resolved field table.");
+}
+
+template <>
+std::expected<And, ResolveDiagnostic>
+resolve<And>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<And>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, And::get_syntax_descriptor(), And::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return And{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = And::B32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+
+  throw ResolveException("Unknown And variant in resolved field table.");
+}
+
+template <>
+std::expected<Or, ResolveDiagnostic>
+resolve<Or>(const syntax_ast::AstInstruction &ast,
+            const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Or>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Or::get_syntax_descriptor(), Or::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Or{.execution_predicate = std::move(fields->execution_predicate),
+              .variant = Or::B32{
+                  .operand_layout = fields->operand_layout,
+                  .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                  .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                  .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+              }};
+  }
+
+  throw ResolveException("Unknown Or variant in resolved field table.");
+}
+
+template <>
+std::expected<Xor, ResolveDiagnostic>
+resolve<Xor>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Xor>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Xor::get_syntax_descriptor(), Xor::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Xor{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Xor::B32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src1 = resolved_operand<RegOrImm>(*fields, "src1"),
+                   .src2 = resolved_operand<RegOrImm>(*fields, "src2"),
+               }};
+  }
+
+  throw ResolveException("Unknown Xor variant in resolved field table.");
+}
+
+template <>
+std::expected<Not, ResolveDiagnostic>
+resolve<Not>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Not>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Not::get_syntax_descriptor(), Not::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Not{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Not::B32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<RegOrImm>(*fields, "src"),
+               }};
+  }
+
+  throw ResolveException("Unknown Not variant in resolved field table.");
+}
+
+template <>
+std::expected<Lop3, ResolveDiagnostic>
+resolve<Lop3>(const syntax_ast::AstInstruction &ast,
+              const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Lop3>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Lop3::get_syntax_descriptor(), Lop3::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Lop3{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Lop3::B32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .src3 = resolved_operand<ResolvedRegisterRef>(*fields, "src3"),
+            .lut = resolved_operand<ResolvedImmediate>(*fields, "lut"),
+        }};
+  }
+
+  throw ResolveException("Unknown Lop3 variant in resolved field table.");
+}
+
+template <>
+std::expected<Shf, ResolveDiagnostic>
+resolve<Shf>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Shf>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Shf::get_syntax_descriptor(), Shf::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "LClampB32") {
+    return Shf{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Shf::LClampB32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .count = resolved_operand<RegOrImm>(*fields, "count"),
+        }};
+  }
+  if (fields->variant_name == "RWrapB32") {
+    return Shf{
+        .execution_predicate = std::move(fields->execution_predicate),
+        .variant = Shf::RWrapB32{
+            .operand_layout = fields->operand_layout,
+            .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+            .src1 = resolved_operand<ResolvedRegisterRef>(*fields, "src1"),
+            .src2 = resolved_operand<ResolvedRegisterRef>(*fields, "src2"),
+            .count = resolved_operand<RegOrImm>(*fields, "count"),
+        }};
+  }
+
+  throw ResolveException("Unknown Shf variant in resolved field table.");
+}
+
+template <>
+std::expected<Shl, ResolveDiagnostic>
+resolve<Shl>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Shl>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Shl::get_syntax_descriptor(), Shl::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "B32") {
+    return Shl{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Shl::B32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<RegOrImm>(*fields, "src"),
+                   .amount = resolved_operand<RegOrImm>(*fields, "amount"),
+               }};
+  }
+
+  throw ResolveException("Unknown Shl variant in resolved field table.");
+}
+
+template <>
+std::expected<Shr, ResolveDiagnostic>
+resolve<Shr>(const syntax_ast::AstInstruction &ast,
+             const ResolveContext *context) {
+  const auto selected_variant = selectVariant<Shr>(ast);
+  if (!selected_variant)
+    return std::unexpected(selected_variant.error());
+
+  auto fields = resolve_fields(
+      ast, Shr::get_syntax_descriptor(), Shr::get_resolved_descriptor(),
+      magic_enum::enum_name(*selected_variant), context);
+  if (!fields)
+    return std::unexpected(fields.error());
+
+  if (fields->variant_name == "U32") {
+    return Shr{.execution_predicate = std::move(fields->execution_predicate),
+               .variant = Shr::U32{
+                   .operand_layout = fields->operand_layout,
+                   .dst = resolved_operand<ResolvedRegisterRef>(*fields, "dst"),
+                   .src = resolved_operand<RegOrImm>(*fields, "src"),
+                   .amount = resolved_operand<RegOrImm>(*fields, "amount"),
+               }};
+  }
+
+  throw ResolveException("Unknown Shr variant in resolved field table.");
+}
+
 namespace checker {
 
 template <>
@@ -255,7 +1275,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -266,7 +1289,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -277,7 +1303,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -288,7 +1317,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Add::FloatF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -302,7 +1334,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -316,7 +1351,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -330,7 +1368,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -344,7 +1385,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Add::FloatF32::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -382,6 +1426,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -403,6 +1449,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -458,7 +1506,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -469,7 +1520,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -480,7 +1534,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Add::FloatF32x2::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -494,7 +1551,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -508,7 +1568,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -522,7 +1585,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Add::FloatF32x2::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -608,7 +1674,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -619,7 +1688,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Add::FloatF64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -633,7 +1705,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -647,7 +1722,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Add::FloatF64::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -685,6 +1763,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -706,6 +1786,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -760,7 +1842,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -771,7 +1856,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -782,7 +1870,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -793,7 +1884,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -807,7 +1901,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -821,7 +1918,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -835,7 +1935,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -849,7 +1952,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -933,7 +2039,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -944,7 +2053,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -958,7 +2070,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -972,7 +2087,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1058,7 +2176,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1069,7 +2190,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Add::MixedF32::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1080,7 +2204,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "input_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.input_type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1091,7 +2218,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1105,7 +2235,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1119,7 +2252,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Add::MixedF32::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1133,7 +2269,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.input_type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1147,7 +2286,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1232,7 +2374,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
         .field_id = "type",
         .bool_value = std::nullopt,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = selected.type.value,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -1246,7 +2391,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
             .bool_value = false,
             .scalar_type = selected.type.value,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -1284,6 +2432,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -1305,6 +2455,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -1359,7 +2511,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = Add::Sat::saturate,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1370,7 +2525,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1384,7 +2542,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = Add::Sat::saturate,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1398,7 +2559,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1436,6 +2600,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -1457,6 +2623,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -1511,7 +2679,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1522,7 +2693,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1536,7 +2710,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1550,7 +2727,10 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1588,6 +2768,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -1609,6 +2791,8 @@ CheckResult check<Add>(const Add &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -1676,7 +2860,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1687,7 +2874,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1698,7 +2888,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1709,7 +2902,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Sub::FloatF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1723,7 +2919,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1737,7 +2936,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1751,7 +2953,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1765,7 +2970,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Sub::FloatF32::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1803,6 +3011,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -1824,6 +3034,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -1879,7 +3091,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1890,7 +3105,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1901,7 +3119,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Sub::FloatF32x2::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -1915,7 +3136,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1929,7 +3153,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -1943,7 +3170,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Sub::FloatF32x2::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2029,7 +3259,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2040,7 +3273,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Sub::FloatF64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2054,7 +3290,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2068,7 +3307,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Sub::FloatF64::type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2106,6 +3348,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -2127,6 +3371,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -2181,7 +3427,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2192,7 +3441,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "ftz",
              .bool_value = selected.ftz.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2203,7 +3455,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2214,7 +3469,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2228,7 +3486,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2242,7 +3503,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.ftz.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2256,7 +3520,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2270,7 +3537,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2354,7 +3624,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2365,7 +3638,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2379,7 +3655,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2393,7 +3672,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2479,7 +3761,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "rounding",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2490,7 +3775,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "result_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = Sub::MixedF32::result_type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2501,7 +3789,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "input_type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.input_type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2512,7 +3803,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2526,7 +3820,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = selected.rounding.value,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2540,7 +3837,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = Sub::MixedF32::result_type,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2554,7 +3854,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.input_type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2568,7 +3871,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2653,7 +3959,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
         .field_id = "type",
         .bool_value = std::nullopt,
         .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
         .scalar_type = selected.type.value,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
         .vector_arity = std::nullopt,
         .memory_state_space = std::nullopt,
         .memory_consistency = std::nullopt,
@@ -2667,7 +3976,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
             .bool_value = false,
             .scalar_type = selected.type.value,
             .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
             .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
             .vector_arity = VectorArity::Invalid,
             .memory_state_space = MemoryStateSpace::Invalid,
             .memory_consistency = MemoryConsistency::Omitted,
@@ -2705,6 +4017,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -2726,6 +4040,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -2781,7 +4097,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "saturate",
              .bool_value = selected.saturate.value,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2792,7 +4111,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .field_id = "type",
              .bool_value = std::nullopt,
              .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
              .scalar_type = selected.type.value,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
              .vector_arity = std::nullopt,
              .memory_state_space = std::nullopt,
              .memory_consistency = std::nullopt,
@@ -2806,7 +4128,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = selected.saturate.value,
              .scalar_type = ScalarType::Invalid,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2820,7 +4145,10 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
              .bool_value = false,
              .scalar_type = selected.type.value,
              .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
              .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
              .vector_arity = VectorArity::Invalid,
              .memory_state_space = MemoryStateSpace::Invalid,
              .memory_consistency = MemoryConsistency::Omitted,
@@ -2858,6 +4186,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src1",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src1.locs,
              };
@@ -2879,6 +4209,8 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                  .field_id = "src2",
                  .actual_shape = check_end::OperandShape::Immediate,
                  .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
                  .register_type = std::nullopt,
                  .locations = selected.src2.locs,
              };
@@ -2932,6 +4264,7865 @@ CheckResult check<Sub>(const Sub &instruction, const Context &context) {
                          check_half, check_bfloat, check_mixed_f32,
                          check_integer_no_sat, check_optional_sat},
       instruction.variant);
+}
+
+template <>
+CheckResult check<Mul>(const Mul &instruction, const Context &context) {
+  const auto check_rn_f32 = [&](const Mul::RnF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mul::RnF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Mul::RnF32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mul::RnF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mul::get_checker_descriptor(), "RnF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mul::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Mul::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mul::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mul::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32), Mul::RnF32>);
+
+  const auto check_lo_u32 = [&](const Mul::LoU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "lo",
+             .bool_value = Mul::LoU32::lo,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mul::LoU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "lo",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mul::LoU32::lo,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mul::LoU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mul::get_checker_descriptor(), "LoU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mul::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mul::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LoU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mul::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mul::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_lo_u32), Mul::LoU32>);
+
+  const auto check_hi_u32 = [&](const Mul::HiU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "hi",
+             .bool_value = Mul::HiU32::hi,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mul::HiU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "hi",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mul::HiU32::hi,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mul::HiU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mul::get_checker_descriptor(), "HiU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mul::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mul::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "HiU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mul::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mul::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_hi_u32), Mul::HiU32>);
+
+  const auto check_wide_u32 = [&](const Mul::WideU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "wide",
+             .bool_value = Mul::WideU32::wide,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mul::WideU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "wide",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mul::WideU32::wide,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mul::WideU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mul::get_checker_descriptor(), "WideU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mul::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mul::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "WideU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mul::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mul::get_checker_descriptor()
+              .variants[3]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_wide_u32), Mul::WideU32>);
+
+  const auto check_wide_s32 = [&](const Mul::WideS32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "wide",
+             .bool_value = Mul::WideS32::wide,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mul::WideS32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "wide",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mul::WideS32::wide,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mul::WideS32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mul::get_checker_descriptor(), "WideS32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mul::get_checker_descriptor().variants[4].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mul::get_resolved_descriptor().variants[4].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "WideS32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mul::get_checker_descriptor().variants[4],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mul::get_checker_descriptor()
+              .variants[4]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_wide_s32), Mul::WideS32>);
+
+  return std::visit(detail::Overloaded{check_rn_f32, check_lo_u32, check_hi_u32,
+                                       check_wide_u32, check_wide_s32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Fma>(const Fma &instruction, const Context &context) {
+  const auto check_rn_f32 = [&](const Fma::RnF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Fma::RnF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Fma::RnF32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Fma::RnF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Fma::get_checker_descriptor(), "RnF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Fma::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "src3",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src3.value.declared_type,
+             .locations = selected.src3.locs,
+         }}};
+    const auto &layouts =
+        Fma::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Fma::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Fma::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32), Fma::RnF32>);
+
+  const auto check_rn_f64 = [&](const Fma::RnF64 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Fma::RnF64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Fma::RnF64::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Fma::RnF64::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Fma::get_checker_descriptor(), "RnF64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Fma::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "src3",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src3.value.declared_type,
+             .locations = selected.src3.locs,
+         }}};
+    const auto &layouts =
+        Fma::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Fma::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Fma::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f64), Fma::RnF64>);
+
+  const auto check_rn_f16 = [&](const Fma::RnF16 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Fma::RnF16::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Fma::RnF16::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Fma::RnF16::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Fma::get_checker_descriptor(), "RnF16", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Fma::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "src3",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src3.value.declared_type,
+             .locations = selected.src3.locs,
+         }}};
+    const auto &layouts =
+        Fma::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF16", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Fma::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Fma::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f16), Fma::RnF16>);
+
+  return std::visit(
+      detail::Overloaded{check_rn_f32, check_rn_f64, check_rn_f16},
+      instruction.variant);
+}
+
+template <>
+CheckResult check<Mad>(const Mad &instruction, const Context &context) {
+  const auto check_rn_f32 = [&](const Mad::RnF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mad::RnF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Mad::RnF32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mad::RnF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mad::get_checker_descriptor(), "RnF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mad::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "src3",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src3.value.declared_type,
+             .locations = selected.src3.locs,
+         }}};
+    const auto &layouts =
+        Mad::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mad::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mad::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32), Mad::RnF32>);
+
+  const auto check_lo_u32 = [&](const Mad::LoU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "lo",
+             .bool_value = Mad::LoU32::lo,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mad::LoU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "lo",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mad::LoU32::lo,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mad::LoU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mad::get_checker_descriptor(), "LoU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mad::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src3.value)) {
+             return OperandView{
+                 .field_id = "src3",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src3.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src3.value);
+           return OperandView{
+               .field_id = "src3",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src3.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mad::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LoU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mad::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mad::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_lo_u32), Mad::LoU32>);
+
+  const auto check_lo_s32 = [&](const Mad::LoS32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "lo",
+             .bool_value = Mad::LoS32::lo,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mad::LoS32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "lo",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mad::LoS32::lo,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mad::LoS32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mad::get_checker_descriptor(), "LoS32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mad::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src3.value)) {
+             return OperandView{
+                 .field_id = "src3",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src3.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src3.value);
+           return OperandView{
+               .field_id = "src3",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src3.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mad::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LoS32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mad::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mad::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_lo_s32), Mad::LoS32>);
+
+  const auto check_wide_u32 = [&](const Mad::WideU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "wide",
+             .bool_value = Mad::WideU32::wide,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Mad::WideU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "wide",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Mad::WideU32::wide,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Mad::WideU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Mad::get_checker_descriptor(), "WideU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Mad::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src3.value)) {
+             return OperandView{
+                 .field_id = "src3",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src3.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src3.value);
+           return OperandView{
+               .field_id = "src3",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src3.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Mad::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "WideU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Mad::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Mad::get_checker_descriptor()
+              .variants[3]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_wide_u32), Mad::WideU32>);
+
+  return std::visit(detail::Overloaded{check_rn_f32, check_lo_u32, check_lo_s32,
+                                       check_wide_u32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Div>(const Div &instruction, const Context &context) {
+  const auto check_rn_f32 = [&](const Div::RnF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Div::RnF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Div::RnF32::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Div::RnF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Div::get_checker_descriptor(), "RnF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Div::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Div::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Div::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Div::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f32), Div::RnF32>);
+
+  const auto check_rn_f64 = [&](const Div::RnF64 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "rounding",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Div::RnF64::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "rounding",
+             .value_kind = checker::ModifierValueKind::RoundingMode,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = Div::RnF64::rounding,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Div::RnF64::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Div::get_checker_descriptor(), "RnF64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Div::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Div::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RnF64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Div::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Div::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_rn_f64), Div::RnF64>);
+
+  const auto check_u32 = [&](const Div::U32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Div::U32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Div::U32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Div::get_checker_descriptor(), "U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Div::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Div::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Div::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Div::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_u32), Div::U32>);
+
+  const auto check_s32 = [&](const Div::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Div::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Div::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Div::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Div::get_checker_descriptor().variants[3].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Div::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Div::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Div::get_checker_descriptor()
+              .variants[3]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Div::S32>);
+
+  return std::visit(
+      detail::Overloaded{check_rn_f32, check_rn_f64, check_u32, check_s32},
+      instruction.variant);
+}
+
+template <>
+CheckResult check<Rem>(const Rem &instruction, const Context &context) {
+  const auto check_s32 = [&](const Rem::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Rem::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Rem::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Rem::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Rem::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Rem::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Rem::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Rem::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Rem::S32>);
+
+  const auto check_u32 = [&](const Rem::U32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Rem::U32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Rem::U32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Rem::get_checker_descriptor(), "U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Rem::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Rem::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Rem::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Rem::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_u32), Rem::U32>);
+
+  return std::visit(detail::Overloaded{check_s32, check_u32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Min>(const Min &instruction, const Context &context) {
+  const auto check_s32 = [&](const Min::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Min::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Min::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Min::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Min::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Min::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Min::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Min::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Min::S32>);
+
+  const auto check_nan_f32 = [&](const Min::NanF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "nan",
+             .bool_value = Min::NanF32::nan,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Min::NanF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "nan",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Min::NanF32::nan,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Min::NanF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Min::get_checker_descriptor(), "NanF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Min::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Min::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "NanF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Min::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Min::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_nan_f32), Min::NanF32>);
+
+  return std::visit(detail::Overloaded{check_s32, check_nan_f32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Max>(const Max &instruction, const Context &context) {
+  const auto check_s32 = [&](const Max::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Max::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Max::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Max::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Max::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Max::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Max::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Max::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Max::S32>);
+
+  const auto check_nan_f32 = [&](const Max::NanF32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "nan",
+             .bool_value = Max::NanF32::nan,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Max::NanF32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "nan",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Max::NanF32::nan,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Max::NanF32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Max::get_checker_descriptor(), "NanF32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Max::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         }}};
+    const auto &layouts =
+        Max::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "NanF32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Max::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Max::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_nan_f32), Max::NanF32>);
+
+  return std::visit(detail::Overloaded{check_s32, check_nan_f32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Abs>(const Abs &instruction, const Context &context) {
+  const auto check_s32 = [&](const Abs::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Abs::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Abs::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Abs::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Abs::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Abs::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Abs::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Abs::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Abs::S32>);
+
+  const auto check_f32 = [&](const Abs::F32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Abs::F32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Abs::F32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Abs::get_checker_descriptor(), "F32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Abs::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Abs::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "F32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Abs::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Abs::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_f32), Abs::F32>);
+
+  return std::visit(detail::Overloaded{check_s32, check_f32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Neg>(const Neg &instruction, const Context &context) {
+  const auto check_s32 = [&](const Neg::S32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Neg::S32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Neg::S32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Neg::get_checker_descriptor(), "S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Neg::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Neg::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Neg::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Neg::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_s32), Neg::S32>);
+
+  const auto check_f32 = [&](const Neg::F32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Neg::F32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Neg::F32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Neg::get_checker_descriptor(), "F32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Neg::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Neg::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "F32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Neg::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Neg::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_f32), Neg::F32>);
+
+  const auto check_f16x2 = [&](const Neg::F16x2 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Neg::F16x2::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Neg::F16x2::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Neg::get_checker_descriptor(), "F16x2", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Neg::get_checker_descriptor().variants[2].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Neg::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "F16x2", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Neg::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Neg::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_f16x2), Neg::F16x2>);
+
+  return std::visit(detail::Overloaded{check_s32, check_f32, check_f16x2},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Popc>(const Popc &instruction, const Context &context) {
+  const auto check_b32 = [&](const Popc::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Popc::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Popc::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Popc::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Popc::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Popc::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Popc::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Popc::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Popc::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Clz>(const Clz &instruction, const Context &context) {
+  const auto check_b32 = [&](const Clz::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Clz::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Clz::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Clz::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Clz::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Clz::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Clz::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Clz::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Clz::B32>);
+
+  const auto check_b64 = [&](const Clz::B64 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Clz::B64::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Clz::B64::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Clz::get_checker_descriptor(), "B64", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Clz::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Clz::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B64", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Clz::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Clz::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b64), Clz::B64>);
+
+  return std::visit(detail::Overloaded{check_b32, check_b64},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Bfind>(const Bfind &instruction, const Context &context) {
+  const auto check_shiftamt_u32 =
+      [&](const Bfind::ShiftamtU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "shiftamt",
+             .bool_value = Bfind::ShiftamtU32::shiftamt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Bfind::ShiftamtU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "shiftamt",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Bfind::ShiftamtU32::shiftamt,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Bfind::ShiftamtU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Bfind::get_checker_descriptor(), "ShiftamtU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Bfind::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Bfind::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "ShiftamtU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Bfind::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Bfind::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_shiftamt_u32),
+                                             Bfind::ShiftamtU32>);
+
+  return std::visit(detail::Overloaded{check_shiftamt_u32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Bfe>(const Bfe &instruction, const Context &context) {
+  const auto check_u32 = [&](const Bfe::U32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Bfe::U32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Bfe::U32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Bfe::get_checker_descriptor(), "U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Bfe::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         },
+         OperandView{
+             .field_id = "offset",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.offset.value.type,
+             .immediate_bits = selected.offset.value.bits,
+             .immediate_is_negative = selected.offset.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.offset.locs,
+         },
+         OperandView{
+             .field_id = "width",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.width.value.type,
+             .immediate_bits = selected.width.value.bits,
+             .immediate_is_negative = selected.width.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.width.locs,
+         }}};
+    const auto &layouts =
+        Bfe::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Bfe::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Bfe::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Bfe::get_checker_descriptor().variants[0].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_u32), Bfe::U32>);
+
+  return std::visit(detail::Overloaded{check_u32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Bfi>(const Bfi &instruction, const Context &context) {
+  const auto check_b32 = [&](const Bfi::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Bfi::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Bfi::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Bfi::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Bfi::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 5> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "insert",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.insert.value.declared_type,
+             .locations = selected.insert.locs,
+         },
+         OperandView{
+             .field_id = "base",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.base.value.declared_type,
+             .locations = selected.base.locs,
+         },
+         OperandView{
+             .field_id = "offset",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.offset.value.type,
+             .immediate_bits = selected.offset.value.bits,
+             .immediate_is_negative = selected.offset.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.offset.locs,
+         },
+         OperandView{
+             .field_id = "width",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.width.value.type,
+             .immediate_bits = selected.width.value.bits,
+             .immediate_is_negative = selected.width.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.width.locs,
+         }}};
+    const auto &layouts =
+        Bfi::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Bfi::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Bfi::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Bfi::get_checker_descriptor().variants[0].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Bfi::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Brev>(const Brev &instruction, const Context &context) {
+  const auto check_b32 = [&](const Brev::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Brev::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Brev::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Brev::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Brev::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src.value.declared_type,
+             .locations = selected.src.locs,
+         }}};
+    const auto &layouts =
+        Brev::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Brev::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Brev::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Brev::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Set>(const Set &instruction, const Context &context) {
+  const auto check_eq_u32_u32 =
+      [&](const Set::EqU32U32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "dtype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Set::EqU32U32::dtype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "stype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Set::EqU32U32::stype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "dtype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Set::EqU32U32::dtype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "stype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Set::EqU32U32::stype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Set::get_checker_descriptor(), "EqU32U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Set::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Set::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "EqU32U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Set::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Set::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_eq_u32_u32), Set::EqU32U32>);
+
+  const auto check_lt_and_f32_s32 =
+      [&](const Set::LtAndF32S32 &selected) -> CheckResult {
+    const std::array<FieldView, 4> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "boolean",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = selected.boolean.value,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.boolean.locs,
+         },
+         FieldView{
+             .field_id = "dtype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Set::LtAndF32S32::dtype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "stype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Set::LtAndF32S32::stype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 4> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "boolean",
+             .value_kind = checker::ModifierValueKind::BooleanOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = selected.boolean.value,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.boolean.locs,
+         },
+         ModifierValueView{
+             .kind_id = "dtype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Set::LtAndF32S32::dtype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "stype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Set::LtAndF32S32::stype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Set::get_checker_descriptor(), "LtAndF32S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Set::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "combine",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.combine.value.register_ref.declared_type,
+             .locations = selected.combine.locs,
+         }}};
+    const auto &layouts =
+        Set::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LtAndF32S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Set::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Set::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_lt_and_f32_s32),
+                                             Set::LtAndF32S32>);
+
+  return std::visit(detail::Overloaded{check_eq_u32_u32, check_lt_and_f32_s32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Setp>(const Setp &instruction, const Context &context) {
+  const auto check_lt_u32 = [&](const Setp::LtU32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setp::LtU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setp::LtU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Setp::get_checker_descriptor(), "LtU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setp::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.register_ref.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Setp::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LtU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setp::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setp::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_lt_u32), Setp::LtU32>);
+
+  const auto check_ge_s32 = [&](const Setp::GeS32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setp::GeS32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setp::GeS32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Setp::get_checker_descriptor(), "GeS32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setp::get_checker_descriptor()
+                                              .variants[1]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.register_ref.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Setp::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "GeS32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setp::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setp::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_ge_s32), Setp::GeS32>);
+
+  const auto check_lt_and_u32 =
+      [&](const Setp::LtAndU32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "boolean",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = selected.boolean.value,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.boolean.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setp::LtAndU32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "boolean",
+             .value_kind = checker::ModifierValueKind::BooleanOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = selected.boolean.value,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.boolean.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setp::LtAndU32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Setp::get_checker_descriptor(), "LtAndU32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setp::get_checker_descriptor()
+                                              .variants[2]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.register_ref.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "combine",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.combine.value.register_ref.declared_type,
+             .locations = selected.combine.locs,
+         }}};
+    const auto &layouts =
+        Setp::get_resolved_descriptor().variants[2].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LtAndU32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setp::get_checker_descriptor().variants[2],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setp::get_checker_descriptor()
+              .variants[2]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_lt_and_u32), Setp::LtAndU32>);
+
+  const auto check_eq_u32_pair =
+      [&](const Setp::EqU32Pair &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setp::EqU32Pair::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setp::EqU32Pair::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Setp::get_checker_descriptor(), "EqU32Pair", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setp::get_checker_descriptor()
+                                              .variants[3]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::PredicatePair,
+             .immediate_type = std::nullopt,
+             .predicate_pair_types =
+                 {selected.dst.value.first.register_ref.declared_type.value_or(
+                      ScalarType::Invalid),
+                  selected.dst.value.second.register_ref.declared_type.value_or(
+                      ScalarType::Invalid)},
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Setp::get_resolved_descriptor().variants[3].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "EqU32Pair", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setp::get_checker_descriptor().variants[3],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setp::get_checker_descriptor()
+              .variants[3]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_eq_u32_pair),
+                                             Setp::EqU32Pair>);
+
+  const auto check_lt_and_s32_pair =
+      [&](const Setp::LtAndS32Pair &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "comparison",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.comparison.locs,
+         },
+         FieldView{
+             .field_id = "boolean",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = selected.boolean.value,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = selected.boolean.locs,
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Setp::LtAndS32Pair::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "comparison",
+             .value_kind = checker::ModifierValueKind::ComparisonOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = selected.comparison.value,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.comparison.locs,
+         },
+         ModifierValueView{
+             .kind_id = "boolean",
+             .value_kind = checker::ModifierValueKind::BooleanOperator,
+             .bool_value = false,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = selected.boolean.value,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = selected.boolean.locs,
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Setp::LtAndS32Pair::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Setp::get_checker_descriptor(), "LtAndS32Pair", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Setp::get_checker_descriptor()
+                                              .variants[4]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::PredicatePair,
+             .immediate_type = std::nullopt,
+             .predicate_pair_types =
+                 {selected.dst.value.first.register_ref.declared_type.value_or(
+                      ScalarType::Invalid),
+                  selected.dst.value.second.register_ref.declared_type.value_or(
+                      ScalarType::Invalid)},
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "combine",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type = selected.combine.value.register_ref.declared_type,
+             .locations = selected.combine.locs,
+         }}};
+    const auto &layouts =
+        Setp::get_resolved_descriptor().variants[4].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LtAndS32Pair", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Setp::get_checker_descriptor().variants[4],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Setp::get_checker_descriptor()
+              .variants[4]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_lt_and_s32_pair),
+                                             Setp::LtAndS32Pair>);
+
+  return std::visit(detail::Overloaded{check_lt_u32, check_ge_s32,
+                                       check_lt_and_u32, check_eq_u32_pair,
+                                       check_lt_and_s32_pair},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Selp>(const Selp &instruction, const Context &context) {
+  const auto check_u32 = [&](const Selp::U32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Selp::U32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Selp::U32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Selp::get_checker_descriptor(), "U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Selp::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src_true.value)) {
+             return OperandView{
+                 .field_id = "src_true",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src_true.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src_true.value);
+           return OperandView{
+               .field_id = "src_true",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src_true.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src_false.value)) {
+             return OperandView{
+                 .field_id = "src_false",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src_false.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src_false.value);
+           return OperandView{
+               .field_id = "src_false",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src_false.locs,
+           };
+         }(),
+         OperandView{
+             .field_id = "predicate",
+             .actual_shape = check_end::OperandShape::Predicate,
+             .immediate_type = std::nullopt,
+             .register_type =
+                 selected.predicate.value.register_ref.declared_type,
+             .locations = selected.predicate.locs,
+         }}};
+    const auto &layouts =
+        Selp::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Selp::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Selp::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_u32), Selp::U32>);
+
+  return std::visit(detail::Overloaded{check_u32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Slct>(const Slct &instruction, const Context &context) {
+  const auto check_u32_s32 = [&](const Slct::U32S32 &selected) -> CheckResult {
+    const std::array<FieldView, 2> fields = {
+        {FieldView{
+             .field_id = "dtype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Slct::U32S32::dtype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "stype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Slct::U32S32::stype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 2> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "dtype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Slct::U32S32::dtype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "stype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Slct::U32S32::stype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Slct::get_checker_descriptor(), "U32S32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Slct::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src_true",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src_true.value.declared_type,
+             .locations = selected.src_true.locs,
+         },
+         OperandView{
+             .field_id = "src_false",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src_false.value.declared_type,
+             .locations = selected.src_false.locs,
+         },
+         OperandView{
+             .field_id = "selector",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.selector.value.declared_type,
+             .locations = selected.selector.locs,
+         }}};
+    const auto &layouts =
+        Slct::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32S32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Slct::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Slct::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_u32_s32), Slct::U32S32>);
+
+  const auto check_ftz_u64_f32 =
+      [&](const Slct::FtzU64F32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "ftz",
+             .bool_value = Slct::FtzU64F32::ftz,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "dtype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Slct::FtzU64F32::dtype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "stype",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Slct::FtzU64F32::stype,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "ftz",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Slct::FtzU64F32::ftz,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "dtype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Slct::FtzU64F32::dtype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "stype",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Slct::FtzU64F32::stype,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Slct::get_checker_descriptor(), "FtzU64F32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Slct::get_checker_descriptor()
+                                              .variants[1]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src_true",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src_true.value.declared_type,
+             .locations = selected.src_true.locs,
+         },
+         OperandView{
+             .field_id = "src_false",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src_false.value.declared_type,
+             .locations = selected.src_false.locs,
+         },
+         OperandView{
+             .field_id = "selector",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.selector.value.declared_type,
+             .locations = selected.selector.locs,
+         }}};
+    const auto &layouts =
+        Slct::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "FtzU64F32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Slct::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Slct::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_ftz_u64_f32),
+                                             Slct::FtzU64F32>);
+
+  return std::visit(detail::Overloaded{check_u32_s32, check_ftz_u64_f32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<And>(const And &instruction, const Context &context) {
+  const auto check_b32 = [&](const And::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = And::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = And::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(And::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        And::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        And::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          And::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          And::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), And::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Or>(const Or &instruction, const Context &context) {
+  const auto check_b32 = [&](const Or::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Or::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Or::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Or::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Or::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Or::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Or::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Or::get_checker_descriptor().variants[0].operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Or::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Xor>(const Xor &instruction, const Context &context) {
+  const auto check_b32 = [&](const Xor::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Xor::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Xor::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Xor::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Xor::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src1.value)) {
+             return OperandView{
+                 .field_id = "src1",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src1.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src1.value);
+           return OperandView{
+               .field_id = "src1",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src1.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src2.value)) {
+             return OperandView{
+                 .field_id = "src2",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src2.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src2.value);
+           return OperandView{
+               .field_id = "src2",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src2.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Xor::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Xor::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Xor::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Xor::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Not>(const Not &instruction, const Context &context) {
+  const auto check_b32 = [&](const Not::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Not::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Not::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Not::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Not::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 2> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src.value)) {
+             return OperandView{
+                 .field_id = "src",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src.value);
+           return OperandView{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Not::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Not::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Not::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Not::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Lop3>(const Lop3 &instruction, const Context &context) {
+  const auto check_b32 = [&](const Lop3::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Lop3::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Lop3::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Lop3::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability =
+        check_modifier_value_availability(Lop3::get_checker_descriptor()
+                                              .variants[0]
+                                              .modifier_value_availabilities,
+                                          modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 5> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         OperandView{
+             .field_id = "src3",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src3.value.declared_type,
+             .locations = selected.src3.locs,
+         },
+         OperandView{
+             .field_id = "lut",
+             .actual_shape = check_end::OperandShape::Immediate,
+             .immediate_type = selected.lut.value.type,
+             .immediate_bits = selected.lut.value.bits,
+             .immediate_is_negative = selected.lut.value.is_negative,
+             .register_type = std::nullopt,
+             .locations = selected.lut.locs,
+         }}};
+    const auto &layouts =
+        Lop3::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Lop3::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Lop3::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+      for (const auto &immediate_range :
+           Lop3::get_checker_descriptor().variants[0].immediate_ranges) {
+        const auto immediate_range_check =
+            check_immediate_range(immediate_range, operands, context);
+        if (!immediate_range_check) {
+          diagnostics.insert(diagnostics.end(),
+                             immediate_range_check.error().begin(),
+                             immediate_range_check.error().end());
+        }
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Lop3::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Shf>(const Shf &instruction, const Context &context) {
+  const auto check_l_clamp_b32 =
+      [&](const Shf::LClampB32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "left",
+             .bool_value = Shf::LClampB32::left,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "clamp",
+             .bool_value = Shf::LClampB32::clamp,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Shf::LClampB32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "left",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shf::LClampB32::left,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "clamp",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shf::LClampB32::clamp,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Shf::LClampB32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Shf::get_checker_descriptor(), "LClampB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Shf::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.count.value)) {
+             return OperandView{
+                 .field_id = "count",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.count.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.count.value);
+           return OperandView{
+               .field_id = "count",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.count.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Shf::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "LClampB32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Shf::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Shf::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_l_clamp_b32),
+                                             Shf::LClampB32>);
+
+  const auto check_r_wrap_b32 =
+      [&](const Shf::RWrapB32 &selected) -> CheckResult {
+    const std::array<FieldView, 3> fields = {
+        {FieldView{
+             .field_id = "right",
+             .bool_value = Shf::RWrapB32::right,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "wrap",
+             .bool_value = Shf::RWrapB32::wrap,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = std::nullopt,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         },
+         FieldView{
+             .field_id = "type",
+             .bool_value = std::nullopt,
+             .cache_operator = std::nullopt,
+             .eviction_priority = std::nullopt,
+             .scalar_type = Shf::RWrapB32::type,
+             .comparison_operator = std::nullopt,
+             .boolean_operator = std::nullopt,
+             .vector_arity = std::nullopt,
+             .memory_state_space = std::nullopt,
+             .memory_consistency = std::nullopt,
+             .memory_scope = std::nullopt,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    const std::array<ModifierValueView, 3> modifier_values = {
+        {ModifierValueView{
+             .kind_id = "right",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shf::RWrapB32::right,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "wrap",
+             .value_kind = checker::ModifierValueKind::Bool,
+             .bool_value = Shf::RWrapB32::wrap,
+             .scalar_type = ScalarType::Invalid,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         },
+         ModifierValueView{
+             .kind_id = "type",
+             .value_kind = checker::ModifierValueKind::ScalarType,
+             .bool_value = false,
+             .scalar_type = Shf::RWrapB32::type,
+             .rounding_mode = RoundingMode::Invalid,
+             .comparison_operator = ComparisonOperator::Invalid,
+             .boolean_operator = BooleanOperator::Invalid,
+             .cache_operator = CacheOperator::Unspecified,
+             .eviction_priority = EvictionPriority::Invalid,
+             .vector_arity = VectorArity::Invalid,
+             .memory_state_space = MemoryStateSpace::Invalid,
+             .memory_consistency = MemoryConsistency::Omitted,
+             .memory_scope = MemoryScope::None,
+             .is_present = true,
+             .locations = std::span<const SourceRange>{},
+         }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Shf::get_checker_descriptor(), "RWrapB32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Shf::get_checker_descriptor().variants[1].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 4> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         OperandView{
+             .field_id = "src1",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src1.value.declared_type,
+             .locations = selected.src1.locs,
+         },
+         OperandView{
+             .field_id = "src2",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.src2.value.declared_type,
+             .locations = selected.src2.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.count.value)) {
+             return OperandView{
+                 .field_id = "count",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.count.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.count.value);
+           return OperandView{
+               .field_id = "count",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.count.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Shf::get_resolved_descriptor().variants[1].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "RWrapB32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Shf::get_checker_descriptor().variants[1],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Shf::get_checker_descriptor()
+              .variants[1]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(
+      detail::VariantCheckFunction<decltype(check_r_wrap_b32), Shf::RWrapB32>);
+
+  return std::visit(detail::Overloaded{check_l_clamp_b32, check_r_wrap_b32},
+                    instruction.variant);
+}
+
+template <>
+CheckResult check<Shl>(const Shl &instruction, const Context &context) {
+  const auto check_b32 = [&](const Shl::B32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Shl::B32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Shl::B32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Shl::get_checker_descriptor(), "B32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Shl::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src.value)) {
+             return OperandView{
+                 .field_id = "src",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src.value);
+           return OperandView{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.amount.value)) {
+             return OperandView{
+                 .field_id = "amount",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.amount.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.amount.value);
+           return OperandView{
+               .field_id = "amount",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.amount.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Shl::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "B32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Shl::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Shl::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_b32), Shl::B32>);
+
+  return std::visit(detail::Overloaded{check_b32}, instruction.variant);
+}
+
+template <>
+CheckResult check<Shr>(const Shr &instruction, const Context &context) {
+  const auto check_u32 = [&](const Shr::U32 &selected) -> CheckResult {
+    const std::array<FieldView, 1> fields = {{FieldView{
+        .field_id = "type",
+        .bool_value = std::nullopt,
+        .cache_operator = std::nullopt,
+        .eviction_priority = std::nullopt,
+        .scalar_type = Shr::U32::type,
+        .comparison_operator = std::nullopt,
+        .boolean_operator = std::nullopt,
+        .vector_arity = std::nullopt,
+        .memory_state_space = std::nullopt,
+        .memory_consistency = std::nullopt,
+        .memory_scope = std::nullopt,
+        .locations = std::span<const SourceRange>{},
+    }}};
+    const std::array<ModifierValueView, 1> modifier_values = {
+        {ModifierValueView{
+            .kind_id = "type",
+            .value_kind = checker::ModifierValueKind::ScalarType,
+            .bool_value = false,
+            .scalar_type = Shr::U32::type,
+            .rounding_mode = RoundingMode::Invalid,
+            .comparison_operator = ComparisonOperator::Invalid,
+            .boolean_operator = BooleanOperator::Invalid,
+            .cache_operator = CacheOperator::Unspecified,
+            .eviction_priority = EvictionPriority::Invalid,
+            .vector_arity = VectorArity::Invalid,
+            .memory_state_space = MemoryStateSpace::Invalid,
+            .memory_consistency = MemoryConsistency::Omitted,
+            .memory_scope = MemoryScope::None,
+            .is_present = true,
+            .locations = std::span<const SourceRange>{},
+        }}};
+    CheckDiagnostics diagnostics;
+    const auto common =
+        check_common(Shr::get_checker_descriptor(), "U32", context);
+    if (!common) {
+      diagnostics.insert(diagnostics.end(), common.error().begin(),
+                         common.error().end());
+    }
+    const auto modifier_availability = check_modifier_value_availability(
+        Shr::get_checker_descriptor().variants[0].modifier_value_availabilities,
+        modifier_values, context);
+    if (!modifier_availability) {
+      diagnostics.insert(diagnostics.end(),
+                         modifier_availability.error().begin(),
+                         modifier_availability.error().end());
+    }
+    const std::array<OperandView, 3> operands = {
+        {OperandView{
+             .field_id = "dst",
+             .actual_shape = check_end::OperandShape::Register,
+             .immediate_type = std::nullopt,
+             .register_type = selected.dst.value.declared_type,
+             .locations = selected.dst.locs,
+         },
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.src.value)) {
+             return OperandView{
+                 .field_id = "src",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.src.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.src.value);
+           return OperandView{
+               .field_id = "src",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.src.locs,
+           };
+         }(),
+         [&]() -> OperandView {
+           if (const auto *immediate =
+                   std::get_if<ResolvedImmediate>(&selected.amount.value)) {
+             return OperandView{
+                 .field_id = "amount",
+                 .actual_shape = check_end::OperandShape::Immediate,
+                 .immediate_type = immediate->type,
+                 .immediate_bits = immediate->bits,
+                 .immediate_is_negative = immediate->is_negative,
+                 .register_type = std::nullopt,
+                 .locations = selected.amount.locs,
+             };
+           }
+           const auto &register_ref =
+               std::get<ResolvedRegisterRef>(selected.amount.value);
+           return OperandView{
+               .field_id = "amount",
+               .actual_shape = check_end::OperandShape::Register,
+               .immediate_type = std::nullopt,
+               .register_type = register_ref.declared_type,
+               .locations = selected.amount.locs,
+           };
+         }()}};
+    const auto &layouts =
+        Shr::get_resolved_descriptor().variants[0].operand_layouts;
+    const auto layout_check = check_operand_layout_tag(
+        "U32", selected.operand_layout.value, layouts.size(), context);
+    if (!layout_check) {
+      diagnostics.insert(diagnostics.end(), layout_check.error().begin(),
+                         layout_check.error().end());
+    } else {
+      const auto availability_check = check_operand_layout_availability(
+          Shr::get_checker_descriptor().variants[0],
+          selected.operand_layout.value, context);
+      if (!availability_check) {
+        diagnostics.insert(diagnostics.end(),
+                           availability_check.error().begin(),
+                           availability_check.error().end());
+      }
+      const auto operand_check = check_operands(
+          layouts[selected.operand_layout.value].bindings, fields, operands,
+          Shr::get_checker_descriptor()
+              .variants[0]
+              .operand_type_compatibilities,
+          context);
+      if (!operand_check) {
+        diagnostics.insert(diagnostics.end(), operand_check.error().begin(),
+                           operand_check.error().end());
+      }
+    }
+    if (diagnostics.empty())
+      return CheckResult{};
+    return std::unexpected(std::move(diagnostics));
+  };
+  static_assert(detail::VariantCheckFunction<decltype(check_u32), Shr::U32>);
+
+  return std::visit(detail::Overloaded{check_u32}, instruction.variant);
 }
 
 } // namespace checker
