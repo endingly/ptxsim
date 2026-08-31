@@ -10,15 +10,18 @@
 namespace ptxsim::common {
 namespace detail {
 
-template <typename Tag>
+template <typename T>
+concept HasPrefixMember = requires {
+  { T::prefix } -> std::convertible_to<std::string_view>;
+} && std::same_as<decltype(T::prefix), const std::string_view>;
+
+template <HasPrefixMember Tag>
 class Id {
  public:
   explicit constexpr Id(std::uint32_t value) noexcept : value_(value) {}
-
   [[nodiscard]] constexpr auto value() const noexcept -> std::uint32_t {
     return value_;
   }
-
   constexpr auto operator<=>(const Id&) const noexcept = default;
 
  private:
@@ -75,11 +78,18 @@ using SpecialRegisterId = detail::Id<detail::SpecialRegisterIdTag>;
 
 template <typename Tag>
 [[nodiscard]] inline auto to_string(detail::Id<Tag> id) -> std::string {
-  char digits[std::numeric_limits<std::uint32_t>::digits10 + 1];
-  const auto [end, error] =
-      std::to_chars(digits, digits + sizeof(digits), id.value());
-  (void)error;
-  std::string result{Tag::prefix};
+  constexpr std::size_t max_digits =
+      std::numeric_limits<std::uint32_t>::digits10 + 1;
+  char digits[max_digits];
+  const auto [end, ec] = std::to_chars(digits, digits + max_digits, id.value());
+  (void)ec;
+
+  static_assert(Tag::prefix.size() >= 0,
+                "Tag::prefix must be a static constexpr std::string_view");
+
+  std::string result;
+  result.reserve(Tag::prefix.size() + 1 + max_digits);
+  result.append(Tag::prefix);
   result.push_back(':');
   result.append(digits, end);
   return result;

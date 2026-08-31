@@ -4,32 +4,17 @@ set_target_properties(ptxsim_common PROPERTIES EXPORT_NAME common)
 target_compile_features(ptxsim_common INTERFACE cxx_std_23)
 register_headers(ptxsim_common common INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-file(GLOB ptxsim_common_public_headers CONFIGURE_DEPENDS include/*.hpp)
-set(ptxsim_common_header_check_sources)
-foreach(ptxsim_common_header IN LISTS ptxsim_common_public_headers)
-    get_filename_component(ptxsim_common_header_name "${ptxsim_common_header}" NAME)
-    string(MAKE_C_IDENTIFIER "${ptxsim_common_header_name}" ptxsim_common_header_id)
-    set(ptxsim_common_header_check
-        "${CMAKE_CURRENT_BINARY_DIR}/header-check/${ptxsim_common_header_id}.cpp")
-    file(GENERATE OUTPUT "${ptxsim_common_header_check}"
-         CONTENT "#include <ptxsim/common/${ptxsim_common_header_name}>\n")
-    list(APPEND ptxsim_common_header_check_sources "${ptxsim_common_header_check}")
-endforeach()
-add_library(ptxsim_common_public_headers OBJECT ${ptxsim_common_header_check_sources})
-target_link_libraries(ptxsim_common_public_headers PRIVATE ptxsim::common)
-ptxsim_enable_sanitizers(ptxsim_common_public_headers)
-add_custom_target(ptxsim_common_public_header_check ALL
-    DEPENDS ptxsim_common_public_headers)
-
 if(BUILD_TESTING)
-    add_executable(test_ptxsim_common
-        test/test_ids.cpp
-        test/test_raw_value.cpp)
+    file(GLOB_RECURSE test_ptxsim_common_srcs "test/*.cpp")
+    add_executable(test_ptxsim_common ${test_ptxsim_common_srcs})
     find_package(GTest CONFIG REQUIRED)
-    target_link_libraries(test_ptxsim_common PRIVATE
+    target_link_libraries(
+        test_ptxsim_common 
+        PRIVATE
         GTest::gtest
         GTest::gtest_main
-        ptxsim::common)
+        ptxsim::common
+    )
     ptxsim_enable_sanitizers(test_ptxsim_common)
     gtest_discover_tests(test_ptxsim_common)
 endif()

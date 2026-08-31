@@ -34,6 +34,11 @@ if(PTXSIM_ENABLE_UBSAN)
     list(APPEND PTXSIM_SANITIZER_FLAGS -fsanitize=undefined)
 endif()
 
+# Enables the sanitizers selected by PTXSIM_ENABLE_ASAN and
+# PTXSIM_ENABLE_UBSAN for the given target.
+#
+# Adds the required compile/link flags and preserves frame pointers
+# to improve sanitizer diagnostics and stack traces.
 function(ptxsim_enable_sanitizers target)
     if(PTXSIM_SANITIZER_FLAGS)
         target_compile_options(${target} PRIVATE
