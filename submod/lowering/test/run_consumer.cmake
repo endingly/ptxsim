@@ -36,6 +36,9 @@ if(PTXSIM_MAKE_PROGRAM)
     list(APPEND ptxsim_consumer_args
         "-DCMAKE_MAKE_PROGRAM=${PTXSIM_MAKE_PROGRAM}")
 endif()
+if(PTXSIM_CONSUMER_ENABLE_SANITIZERS)
+    list(APPEND ptxsim_consumer_args -DPTXSIM_CONSUMER_ENABLE_SANITIZERS=ON)
+endif()
 
 execute_process(
     COMMAND "${CMAKE_COMMAND}" ${ptxsim_consumer_args}

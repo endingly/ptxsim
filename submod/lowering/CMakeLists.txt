@@ -47,6 +47,7 @@ if(ptx_frontend_FOUND)
             GTest::gtest
             GTest::gtest_main
             ptxsim::lowering
+            ptxsim::bootstrap
             ptxsim::state)
         ptxsim_enable_sanitizers(test_ptxsim_lowering)
         gtest_discover_tests(test_ptxsim_lowering)
@@ -75,6 +76,7 @@ if(ptx_frontend_FOUND)
                         "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
                         "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
                         "-DPTXSIM_VCPKG_PREFIX=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}"
+                        "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
                         -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
             endforeach()
         endif()

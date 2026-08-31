@@ -94,6 +94,18 @@ TEST(ProgramImage, OwnsDataVerifiesAndDumpsDeterministically) {
   EXPECT_NE(dump(*first).find("pc:2 bra branch:pc:0"), std::string::npos);
 }
 
+TEST(ProgramImage, ProgramErrorsHaveStableStrings) {
+  const ProgramError error{ProgramErrorCode::invalid_instruction,
+                           common::FunctionId{3}, common::ProgramCounter{7},
+                           11U, exec_ir::InstructionErrorCode::width_mismatch};
+  EXPECT_EQ(to_string(ProgramErrorCode::invalid_instruction),
+            "invalid_instruction");
+  EXPECT_EQ(to_string(error),
+            "code=invalid_instruction function=3 pc=7 index=11 "
+            "instruction_error=width_mismatch");
+  EXPECT_TRUE(verify(valid_data()));
+}
+
 TEST(ProgramImage, EmptyImageIsValidOnlyWithoutFunctionsOrEntries) {
   EXPECT_TRUE(ProgramImage::create(ProgramImageData{}));
   auto with_function = ProgramImageData{};

@@ -32,10 +32,13 @@ ptxsim::exec_ir
         v
 ptxsim::program::ProgramImage
         |
-        +------------------+
-        |                  |
-        v                  v
-   ptxsim::state       ptxsim::arith
+        +------------------+------------------+
+        |                  |                  |
+        v                  v                  v
+ ptxsim::bootstrap    ptxsim::state       ptxsim::arith
+        |
+        v
+ ptxsim::state::ThreadState
         |
         v
    later semantics/executor
@@ -47,7 +50,7 @@ Important boundaries already established by V2-M1 must remain unchanged:
 arith does not model PTX instructions
 arith does not depend on exec_ir
 exec_ir does not depend on ptx_frontend
-state does not depend on ptx_frontend
+state and bootstrap do not depend on ptx_frontend
 only lowering may link ptx_frontend
 SoftFloat remains private to arith
 ```
@@ -663,6 +666,8 @@ are primarily populated in V2-M6.
 state has no ptx_frontend dependency
 RegisterFile initialization is testable
 ThreadState can be constructed from ProgramImage metadata
+through a production adapter that validates entry membership and canonical
+PC/register layout
 special-register provider can be mocked
 ```
 
@@ -824,6 +829,7 @@ PTX source
 -> resolved_ir
 -> ptxsim lowering
 -> ProgramImage
+-> bootstrap::create_entry_thread
 -> ThreadState
 ```
 
@@ -846,7 +852,7 @@ dump ProgramImage
 resolve function ranges
 read copied source metadata
 inspect symbols
-create ThreadState
+create ThreadState through the production bootstrap adapter
 verify branch targets
 run ProgramImage verifier
 ```
@@ -954,9 +960,10 @@ Avoid scope creep.
 - [ ] `ptxsim_exec_ir` exists
 - [ ] `ptxsim_program` exists
 - [ ] `ptxsim_state` exists
+- [ ] `ptxsim_bootstrap` exists
 - [ ] `ptxsim_lowering` exists
 - [ ] only lowering links `ptx_frontend`
-- [ ] exec_ir/program/state installed headers contain no frontend type
+- [ ] exec_ir/program/state/bootstrap installed headers contain no frontend type
 - [ ] arith has no new dependency on exec_ir/state/frontend
 
 ## Exec IR
@@ -981,6 +988,7 @@ Avoid scope creep.
 - [ ] dense RegisterFile exists
 - [ ] initialization tracking exists
 - [ ] ThreadState exists
+- [ ] bootstrap validates entry membership and uses canonical PC/register layout
 - [ ] special-register provider is mockable
 
 ## Lowering

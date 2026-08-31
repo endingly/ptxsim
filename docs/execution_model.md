@@ -7,11 +7,12 @@ The installed frontend-independent core has the following build graph:
 ```text
 ptxsim::common
   +--> ptxsim::exec_ir --> ptxsim::program
-  +--> ptxsim::state
+  +--> ptxsim::state <--- ptxsim::bootstrap <--- ptxsim::program
 ```
 
-`ptxsim::common`, `ptxsim::exec_ir`, `ptxsim::program`, and `ptxsim::state`
-are installed/exported public targets. `ProgramImage` owns verified execution IR,
+`ptxsim::common`, `ptxsim::exec_ir`, `ptxsim::program`, `ptxsim::state`, and
+`ptxsim::bootstrap` are installed/exported public targets. `ProgramImage` owns
+verified execution IR,
 function PC partitions and dense register layouts, copied names and source
 metadata, and entry IDs without retaining frontend objects. `ptxsim::lowering`
 is an optional `frontend-lowering` target. It is installed/exported only as
@@ -21,13 +22,14 @@ temporary frontend-ID-to-simulator-ID/PC map, never `ProgramImage` data. PTX
 program lowering is available through the optional component:
 it converts a parsed AST plus resolved module into a self-contained,
 `ProgramImage`-verified initial instruction subset. The AST supplies labels,
-nested ordering, and source ranges; resolved IR supplies semantics. No executor
-or state integration is added.
+nested ordering, and source ranges; resolved IR supplies semantics. Lowering
+itself adds no executor or state dependency.
 The feature-on lifetime acceptance covers destruction of source, parser, AST,
 resolved IR, and temporary lowering context before walking, dumping and
-verifying the resulting `ProgramImage`, then copying an entry register layout
-into a standalone ready `ThreadState`. This is test-only wiring; production
-lowering does not depend on `state`.
+verifying the resulting `ProgramImage`, then creating a standalone ready
+`ThreadState` with `bootstrap::create_entry_thread`. The adapter validates the
+entry ID and uses the image's canonical entry PC and register layout without
+retaining the image; production lowering still does not depend on `state`.
 Use `find_package(ptxsim CONFIG REQUIRED COMPONENTS lowering)` to load the
 component and its public `ptx_frontend` dependency. Default
 `find_package(ptxsim CONFIG REQUIRED)` remains core-only and does not discover
@@ -47,7 +49,7 @@ semantics are M7 work.
 
 ## Non-goals in M2 package acceptance
 
-There is no ProgramImage adapter in production state, special-register production
+There is no adapter inside production state itself, special-register production
 implementation, launch configuration, executor status/PC transition API (M4+),
 call semantics (M7), scheduler, or memory model yet. `%tid`, `%ntid`, `%ctaid`,
 `%nctaid`, `%laneid`, and `%warpid` values are M6 work. Symbol storage addresses

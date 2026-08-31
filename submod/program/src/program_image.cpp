@@ -272,6 +272,23 @@ namespace {
   return {};
 }
 
+[[nodiscard]] auto instruction_error_name(exec_ir::InstructionErrorCode code)
+    -> std::string_view {
+  switch (code) {
+    case exec_ir::InstructionErrorCode::invalid_control:
+      return "invalid_control";
+    case exec_ir::InstructionErrorCode::width_mismatch:
+      return "width_mismatch";
+    case exec_ir::InstructionErrorCode::unsupported_width:
+      return "unsupported_width";
+    case exec_ir::InstructionErrorCode::invalid_mul_result_relation:
+      return "invalid_mul_result_relation";
+    case exec_ir::InstructionErrorCode::read_only_store:
+      return "read_only_store";
+  }
+  return "invalid_instruction_error_code";
+}
+
 void append_number(std::string& output, std::uint32_t value) {
   char digits[std::numeric_limits<std::uint32_t>::digits10 + 1];
   const auto [end, ignored] =
@@ -326,6 +343,10 @@ auto ProgramImage::create(ProgramImageData data)
   return ProgramImage{std::move(data)};
 }
 
+auto verify(const ProgramImageData& data) -> std::expected<void, ProgramError> {
+  return verify_data(data);
+}
+
 auto ProgramImage::instructions() const noexcept
     -> std::span<const exec_ir::Instruction> {
   return data_.instructions;
@@ -352,6 +373,62 @@ auto ProgramImage::source_locations_by_pc() const noexcept
 
 auto verify(const ProgramImage& image) -> std::expected<void, ProgramError> {
   return verify_data(image.data_);
+}
+
+auto to_string(ProgramErrorCode code) -> std::string {
+  switch (code) {
+    case ProgramErrorCode::instruction_count_not_representable:
+      return "instruction_count_not_representable";
+    case ProgramErrorCode::empty_program_has_functions:
+      return "empty_program_has_functions";
+    case ProgramErrorCode::invalid_instruction:
+      return "invalid_instruction";
+    case ProgramErrorCode::function_id_not_canonical:
+      return "function_id_not_canonical";
+    case ProgramErrorCode::invalid_function_range:
+      return "invalid_function_range";
+    case ProgramErrorCode::function_ranges_not_partition:
+      return "function_ranges_not_partition";
+    case ProgramErrorCode::register_slot_not_canonical:
+      return "register_slot_not_canonical";
+    case ProgramErrorCode::invalid_register_width:
+      return "invalid_register_width";
+    case ProgramErrorCode::symbol_id_not_canonical:
+      return "symbol_id_not_canonical";
+    case ProgramErrorCode::source_location_id_not_canonical:
+      return "source_location_id_not_canonical";
+    case ProgramErrorCode::invalid_entry_function:
+      return "invalid_entry_function";
+    case ProgramErrorCode::source_map_size_mismatch:
+      return "source_map_size_mismatch";
+    case ProgramErrorCode::invalid_source_location:
+      return "invalid_source_location";
+    case ProgramErrorCode::register_slot_not_found:
+      return "register_slot_not_found";
+    case ProgramErrorCode::register_width_mismatch:
+      return "register_width_mismatch";
+    case ProgramErrorCode::invalid_symbol:
+      return "invalid_symbol";
+    case ProgramErrorCode::branch_target_out_of_range:
+      return "branch_target_out_of_range";
+    case ProgramErrorCode::branch_crosses_function:
+      return "branch_crosses_function";
+  }
+  return "invalid_program_error_code";
+}
+
+auto to_string(const ProgramError& value) -> std::string {
+  std::string output{"code=" + to_string(value.code)};
+  if (value.function)
+    output += " function=" + std::to_string(value.function->value());
+  if (value.pc)
+    output += " pc=" + std::to_string(value.pc->value());
+  if (value.index)
+    output += " index=" + std::to_string(*value.index);
+  if (value.instruction_error)
+    output += " instruction_error=" +
+              std::string(instruction_error_name(*value.instruction_error));
+  return output;
 }
 
 auto dump(const ProgramImage& image) -> std::string {

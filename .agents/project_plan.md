@@ -4,7 +4,9 @@
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M3 memory and storage. V2-M1 arithmetic
+> **Current gate:** V2-M2 review/remediation.
+> **Next gate:** V2-M3 memory and storage, after the V2-M2 fix review and
+> exact-head feature-off/feature-on CI are accepted. V2-M1 arithmetic
 > remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
@@ -632,9 +634,9 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
-**Current phase (M3 preparation after M2 acceptance):** M2-00 pinned frontend baseline
+**Current phase (M2 review/remediation before M3):** M2-00 pinned frontend baseline
 `1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
-feature-on compile/link smoke. `ptxsim::common` exports stable,
+feature-on acceptance gates under remediation. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
 `ptxsim::exec_ir` now exports typed register, immediate, special-register,
 address, branch, and function operands, with no frontend or arith dependency.
@@ -650,8 +652,11 @@ dense `RawWidth` layout, exact-width writes, structured uninitialized reads,
 and deterministic dumps.
 It now also exports a frontend-independent `ThreadState` that owns
 caller-supplied IDs, initial PC, RegisterFile, ready status, and an empty
-call-frame placeholder. It deliberately has no production `ProgramImage`
-adapter. M2-11 now adds only the mockable `SpecialRegisterProvider` interface;
+call-frame placeholder. The frontend-independent `ptxsim::bootstrap`
+production adapter validates an entry against its owning `ProgramImage`, then
+creates `ThreadState` from the canonical function PC and register layout
+without retaining the image. M2-11 now adds only the mockable
+`SpecialRegisterProvider` interface;
 its production values and launch configuration remain absent. Executor PC/status
 transitions are M4+ work, and call semantics are M7 work. `%tid`, `%ntid`,
 `%ctaid`, `%nctaid`, `%laneid`, and `%warpid` values are M6 work.
@@ -666,8 +671,9 @@ mov, selected integer/bit/branch instructions, and selected explicit scalar
 global/constant memory operations; unsupported legal forms are diagnostics.
 The feature-on acceptance test destroys all frontend and temporary lowering
 objects before verifying/dumping the resulting image and creating a ready
-`ThreadState` from copied entry layouts; no production lowering-to-state
-dependency is introduced. Default package consumers remain frontend-free;
+`ThreadState` through the production bootstrap API; no production
+lowering-to-state dependency is introduced. Default package consumers remain
+frontend-free;
 lowering consumers explicitly request the component and its frontend dependency.
 
 ## 10.1 Exec IR principles
@@ -693,7 +699,7 @@ lowering consumers explicitly request the component and its frontend dependency.
 | M2-07 | Lowering context | frontend IDs map to stable simulator IDs/PCs |
 | M2-08 | Module lowering | resolved module can outlive frontend objects after conversion |
 | M2-09 | RegisterFile | dense raw storage and initialization tracking |
-| M2-10 | ThreadState | PC, status, registers, call metadata placeholder |
+| M2-10 | ThreadState | PC, status, registers, call metadata placeholder; validated ProgramImage entry bootstrap |
 | M2-11 | Special register provider | testable interface independent of scheduler implementation |
 
 ## 10.3 Acceptance

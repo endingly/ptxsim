@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <limits>
 #include <optional>
+#include <stdexcept>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -24,8 +26,10 @@ using common::RawWidth;
 struct RegisterBinding {
   common::RegisterSlot base;
   RawWidth width;
-  std::uint32_t count;
+  std::optional<std::uint32_t> parameterized_count;
 };
+
+enum class ModuleAddressSize { bits32, bits64 };
 
 struct FunctionState {
   const syntax::AstFunction* ast{};
@@ -121,6 +125,10 @@ class ModuleLowerer {
 
   [[nodiscard]] auto run()
       -> std::expected<program::ProgramImage, LoweringDiagnostic> {
+    if (auto result = collect_address_size(); !result)
+      return std::unexpected(result.error());
+    if (auto result = validate_frontend_identities(); !result)
+      return std::unexpected(result.error());
     if (auto result = collect_functions(); !result)
       return std::unexpected(result.error());
     if (auto result = bind_declarations(); !result)
@@ -130,21 +138,11 @@ class ModuleLowerer {
     if (auto result = lower_instructions(); !result)
       return std::unexpected(result.error());
 
+    if (const auto valid = program::verify(data_); !valid)
+      return std::unexpected(program_error(valid.error()));
     auto image = program::ProgramImage::create(std::move(data_));
-    if (!image) {
-      auto error = diagnostic(
-          LoweringDiagnosticCode::lowering_invariant_violation, std::nullopt,
-          "program-image", "ProgramImage::create", "verification failed");
-      if (image.error().function) {
-        for (const auto& function : functions_) {
-          if (function.id == *image.error().function) {
-            error.function_context = function.resolved->name;
-            break;
-          }
-        }
-      }
-      return std::unexpected(std::move(error));
-    }
+    if (!image)
+      return std::unexpected(program_error(image.error()));
     return std::move(*image);
   }
 
@@ -163,6 +161,137 @@ class ModuleLowerer {
     return diagnostic(LoweringDiagnosticCode::malformed_resolved_ir,
                       location(range), "module", "AST/resolved alignment",
                       std::move(detail));
+  }
+
+  [[nodiscard]] auto identity_error(const frontend::SourceRange& range,
+                                    std::string_view instruction,
+                                    std::string detail) const
+      -> LoweringDiagnostic {
+    return diagnostic(LoweringDiagnosticCode::malformed_resolved_ir,
+                      location(range), std::string(instruction),
+                      "frontend identity", std::move(detail));
+  }
+
+  [[nodiscard]] auto collect_address_size()
+      -> std::expected<void, LoweringDiagnostic> {
+    const syntax::AstAddressSizeDirective* directive = nullptr;
+    for (const auto& item : ast_.items) {
+      if (const auto* value =
+              std::get_if<syntax::AstAddressSizeDirective>(&item)) {
+        if (directive)
+          return std::unexpected(
+              diagnostic(LoweringDiagnosticCode::malformed_resolved_ir,
+                         location(value->range), "module", "address size",
+                         "duplicate .address_size directive"));
+        directive = value;
+      }
+    }
+    if (!directive)
+      return std::unexpected(diagnostic(
+          LoweringDiagnosticCode::malformed_resolved_ir, location(ast_.range),
+          "module", "address size", "missing .address_size directive"));
+    if (directive->bit_width.text == "32")
+      module_address_size_ = ModuleAddressSize::bits32;
+    else if (directive->bit_width.text == "64")
+      module_address_size_ = ModuleAddressSize::bits64;
+    else
+      return std::unexpected(
+          diagnostic(LoweringDiagnosticCode::malformed_resolved_ir,
+                     location(directive->range), "module", "address size",
+                     "invalid .address_size value"));
+    return {};
+  }
+
+  [[nodiscard]] auto checked_scope(binding::ScopeId id,
+                                   const frontend::SourceRange& range,
+                                   std::string_view instruction) const
+      -> std::expected<const binding::Scope*, LoweringDiagnostic> {
+    const auto& scopes = resolved_.symbols.scopes();
+    const auto index = static_cast<std::size_t>(id.value);
+    if (index >= scopes.size() || scopes[index].id != id)
+      return std::unexpected(
+          identity_error(range, instruction, "invalid scope id"));
+    return &scopes[index];
+  }
+
+  [[nodiscard]] auto checked_symbol(binding::SymbolId id,
+                                    const frontend::SourceRange& range,
+                                    std::string_view instruction) const
+      -> std::expected<const binding::Symbol*, LoweringDiagnostic> {
+    const auto& symbols = resolved_.symbols.symbols();
+    const auto index = static_cast<std::size_t>(id.value);
+    if (index >= symbols.size() || symbols[index].id != id)
+      return std::unexpected(
+          identity_error(range, instruction, "invalid symbol id"));
+    if (const auto scope =
+            checked_scope(symbols[index].scope, range, instruction);
+        !scope)
+      return std::unexpected(scope.error());
+    return &symbols[index];
+  }
+
+  [[nodiscard]] auto validate_frontend_identities()
+      -> std::expected<void, LoweringDiagnostic> {
+    const auto& scopes = resolved_.symbols.scopes();
+    const auto& symbols = resolved_.symbols.symbols();
+    for (std::size_t index = 0; index != scopes.size(); ++index) {
+      const auto id = binding::ScopeId{static_cast<std::uint32_t>(index)};
+      if (scopes[index].id != id)
+        return std::unexpected(
+            identity_error(ast_.range, "module", "non-canonical scope id"));
+      if (scopes[index].parent &&
+          !checked_scope(*scopes[index].parent, ast_.range, "module"))
+        return std::unexpected(
+            identity_error(ast_.range, "module", "invalid parent scope"));
+      if (scopes[index].owner &&
+          !checked_symbol(*scopes[index].owner, ast_.range, "module"))
+        return std::unexpected(
+            identity_error(ast_.range, "module", "invalid scope owner"));
+    }
+    for (std::size_t index = 0; index != symbols.size(); ++index) {
+      const auto id = binding::SymbolId{static_cast<std::uint32_t>(index)};
+      if (symbols[index].id != id)
+        return std::unexpected(
+            identity_error(ast_.range, "module", "non-canonical symbol id"));
+      if (const auto scope =
+              checked_scope(symbols[index].scope, ast_.range, "module");
+          !scope)
+        return std::unexpected(scope.error());
+      if (symbols[index].owned_scope) {
+        const auto scope =
+            checked_scope(*symbols[index].owned_scope, ast_.range, "module");
+        if (!scope)
+          return std::unexpected(scope.error());
+        if (!(*scope)->owner || *(*scope)->owner != symbols[index].id)
+          return std::unexpected(
+              identity_error(ast_.range, "module", "inconsistent owned scope"));
+      }
+    }
+    return {};
+  }
+
+  [[nodiscard]] auto program_error(const program::ProgramError& value) const
+      -> LoweringDiagnostic {
+    auto error = diagnostic(
+        LoweringDiagnosticCode::lowering_invariant_violation, std::nullopt,
+        "program-image", "ProgramImage::create", program::to_string(value));
+    if (value.pc && value.pc->value() < data_.source_locations_by_pc.size()) {
+      const auto source = data_.source_locations_by_pc[value.pc->value()];
+      if (source && source->value() < data_.source_locations.size()) {
+        const auto& location = data_.source_locations[source->value()];
+        error.source_location = LoweringSourceLocation{
+            location.file, location.line, location.column};
+      }
+    }
+    if (value.function) {
+      for (const auto& function : functions_) {
+        if (function.id == *value.function) {
+          error.function_context = function.resolved->name;
+          break;
+        }
+      }
+    }
+    return error;
   }
 
   [[nodiscard]] auto with_function(LoweringDiagnostic error,
@@ -222,16 +351,27 @@ class ModuleLowerer {
         return std::unexpected(
             malformed(ast_function.range, "function identifier overflow"));
       }
-      const auto& symbol =
-          resolved_.symbols.symbol(resolved_function.symbol_id);
-      if (symbol.kind != binding::SymbolKind::Function || !symbol.owned_scope) {
+      const auto symbol = checked_symbol(resolved_function.symbol_id,
+                                         ast_function.range, "function");
+      if (!symbol)
+        return std::unexpected(symbol.error());
+      if ((*symbol)->kind != binding::SymbolKind::Function ||
+          !(*symbol)->owned_scope) {
         return std::unexpected(malformed(
             ast_function.range, "function symbol has no function scope"));
       }
+      const auto scope = checked_scope(*(*symbol)->owned_scope,
+                                       ast_function.range, "function");
+      if (!scope)
+        return std::unexpected(scope.error());
+      if ((*scope)->kind != binding::ScopeKind::Function || !(*scope)->owner ||
+          *(*scope)->owner != (*symbol)->id)
+        return std::unexpected(identity_error(ast_function.range, "function",
+                                              "inconsistent function scope"));
       FunctionState state{
           .ast = &ast_function,
           .resolved = &resolved_function,
-          .scope = *symbol.owned_scope,
+          .scope = *(*symbol)->owned_scope,
           .id = common::FunctionId{static_cast<std::uint32_t>(function_id++)},
       };
       const auto scope_index = static_cast<std::size_t>(state.scope.value);
@@ -252,19 +392,26 @@ class ModuleLowerer {
     return {};
   }
 
-  [[nodiscard]] auto function_for_scope(binding::ScopeId scope)
-      -> std::optional<std::size_t> {
-    for (;;) {
+  [[nodiscard]] auto function_for_scope(binding::ScopeId scope,
+                                        const frontend::SourceRange& range,
+                                        std::string_view instruction) const
+      -> std::expected<std::optional<std::size_t>, LoweringDiagnostic> {
+    for (std::size_t steps = 0; steps != scope_functions_.size(); ++steps) {
       const auto index = static_cast<std::size_t>(scope.value);
       if (index >= scope_functions_.size())
-        return std::nullopt;
+        return std::unexpected(
+            identity_error(range, instruction, "invalid scope id"));
       if (scope_functions_[index])
         return *scope_functions_[index];
-      const auto& current = resolved_.symbols.scope(scope);
-      if (!current.parent)
-        return std::nullopt;
-      scope = *current.parent;
+      const auto current = checked_scope(scope, range, instruction);
+      if (!current)
+        return std::unexpected(current.error());
+      if (!(*current)->parent)
+        return std::optional<std::size_t>{};
+      scope = *(*current)->parent;
     }
+    return std::unexpected(
+        identity_error(range, instruction, "cyclic scope parent"));
   }
 
   [[nodiscard]] auto bind_declarations()
@@ -275,21 +422,25 @@ class ModuleLowerer {
         continue;
       const auto symbol_index = static_cast<std::size_t>(symbol.id.value);
       if (*symbol.state_space == syntax::AstStateSpace::Register) {
-        const auto function = function_for_scope(symbol.scope);
+        const auto function = function_for_scope(
+            symbol.scope, symbol.declaration_range, "register declaration");
         if (!function)
+          return std::unexpected(function.error());
+        if (!*function)
           return std::unexpected(malformed(symbol.declaration_range,
                                            "register outside a function"));
+        const auto function_index = **function;
         if (symbol.vector_width) {
           return std::unexpected(declaration_error(
               diagnostic(LoweringDiagnosticCode::unsupported_ptx_feature,
                          location(symbol.declaration_range),
                          "register declaration", "vector register", "vN"),
-              function));
+              function_index));
         }
         if (!symbol.type) {
           return std::unexpected(declaration_error(
               malformed(symbol.declaration_range, "register lacks a type"),
-              function));
+              function_index));
         }
         const auto width = raw_width(*symbol.type);
         if (!width) {
@@ -297,28 +448,29 @@ class ModuleLowerer {
               diagnostic(LoweringDiagnosticCode::unsupported_type_combination,
                          location(symbol.declaration_range),
                          "register declaration", "register type", *symbol.type),
-              function));
+              function_index));
         }
         const auto count = symbol.parameterized_count.value_or(1);
         if (count == 0 ||
-            next_slots[*function] >
+            next_slots[function_index] >
                 std::numeric_limits<std::uint32_t>::max() - count) {
           return std::unexpected(declaration_error(
               malformed(symbol.declaration_range, "register slot overflow"),
-              function));
+              function_index));
         }
-        const auto base = common::RegisterSlot{next_slots[*function]};
+        const auto base = common::RegisterSlot{next_slots[function_index]};
         if (auto bound = context_.bind_register(symbol.id, base); !bound) {
           return std::unexpected(declaration_error(
               malformed(symbol.declaration_range, "duplicate register mapping"),
-              function));
+              function_index));
         }
-        register_bindings_[symbol_index] = RegisterBinding{base, *width, count};
-        auto& layouts = functions_[*function].registers;
+        register_bindings_[symbol_index] =
+            RegisterBinding{base, *width, symbol.parameterized_count};
+        auto& layouts = functions_[function_index].registers;
         for (std::uint32_t offset = 0; offset != count; ++offset)
           layouts.push_back(
               {common::RegisterSlot{base.value() + offset}, *width});
-        next_slots[*function] += count;
+        next_slots[function_index] += count;
       } else if (*symbol.state_space == syntax::AstStateSpace::Global ||
                  *symbol.state_space == syntax::AstStateSpace::Constant) {
         if (data_.symbols.size() > std::numeric_limits<std::uint32_t>::max()) {
@@ -340,26 +492,44 @@ class ModuleLowerer {
   [[nodiscard]] auto block_scope(binding::ScopeId parent,
                                  const syntax::AstBlock& block)
       -> std::expected<binding::ScopeId, LoweringDiagnostic> {
-    const auto nested = resolved_.symbols.blockScope(parent, block.range);
-    if (!nested)
-      return std::unexpected(
-          malformed(block.range, "missing bound block scope"));
-    return *nested;
+    const auto checked_parent = checked_scope(parent, block.range, "block");
+    if (!checked_parent)
+      return std::unexpected(checked_parent.error());
+    for (const auto& scope : resolved_.symbols.scopes()) {
+      if (scope.kind == binding::ScopeKind::Block && scope.parent == parent &&
+          scope.range == block.range)
+        return scope.id;
+    }
+    return std::unexpected(malformed(block.range, "missing bound block scope"));
   }
 
   [[nodiscard]] auto bind_label(binding::ScopeId scope,
                                 const syntax::AstLabel& label, std::size_t pc)
       -> std::expected<void, LoweringDiagnostic> {
-    const auto lookup = resolved_.symbols.lookup(scope, label.name.syntax.text);
-    if (!lookup || lookup->parameterized_index ||
-        resolved_.symbols.symbol(lookup->symbol).kind !=
-            binding::SymbolKind::Label) {
-      return std::unexpected(malformed(label.range, "unbound label"));
+    binding::SymbolId symbol_id{};
+    bool found = false;
+    for (std::size_t steps = 0; steps != scope_functions_.size(); ++steps) {
+      const auto checked = checked_scope(scope, label.range, "label");
+      if (!checked)
+        return std::unexpected(checked.error());
+      for (const auto& symbol : resolved_.symbols.symbols()) {
+        if (symbol.scope == scope && symbol.name == label.name.syntax.text &&
+            symbol.kind == binding::SymbolKind::Label) {
+          symbol_id = symbol.id;
+          found = true;
+          break;
+        }
+      }
+      if (found || !(*checked)->parent)
+        break;
+      scope = *(*checked)->parent;
     }
+    if (!found)
+      return std::unexpected(malformed(label.range, "unbound label"));
     const auto target = checked_pc(pc, label.range);
     if (!target)
       return std::unexpected(target.error());
-    if (auto bound = context_.bind_label(lookup->symbol, *target); !bound) {
+    if (auto bound = context_.bind_label(symbol_id, *target); !bound) {
       return std::unexpected(malformed(label.range, "duplicate label mapping"));
     }
     return {};
@@ -415,6 +585,21 @@ class ModuleLowerer {
       -> std::expected<exec_ir::RegisterOperand, LoweringDiagnostic> {
     if (!ref.symbol_id)
       return std::unexpected(malformed(range, "register has no bound symbol"));
+    const auto symbol = checked_symbol(*ref.symbol_id, range, instruction);
+    if (!symbol)
+      return std::unexpected(symbol.error());
+    if ((*symbol)->kind != binding::SymbolKind::Variable ||
+        (*symbol)->state_space != syntax::AstStateSpace::Register)
+      return std::unexpected(
+          identity_error(range, instruction, "register symbol kind mismatch"));
+    const auto function =
+        function_for_scope((*symbol)->scope, range, instruction);
+    if (!function)
+      return std::unexpected(function.error());
+    if (!*function || !current_function_ ||
+        functions_[**function].id != current_function_->id)
+      return std::unexpected(identity_error(
+          range, instruction, "register belongs to another function"));
     const auto symbol_index = static_cast<std::size_t>(ref.symbol_id->value);
     if (symbol_index >= register_bindings_.size() ||
         !register_bindings_[symbol_index]) {
@@ -424,13 +609,15 @@ class ModuleLowerer {
                      "register binding", "missing register mapping"));
     }
     const auto binding = *register_bindings_[symbol_index];
-    if (binding.count > 1 && !ref.parameterized_index) {
+    const auto count = binding.parameterized_count.value_or(1);
+    if (binding.parameterized_count && !ref.parameterized_index) {
       return std::unexpected(
           malformed(range, "parameterized register lacks an index"));
     }
+    if (!binding.parameterized_count && ref.parameterized_index)
+      return std::unexpected(malformed(range, "scalar register has an index"));
     const auto index = ref.parameterized_index.value_or(0);
-    if ((ref.parameterized_index && binding.count == 1) ||
-        index >= binding.count ||
+    if (index >= count ||
         binding.base.value() >
             std::numeric_limits<std::uint32_t>::max() - index) {
       return std::unexpected(
@@ -530,6 +717,11 @@ class ModuleLowerer {
       const resolved_ir::ResolvedAddress& address,
       const frontend::SourceRange& range, std::string_view instruction)
       -> std::expected<exec_ir::AddressOperand, LoweringDiagnostic> {
+    if (module_address_size_ != ModuleAddressSize::bits64)
+      return std::unexpected(
+          diagnostic(LoweringDiagnosticCode::unsupported_ptx_feature,
+                     location(range), std::string(instruction), "address size",
+                     "M2 supports .address_size 64 only"));
     std::optional<std::variant<common::RegisterSlot, common::SymbolId>> base;
     if (const auto* reg =
             std::get_if<resolved_ir::ResolvedRegisterRef>(&address.base)) {
@@ -543,6 +735,16 @@ class ModuleLowerer {
       if (!symbol->symbol_id)
         return std::unexpected(
             malformed(range, "address symbol has no binding"));
+      const auto frontend_symbol =
+          checked_symbol(*symbol->symbol_id, range, instruction);
+      if (!frontend_symbol)
+        return std::unexpected(frontend_symbol.error());
+      if ((*frontend_symbol)->kind != binding::SymbolKind::Variable ||
+          !(*frontend_symbol)->state_space ||
+          ((*frontend_symbol)->state_space != syntax::AstStateSpace::Global &&
+           (*frontend_symbol)->state_space != syntax::AstStateSpace::Constant))
+        return std::unexpected(
+            identity_error(range, instruction, "address symbol kind mismatch"));
       if (symbol->parameterized_index) {
         return std::unexpected(diagnostic(
             LoweringDiagnosticCode::unsupported_ptx_feature, location(range),
@@ -786,6 +988,20 @@ class ModuleLowerer {
                      location(range), "bra", "Bra::Direct", "uni"));
     if (!variant->target.value.symbol_id)
       return std::unexpected(malformed(range, "branch target has no binding"));
+    const auto symbol =
+        checked_symbol(*variant->target.value.symbol_id, range, "bra");
+    if (!symbol)
+      return std::unexpected(symbol.error());
+    if ((*symbol)->kind != binding::SymbolKind::Label)
+      return std::unexpected(
+          identity_error(range, "bra", "branch target is not a label"));
+    const auto function = function_for_scope((*symbol)->scope, range, "bra");
+    if (!function)
+      return std::unexpected(function.error());
+    if (!*function || !current_function_ ||
+        functions_[**function].id != current_function_->id)
+      return std::unexpected(identity_error(
+          range, "bra", "branch target belongs to another function"));
     const auto target =
         context_.resolve_label(*variant->target.value.symbol_id);
     if (!target)
@@ -1020,6 +1236,7 @@ class ModuleLowerer {
   [[nodiscard]] auto lower_instructions()
       -> std::expected<void, LoweringDiagnostic> {
     for (auto& function : functions_) {
+      current_function_ = &function;
       if (auto result =
               lower_body(function.ast->body, function.scope, function);
           !result)
@@ -1034,6 +1251,7 @@ class ModuleLowerer {
       if (function.resolved->is_entry)
         data_.entry_points.push_back(function.id);
     }
+    current_function_ = nullptr;
     return {};
   }
 
@@ -1045,6 +1263,8 @@ class ModuleLowerer {
   std::vector<std::optional<std::size_t>> scope_functions_;
   std::vector<FunctionState> functions_;
   program::ProgramImageData data_;
+  std::optional<ModuleAddressSize> module_address_size_;
+  const FunctionState* current_function_{};
 };
 
 }  // namespace
@@ -1053,7 +1273,17 @@ auto lower_module(const syntax::AstModule& ast,
                   const resolved_ir::ResolvedModule& resolved,
                   std::string source_file)
     -> std::expected<program::ProgramImage, LoweringDiagnostic> {
-  return ModuleLowerer{ast, resolved, std::move(source_file)}.run();
+  try {
+    return ModuleLowerer{ast, resolved, std::move(source_file)}.run();
+  } catch (const std::out_of_range&) {
+    return std::unexpected(diagnostic(
+        LoweringDiagnosticCode::malformed_resolved_ir, std::nullopt, "module",
+        "frontend identity", "out-of-range access escaped lowering"));
+  } catch (const std::bad_variant_access&) {
+    return std::unexpected(diagnostic(
+        LoweringDiagnosticCode::malformed_resolved_ir, std::nullopt, "module",
+        "frontend variant", "invalid variant state escaped lowering"));
+  }
 }
 
 }  // namespace ptxsim::lowering

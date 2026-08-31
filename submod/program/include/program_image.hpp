@@ -81,7 +81,12 @@ struct ProgramError {
   constexpr bool operator==(const ProgramError&) const noexcept = default;
 };
 
+[[nodiscard]] auto to_string(ProgramErrorCode code) -> std::string;
+[[nodiscard]] auto to_string(const ProgramError& error) -> std::string;
+
 class ProgramImage;
+[[nodiscard]] auto verify(const ProgramImageData& data)
+    -> std::expected<void, ProgramError>;
 [[nodiscard]] auto verify(const ProgramImage& image)
     -> std::expected<void, ProgramError>;
 

@@ -37,7 +37,8 @@ structured diagnostic. The target does not add storage, state, module traversal
 abstractions, special-register values, calls, or returns.
 
 The feature-on acceptance test proves that the resulting `ProgramImage` outlives
-all frontend and temporary lowering objects. It may copy an entry layout into
-`ThreadState`, but that is test-only: `ptxsim::lowering` has no production
-dependency on `state`. Public frontend types make `ptx_frontend` a public
+all frontend and temporary lowering objects, then passes it to the independent
+production `ptxsim::bootstrap::create_entry_thread` adapter. Lowering has no
+production dependency on `state` or `bootstrap`. Public frontend types make
+`ptx_frontend` a public
 dependency of the explicit component only.
