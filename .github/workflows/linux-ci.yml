@@ -125,6 +125,15 @@ jobs:
             zip
           sudo chmod -R a+rX "$APT_CACHE_DIR"
 
+      - name: Install PTX frontend generator
+        if: matrix.mode == 'lowering'
+        shell: bash
+        run: |
+          python3 -m venv .venv/ptx-frontend-ci
+          .venv/ptx-frontend-ci/bin/python -m pip install \
+            'ptx_frontend @ git+https://github.com/endingly/ptx_frontend.git@992fc36527e1ffe2d1b3dd2a07de2b6d721e7898#subdirectory=python'
+          echo "$GITHUB_WORKSPACE/.venv/ptx-frontend-ci/bin" >> "$GITHUB_PATH"
+
       - name: Restore vcpkg binary cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:

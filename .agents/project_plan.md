@@ -635,8 +635,8 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 
 **Current phase (M2 review/remediation before M3):** M2-00 pinned frontend baseline
-`1c4547f65c888ee92b1933a20f9a74b380b96953`, snapshot integrity, and the
-feature-on acceptance gates under remediation. `ptxsim::common` exports stable,
+`992fc36527e1ffe2d1b3dd2a07de2b6d721e7898`, upstream native CMake codegen, and
+the feature-on acceptance gates under remediation. `ptxsim::common` exports stable,
 frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
 `ptxsim::exec_ir` now exports typed register, immediate, special-register,
 address, branch, and function operands, with no frontend or arith dependency.

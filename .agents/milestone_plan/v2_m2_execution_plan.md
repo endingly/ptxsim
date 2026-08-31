@@ -95,7 +95,7 @@ Current ptxsim frontend pin predates significant newer frontend work.
 V2-M2 should first move the exact frontend dependency to a modern, known-good baseline, preferably the current M12-complete frontend revision:
 
 ```text
-ptx_frontend@1c4547f65c888ee92b1933a20f9a74b380b96953
+ptx_frontend@992fc36527e1ffe2d1b3dd2a07de2b6d721e7898
 ```
 
 Do not follow `ptx_frontend/main` continuously during M2.
