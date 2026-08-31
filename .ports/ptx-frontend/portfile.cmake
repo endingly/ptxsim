@@ -8,6 +8,18 @@ vcpkg_from_github(
     HEAD_REF dev
 )
 
+vcpkg_replace_string(
+    "${SOURCE_PATH}/requirements.txt"
+    "-e ./python"
+    "-e ${SOURCE_PATH}/python"
+)
+
+x_vcpkg_get_python_packages(
+    PYTHON_VERSION 3
+    OUT_PYTHON_VAR PYTHON3
+    REQUIREMENTS_FILE "${SOURCE_PATH}/requirements.txt"
+)
+
 vcpkg_find_acquire_program(FLEX)
 
 #
@@ -22,6 +34,7 @@ vcpkg_cmake_configure(
     -DPTX_USE_CCACHE=OFF
 
     "-DFLEX_EXECUTABLE=${FLEX}"
+    "-DPython3_EXECUTABLE=${PYTHON3}"
 )
 
 vcpkg_cmake_install()

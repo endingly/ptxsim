@@ -8,6 +8,10 @@
         "fmt",
         "magic-enum",
         {
+            "name": "vcpkg-get-python-packages",
+            "host": true
+        },
+        {
             "name": "vcpkg-cmake",
             "host": true
         },
