@@ -96,6 +96,7 @@ if(BUILD_TESTING)
                     "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                     "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
                     "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
+                    "-DPTXSIM_DYNAMIC_BITSET_DIR=${sul-dynamic_bitset_DIR}"
                     "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
                     -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
         endforeach()
