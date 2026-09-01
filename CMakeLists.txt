@@ -99,7 +99,9 @@ install_project_targets(
         "${PROJECT_NAME}/bootstrap"
         "${PROJECT_NAME}/arith"
         "${PROJECT_NAME}/memory"
-    DEPENDENCIES "softfloat CONFIG REQUIRED")
+    DEPENDENCIES
+        "softfloat CONFIG REQUIRED"
+        "sul-dynamic_bitset CONFIG REQUIRED")
 
 # Lowering is intentionally a separate export: loading the default core package
 # must not require the optional frontend dependency.
