@@ -1,0 +1,21 @@
+#pragma once
+
+#include <ptxsim/memory/address_space/address_space_error.hpp>
+#include <ptxsim/memory/address_space/address_space_handle.hpp>
+#include <ptxsim/memory/address_space/address_space_manager.hpp>
+#include <ptxsim/memory/address_space/constant_space.hpp>
+#include <ptxsim/memory/address_space/generic_address.hpp>
+#include <ptxsim/memory/address_space/global_space.hpp>
+#include <ptxsim/memory/address_space/local_space.hpp>
+#include <ptxsim/memory/address_space/parameter_space.hpp>
+#include <ptxsim/memory/address_space/shared_space.hpp>
+#include <ptxsim/memory/core/access.hpp>
+#include <ptxsim/memory/core/address.hpp>
+#include <ptxsim/memory/core/memory_error.hpp>
+#include <ptxsim/memory/core/memory_region.hpp>
+#include <ptxsim/memory/core/state_space.hpp>
+#include <ptxsim/memory/register/register_error.hpp>
+#include <ptxsim/memory/register/register_frame.hpp>
+#include <ptxsim/memory/register/register_manager.hpp>
+#include <ptxsim/memory/register/register_view.hpp>
+#include <ptxsim/memory/sync/mbarrier_state.hpp>
