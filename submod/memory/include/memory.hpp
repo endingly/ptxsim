@@ -19,3 +19,6 @@
 #include <ptxsim/memory/register/register_manager.hpp>
 #include <ptxsim/memory/register/register_view.hpp>
 #include <ptxsim/memory/sync/mbarrier_state.hpp>
+#include <ptxsim/memory/tmem/tensor_memory_address.hpp>
+#include <ptxsim/memory/tmem/tensor_memory_allocation.hpp>
+#include <ptxsim/memory/tmem/tensor_memory_manager.hpp>
