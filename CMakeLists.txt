@@ -82,6 +82,7 @@ install_project_targets(
         ptxsim_bootstrap
         ptxsim_arith
         ptxsim_arith_validation
+        ptxsim_memory
     INCLUDE_DIRS
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir/include"
@@ -89,6 +90,7 @@ install_project_targets(
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/state/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/bootstrap/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/memory/include"
     INCLUDE_DESTINATIONS
         "${PROJECT_NAME}/common"
         "${PROJECT_NAME}/exec_ir"
@@ -96,6 +98,7 @@ install_project_targets(
         "${PROJECT_NAME}/state"
         "${PROJECT_NAME}/bootstrap"
         "${PROJECT_NAME}/arith"
+        "${PROJECT_NAME}/memory"
     DEPENDENCIES "softfloat CONFIG REQUIRED")
 
 # Lowering is intentionally a separate export: loading the default core package
