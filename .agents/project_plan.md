@@ -8,8 +8,9 @@
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Current work:** retained modules are `common`, `arith`,
 > `execution_model`, `memory`, and `runtime`; the replacement `exec_ir`
-> boundary has completed its WP0 generator probe and tracks remaining work in
-> [`milestone_plan/exec_ir_module_execution_plan.md`](milestone_plan/exec_ir_module_execution_plan.md).
+> boundary has completed its WP0 generator probe and is paused at WP1 while
+> the warp-first executor contract is developed in
+> [`milestone_plan/executor_module_execution_plan.md`](milestone_plan/executor_module_execution_plan.md).
 > V2-M1 arithmetic remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and

@@ -1,6 +1,6 @@
 # PTXSim `exec_ir` Module Execution Plan
 
-> **Status:** WP0 generator contract probe implemented; WP1 and later remain planned
+> **Status:** WP0 generator contract probe implemented; WP1 and later paused pending `.agents/milestone_plan/executor_module_execution_plan.md` Gate A
 > **Working branch:** `feat/exec-ir-wp0`
 > **Frontend baseline:** `ptx_frontend` commit `3458bc53eacbc051d3ba4e2685c59aced4bf50af` / PTX ISA 9.3
 > **Language/build:** C++23 / CMake / Python code generation
@@ -349,4 +349,4 @@ Add each only when the first execution path needs it. Do not recreate the retire
 
 ## 8. First implementation checkpoint
 
-WP0 adds the pinned Python requirement, the local generator package, one minimal support manifest, and a deterministic Python check. It does not add frontend C++ linkage, an `exec_ir` target, or execution behavior. The next coding step is WP1.
+WP0 adds the pinned Python requirement, the local generator package, one minimal support manifest, and a deterministic Python check. It does not add frontend C++ linkage, an `exec_ir` target, or execution behavior. WP1 is paused until the executor control-flow probe completes Gate A and this plan is revised from the proven consumer contract.

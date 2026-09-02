@@ -5,6 +5,7 @@
 #include <ptxsim/execution_model/forward_def.hpp>
 #include <ptxsim/execution_model/ids.hpp>
 #include <ptxsim/execution_model/execution_state.hpp>
+#include <ptxsim/execution_model/warp_state.hpp>
 
 namespace ptxsim::execution_model {
 
@@ -124,16 +125,20 @@ class Thread final {
   /*
    * Thin facade only.
    *
-   * execution_model does not depend on executor. The concrete engine
-   * only needs to provide:
+   * execution_model does not depend on inst_execute_engine. The concrete
+   * engine only needs to provide:
    *
-   *     engine.step(Thread&)
+   *     engine.step(Warp&, const WarpIssueGroup&)
    *
    * No instruction semantics belong to Thread itself.
    */
   template <typename Engine>
+    requires requires(Engine& engine, Warp& warp,
+                      const WarpIssueGroup& issue) {
+      engine.step(warp, issue);
+    }
   decltype(auto) step(Engine& engine) {
-    return engine.step(*this);
+    return engine.step(warp(), singleton_issue_group());
   }
 
  private:
@@ -145,6 +150,9 @@ class Thread final {
   LaneId lane_id_;
 
   ThreadExecutionState state_;
+
+  [[nodiscard]]
+  WarpIssueGroup singleton_issue_group() const;
 };
 
 }  // namespace ptxsim::execution_model
