@@ -15,7 +15,8 @@ target_link_libraries(ptxsim_arith_external_consumer PRIVATE
     ptxsim::common
     ptxsim::exec_ir
     ptxsim::program
-    ptxsim::state)
+    ptxsim::state
+    ptxsim::runtime)
 
 if(PTXSIM_CONSUMER_ENABLE_SANITIZERS)
     target_compile_options(ptxsim_arith_external_consumer PRIVATE

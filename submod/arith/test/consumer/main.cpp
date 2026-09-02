@@ -6,6 +6,7 @@
 #include <ptxsim/exec_ir/instruction.hpp>
 #include <ptxsim/exec_ir/operand.hpp>
 #include <ptxsim/program/program_image.hpp>
+#include <ptxsim/runtime/runtime.hpp>
 #include <ptxsim/state/special_register_provider.hpp>
 #include <ptxsim/state/thread_state.hpp>
 
@@ -38,6 +39,9 @@ int main() {
   auto thread = ptxsim::state::ThreadState::create(
       ptxsim::common::ThreadId{0}, ptxsim::common::FunctionId{0},
       ptxsim::common::ProgramCounter{0}, {ptxsim::common::RawWidth::b32});
+  ptxsim::runtime::LaunchRuntime runtime{
+      ptxsim::execution_model::GridId{0},
+      {.cta_dim = {1, 1, 1}, .thread_dim = {1, 1, 1}, .warp_size = 32}};
   if (!thread ||
       !thread->registers().write(ptxsim::common::RegisterSlot{0}, raw))
     return 1;
@@ -52,6 +56,7 @@ int main() {
                  !ptxsim::program::dump(*image).empty() &&
                  *thread->registers().read(ptxsim::common::RegisterSlot{0}) ==
                      raw &&
+                 runtime.grid().thread_count() == 1 &&
                  ptxsim::state::dump(*thread) ==
                      "thread:0 function:0 pc:0 status:ready call-depth:0\n"
                      "register:0 b32 b32:0x00000007\n"

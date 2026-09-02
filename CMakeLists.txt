@@ -82,7 +82,9 @@ install_project_targets(
         ptxsim_bootstrap
         ptxsim_arith
         ptxsim_arith_validation
+        ptxsim_execution_model
         ptxsim_memory
+        ptxsim_runtime
     INCLUDE_DIRS
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir/include"
@@ -90,7 +92,9 @@ install_project_targets(
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/state/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/bootstrap/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/execution_model/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/memory/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/runtime/include"
     INCLUDE_DESTINATIONS
         "${PROJECT_NAME}/common"
         "${PROJECT_NAME}/exec_ir"
@@ -98,7 +102,9 @@ install_project_targets(
         "${PROJECT_NAME}/state"
         "${PROJECT_NAME}/bootstrap"
         "${PROJECT_NAME}/arith"
+        "${PROJECT_NAME}/execution_model"
         "${PROJECT_NAME}/memory"
+        "${PROJECT_NAME}/runtime"
     DEPENDENCIES
         "softfloat CONFIG REQUIRED"
         "sul-dynamic_bitset CONFIG REQUIRED")

@@ -5,6 +5,7 @@ set_target_properties(ptxsim_execution_model PROPERTIES EXPORT_NAME execution_mo
 target_compile_features(ptxsim_execution_model PUBLIC cxx_std_23)
 target_link_libraries(ptxsim_execution_model PUBLIC ptxsim::common)
 register_headers(ptxsim_execution_model execution_model PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+ptxsim_enable_sanitizers(ptxsim_execution_model)
 
 if(BUILD_TESTING)
     file(GLOB_RECURSE test_ptxsim_execution_model_srcs "test/*.cpp")
@@ -16,5 +17,6 @@ if(BUILD_TESTING)
         GTest::gtest
         GTest::gtest_main
         ptxsim::execution_model)
+    ptxsim_enable_sanitizers(test_ptxsim_execution_model)
     gtest_discover_tests(test_ptxsim_execution_model)
 endif()
