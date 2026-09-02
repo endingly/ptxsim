@@ -24,7 +24,7 @@ enum class WaitReason : std::uint8_t {
 };
 
 struct ThreadExecutionState {
-  ProgramCounter pc{};
+  ProgramCounter pc{0};
   ThreadStatus status{ThreadStatus::Ready};
 
   WaitReason wait_reason{WaitReason::None};

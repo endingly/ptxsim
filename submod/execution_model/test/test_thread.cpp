@@ -1,10 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <concepts>
 #include <cstdint>
+#include <type_traits>
 
+#include <ptxsim/common/ids.hpp>
 #include <ptxsim/execution_model/execution_model.hpp>
 
 namespace ptxsim::execution_model::test {
+static_assert(std::same_as<ProgramCounter, common::ProgramCounter>);
+
 namespace {
 
 class FakeEngine {
@@ -18,7 +23,7 @@ class FakeEngine {
     const auto old_pc = thread.pc();
 
     thread.set_pc(ProgramCounter{
-        old_pc.value + 1,
+        old_pc.value() + 1,
     });
 
     ++calls_;

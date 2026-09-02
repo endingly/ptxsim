@@ -1,13 +1,8 @@
 #pragma once
-#include <compare>
-#include <cstdint>
+#include <ptxsim/common/ids.hpp>
 
 namespace ptxsim::execution_model {
 
-struct ProgramCounter {
-  std::uint32_t value = 0;
+using ProgramCounter = common::ProgramCounter;
 
-  auto operator<=>(const ProgramCounter&) const = default;
-};
-
-};  // namespace ptxsim::execution_model
+}  // namespace ptxsim::execution_model

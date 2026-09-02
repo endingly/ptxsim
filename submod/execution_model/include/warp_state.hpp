@@ -33,7 +33,7 @@ namespace ptxsim::execution_model {
  *   }
  */
 struct WarpIssueGroup {
-  ProgramCounter pc{};
+  ProgramCounter pc{0};
   LaneMask lanes;
 
   /**
@@ -148,7 +148,7 @@ class WarpRendezvous final {
   }
 
  private:
-  ProgramCounter pc_{};
+  ProgramCounter pc_{0};
 
   std::uint64_t generation_ = 0;
 
