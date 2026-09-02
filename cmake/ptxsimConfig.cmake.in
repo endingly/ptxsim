@@ -4,3 +4,24 @@ include(CMakeFindDependencyMacro)
 @PACKAGE_DEPENDENCY_CALLS@
 
 include("${CMAKE_CURRENT_LIST_DIR}/ptxsimTargets.cmake")
+
+set(ptxsim_known_components
+    common
+    arith
+    arith_validation
+    execution_model
+    memory
+    runtime)
+foreach(ptxsim_component IN LISTS ptxsim_FIND_COMPONENTS)
+    if(ptxsim_component IN_LIST ptxsim_known_components)
+        set("ptxsim_${ptxsim_component}_FOUND" TRUE)
+    else()
+        set("ptxsim_${ptxsim_component}_FOUND" FALSE)
+        if(ptxsim_FIND_REQUIRED_${ptxsim_component})
+            set(ptxsim_FOUND FALSE)
+            set(ptxsim_NOT_FOUND_MESSAGE
+                "ptxsim does not provide required component '${ptxsim_component}'")
+            return()
+        endif()
+    endif()
+endforeach()

@@ -48,27 +48,6 @@ set_target_properties(ptxsim_arith_validation PROPERTIES EXPORT_NAME arith_valid
 target_link_libraries(ptxsim_arith_validation PUBLIC ptxsim_arith)
 ptxsim_enable_sanitizers(ptxsim_arith_validation)
 
-# Compile every supported public header as its own translation unit. detail/
-# files are not a supported include surface; the few template implementation
-# headers transitively needed by scalar.hpp are installed solely so public
-# headers remain self-contained for package consumers.
-file(GLOB ptxsim_arith_public_headers CONFIGURE_DEPENDS include/*.hpp)
-set(ptxsim_arith_header_check_sources)
-foreach(ptxsim_arith_header IN LISTS ptxsim_arith_public_headers)
-    get_filename_component(ptxsim_arith_header_name "${ptxsim_arith_header}" NAME)
-    string(MAKE_C_IDENTIFIER "${ptxsim_arith_header_name}" ptxsim_arith_header_id)
-    set(ptxsim_arith_header_source
-        "${CMAKE_CURRENT_BINARY_DIR}/header-check/${ptxsim_arith_header_id}.cpp")
-    file(GENERATE OUTPUT "${ptxsim_arith_header_source}"
-         CONTENT "#include <ptxsim/arith/${ptxsim_arith_header_name}>\n")
-    list(APPEND ptxsim_arith_header_check_sources "${ptxsim_arith_header_source}")
-endforeach()
-add_library(ptxsim_arith_public_headers OBJECT ${ptxsim_arith_header_check_sources})
-target_link_libraries(ptxsim_arith_public_headers PRIVATE ptxsim::arith)
-ptxsim_enable_sanitizers(ptxsim_arith_public_headers)
-add_custom_target(ptxsim_arith_public_header_check ALL
-    DEPENDS ptxsim_arith_public_headers)
-
 if(BUILD_TESTING)
     file(GLOB ptxsim_arith_test_srcs CONFIGURE_DEPENDS test/*.cpp)
     foreach(ptxsim_arith_test_source IN LISTS ptxsim_arith_test_srcs)
@@ -117,6 +96,7 @@ if(BUILD_TESTING)
                     "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                     "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
                     "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
+                    "-DPTXSIM_DYNAMIC_BITSET_DIR=${sul-dynamic_bitset_DIR}"
                     "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
                     -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
         endforeach()

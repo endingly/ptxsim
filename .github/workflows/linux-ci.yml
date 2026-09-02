@@ -46,6 +46,20 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Reject floating third-party action references
+        shell: bash
+        run: |
+          refs="$({
+            while IFS= read -r workflow; do
+              sed -nE 's/^[[:space:]]*uses:[[:space:]]*([^[:space:]#]+).*/\1/p' "$workflow"
+            done < <(find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \))
+          } | grep -Ev '^(\./|docker://)' || true)"
+          invalid="$(printf '%s\n' "$refs" | grep -Ev '@[0-9a-f]{40}$' || true)"
+          if [[ -n "$invalid" ]]; then
+            printf 'Floating third-party action reference(s):\n%s\n' "$invalid" >&2
+            exit 1
+          fi
+
       - name: Compute cache epoch
         id: cache-epoch
         shell: bash
@@ -117,22 +131,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
+          key: ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml', 'CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
           restore-keys: |
-            ccache-v2-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+            ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
 
-      - name: Run CMake workflow preset
+      - name: Run core CMake workflow preset
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
-
-      - name: Frontend-lowering vcpkg install smoke
-        if: matrix.name == 'GCC Debug'
-        shell: bash
-        run: |
-          "$VCPKG_ROOT/vcpkg" install \
-            --x-manifest-root="$GITHUB_WORKSPACE" \
-            --x-feature=frontend-lowering \
-            --x-install-root="$RUNNER_TEMP/ptxsim-frontend-lowering-installed"
 
       - name: Show compiler cache statistics
         if: always()

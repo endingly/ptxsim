@@ -34,6 +34,11 @@ if(PTXSIM_ENABLE_UBSAN)
     list(APPEND PTXSIM_SANITIZER_FLAGS -fsanitize=undefined)
 endif()
 
+# Enables the sanitizers selected by PTXSIM_ENABLE_ASAN and
+# PTXSIM_ENABLE_UBSAN for the given target.
+#
+# Adds the required compile/link flags and preserves frame pointers
+# to improve sanitizer diagnostics and stack traces.
 function(ptxsim_enable_sanitizers target)
     if(PTXSIM_SANITIZER_FLAGS)
         target_compile_options(${target} PRIVATE
@@ -57,12 +62,6 @@ if(BUILD_TESTING)
     include(CTest)
     enable_testing()
     include(GoogleTest)
-    add_test(
-        NAME ptxsim_ptx_frontend_snapshot_integrity
-        COMMAND "${CMAKE_COMMAND}"
-            "-DPTXSIM_SNAPSHOT_DIR=${CMAKE_CURRENT_SOURCE_DIR}/.ports/ptx-frontend/generated"
-            "-DPTXSIM_PTX_FRONTEND_PORTFILE=${CMAKE_CURRENT_SOURCE_DIR}/.ports/ptx-frontend/portfile.cmake"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/verify_ptx_frontend_snapshot.cmake")
 endif()
 
 add_subdirectory(submod)
@@ -76,8 +75,24 @@ install_project_targets(
     VERSION "${PROJECT_VERSION}"
     NAMESPACE ptxsim
     TARGETS
+        ptxsim_common
         ptxsim_arith
         ptxsim_arith_validation
-    INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
-    INCLUDE_DESTINATIONS "${PROJECT_NAME}/arith"
-    DEPENDENCIES "softfloat CONFIG REQUIRED")
+        ptxsim_execution_model
+        ptxsim_memory
+        ptxsim_runtime
+    INCLUDE_DIRS
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/execution_model/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/memory/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/runtime/include"
+    INCLUDE_DESTINATIONS
+        "${PROJECT_NAME}/common"
+        "${PROJECT_NAME}/arith"
+        "${PROJECT_NAME}/execution_model"
+        "${PROJECT_NAME}/memory"
+        "${PROJECT_NAME}/runtime"
+    DEPENDENCIES
+        "softfloat CONFIG REQUIRED"
+        "sul-dynamic_bitset CONFIG REQUIRED")

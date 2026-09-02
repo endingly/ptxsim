@@ -30,6 +30,7 @@ set(ptxsim_consumer_args
     -G "${PTXSIM_GENERATOR}"
     "-Dptxsim_DIR=${ptxsim_package_dir}"
     "-Dsoftfloat_DIR=${PTXSIM_SOFTFLOAT_DIR}"
+    "-Dsul-dynamic_bitset_DIR=${PTXSIM_DYNAMIC_BITSET_DIR}"
     "-DCMAKE_CXX_COMPILER=${PTXSIM_CXX_COMPILER}")
 if(PTXSIM_MAKE_PROGRAM)
     list(APPEND ptxsim_consumer_args

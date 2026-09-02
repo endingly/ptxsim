@@ -1,17 +1,21 @@
-# ptxsim Project Plan v2
+# ptxsim Project Plan v2 (historical)
 
-> **Status:** Execution draft v2.0  
+> **Status:** Historical planning record. The frontend/lowering, `exec_ir`,
+> program, state, and bootstrap pipeline described below was retired; the
+> surviving module boundaries are defined by the current source tree and
+> `docs/execution_model.md`.
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
-> **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M1 remains pending acceptance. The final integrated
-> tree must pass the five local CMake workflows and receive hosted CI evidence.
-> `MAIN-P2-004` is complete: active default-branch ruleset `21723631` requires
-> PRs and strict checks for exactly `GCC Debug`, `GCC Release`, `Clang Debug`,
-> `Clang Release`, and `GCC ASan + UBSan`. Hosted Linux CI run `33310952274`
-> succeeded for prior head `0f5ef9a`; evidence for the final current head is
-> still pending. The user owns that cloud execution.
-> **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
+> **Current work:** retained modules are `common`, `arith`,
+> `execution_model`, `memory`, and `runtime`. V2-M1 arithmetic remediation was
+> accepted when PR #3 merged with merge commit
+> `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
+> Linux CI run `33313368339` completed successfully for that exact head. The
+> required `GCC Debug`, `GCC Release`, `Clang Debug`, `Clang Release`, and
+> `GCC ASan + UBSan` jobs all succeeded. Active default-branch ruleset
+> `21723631` requires PRs and those exact strict checks.
+> **Primary objective:** retain a deterministic, inspectable runtime topology,
+> memory, and instruction-independent numerical semantics foundation.
 
 ---
 
@@ -101,7 +105,7 @@ Instruction availability and target architecture gating belong outside `arith`; 
 
 # 3. Architecture decisions
 
-## 3.1 Execution pipeline
+## 3.1 Retired execution pipeline (historical)
 
 ```text
 PTX source
@@ -539,11 +543,11 @@ and V2-M5 remains the future floating/conversion integration milestone.
 
 **Goal:** turn `refactor/arith-module` into a truthful, deterministic numerical library before simulator integration.
 
-**Current remediation status:** the audit chain and map below record local
+**Accepted remediation status:** the audit chain and map below record local
 fixes, including `05b0af2` (F64 FTZ projection), `419e2e6` (S2F6 finite
 saturation), `def4b8a` (frontend snapshot integrity), and `a407c8e`
-(pre-rounding S2F6 status). They are not V2-M1 acceptance evidence: the final
-integrated tree must pass the five workflows and receive final-head hosted CI.
+(pre-rounding S2F6 status). Acceptance evidence is the exact merge and hosted
+CI run recorded at the top of this plan.
 
 ## 9.1 Work packages
 
@@ -585,10 +589,8 @@ No public instruction form/opcode dispatch is added.
 
 ## 9.3 Acceptance
 
-V2-M1 remains pending acceptance. `MAIN-P2-004` branch-protection
-configuration is complete; the final integrated tree must still pass the five
-local workflows and receive final-head hosted CI evidence. The map below
-records remediation targets and checks, not proof that those gates have closed.
+V2-M1 was accepted with the merge and exact-head hosted CI evidence recorded
+at the top of this plan. The map below records remediation targets and checks.
 
 ## 9.4 MAIN remediation and regression map
 
@@ -615,7 +617,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 | MAIN-P2-001 | `d2b2ad9` | `test_scalar.cpp` |
 | MAIN-P2-002 | `d3850cf` | five workflow presets; manifest feature dry-run/config with tests enabled and frontend omitted |
 | MAIN-P2-003 | `20e0e37` + `def4b8a` | `frontend-lowering` feature install; automatic snapshot integrity check + documented manual regeneration/byte comparison |
-| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33310952274` passed prior head `0f5ef9a`, final-head hosted CI pending |
+| MAIN-P2-004 | external / configured | ruleset `21723631` exact five strict contexts; run `33313368339` passed the merge head `7da3628c0463f586b190921b283b15ab059d2022` |
 | MAIN-P2-005 | `57f3593` | `ptxsim_arith_public_header_check` |
 | MAIN-P2-006 | `24dd230` | plan/document consistency searches |
 | FIX-P0-001 | `05b0af2` | F64 FTZ upper-word projection; `test_special.cpp` |
@@ -629,9 +631,51 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 ---
 
-# 10. V2-M2 — Exec IR, lowering, ProgramImage and core state
+# 10. Retired V2-M2 record — Exec IR, lowering, ProgramImage and core state
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
+
+**Current phase (M2 review/remediation before M3):** M2-00 pinned frontend baseline
+`992fc36527e1ffe2d1b3dd2a07de2b6d721e7898`, upstream native CMake codegen, and
+the feature-on acceptance gates under remediation. `ptxsim::common` exports stable,
+frontend-independent IDs and exact-width raw pred/b8/b16/b32/b64/b128 values.
+`ptxsim::exec_ir` now exports typed register, immediate, special-register,
+address, branch, and function operands, with no frontend or arith dependency.
+It now also exports the validated initial data-only instruction slice: mov,
+integer add/sub/mul, b32 and/or/xor, direct branch, and selected scalar
+global/constant loads and global stores. `ptxsim::program` now owns verified,
+frontend-independent `ProgramImage` data: instruction PC order, contiguous
+function ranges with dense register layouts, copied symbols/source metadata,
+entries, and a PC source side table. It has no executor, state, lowering, or
+symbol storage/address implementation. `ptxsim::state` now exports a static,
+frontend-independent `RegisterFile` with caller-supplied, RegisterFile-owned
+dense `RawWidth` layout, exact-width writes, structured uninitialized reads,
+and deterministic dumps.
+It now also exports a frontend-independent `ThreadState` that owns
+caller-supplied IDs, initial PC, RegisterFile, ready status, and an empty
+call-frame placeholder. The frontend-independent `ptxsim::bootstrap`
+production adapter validates an entry against its owning `ProgramImage`, then
+creates `ThreadState` from the canonical function PC and register layout
+without retaining the image. M2-11 now adds only the mockable
+`SpecialRegisterProvider` interface;
+its production values and launch configuration remain absent. Executor PC/status
+transitions are M4+ work, and call semantics are M7 work. `%tid`, `%ntid`,
+`%ctaid`, `%nctaid`, `%laneid`, and `%warpid` values are M6 work.
+`ptxsim::lowering` is an optional `frontend-lowering` target and
+now owns structured, fully copied lowering diagnostics plus a temporary dense
+frontend-ID-to-simulator-ID/PC `LoweringContext`, plus module
+lowering from AST placement/source facts and resolved-IR semantics into verified
+`ProgramImage` data. It is installed/exported as the explicit `lowering`
+component, and no frontend object or identity survives in `ProgramImage`. The
+supported M2-08 slice is scalar/pred
+mov, selected integer/bit/branch instructions, and selected explicit scalar
+global/constant memory operations; unsupported legal forms are diagnostics.
+The feature-on acceptance test destroys all frontend and temporary lowering
+objects before verifying/dumping the resulting image and creating a ready
+`ThreadState` through the production bootstrap API; no production
+lowering-to-state dependency is introduced. Default package consumers remain
+frontend-free;
+lowering consumers explicitly request the component and its frontend dependency.
 
 ## 10.1 Exec IR principles
 
@@ -656,7 +700,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 | M2-07 | Lowering context | frontend IDs map to stable simulator IDs/PCs |
 | M2-08 | Module lowering | resolved module can outlive frontend objects after conversion |
 | M2-09 | RegisterFile | dense raw storage and initialization tracking |
-| M2-10 | ThreadState | PC, status, registers, call metadata placeholder |
+| M2-10 | ThreadState | PC, status, registers, call metadata placeholder; validated ProgramImage entry bootstrap |
 | M2-11 | Special register provider | testable interface independent of scheduler implementation |
 
 ## 10.3 Acceptance
