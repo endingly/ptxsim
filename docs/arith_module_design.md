@@ -84,7 +84,7 @@ executor:
 2. 历史 `submod/fp` 仅曾作为 F32/F64、SoftFloat 状态管理和测试样本的实现参考，不构成当前依赖。
 3. 仓库必须持续保持不含 `submod/fp`、`ptxsim::fp` namespace、旧测试和旧 CMake target；不得为兼容旧架构而恢复它们。
 4. `arith` 不建立 PTX instruction、opcode、instruction form、modifier sequence、target SM 或 operand grammar 模型。
-5. PTX 指令解析、合法性检查及指令到算术原语的映射属于 frontend / lowering / exec IR / executor。
+5. PTX 指令解析、合法性检查及指令到算术原语的映射不属于 `arith`。
 6. `arith` 只提供类型驱动、操作驱动的数值 API。
 7. 舍入、FTZ、饱和、激活、近似模式、乘积截取和张量累加规则必须作为独立控制维度建模，不能与每个 operation 组合成大量 form 类型。
 8. 增加新格式时，不得新增一整套 `add/sub/mul/fma/cvt` overload。
@@ -263,8 +263,6 @@ instruction-form descriptor
 modifier sequence parser
 PTX syntax validation
 target SM availability validation
-resolved_ir
-exec_ir
 register file
 predicate guard
 CC register storage
@@ -296,7 +294,7 @@ executor 应进行：
 
 ```text
 PTX instruction
-    ↓ decode/lowering
+    ↓ decode
 operation + typed operands + independent controls
     ↓
 ptxsim::arith
@@ -498,7 +496,6 @@ compare / select
 ```text
 backend -> public CPO
 backend -> executor
-backend -> exec_ir
 format traits -> SoftFloat
 arith -> fp
 arith -> memory/scheduler/trace
@@ -2453,8 +2450,6 @@ package；`submod/arith/CMakeLists.txt` 只定义 arithmetic target、header che
 `arith` 不得链接：
 
 ```text
-ptx_frontend
-exec_ir
 simulator core
 memory
 scheduler
@@ -2738,7 +2733,6 @@ Agent MUST NOT：
 ```text
 建立 PTX instruction form model
 建立 opcode/modifier registry
-把 exec_ir 引入 arith
 为新类型添加整套 overload
 添加逐对 conversion public API
 为 TF32/FP8/FP4 伪造 scalar add/mul/fma

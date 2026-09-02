@@ -1,20 +1,21 @@
-# ptxsim Project Plan v2
+# ptxsim Project Plan v2 (historical)
 
-> **Status:** Execution draft v2.0  
+> **Status:** Historical planning record. The frontend/lowering, `exec_ir`,
+> program, state, and bootstrap pipeline described below was retired; the
+> surviving module boundaries are defined by the current source tree and
+> `docs/execution_model.md`.
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
-> **Frontend:** `endingly/ptx_frontend` / `ptx_frontend::resolved_ir`  
-> **Current gate:** V2-M2 review/remediation.
-> **Next gate:** V2-M3 memory and storage, after the V2-M2 fix review and
-> exact-head feature-off/feature-on CI are accepted. V2-M1 arithmetic
-> remediation was
+> **Current work:** retained modules are `common`, `arith`,
+> `execution_model`, `memory`, and `runtime`. V2-M1 arithmetic remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and
 > Linux CI run `33313368339` completed successfully for that exact head. The
 > required `GCC Debug`, `GCC Release`, `Clang Debug`, `Clang Release`, and
 > `GCC ASan + UBSan` jobs all succeeded. Active default-branch ruleset
 > `21723631` requires PRs and those exact strict checks.
-> **Primary objective:** build a deterministic, inspectable PTX functional simulator with a typed execution IR and an instruction-independent numerical semantics library
+> **Primary objective:** retain a deterministic, inspectable runtime topology,
+> memory, and instruction-independent numerical semantics foundation.
 
 ---
 
@@ -104,7 +105,7 @@ Instruction availability and target architecture gating belong outside `arith`; 
 
 # 3. Architecture decisions
 
-## 3.1 Execution pipeline
+## 3.1 Retired execution pipeline (historical)
 
 ```text
 PTX source
@@ -630,7 +631,7 @@ the review audit chain is under [`docs/reviews`](../docs/reviews/).
 
 ---
 
-# 10. V2-M2 — Exec IR, lowering, ProgramImage and core state
+# 10. Retired V2-M2 record — Exec IR, lowering, ProgramImage and core state
 
 **Goal:** establish the formal execution boundary and frontend-independent program ownership.
 

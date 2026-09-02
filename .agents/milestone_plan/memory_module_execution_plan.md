@@ -120,26 +120,10 @@ transport/data-movement mechanism
 
 ## 3. Critical preflight audit — complete before manager implementation
 
-### P0.1 Resolve duplicated ID domains
+### P0.1 Canonical topology IDs
 
-The current branch contains two independent topology-ID families:
-
-```text
-ptxsim::common::{ThreadId, CtaId, WarpId, LaneId}
-ptxsim::execution_model::{ThreadId, CtaId, WarpId, LaneId}
-```
-
-This is a whole-project and future simulator-integration concern, not a memory
-manager precondition. Memory resource managers must not consume either topology
-ID family. The simulator/runtime binds the chosen canonical topology IDs to
-memory-owned handles.
-
-Before simulator integration:
-
-1. audit usages of the topology IDs in `common`;
-2. establish **one canonical topology-ID family**;
-3. simulator binding tables must use the canonical execution-topology IDs;
-4. do not add implicit conversions between two competing ID families.
+Topology IDs are owned only by `execution_model`. Memory resource managers do
+not consume them; `runtime` binds execution-model IDs to memory-owned handles.
 
 Recommended ownership:
 
@@ -152,19 +136,7 @@ execution_model
   GridId / CtaId / WarpId / ThreadId / LaneId
 ```
 
-If the topology IDs in `common` have no legitimate non-execution-model consumer, remove them in a focused cleanup change.
-
-### P0.2 Resolve duplicated `ProgramCounter`
-
-The branch also currently has a `common::ProgramCounter` and an `execution_model::ProgramCounter`.
-
-This should be audited before simulator call-frame integration. A program
-counter identifies an executable instruction location and should have one
-canonical representation.
-
-Do **not** make the memory module depend on either duplicate until this audit is resolved.
-
-### P0.3 Dependency direction
+### P0.2 Dependency direction
 
 Target dependencies:
 
@@ -184,9 +156,6 @@ More concretely:
 memory -> common
 memory -X-> execution_model
 
-memory -X-> exec_ir
-memory -X-> lowering
-memory -X-> ptx_frontend
 memory -X-> scheduler
 memory -X-> executor
 ```
@@ -195,7 +164,7 @@ The entire `memory` target and all of its public headers must not depend on
 `execution_model`. The future simulator/runtime target may depend on both.
 Do not add a neutral-ID adapter or conversion layer to bypass this boundary.
 
-Where program metadata is required for allocation, use a narrow allocation specification or view. Do not make low-level memory storage understand `exec_ir`.
+Where program metadata is required for allocation, use a narrow allocation specification or view.
 
 ---
 
@@ -503,7 +472,7 @@ Use structured errors (`std::expected`), never `abort()`.
 ```text
 the memory target builds independently of execution_model
 all core tests pass under Debug + sanitizers
-no frontend/exec_ir includes exist in memory core
+memory core depends only on common
 ```
 
 ---
@@ -1454,8 +1423,6 @@ future simulator/runtime target:
     ptxsim::execution_model + ptxsim::memory
 ```
 
-Do not link `ptxsim::exec_ir` merely to obtain operand types.
-
 Public headers should follow the repository's existing exported-header/install conventions.
 
 Every new source/header must be included in install/export handling if the module is public.
@@ -1639,10 +1606,6 @@ Instruction semantics translate instructions into memory-subsystem requests.
 
 `AsyncMemoryEngine` must not directly mark Threads ready/waiting.
 
-### No frontend dependency
-
-Memory must not consume `ptx_frontend::resolved_ir`.
-
 ### No raw string-based register access
 
 Register lookup uses `RegisterSlot`, never PTX register names.
@@ -1670,7 +1633,7 @@ and:
 - read-only semantics pass;
 - stale handles are detected;
 - no topology node owns program storage;
-- no memory manager depends on execution_model, `exec_ir`, or frontend IR;
+- no memory manager depends on execution_model;
 - sanitizers are clean;
 - debug snapshots can inspect each implemented storage domain.
 
@@ -1714,7 +1677,7 @@ Reviewers should answer:
 3. Does the API use strong IDs/addresses rather than raw integers/strings where identity matters?
 4. Is the resource lifetime explicit?
 5. Can this component be unit-tested without constructing the whole simulator?
-6. Does it accidentally depend on frontend/exec_ir?
+6. Does it accidentally depend on execution_model?
 7. Is TMEM/generic/multimem incorrectly treated as a normal state space?
 8. Are bounds and integer-overflow paths tested?
 9. Are read-only vs loader-initialization semantics separated?
@@ -1768,8 +1731,6 @@ The branch currently has:
 submod/common/include/raw_value.hpp
 submod/common/include/ids.hpp
 
-submod/exec_ir/include/operand.hpp
-
 submod/execution_model/include/
   cta.hpp
   cta_state.hpp
@@ -1787,7 +1748,7 @@ submod/execution_model/include/
 Important audit observation:
 
 ```text
-common::ThreadId/CtaId/WarpId/LaneId
+execution_model::ThreadId/CtaId/WarpId/LaneId
 ```
 
 and:
