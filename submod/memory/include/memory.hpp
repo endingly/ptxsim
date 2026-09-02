@@ -9,6 +9,9 @@
 #include <ptxsim/memory/address_space/local_space.hpp>
 #include <ptxsim/memory/address_space/parameter_space.hpp>
 #include <ptxsim/memory/address_space/shared_space.hpp>
+#include <ptxsim/memory/async/async_memory_engine.hpp>
+#include <ptxsim/memory/async/async_memory_handle.hpp>
+#include <ptxsim/memory/async/async_memory_op.hpp>
 #include <ptxsim/memory/core/access.hpp>
 #include <ptxsim/memory/core/address.hpp>
 #include <ptxsim/memory/core/memory_error.hpp>
