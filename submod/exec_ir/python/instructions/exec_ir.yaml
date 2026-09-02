@@ -1,0 +1,11 @@
+schema: ptxsim-exec-ir/v1
+ptx_spec_schema: ptx-instr/v1
+
+instructions:
+  - opcode: add
+    operation: integer_add
+    forms:
+      - variant: add_integer_no_sat
+        layouts: [default]
+        modifier_values:
+          type: [u32]
