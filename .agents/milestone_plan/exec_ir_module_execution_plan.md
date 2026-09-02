@@ -1,6 +1,6 @@
 # PTXSim `exec_ir` Module Execution Plan
 
-> **Status:** WP0 generator contract probe implemented; WP1 and later paused pending `.agents/milestone_plan/executor_module_execution_plan.md` Gate A
+> **Status:** WP0 generator contract probe and executor Gate A complete; WP1 ready for implementation
 > **Working branch:** `feat/exec-ir-wp0`
 > **Frontend baseline:** `ptx_frontend` commit `3458bc53eacbc051d3ba4e2685c59aced4bf50af` / PTX ISA 9.3
 > **Language/build:** C++23 / CMake / Python code generation
@@ -10,7 +10,11 @@
 
 ## 1. Boundary decision
 
-`exec_ir` owns normalized facts required to execute the supported PTX subset after frontend validation. It does not own PTX parsing, source syntax, target availability checks, runtime topology, storage, or instruction execution.
+`exec_ir` owns normalized facts required to execute the supported PTX subset
+after frontend validation and one immutable dense instruction sequence. It does
+not own PTX parsing, source syntax, target availability checks, runtime
+topology, mutable execution state, storage, scheduling, or instruction
+execution.
 
 ```text
                          build time only
@@ -24,11 +28,11 @@ ptxsim support manifest ───────────────> ptxsim ex
                                       generated exec_ir C++ types (WP1)
 
                          runtime/library targets
-common ────────────────────────────────> exec_ir
+common ────────────────────────────────> exec_ir::InstructionStream
 
 ptx_frontend::resolved_ir ──> optional frontend adapter ──> exec_ir
 
-exec_ir + arith + runtime ──> future simulator/executor
+InstructionStream + runtime + executor ──> future simulator
 ```
 
 Required dependency rules:
@@ -42,7 +46,8 @@ exec_ir -X-> execution_model
 exec_ir -X-> runtime
 
 frontend adapter -> ptx_frontend::resolved_ir + exec_ir
-future simulator -> exec_ir + arith + runtime
+executor -> exec_ir + arith + runtime
+future simulator -> exec_ir + executor + runtime
 ```
 
 The wheel is a host/build dependency. It must not appear in installed `exec_ir` headers or in an `exec_ir` link interface.
@@ -101,7 +106,7 @@ ptx_spec_schema: ptx-instr/v1
 
 instructions:
   - opcode: add
-    operation: integer_add
+    operation: add
     forms:
       - variant: add_integer_no_sat
         layouts: [default]
@@ -121,11 +126,14 @@ The Python emitter owns one closed mapping from normalized frontend modifier/ope
 
 ### Generated C++
 
-Generate only repetitive structural declarations:
+Generate only repetitive structural declarations and dispatch glue:
 
-- one plain record per supported semantic operation/form;
+- one plain record per supported opcode;
+- one `Op` enumerator per opcode, never per data type, modifier, or frontend
+  variant;
 - a bounded `std::variant` over the generated operation records;
-- deterministic operation/variant identity needed by dispatch;
+- deterministic `Operation -> Op` identity;
+- a static, closed first-level dispatch list consumed by executor code;
 - optional compile-time metadata that is directly consumed by the adapter or executor.
 
 Generated files live outside the source tree and are never committed. The public generated header is copied from the build tree into the install tree as part of the `ptxsim::exec_ir` package; private generated artifacts, if any, are not installed.
@@ -152,9 +160,9 @@ Generated code must not contain:
 
 These exclusions keep regeneration mechanical and keep execution policy reviewable in handwritten code.
 
-### Initial C++ shape
+### Gate A C++ shape
 
-WP1 should produce the equivalent of this deliberately narrow model:
+The executor probes require the equivalent of this deliberately narrow model:
 
 ```cpp
 struct RegisterRef {
@@ -166,23 +174,111 @@ struct PredicateRef {
   bool negated = false;
 };
 
-using U32Source = std::variant<RegisterRef, common::RawValue>;
+using ScalarSource = std::variant<RegisterRef, common::RawValue>;
 
-struct IntegerAddU32 {
-  RegisterRef destination;
-  U32Source left;
-  U32Source right;
+enum class Op {
+  mov,
+  add,
+  bra,
+  exit,
 };
 
-using Operation = std::variant<IntegerAddU32>;
+enum class ScalarType {
+  b32,
+  u32,
+};
+
+struct Move {
+  ScalarType type;
+  RegisterRef source;
+  RegisterRef destination;
+};
+
+struct Add {
+  ScalarType type;
+  RegisterRef destination;
+  ScalarSource left;
+  ScalarSource right;
+};
+
+struct Branch {
+  common::ProgramCounter target;
+};
+
+struct Exit {};
+
+using Operation = std::variant<Move, Add, Branch, Exit>;
+
+[[nodiscard]] Op op(const Operation&) noexcept;
 
 struct Instruction {
   std::optional<PredicateRef> predicate;
   Operation operation;
 };
+
+class InstructionStream {
+ public:
+  // Validated once, then immutable for Simulator lifetime.
+  [[nodiscard]] static auto create(std::vector<Instruction> instructions)
+      -> std::expected<InstructionStream, StreamError>;
+
+  [[nodiscard]] auto fetch(common::ProgramCounter pc) const
+      -> std::expected<std::reference_wrapper<const Instruction>, StreamError>;
+  [[nodiscard]] auto fallthrough(common::ProgramCounter pc) const
+      -> std::expected<common::ProgramCounter, StreamError>;
+
+ private:
+  std::vector<Instruction> instructions_;
+};
 ```
 
-`IntegerAddU32` and `Operation` are generated; operand primitives and the `Instruction` envelope are handwritten. Encoding the selected `u32` type in the operation type avoids a redundant runtime tag and invalid type combinations. Revisit that representation only if adding several scalar types makes separate records measurably repetitive.
+`Op` contains only opcode identity. Data type, execution-relevant modifiers,
+and operand form are fields of that opcode's record and participate only in
+secondary dispatch. Do not generate cross-product enumerators such as
+`add_u32`, `add_s32_sat`, or `mov_b32`.
+
+The operation records, `Operation`, `Op`, `op()`, and closed first-level
+dispatch list are generated. Operand primitives, scalar/control primitives,
+the `Instruction` envelope, `InstructionStream`, validation, and execution are
+handwritten. `Op` is derived from `Operation`; it is not stored as a second tag
+that could disagree with the variant alternative.
+
+The initial move remains register-to-register and supports only `b32`; the
+initial add supports only wrapping `u32` with register/immediate sources.
+Those restrictions are validated when the stream is created rather than
+encoded into top-level operation names.
+
+### Gate A consumer audit
+
+The executor WP1-WP3 probes establish the following contract:
+
+- operands own either a `common::RegisterSlot` reference or, where the
+  operation permits it, a `common::RawValue` immediate;
+- predicate reference and negation belong to the common instruction envelope,
+  because move, add, branch, and exit use the same operand-gating rule;
+- `Thread` remains the sole authoritative owner of its current PC;
+- `InstructionStream` defines PC as a dense vector index, fetches by the
+  scheduler-selected `WarpIssueGroup::pc`, and derives fallthrough as the next
+  validated index; only the direct branch target is stored in `Branch`;
+- Simulator owns the immutable stream for its lifetime, performs fetch, and
+  passes the already-fetched instruction plus derived fallthrough to executor;
+- first-level dispatch uses only the pure `Op`; each opcode handler may perform
+  a second dispatch over normalized data type, form, or modifier controls;
+- dispatch is closed and static, not an opcode string, dynamic handler
+  registry, factory, or virtual interface;
+- the operation records are generated structure, while operand primitives,
+  the instruction envelope, validation, and execution remain handwritten;
+- executor receives one already-fetched `Instruction`; it does not own the
+  stream, label lookup, fetch policy, or reconvergence policy;
+- `FunctionId`, `LaunchRuntime`, `arith::context`, Warp/Thread objects, register
+  views, prepared writes, and prepared control effects remain executor inputs
+  or transient state and never enter `exec_ir`.
+
+Predicated-off `Exit` proves that Simulator must provide a valid successor even
+when an active `Exit` does not consume it. A frontend adapter must resolve a
+direct label to a dense `ProgramCounter` before constructing `Branch`.
+Function ranges, symbol/source metadata, and call layout remain deferred; the
+initial stream is not a return to the retired multi-module `ProgramImage`.
 
 ---
 
@@ -195,6 +291,7 @@ submod/exec_ir/
 ├── CMakeLists.txt
 ├── include/
 │   ├── exec_ir.hpp
+│   ├── instruction_stream.hpp
 │   ├── operand.hpp
 │   └── validation.hpp
 ├── python/
@@ -262,19 +359,33 @@ no generated file is added to Git
 
 If the wheel model cannot support this narrow probe without importing frontend emitter internals, stop and first add a stable normalized-spec API to `ptx_frontend`; do not copy its normalizer into ptxsim.
 
-### WP1 — Core `exec_ir` operands and one operation
+### WP1 — Core `exec_ir` envelope and proven operation set
 
-Implement only the primitives required by `add.u32` without saturation and one generated integer-add operation record. This is the smallest useful path through the already completed register storage and arithmetic modules; packed integer types and other add variants remain unsupported.
+Implement the handwritten operand/envelope/stream primitives and generate
+exactly four pure opcode records proven by executor WP1-WP3: `mov`, `add`,
+`bra`, and `exit`. Generalize the WP0 generator only enough to accept these
+four manifest mappings, modifier-free operations, and a generated static
+first-level dispatch list.
+Packed types, additional move sources, `.uni`, other add variants, and every
+other opcode remain unsupported.
 
 Minimum invariants:
 
 - registers use `common::RegisterSlot`, never source spellings;
 - immediates own their bits after frontend destruction;
 - predicate negation is explicit;
+- PC is a checked dense instruction index; fallthrough is derived by the
+  stream and direct-branch target PCs are explicit;
+- `Op` contains no data type, modifier, or operand-form cross product;
+- `mov` and `add` data types are validated as record fields;
 - width/type combinations are validated before execution;
 - invalid records return structured errors.
 
-Do not add a complete PTX type universe or all `add` forms merely because they exist in the frontend database.
+Do not add a complete PTX type universe or additional frontend forms merely
+because they exist in the frontend database. If selecting register-only
+`mov.b32` requires an operand-kind selector, add that one manifest field and
+validate it against the normalized frontend model; do not add a generic
+selection language.
 
 ### WP2 — CMake and CI generation
 
@@ -335,7 +446,6 @@ Do not generate the full PTX instruction universe up front. The generated varian
 
 The following are deliberately outside the initial `exec_ir` module:
 
-- executable module/program container;
 - function PC ranges and control-flow tables;
 - register-frame allocation plans;
 - globals/constants/parameters initializers;
@@ -349,4 +459,9 @@ Add each only when the first execution path needs it. Do not recreate the retire
 
 ## 8. First implementation checkpoint
 
-WP0 adds the pinned Python requirement, the local generator package, one minimal support manifest, and a deterministic Python check. It does not add frontend C++ linkage, an `exec_ir` target, or execution behavior. WP1 is paused until the executor control-flow probe completes Gate A and this plan is revised from the proven consumer contract.
+WP0 adds the pinned Python requirement, the local generator package, one
+minimal support manifest, and a deterministic Python check. It does not add
+frontend C++ linkage, an `exec_ir` target, or execution behavior. Executor
+WP1-WP3 and the post-Gate-A dispatch audit completed the consumer contract;
+the revised WP1 may now implement only the immutable dense stream, instruction
+envelope, pure four-op enum, per-op records, and static dispatch glue above.

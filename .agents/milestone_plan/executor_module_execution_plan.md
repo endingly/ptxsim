@@ -1,8 +1,8 @@
 # PTXSim `inst_execute_engine` Module Execution Plan
 
-> **Status:** draft for review
+> **Status:** WP0-WP3 and post-Gate-A fetch/dispatch refactor implemented; WP4 waits for revised `exec_ir` WP1
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
-> **Blocked work:** `exec_ir` WP1 and later
+> **Next dependency:** revised `exec_ir` WP1 immutable instruction stream
 > **Language/build:** C++23 / CMake / GoogleTest
 > **Primary objective:** establish how one warp issue is prepared and committed before fixing the shape of `exec_ir`
 
@@ -14,19 +14,21 @@ The executor is designed before the C++ `exec_ir` representation.
 
 The stable execution unit is a scheduler-selected
 `execution_model::WarpIssueGroup`, not an isolated Thread and not a complete
-instruction stream:
+instruction stream. Simulator owns the immutable stream and performs fetch;
+executor consumes the fetched instruction:
 
 ```text
 scheduler selects Warp + WarpIssueGroup
                     |
                     v
-           validate warp issue
+     Simulator fetches stream[issue.pc]
+       and derives the successor PC
                     |
                     v
-             executor prepare
+      executor validates / dispatches
                     |
                     v
-             executor commit
+        executor prepare / commit
                     |
         +-----------+-----------+
         v           v           v
@@ -35,23 +37,31 @@ scheduler selects Warp + WarpIssueGroup
 ```
 
 `Thread::step()` and `Warp::step()` remain as constrained thin facades. Both
-must reach the same executor contract:
+reach the same step-provider contract, which the future Simulator implements:
 
 ```cpp
-engine.step(Warp&, const WarpIssueGroup&)
+simulator.step(Warp&, const WarpIssueGroup&)
 ```
 
 `Thread::step()` forms a single-lane issue from its authoritative current PC
-and lane ID, then forwards to that same contract. It is a convenience for
-lane-local execution and tests, not a second instruction engine. Collective
-instructions may reject a single-lane issue.
+and lane ID, then forwards to that same contract. Simulator fetches the
+instruction and invokes the lower executor entry:
 
-Thread owns the current PC value. The executor decides the next PC from the
-instruction and commits it through Thread. Thread never infers fallthrough by
-performing `pc + 1`.
+```cpp
+executor.execute(warp, issue, instruction, fallthrough);
+```
 
-The first implementation uses handwritten probe operations. It does not add
-generated instruction records, a program image, fetch/decode, a handler
+The facade is a convenience for lane-local execution and tests, not a second
+instruction engine. Collective instructions may reject a single-lane issue.
+
+Thread owns the sole authoritative current PC value. Simulator uses the
+transient `issue.pc` to fetch but stores no duplicate PC. The immutable dense
+instruction stream derives fallthrough; executor selects target/fallthrough
+and commits it through Thread.
+
+The first implementation uses handwritten probe operations and a static
+generated-shaped dispatch table. It does not add generated instruction
+records, a production instruction stream/Simulator, a dynamic handler
 registry, or a general transaction system.
 
 ---
@@ -75,11 +85,10 @@ the shape of a runtime instruction record.
 Therefore:
 
 - `.agents/milestone_plan/exec_ir_module_execution_plan.md` WP0 remains valid;
-- its WP1 and later work are paused;
-- the executor control-flow gate in this plan must complete before WP1 is
-  redesigned and resumed;
-- generated C++ instruction types must not be added merely to unblock the
-  executor probe.
+- executor WP1-WP3 completed the control-flow and dispatch gate;
+- revised `exec_ir` WP1 is resumed from the proven consumer contract;
+- generated C++ instruction types replace rather than preserve the private
+  probe types when executor WP4 begins.
 
 This plan supersedes the single-thread-first executor sequence in V2-M4 of
 `.agents/project_plan.md`. It does not supersede the completed arithmetic,
@@ -102,11 +111,10 @@ execution-model, memory, or runtime work.
 It does not own instructions, register storage, memory, fetching, arithmetic,
 or instruction semantics.
 
-Current gaps relevant to executor work:
+Current gaps relevant to later integration:
 
-- no scheduler constructs `WarpIssueGroup` values;
-- `Warp::step()` does not accept an issue group;
-- both existing `step()` templates use unconstrained `typename` parameters;
+- no production scheduler constructs `WarpIssueGroup` values;
+- no Simulator owns/fetches an immutable instruction stream;
 - `WaitReason` is stored but has no complete set/get/clear transition API;
 - `Thread` has no current FunctionId or call stack.
 
@@ -174,31 +182,34 @@ after multiple handlers demonstrate reusable instruction-independent code.
 
 ## 5. Step facades and canonical call path
 
-### 5.1 Required engine contract
+### 5.1 Required step-provider contract
 
 The execution-model facade should constrain the actual expression it invokes:
 
 ```cpp
-template <typename Engine>
-concept WarpIssueEngine =
-    requires(Engine& engine, execution_model::Warp& warp,
+template <typename Stepper>
+concept WarpIssueStepper =
+    requires(Stepper& stepper, execution_model::Warp& warp,
              const execution_model::WarpIssueGroup& issue) {
-      engine.step(warp, issue);
+      stepper.step(warp, issue);
     };
 ```
 
 The exact concept location and namespace may be chosen during WP0. There must
 not be an unconstrained public `template <typename Engine>` facade after WP0.
+The future production Stepper is Simulator; `InstExecuteEngine` instead exposes
+the lower `execute(..., instruction, fallthrough)` operation and does not
+perform fetch.
 
 ### 5.2 Warp facade
 
 Conceptual API:
 
 ```cpp
-template <WarpIssueEngine Engine>
-decltype(auto) Warp::step(Engine& engine, const WarpIssueGroup& issue)
-    noexcept(noexcept(engine.step(*this, issue))) {
-  return engine.step(*this, issue);
+template <WarpIssueStepper Stepper>
+decltype(auto) Warp::step(Stepper& stepper, const WarpIssueGroup& issue)
+    noexcept(noexcept(stepper.step(*this, issue))) {
+  return stepper.step(*this, issue);
 }
 ```
 
@@ -212,10 +223,10 @@ Conceptual behavior:
 ```text
 read this Thread's current PC
 build one correctly-sized LaneMask containing only lane_id()
-forward engine.step(warp(), singleton issue)
+forward stepper.step(warp(), singleton issue)
 ```
 
-This facade does not require a production `engine.step(Thread&)` overload.
+This facade does not require a production `stepper.step(Thread&)` overload.
 Both facades reach the canonical warp-issue path directly.
 
 Because `Thread` sees Warp through a forward declaration, implementation must
@@ -228,8 +239,11 @@ thin constrained forwarder.
 PC ownership and transition policy are distinct:
 
 - Thread stores and exposes the authoritative current PC;
-- executor obtains fallthrough/target information from the bound operation or
-  future program representation;
+- Simulator reads the transient issue PC to fetch from the immutable stream
+  but stores no duplicate authoritative PC;
+- the stream derives fallthrough from the dense index and the branch record
+  carries an explicit target;
+- executor receives both the fetched instruction and fallthrough;
 - executor applies the chosen PC only during commit;
 - Thread may later enforce transition invariants, but it never interprets an
   instruction to choose a destination.
@@ -336,9 +350,8 @@ require atomic commit across those resources.
 | wait | deferred | must be defined with its wakeup protocol |
 
 No executor path may assume `ProgramCounter` is a byte address or increment it
-implicitly. The probe operation supplies an explicit successor. A future
-program representation decides how current PC maps to instruction and
-fallthrough PC.
+implicitly. The immutable instruction stream defines PC as a checked dense
+index and supplies the successor; executor receives that fallthrough value.
 
 Predication is evaluated before non-predicate operands. A predicated-off lane
 must not fault because an unused data operand is uninitialized or invalid.
@@ -360,7 +373,7 @@ These reject the entire issue before mutation:
 - malformed or empty WarpIssueGroup;
 - foreign Warp/runtime pairing;
 - missing bound execution context such as the probe FunctionId;
-- unsupported/unrecognized bound operation;
+- unsupported fetched opcode/type/modifier combination;
 - executor invariant failure represented as a structured internal error when
   it can arise from runtime input.
 
@@ -435,7 +448,7 @@ Tasks:
 - constrain both facade templates with a concept/requires expression;
 - change `Warp::step()` to accept a `WarpIssueGroup`;
 - make `Thread::step()` construct a single-lane issue using its current PC;
-- forward both directly to `engine.step(Warp&, const WarpIssueGroup&)`;
+- forward both directly to `stepper.step(Warp&, const WarpIssueGroup&)`;
 - add the missing Warp facade test;
 - replace the existing Thread facade tests so they verify canonical forwarding,
   issue PC, mask width, and selected lane;
@@ -446,7 +459,7 @@ Acceptance:
 - an engine without the canonical step expression is rejected at compile time;
 - Thread and Warp facades reach the same fake-engine overload;
 - Thread stepping selects exactly itself and its current PC;
-- no production `engine.step(Thread&)` path is required;
+- no production `stepper.step(Thread&)` path is required;
 - `execution_model` still depends only on `common`.
 
 ### WP1 — Register-move executor probe
@@ -456,10 +469,10 @@ Acceptance:
 Use one private handwritten operation equivalent to:
 
 ```text
-MoveB32Probe {
+MoveProbe {
+  type b32
   source RegisterSlot
   destination RegisterSlot
-  explicit fallthrough ProgramCounter
 }
 ```
 
@@ -467,7 +480,10 @@ The probe executor is bound to:
 
 - one `LaunchRuntime`;
 - one explicit FunctionId;
-- the concrete probe operation.
+- one immutable `arith::context` after WP2.
+
+The already-fetched probe instruction and explicit fallthrough are arguments
+to `execute()`, not constructor-bound executor state.
 
 Tasks:
 
@@ -501,9 +517,9 @@ No `arith` link is required for this work package.
 Add only:
 
 - an optional predicate register plus explicit negation;
-- one private `AddU32Probe` with register/immediate sources as required by the
-  test;
-- explicit fallthrough PC.
+- one private `AddProbe` whose separate data-type field currently accepts
+  `u32`, with register/immediate sources as required by the test;
+- an explicit fallthrough argument supplied by the future fetch owner.
 
 Tasks:
 
@@ -532,7 +548,8 @@ Acceptance tests:
 
 Tasks:
 
-- add one direct branch probe with explicit target and fallthrough PCs;
+- add one direct branch probe with an explicit target; fallthrough remains a
+  separate executor input;
 - reuse the same per-lane predicate logic;
 - add one exit probe;
 - commit different next PCs for lanes in the same issue group;
@@ -542,10 +559,12 @@ Tasks:
 
 Acceptance tests:
 
-- taken, untaken, predicated-off, and divergent branch behavior;
+- unpredicated and predicate-true branches take the target;
+- a predicate-false branch is predicated off and takes fallthrough;
+- divergent lanes commit different target/fallthrough PCs;
 - non-participating lanes remain unchanged;
 - exited lanes disappear from `ready_mask()`;
-- a faulting branch operand retains the source PC;
+- a faulting branch predicate retains the source PC;
 - no scheduler, reconvergence stack, ProgramImage, or label lookup is added.
 
 ### Gate A — Resume `exec_ir` design
@@ -565,6 +584,19 @@ The audit must answer only facts proven by the executor:
 Only then may `exec_ir` WP1 be rewritten and resumed. The probe operation
 types may be replaced rather than preserved for compatibility.
 
+Gate A and the follow-up dispatch audit decided:
+
+- `Thread` is the only authoritative PC owner;
+- Simulator owns an immutable dense `std::vector<Instruction>`, fetches with
+  `WarpIssueGroup::pc`, derives fallthrough, and calls executor;
+- executor stores no instruction and exposes
+  `execute(warp, issue, instruction, fallthrough)`;
+- top-level `Op` contains only `mov`, `add`, `bra`, and `exit` opcode identity;
+- data type, modifier, and operand form remain per-op record fields and may
+  drive a second dispatch inside that opcode handler;
+- a static generated-shaped table performs first-level dispatch; no dynamic
+  registry or duplicated `Op`/payload tag is permitted.
+
 ### WP4 — `exec_ir` consumption and dispatch
 
 **Prerequisite:** Gate A and the revised `exec_ir` WP1 are complete.
@@ -572,7 +604,12 @@ types may be replaced rather than preserved for compatibility.
 Tasks are intentionally bounded by the revised plan:
 
 - consume owned frontend-independent instruction values;
-- dispatch the supported bounded variant without a registry/factory;
+- receive an already-fetched instruction and fallthrough from Simulator;
+- dispatch once by pure `Op` through generated static glue;
+- dispatch within the selected handler by normalized type/form/modifier only
+  when the implemented opcode requires it;
+- do not encode type/modifier combinations in `Op`;
+- do not add a dynamic registry/factory;
 - keep all runtime handles and topology objects outside `exec_ir`;
 - preserve the prepare/commit behavior proved by WP1-WP3;
 - reject unsupported operations before mutation.
@@ -727,12 +764,13 @@ The executor milestone does not authorize:
 - a virtual handler hierarchy or handler registry;
 - a generic effect graph or rollback engine;
 - a scheduler/reconvergence algorithm inside Warp;
-- a ProgramImage, loader, source map, or call stack before its gate;
+- a module loader, function/source metadata image, or call stack before its
+  gate;
 - execution_model knowledge of register/memory handles;
 - memory knowledge of Thread/Warp/CTA;
 - arithmetic knowledge of PTX instruction forms;
 - asynchronous host execution or timing simulation;
-- an installed executor API before Gate A stabilizes the consumer contract.
+- an installed executor API before generated `exec_ir` replaces probe types.
 
 ---
 
@@ -741,7 +779,7 @@ The executor milestone does not authorize:
 Every executor change must answer:
 
 1. Does it use `WarpIssueGroup` as the real execution unit?
-2. Do both facades reach the same canonical engine call?
+2. Do both facades reach the same canonical step-provider call?
 3. Is Thread still the only owner of current PC/status?
 4. Does executor, rather than Thread, choose next PC?
 5. Is every predictable failure checked before the first mutation, and is
@@ -765,7 +803,8 @@ commit rule before adding another operation.
 The executor foundation is ready to drive `exec_ir` design when WP0-WP3 and
 Gate A are complete:
 
-- Thread and Warp facades share one constrained warp-issue engine contract;
+- Thread and Warp facades share one constrained warp-issue step-provider
+  contract;
 - scalar register execution performs warp prepare followed by deterministic
   commit;
 - predicate, arithmetic, branch, exit, PC, and lane-fault behavior are tested;
