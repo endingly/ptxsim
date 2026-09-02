@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <concepts>
-#include <type_traits>
 #include <variant>
 
 #include <ptxsim/common/ids.hpp>
@@ -17,16 +16,6 @@ using execution_model::ThreadId;
 
 static_assert(std::same_as<execution_model::ProgramCounter,
                            common::ProgramCounter>);
-static_assert(!std::is_convertible_v<common::CtaId, execution_model::CtaId>);
-static_assert(!std::is_convertible_v<common::ThreadId,
-                                     execution_model::ThreadId>);
-static_assert(!std::is_invocable_v<decltype(&LaunchRuntime::bind_shared),
-                                   LaunchRuntime&, common::CtaId,
-                                   memory::SharedSpaceHandle>);
-static_assert(!std::is_invocable_v<decltype(&LaunchRuntime::bind_register_frame),
-                                   LaunchRuntime&, common::ThreadId,
-                                   common::FunctionId,
-                                   memory::RegisterFrameHandle>);
 
 auto shape() -> execution_model::GridShape {
   return {

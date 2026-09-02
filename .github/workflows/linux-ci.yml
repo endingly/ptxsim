@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 60
     concurrency:
-      group: linux-ci-${{ github.ref }}-${{ matrix.preset }}-${{ matrix.mode }}
+      group: linux-ci-${{ github.ref }}-${{ matrix.preset }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -33,34 +33,14 @@ jobs:
         include:
           - name: GCC Debug
             preset: ci-linux-gcc-debug
-            mode: core
-          - name: GCC Debug + Lowering
-            preset: ci-linux-gcc-debug
-            mode: lowering
           - name: GCC Release
             preset: ci-linux-gcc-release
-            mode: core
-          - name: GCC Release + Lowering
-            preset: ci-linux-gcc-release
-            mode: lowering
           - name: Clang Debug
             preset: ci-linux-clang-debug
-            mode: core
-          - name: Clang Debug + Lowering
-            preset: ci-linux-clang-debug
-            mode: lowering
           - name: Clang Release
             preset: ci-linux-clang-release
-            mode: core
-          - name: Clang Release + Lowering
-            preset: ci-linux-clang-release
-            mode: lowering
           - name: GCC ASan + UBSan
             preset: ci-linux-gcc-asan-ubsan
-            mode: core
-          - name: GCC ASan + UBSan + Lowering
-            preset: ci-linux-gcc-asan-ubsan
-            mode: lowering
 
     steps:
       - name: Check out source
@@ -151,38 +131,13 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ matrix.mode }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml', 'CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
+          key: ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml', 'CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
           restore-keys: |
-            ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ matrix.mode }}-
+            ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
 
       - name: Run core CMake workflow preset
-        if: matrix.mode == 'core'
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
-
-      - name: Run full frontend-lowering build and tests
-        if: matrix.mode == 'lowering'
-        shell: bash
-        run: |
-          cmake --preset "${{ matrix.preset }}" \
-            "-DVCPKG_MANIFEST_FEATURES=tests;frontend-lowering"
-          cmake --build "out/build/${{ matrix.preset }}"
-
-          test_list="$(ctest --test-dir "out/build/${{ matrix.preset }}" -N)"
-          printf '%s\n' "$test_list"
-          for pattern in \
-            'ModuleLowering\.' \
-            'LoweringContext\.' \
-            'LoweringDiagnostic\.' \
-            'ptxsim_lowering_build-tree_consumer' \
-            'ptxsim_lowering_installed_consumer'; do
-            if ! grep -Eq "$pattern" <<<"$test_list"; then
-              printf 'Missing required lowering test: %s\n' "$pattern" >&2
-              exit 1
-            fi
-          done
-
-          ctest --test-dir "out/build/${{ matrix.preset }}" --output-on-failure
 
       - name: Show compiler cache statistics
         if: always()

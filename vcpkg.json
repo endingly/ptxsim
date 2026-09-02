@@ -11,10 +11,6 @@
     "tests": {
       "description": "Build the arithmetic test suite",
       "dependencies": ["gtest"]
-    },
-    "frontend-lowering": {
-      "description": "Enable the optional PTX frontend/lowering path",
-      "dependencies": ["ptx-frontend"]
     }
   }
 }

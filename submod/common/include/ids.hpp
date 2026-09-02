@@ -46,18 +46,6 @@ struct LabelIdTag {
 struct SourceLocationIdTag {
   static constexpr std::string_view prefix = "source";
 };
-struct ThreadIdTag {
-  static constexpr std::string_view prefix = "thread";
-};
-struct CtaIdTag {
-  static constexpr std::string_view prefix = "cta";
-};
-struct WarpIdTag {
-  static constexpr std::string_view prefix = "warp";
-};
-struct LaneIdTag {
-  static constexpr std::string_view prefix = "lane";
-};
 struct SpecialRegisterIdTag {
   static constexpr std::string_view prefix = "special-register";
 };
@@ -70,10 +58,6 @@ using RegisterSlot = detail::Id<detail::RegisterSlotTag>;
 using SymbolId = detail::Id<detail::SymbolIdTag>;
 using LabelId = detail::Id<detail::LabelIdTag>;
 using SourceLocationId = detail::Id<detail::SourceLocationIdTag>;
-using ThreadId = detail::Id<detail::ThreadIdTag>;
-using CtaId = detail::Id<detail::CtaIdTag>;
-using WarpId = detail::Id<detail::WarpIdTag>;
-using LaneId = detail::Id<detail::LaneIdTag>;
 using SpecialRegisterId = detail::Id<detail::SpecialRegisterIdTag>;
 
 template <typename Tag>

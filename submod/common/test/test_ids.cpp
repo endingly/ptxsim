@@ -35,10 +35,6 @@ TEST(CoreIds, ConstructCompareAndFormat) {
   check_properties<SymbolId>();
   check_properties<LabelId>();
   check_properties<SourceLocationId>();
-  check_properties<ThreadId>();
-  check_properties<CtaId>();
-  check_properties<WarpId>();
-  check_properties<LaneId>();
   check_properties<SpecialRegisterId>();
 
   static_assert(!std::is_constructible_v<FunctionId, ProgramCounter>);
@@ -50,10 +46,6 @@ TEST(CoreIds, ConstructCompareAndFormat) {
   check_id<SymbolId>("symbol");
   check_id<LabelId>("label");
   check_id<SourceLocationId>("source");
-  check_id<ThreadId>("thread");
-  check_id<CtaId>("cta");
-  check_id<WarpId>("warp");
-  check_id<LaneId>("lane");
   check_id<SpecialRegisterId>("special-register");
 
   EXPECT_EQ(

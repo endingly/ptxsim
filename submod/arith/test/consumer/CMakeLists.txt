@@ -1,21 +1,15 @@
 cmake_minimum_required(VERSION 3.28)
 project(ptxsim_arith_external_consumer LANGUAGES CXX)
 
-# The default core package must not discover the optional frontend.
-set(CMAKE_DISABLE_FIND_PACKAGE_ptx_frontend TRUE)
-find_package(ptxsim CONFIG REQUIRED)
-find_package(ptxsim CONFIG REQUIRED OPTIONAL_COMPONENTS lowering)
-if(ptxsim_lowering_FOUND)
-    message(FATAL_ERROR "optional lowering unexpectedly loaded with frontend disabled")
-endif()
+find_package(ptxsim CONFIG REQUIRED COMPONENTS
+    common arith execution_model memory runtime)
 
 add_executable(ptxsim_arith_external_consumer main.cpp)
 target_link_libraries(ptxsim_arith_external_consumer PRIVATE
     ptxsim::arith
     ptxsim::common
-    ptxsim::exec_ir
-    ptxsim::program
-    ptxsim::state
+    ptxsim::execution_model
+    ptxsim::memory
     ptxsim::runtime)
 
 if(PTXSIM_CONSUMER_ENABLE_SANITIZERS)

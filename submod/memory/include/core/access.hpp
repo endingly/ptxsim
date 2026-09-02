@@ -85,7 +85,7 @@ struct AccessDescriptor {
   /**
    * @brief Scope associated with strong memory semantics.
    *
-   * Weak operations normally leave this unset. Instruction lowering or
+   * Weak operations normally leave this unset. Instruction decoding or
    * semantics should resolve PTX defaults before the descriptor reaches the
    * memory-model implementation when a scope is required.
    */

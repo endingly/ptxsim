@@ -5,9 +5,17 @@ include(CMakeFindDependencyMacro)
 
 include("${CMAKE_CURRENT_LIST_DIR}/ptxsimTargets.cmake")
 
-set(ptxsim_lowering_FOUND FALSE)
+set(ptxsim_known_components
+    common
+    arith
+    arith_validation
+    execution_model
+    memory
+    runtime)
 foreach(ptxsim_component IN LISTS ptxsim_FIND_COMPONENTS)
-    if(NOT ptxsim_component STREQUAL "lowering")
+    if(ptxsim_component IN_LIST ptxsim_known_components)
+        set("ptxsim_${ptxsim_component}_FOUND" TRUE)
+    else()
         set("ptxsim_${ptxsim_component}_FOUND" FALSE)
         if(ptxsim_FIND_REQUIRED_${ptxsim_component})
             set(ptxsim_FOUND FALSE)
@@ -17,29 +25,3 @@ foreach(ptxsim_component IN LISTS ptxsim_FIND_COMPONENTS)
         endif()
     endif()
 endforeach()
-
-if("lowering" IN_LIST ptxsim_FIND_COMPONENTS)
-    set(ptxsim_lowering_targets
-        "${CMAKE_CURRENT_LIST_DIR}/ptxsimLoweringTargets.cmake")
-    if(NOT EXISTS "${ptxsim_lowering_targets}")
-        if(ptxsim_FIND_REQUIRED_lowering)
-            set(ptxsim_FOUND FALSE)
-            set(ptxsim_NOT_FOUND_MESSAGE
-                "ptxsim lowering component was not built; enable frontend-lowering")
-            return()
-        endif()
-    else()
-        find_package(ptx_frontend CONFIG QUIET)
-        if(NOT ptx_frontend_FOUND)
-            if(ptxsim_FIND_REQUIRED_lowering)
-                set(ptxsim_FOUND FALSE)
-                set(ptxsim_NOT_FOUND_MESSAGE
-                    "ptxsim lowering component requires ptx_frontend")
-                return()
-            endif()
-        else()
-            include("${ptxsim_lowering_targets}")
-            set(ptxsim_lowering_FOUND TRUE)
-        endif()
-    endif()
-endif()

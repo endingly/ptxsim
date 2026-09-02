@@ -76,10 +76,6 @@ install_project_targets(
     NAMESPACE ptxsim
     TARGETS
         ptxsim_common
-        ptxsim_exec_ir
-        ptxsim_program
-        ptxsim_state
-        ptxsim_bootstrap
         ptxsim_arith
         ptxsim_arith_validation
         ptxsim_execution_model
@@ -87,20 +83,12 @@ install_project_targets(
         ptxsim_runtime
     INCLUDE_DIRS
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/submod/program/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/submod/state/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/submod/bootstrap/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/execution_model/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/memory/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/runtime/include"
     INCLUDE_DESTINATIONS
         "${PROJECT_NAME}/common"
-        "${PROJECT_NAME}/exec_ir"
-        "${PROJECT_NAME}/program"
-        "${PROJECT_NAME}/state"
-        "${PROJECT_NAME}/bootstrap"
         "${PROJECT_NAME}/arith"
         "${PROJECT_NAME}/execution_model"
         "${PROJECT_NAME}/memory"
@@ -108,24 +96,3 @@ install_project_targets(
     DEPENDENCIES
         "softfloat CONFIG REQUIRED"
         "sul-dynamic_bitset CONFIG REQUIRED")
-
-# Lowering is intentionally a separate export: loading the default core package
-# must not require the optional frontend dependency.
-if(TARGET ptxsim_lowering)
-    install(TARGETS ptxsim_lowering
-        EXPORT ptxsimLoweringTargets
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-    install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/submod/lowering/include/"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ptxsim/lowering"
-        FILES_MATCHING PATTERN "*.hpp")
-    export(EXPORT ptxsimLoweringTargets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/ptxsimLoweringTargets.cmake"
-        NAMESPACE ptxsim::)
-    install(EXPORT ptxsimLoweringTargets
-        FILE ptxsimLoweringTargets.cmake
-        NAMESPACE ptxsim::
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ptxsim")
-endif()
