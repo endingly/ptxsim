@@ -556,11 +556,17 @@ Future intended relationship:
 
 ```text
 Thread CallFrame
-├── return PC
-├── RegisterFrameHandle
-├── LocalFrameHandle
-└── function parameter frame
+├── return_to: common::CodeLocation
+├── caller_activation: ActivationId
+├── activation-owned RegisterFrameHandle
+├── activation-owned LocalFrameHandle
+└── activation-owned function parameter frame
 ```
+
+`common::CodeLocation` and `ActivationId` are future execution/simulator
+concepts, not memory types. Runtime binds the activation-owned handles; memory
+continues to own only its handles and storage, and never topology or call-stack
+state.
 
 ## RegisterView
 
@@ -1219,6 +1225,12 @@ for (auto& cta : grid) {
 }
 ```
 
+This is the current entry-function binding shape and is MVP-only: one
+`(ThreadId, FunctionId)` key cannot distinguish two live activations of the
+same function. When calls are implemented, runtime binds program/activation
+identity to these same memory-owned handles; memory still receives neither
+topology IDs nor call-stack state.
+
 ---
 
 # 17. Special registers — explicit non-goal of the memory module
@@ -1623,7 +1635,7 @@ LocalSpaceManager -> LocalFrameHandle -> isolated byte region
 ParameterSpaceManager -> parameter-space handles
 device/context -> Global + Constant
 
-simulator/runtime binds topology and program/call identity to those handles
+simulator/runtime binds topology and program/activation identity to those handles
 ```
 
 and:

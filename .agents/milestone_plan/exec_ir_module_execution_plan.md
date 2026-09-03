@@ -1,467 +1,297 @@
 # PTXSim `exec_ir` Module Execution Plan
 
-> **Status:** WP0 generator contract probe and executor Gate A complete; WP1 ready for implementation
-> **Working branch:** `feat/exec-ir-wp0`
-> **Frontend baseline:** `ptx_frontend` commit `3458bc53eacbc051d3ba4e2685c59aced4bf50af` / PTX ISA 9.3
-> **Language/build:** C++23 / CMake / Python code generation
-> **Primary objective:** define a compact, frontend-independent execution IR without copying PTX instruction facts or generated frontend sources.
+> **Status:** WP0 generator contract probe, WP1 executable program core, and
+> the source-built frontend overlay port are implemented; WP2 waits for the
+> frontend label-boundary contract
+> **Architecture authority:**
+> [`../arch/resolved_ir_execution_architecture.md`](../arch/resolved_ir_execution_architecture.md)
+> **Primary objective:** lower checked frontend semantic IR into a ptxsim-owned,
+> fully-bound, immutable executable program
+> **Language/build:** C++23 / CMake / GoogleTest; Python only for the existing
+> generator contract and any later generated static glue
 
 ---
 
-## 1. Boundary decision
+## 1. Decision summary
 
-`exec_ir` owns normalized facts required to execute the supported PTX subset
-after frontend validation and one immutable dense instruction sequence. It does
-not own PTX parsing, source syntax, target availability checks, runtime
-topology, mutable execution state, storage, scheduling, or instruction
-execution.
+`ptx_frontend::resolved_ir` remains the checked symbolic input. `exec_ir` owns
+the representation that the simulator executes:
 
 ```text
-                         build time only
-ptx_frontend wheel ───────────────────────────────┐
-  ptx_spec YAML + normalized InstructionSpec      │
-                                                  v
-ptxsim support manifest ───────────────> ptxsim exec_ir emitter
-                                                  │
-                                                  v
-                                      generated build-tree proof header (WP0)
-                                      generated exec_ir C++ types (WP1)
-
-                         runtime/library targets
-common ────────────────────────────────> exec_ir::InstructionStream
-
-ptx_frontend::resolved_ir ──> optional frontend adapter ──> exec_ir
-
-InstructionStream + runtime + executor ──> future simulator
+ptx_frontend::resolved_ir::ResolvedModule
+                 |
+                 | mandatory lowering and support validation
+                 v
+          ptxsim::exec_ir::ExecutableProgram
+                 |
+                 v
+              Simulator / executor
 ```
 
-Required dependency rules:
+Lowering does not duplicate frontend parsing, modifier legality, type legality,
+or target checking. It eliminates execution-time frontend identities:
 
 ```text
-exec_ir -> common
-exec_ir -X-> ptx_frontend
-exec_ir -X-> arith
-exec_ir -X-> memory
-exec_ir -X-> execution_model
-exec_ir -X-> runtime
-
-frontend adapter -> ptx_frontend::resolved_ir + exec_ir
-executor -> exec_ir + arith + runtime
-future simulator -> exec_ir + executor + runtime
+function SymbolId                 -> FunctionId
+register SymbolId + member        -> RegisterSlot
+label SymbolId                    -> function-local ProgramCounter
+direct-call function SymbolId     -> FunctionId
+immediate / execution controls    -> owned executable values
 ```
 
-The wheel is a host/build dependency. It must not appear in installed `exec_ir` headers or in an `exec_ir` link interface.
+No executable instruction may retain a frontend `SymbolId`, spelling,
+lexical-scope state, source range, or frontend-owned reference needed to run.
+Frontend checker success proves PTX legality; lowering additionally rejects
+frontend-legal forms that ptxsim does not implement.
 
----
+The current executor probe remains authoritative evidence for issue,
+predication, prepare/commit, lane-fault, branch, and exit behavior. WP1 now
+provides the executable program; frontend lowering remains unimplemented.
 
-## 2. `ptx_frontend` reuse audit
+## 2. Static program model
 
-Pinned generator-package dependency:
-
-```text
-ptx_frontend @ git+https://github.com/endingly/ptx_frontend.git@3458bc53eacbc051d3ba4e2685c59aced4bf50af#subdirectory=python
-```
-
-The wheel provides:
-
-- canonical `ptx-instr/v1` YAML and its schema;
-- schema validation and normalization;
-- `CodegenDatabase` / `InstructionSpec` / variant, modifier, and operand models;
-- a frontend-specific C++ generator;
-- `PyYAML>=6.0,<7` and `jsonschema>=4.26,<5` dependencies.
-
-The existing `ptx_frontend_generate()` function must not be used for `exec_ir` generation. Its backend YAML changes value spellings, but its emitters and output topology are fixed to frontend `resolved_ir`, descriptor, resolver, and checker artifacts. Generated headers also include frontend C++ headers and use frontend storage types.
-
-There is also a release-version mismatch at this baseline:
-
-```text
-CMake package version: 0.0.1
-wheel version:         0.0.1b0
-```
-
-The installed `codegen` component requires exact equality and therefore rejects this wheel. `exec_ir` generation will invoke a ptxsim-owned script in the project-selected Python environment instead. The generator package metadata fixes the VCS source revision; `requirements.txt` is only the local editable environment entry point, and neither fact is repeated in the manifest or CMake. CMake must not install Python packages or access the network.
-
-The current Python modules are top-level `code_gen` and `ir`, not a stable `ptx_frontend.*` facade. All imports from them must remain isolated in one ptxsim script. A later stable frontend API should require changing that script only.
-
----
-
-## 3. Single source of truth
-
-Do not copy any of the following into ptxsim YAML:
-
-- PTX syntax;
-- operand layouts;
-- modifier defaults or legal values;
-- target availability;
-- address/type constraints;
-- frontend variant definitions.
-
-Those facts remain owned by the wheel's canonical `ptx_spec` and normalized model.
-
-The ptxsim manifest owns only execution support and semantic mapping:
-
-```yaml
-schema: ptxsim-exec-ir/v1
-ptx_spec_schema: ptx-instr/v1
-
-instructions:
-  - opcode: add
-    operation: add
-    forms:
-      - variant: add_integer_no_sat
-        layouts: [default]
-        modifier_values:
-          type: [u32]
-```
-
-`forms`, `layouts`, and `modifier_values` select a subset of facts already defined by the frontend; they do not redefine legality. Unknown opcodes, variants, layouts, modifier/value selectors, duplicate mappings, and an unexpected frontend spec schema are generation errors.
-
-Do not add a generic templating language, plugin API, inheritance hierarchy, or per-field C++ snippets. Add manifest fields only when a supported operation cannot be represented without them.
-
-The Python emitter owns one closed mapping from normalized frontend modifier/operand `kind` values to handwritten ptxsim primitives. It must reject an unmapped kind; it must not silently fall back to a generic operand.
-
----
-
-## 4. Generated and handwritten boundary
-
-### Generated C++
-
-Generate only repetitive structural declarations and dispatch glue:
-
-- one plain record per supported opcode;
-- one `Op` enumerator per opcode, never per data type, modifier, or frontend
-  variant;
-- a bounded `std::variant` over the generated operation records;
-- deterministic `Operation -> Op` identity;
-- a static, closed first-level dispatch list consumed by executor code;
-- optional compile-time metadata that is directly consumed by the adapter or executor.
-
-Generated files live outside the source tree and are never committed. The public generated header is copied from the build tree into the install tree as part of the `ptxsim::exec_ir` package; private generated artifacts, if any, are not installed.
-
-### Handwritten C++
-
-Handwrite stable semantic primitives and behavior:
-
-- `RegisterRef` using `common::RegisterSlot`;
-- predicate reference plus negation;
-- typed immediate storage using `common::RawValue`;
-- the minimal runtime scalar/type descriptor required by the first operation;
-- structural validation returning `std::expected`;
-- frontend-to-exec conversion;
-- execution behavior and all interaction with `arith`, `runtime`, or memory.
-
-Generated code must not contain:
-
-- `ptx_frontend` types, includes, strings, source ranges, or symbol IDs;
-- memory handles or topology IDs;
-- arithmetic implementations;
-- PC mutation, storage writes, barriers, or async behavior;
-- a module/program image, loader, call stack, or source map.
-
-These exclusions keep regeneration mechanical and keep execution policy reviewable in handwritten code.
-
-### Gate A C++ shape
-
-The executor probes require the equivalent of this deliberately narrow model:
+The semantic instruction address is a function-local `common` value. `common`
+owns it so `execution_model` can later use it without depending on `exec_ir`:
 
 ```cpp
-struct RegisterRef {
-  common::RegisterSlot slot;
+namespace ptxsim::common {
+struct CodeLocation {
+  FunctionId function;
+  ProgramCounter pc;
+};
+}  // namespace ptxsim::common
+```
+
+`ProgramCounter` is a checked dense index inside its function. A flat storage
+offset is derived layout information only:
+
+```cpp
+struct FunctionLayout {
+  common::FunctionId id;
+  std::size_t begin;
+  std::uint32_t instruction_count;
+  std::vector<common::RawWidth> register_widths;
 };
 
-struct PredicateRef {
-  common::RegisterSlot slot;
-  bool negated = false;
-};
-
-using ScalarSource = std::variant<RegisterRef, common::RawValue>;
-
-enum class Op {
-  mov,
-  add,
-  bra,
-  exit,
-};
-
-enum class ScalarType {
-  b32,
-  u32,
-};
-
-struct Move {
-  ScalarType type;
-  RegisterRef source;
-  RegisterRef destination;
-};
-
-struct Add {
-  ScalarType type;
-  RegisterRef destination;
-  ScalarSource left;
-  ScalarSource right;
-};
-
-struct Branch {
-  common::ProgramCounter target;
-};
-
-struct Exit {};
-
-using Operation = std::variant<Move, Add, Branch, Exit>;
-
-[[nodiscard]] Op op(const Operation&) noexcept;
-
-struct Instruction {
-  std::optional<PredicateRef> predicate;
-  Operation operation;
-};
-
-class InstructionStream {
- public:
-  // Validated once, then immutable for Simulator lifetime.
-  [[nodiscard]] static auto create(std::vector<Instruction> instructions)
-      -> std::expected<InstructionStream, StreamError>;
-
-  [[nodiscard]] auto fetch(common::ProgramCounter pc) const
-      -> std::expected<std::reference_wrapper<const Instruction>, StreamError>;
-  [[nodiscard]] auto fallthrough(common::ProgramCounter pc) const
-      -> std::expected<common::ProgramCounter, StreamError>;
-
- private:
+class ExecutableProgram {
   std::vector<Instruction> instructions_;
+  std::vector<FunctionLayout> functions_;
 };
 ```
 
-`Op` contains only opcode identity. Data type, execution-relevant modifiers,
-and operand form are fields of that opcode's record and participate only in
-secondary dispatch. Do not generate cross-product enumerators such as
-`add_u32`, `add_s32_sat`, or `mov_b32`.
+Fetch is conceptually:
 
-The operation records, `Operation`, `Op`, `op()`, and closed first-level
-dispatch list are generated. Operand primitives, scalar/control primitives,
-the `Instruction` envelope, `InstructionStream`, validation, and execution are
-handwritten. `Op` is derived from `Operation`; it is not stored as a second tag
-that could disagree with the variant alternative.
+```text
+FunctionLayout.begin + location.pc -> flat instruction storage index
+```
 
-The initial move remains register-to-register and supports only `b32`; the
-initial add supports only wrapping `u32` with register/immediate sources.
-Those restrictions are validated when the stream is created rather than
-encoded into top-level operation names.
+The initial program owns only the static register slot widths required by the
+implemented operations. `RegisterSlot` is a function-local layout identity,
+not a physical register or dynamic frame. Local and parameter layouts are
+added with their first executable consumer. All such layouts are
+frontend-independent values containing no memory handles or allocated storage;
+Simulator/runtime converts them to existing memory allocation specs when it
+creates an activation.
 
-### Gate A consumer audit
+Branches store a function-local target PC. Direct calls store a `FunctionId`.
+Return has no static target: its destination is dynamic call state. The initial
+shape is compatible with that distinction without creating `Activation` or a
+`CallStack` early.
 
-The executor WP1-WP3 probes establish the following contract:
+## 3. Instruction and dispatch boundary
 
-- operands own either a `common::RegisterSlot` reference or, where the
-  operation permits it, a `common::RawValue` immediate;
-- predicate reference and negation belong to the common instruction envelope,
-  because move, add, branch, and exit use the same operand-gating rule;
-- `Thread` remains the sole authoritative owner of its current PC;
-- `InstructionStream` defines PC as a dense vector index, fetches by the
-  scheduler-selected `WarpIssueGroup::pc`, and derives fallthrough as the next
-  validated index; only the direct branch target is stored in `Branch`;
-- Simulator owns the immutable stream for its lifetime, performs fetch, and
-  passes the already-fetched instruction plus derived fallthrough to executor;
-- first-level dispatch uses only the pure `Op`; each opcode handler may perform
-  a second dispatch over normalized data type, form, or modifier controls;
-- dispatch is closed and static, not an opcode string, dynamic handler
-  registry, factory, or virtual interface;
-- the operation records are generated structure, while operand primitives,
-  the instruction envelope, validation, and execution remain handwritten;
-- executor receives one already-fetched `Instruction`; it does not own the
-  stream, label lookup, fetch policy, or reconvergence policy;
-- `FunctionId`, `LaunchRuntime`, `arith::context`, Warp/Thread objects, register
-  views, prepared writes, and prepared control effects remain executor inputs
-  or transient state and never enter `exec_ir`.
+`Instruction` is a ptxsim-owned value envelope over only supported executable
+operation records. Its top-level `Op` is pure opcode identity:
 
-Predicated-off `Exit` proves that Simulator must provide a valid successor even
-when an active `Exit` does not consume it. A frontend adapter must resolve a
-direct label to a dense `ProgramCounter` before constructing `Branch`.
-Function ranges, symbol/source metadata, and call layout remain deferred; the
-initial stream is not a return to the retired multi-module `ProgramImage`.
+```text
+mov | add | bra | exit | ...
+```
 
----
+Data type, modifier, and operand-form details live in their operation records.
+The executor performs static first-level dispatch by `Op`, then only the
+selected opcode handler performs a second dispatch by the needed form/type or
+modifier. Do not encode their cross-product in `Op`; do not add a registry,
+factory, or virtual handler hierarchy.
 
-## 5. Initial repository shape
+Operation records may be generated after the existing generator contract is
+extended for a real supported form. Generated code is structural/dispatch glue;
+it must not reimplement frontend legality. Operand primitives, `Instruction`,
+`ExecutableProgram`, lowering, validation, and execution policy remain
+handwritten.
 
-Create files only as their work package begins:
+## 4. Frontend lowering contract
+
+Lowering is mandatory rather than an optional adapter. It consumes a checked
+`ResolvedModule`, allocates ptxsim IDs/layouts, and returns either one complete
+`ExecutableProgram` or a structured diagnostic; it produces no partial program.
+
+The required order is:
+
+1. allocate `FunctionId` values;
+2. obtain each frontend function's instruction boundaries and label positions;
+3. allocate static register, local, and parameter layouts per function;
+4. bind operands, branch targets, and direct calls;
+5. copy/normalize immediate and execution-control values;
+6. reject unsupported executable forms; and
+7. construct immutable function layouts and instruction storage.
+
+The frontend must preserve each function-local label `SymbolId` with its
+instruction-boundary offset in `[0, body.size()]`. Consecutive labels may share
+a boundary. Ptxsim must not recover labels from source ranges, spellings, or a
+retained AST.
+
+## 5. Canonical executable printing
+
+The printer describes the program actually executed, not original PTX source:
+
+```text
+@0  [func:0 pc:0]  mov.b32 reg:0, reg:1
+@1  [func:0 pc:1]  bra pc:3
+@2  [func:0 pc:2]  exit
+@3  [func:0 pc:3]  add.u32 reg:2, reg:0, 1
+```
+
+`@N` is a derived flat storage offset; `[func:F pc:P]` is the semantic address.
+Source text, comments, labels, and register spellings are intentionally not
+reconstructed. The printer is part of the executable representation contract,
+so lowering tests can use it for concise diagnostics and golden checks.
+
+## 6. Current repository shape
+
+The existing Python probe and the WP1 C++ core are isolated from each other:
 
 ```text
 submod/exec_ir/
-├── CMakeLists.txt
-├── include/
-│   ├── exec_ir.hpp
-│   ├── instruction_stream.hpp
-│   ├── operand.hpp
-│   └── validation.hpp
-├── python/
-│   ├── pyproject.toml
-│   ├── setup.cfg
-│   ├── codegen/
-│   │   ├── __init__.py
-│   │   ├── __main__.py
-│   │   ├── generate.py
-│   │   └── test_generate.py
-│   └── instructions/
-│       ├── __init__.py
-│       └── exec_ir.yaml
-└── test/
-    └── test_exec_ir.cpp
-
-cmake/
-└── generate_exec_ir.cmake
-
-requirements.txt
+├── include/exec_ir.hpp
+├── src/exec_ir.cpp
+├── test/test_exec_ir.cpp
+└── python/
+    ├── pyproject.toml
+    ├── setup.cfg
+    ├── codegen/
+    └── instructions/
 ```
 
-The WP0 generator is the independent `ptxsim-exec-ir-codegen` distribution. Its import package is `ptxsim_exec_ir_codegen`; explicit setuptools `package_dir` mappings preserve the physical `codegen/` and sibling `instructions/` directories. The bundled manifest is installed as package data and is the default `python -m ptxsim_exec_ir_codegen` input. One generator module remains enough until code generation develops reusable internal modules.
+The core `ptxsim::exec_ir` target exposes only fully-bound values/programs,
+links only `ptxsim::common`, and accepts no frontend types. A separate
+planned `ptxsim::exec_ir_lowering` component will be mandatory for converting
+`ResolvedModule`; it will link `ptx_frontend::resolved_ir` and produce
+`ExecutableProgram`. Consumers of an already-built program will need neither
+frontend headers nor linkage. Keep CMake/Python generation out of
+configure/build network paths.
 
-`submod/exec_ir/python/setup.cfg` is the single source of truth for the `ptx_frontend` VCS commit. `requirements.txt` installs the local editable `ptxsim-exec-ir-codegen` package, whose metadata resolves that pinned dependency. Its transitive Python dependencies may initially follow the bounds declared by the installed package; add a full hash lock only when reproducible/offline packaging requires it.
+`.ports/ptx-frontend` pins frontend `v0.0.1b0`, installs its declared Python
+requirements in a vcpkg buildtree virtual environment, and generates the C++
+artifacts from upstream sources. It contains no generated snapshot. The root
+manifest will depend on this port only when the lowering target exists.
 
-The handwritten `exec_ir.hpp` facade includes the generated public header through the same `ptxsim/exec_ir/...` path in build-tree and installed-package consumers. CMake must register both include roots and explicitly install the generated header; source-header installation alone is insufficient.
-
----
-
-## 6. Work packages
+## 7. Work packages
 
 ### WP0 — Generator contract probe (implemented)
 
-Goal: prove that the Python environment prepared from `requirements.txt` can supply normalized frontend facts without using the wheel's fixed C++ emitter.
+The local `ptxsim-exec-ir-codegen` package proves that the pinned Python
+frontend model can be queried deterministically. It loads the packaged
+`ptx-instr/v1` database, resolves `add_integer_no_sat/default/u32`, and emits a
+byte-stable proof header to an explicit output path.
 
-Required behavior:
+This remains useful evidence for later static record/dispatch generation. It
+does not create a C++ `exec_ir` target, prove a runtime record shape, or make
+the generator a second frontend checker.
 
-1. import the required `code_gen` model API from the selected Python environment;
-2. locate the packaged `code_gen.resources/ptx_spec` with `importlib.resources`;
-3. load it through `code_gen.database.load_codegen_database`;
-4. verify `ptx-instr/v1`;
-5. resolve the selected `add_integer_no_sat/default/u32` form;
-6. emit a deterministic, minimal C++ proof header to the caller's explicit output path;
-7. fail clearly when the required API or spec schema does not match.
+### WP1 — Fully-bound executable program core (implemented)
 
-The installed package exposes:
+Define the smallest core `ptxsim::exec_ir` target needed to own:
 
-```text
-python -m ptxsim_exec_ir_codegen --output <header>
-ptxsim-exec-ir-codegen --output <header>
-```
+- `FunctionLayout`, immutable `ExecutableProgram`, checked function-local
+  fetch by `common::CodeLocation`, and derived flat offsets;
+- the static register slot widths required by the proven operations;
+- the executable instruction envelope and only the `mov`, `add`, `bra`, and
+  `exit` operation records already proven by executor probes; and
+- canonical executable-program printing.
 
-Both commands use the bundled manifest by default; `--manifest <path>` remains
-available for explicit validation and negative tests.
+Use only fully-bound operands (`RegisterSlot`, local PC, `FunctionId`, and
+owned raw values). Hand-constructed test programs are sufficient at this
+stage; do not add simulator composition, source retention, calls, activations,
+or a broad PTX opcode universe.
 
 Acceptance:
 
-```text
-same requirements environment, manifest, generator, and interpreter produce byte-identical output
-unknown manifest selector fails before C++ compilation
-no frontend checkout is required
-no generated file is added to Git
-```
+- fetch distinguishes `{func:0, pc:0}` from `{func:1, pc:0}`;
+- branch targets and fallthrough remain function-local;
+- construction rejects a final instruction that may fall through, while an
+  unpredicated terminal branch or exit needs no successor;
+- invalid function IDs and local PCs return structured errors;
+- flat offsets are derivable and never become Thread's authoritative PC; and
+- canonical output is deterministic for the same executable program.
 
-If the wheel model cannot support this narrow probe without importing frontend emitter internals, stop and first add a stable normalized-spec API to `ptx_frontend`; do not copy its normalizer into ptxsim.
+### WP2 — Resolved-IR lowering for the proven subset (blocked)
 
-### WP1 — Core `exec_ir` envelope and proven operation set
+First obtain the frontend label-boundary contract described in section 4. Add
+the separate, mandatory `ptxsim::exec_ir_lowering` component that consumes a
+checked `ResolvedModule` and lowers exactly the WP1 supported subset.
 
-Implement the handwritten operand/envelope/stream primitives and generate
-exactly four pure opcode records proven by executor WP1-WP3: `mov`, `add`,
-`bra`, and `exit`. Generalize the WP0 generator only enough to accept these
-four manifest mappings, modifier-free operations, and a generated static
-first-level dispatch list.
-Packed types, additional move sources, `.uni`, other add variants, and every
-other opcode remain unsupported.
+Frontend `v0.0.1b0` and remote `dev` currently retain a branch target's label
+`SymbolId`, but expose no mapping from that ID to an instruction boundary.
+Do not start lowering by reconstructing this mapping from source ranges.
 
-Minimum invariants:
+Tests cover function/register/label identity binding, owned immediates,
+unsupported-but-frontend-legal forms, no partial output, and frontend lifetime
+independence of the resulting executable program. The first supported set has
+no call execution path; binding a direct call remains unimplemented until its
+operation is selected for execution.
 
-- registers use `common::RegisterSlot`, never source spellings;
-- immediates own their bits after frontend destruction;
-- predicate negation is explicit;
-- PC is a checked dense instruction index; fallthrough is derived by the
-  stream and direct-branch target PCs are explicit;
-- `Op` contains no data type, modifier, or operand-form cross product;
-- `mov` and `add` data types are validated as record fields;
-- width/type combinations are validated before execution;
-- invalid records return structured errors.
+### WP3 — Static generated glue and build integration
 
-Do not add a complete PTX type universe or additional frontend forms merely
-because they exist in the frontend database. If selecting register-only
-`mov.b32` requires an operand-kind selector, add that one manifest field and
-validate it against the normalized frontend model; do not add a generic
-selection language.
+Only if WP1/WP2 demonstrate repetitive supported-record structure, extend the
+existing generator to emit the bounded operation declarations or static
+first-level dispatch glue. Its manifest must select only ptxsim-supported
+forms. Keep the handwritten executable program and lowering validation as the
+authority.
 
-### WP2 — CMake and CI generation
+Add CMake generation/installation checks only for files actually emitted.
+CI may prepare the pinned Python environment before configuration; CMake must
+not run `pip` or download dependencies.
 
-Add a build-tree-only custom command that:
+### WP4 — Executor consumption
 
-- requires a selected Python interpreter;
-- checks that the required `code_gen` imports are available before registering generation;
-- lists the manifest, generator, and wheel model/resources as dependencies;
-- exposes generated headers through `ptxsim::exec_ir`;
-- installs the public generated header and verifies an installed-package consumer;
-- never runs `pip` or downloads files during CMake configure/build.
+This is paired with executor WP4. Simulator constructs a
+`common::CodeLocation` from the issued Thread/activation state, fetches from
+`ExecutableProgram`, derives the same-function fallthrough, and calls the
+existing executor lower entry.
 
-CI prepares a virtual environment and runs:
+Replace private probe instruction use only after equivalent `mov`, `add`,
+`bra`, and `exit` behavior passes through the fully-bound representation.
+Preserve prepare/commit and lane-local fault behavior; executor owns neither
+frontend resolution nor program loading.
 
-```text
-python -m pip install -r requirements.txt
-cmake ... -DPython3_EXECUTABLE=<that environment>
-```
+### WP5 — Add instruction families on demand
 
-The current repository has no ptxsim vcpkg portfile. If one is added, that portfile must install the local generator package into the selected Python environment before CMake configuration, allowing its pinned package metadata to resolve `ptx_frontend`; ordinary CMake remains offline and never invokes `pip` itself.
+For each execution-ready family, add only:
 
-### WP3 — Optional frontend adapter
+- the fully-bound record fields it needs;
+- lowering/support validation;
+- static dispatch glue when repetition justifies it; and
+- one focused lowering-to-execution test.
 
-Add a separate target only after WP1/WP2 are stable:
+Do not generate or lower the complete PTX universe speculatively.
 
-```text
-ptxsim_frontend_adapter
-  -> ptxsim::exec_ir
-  -> ptx_frontend::resolved_ir
-```
+### Deferred — Calls, activations, and runtime frames
 
-For the first supported form, convert the exact frontend variant into the ptxsim record. The adapter must copy all required data and must not retain frontend references, `WithLocs`, source spellings, or source-owned storage.
+Do not create `Activation`, `ActivationId`, `CallStack`, call-frame storage, or
+activation-owned runtime bindings before the first implemented call/return
+path. That path will use `common::CodeLocation` for return, `FunctionId` for
+entry, and activation identity for dynamic register/local/parameter frames.
 
-Required tests:
+## 8. Non-goals and review gates
 
-- supported input converts exactly;
-- unsupported opcode/variant returns a structured diagnostic;
-- the resulting `exec_ir` remains valid after the frontend object is destroyed;
-- malformed/incomplete mappings produce no partial output.
+This plan does not authorize a direct-execution frontend ABI, a global
+`InstructionStream`, a `ProgramImage`, source/debug sidecars, a scheduler, or
+a simulator plan.
 
-The adapter requires a compatible C++ frontend package. Fix or explicitly map the frontend CMake/wheel release version before using its installed `codegen` component.
+Before each package, confirm:
 
-### WP4 — Add operation families on demand
-
-Add the next operation only when its executor semantics are ready. Each addition must include:
-
-- manifest support mapping;
-- generated structural record;
-- handwritten adapter conversion;
-- handwritten validation;
-- one focused test through generation and conversion.
-
-Do not generate the full PTX instruction universe up front. The generated variant remains bounded to operations the simulator can execute.
-
----
-
-## 7. Deferred artifacts
-
-The following are deliberately outside the initial `exec_ir` module:
-
-- function PC ranges and control-flow tables;
-- register-frame allocation plans;
-- globals/constants/parameters initializers;
-- source-location side tables;
-- calls and call-stack metadata;
-- executor, scheduler, and simulator composition.
-
-Add each only when the first execution path needs it. Do not recreate the retired `exec_ir -> program -> state -> bootstrap -> lowering` chain.
-
----
-
-## 8. First implementation checkpoint
-
-WP0 adds the pinned Python requirement, the local generator package, one
-minimal support manifest, and a deterministic Python check. It does not add
-frontend C++ linkage, an `exec_ir` target, or execution behavior. Executor
-WP1-WP3 and the post-Gate-A dispatch audit completed the consumer contract;
-the revised WP1 may now implement only the immutable dense stream, instruction
-envelope, pure four-op enum, per-op records, and static dispatch glue above.
+1. every operand needed at runtime is fully bound;
+2. frontend legality remains frontend-owned;
+3. `FunctionId + local PC`, not a flat offset, is the semantic code location;
+4. the new record/metadata is required by an implemented execution path; and
+5. generated code replaces repetition rather than introducing a second schema.

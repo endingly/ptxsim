@@ -3,14 +3,15 @@
 > **Status:** Historical planning record. The frontend/lowering, `exec_ir`,
 > program, state, and bootstrap pipeline described below was retired; the
 > surviving module boundaries are defined by the current source tree and
-> `docs/execution_model.md`.
+> `docs/execution_model.md`. Live architecture and implementation gates are
+> [the adopted executable-program decision](arch/resolved_ir_execution_architecture.md),
+> [the active exec_ir plan](milestone_plan/exec_ir_module_execution_plan.md),
+> and [the active executor plan](milestone_plan/executor_module_execution_plan.md).
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
-> **Current work:** retained modules are `common`, `arith`,
-> `execution_model`, `memory`, and `runtime`; the replacement `exec_ir`
-> boundary has completed its WP0 generator probe and is paused at WP1 while
-> the warp-first executor contract is developed in
-> [`milestone_plan/executor_module_execution_plan.md`](milestone_plan/executor_module_execution_plan.md).
+> **Current work (historical snapshot):** retained modules were `common`,
+> `arith`, `execution_model`, `memory`, and `runtime`; the following account
+> is not live gate truth.
 > V2-M1 arithmetic remediation was
 > accepted when PR #3 merged with merge commit
 > `7da3628c0463f586b190921b283b15ab059d2022` at 2026-08-30T13:08:30Z and

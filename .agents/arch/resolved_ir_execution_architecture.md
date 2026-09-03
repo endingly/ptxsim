@@ -70,7 +70,7 @@ ptx_frontend::resolved_ir::ResolvedModule
                  |
                  | lowering / symbolic identity elimination
                  v
-         ptxsim::ExecutableProgram
+    ptxsim::exec_ir::ExecutableProgram
                  |
                  v
               Simulator
@@ -123,14 +123,17 @@ location.
 The adopted static location is:
 
 ```cpp
+namespace ptxsim::common {
 struct CodeLocation {
-  common::FunctionId function;
-  common::ProgramCounter pc;  // function-local dense instruction index
+  FunctionId function;
+  ProgramCounter pc;  // function-local dense instruction index
 };
+}  // namespace ptxsim::common
 ```
 
 `ProgramCounter` is therefore function-local. A complete code location is the
-pair `(FunctionId, ProgramCounter)`.
+pair `(FunctionId, ProgramCounter)`. The value type belongs to `common` so
+`execution_model` can store it without depending on executable IR.
 
 This directly models the control-flow distinctions:
 
@@ -288,7 +291,7 @@ The adopted conceptual model is:
 
 ```cpp
 struct ThreadExecutionState {
-  CodeLocation location;
+  common::CodeLocation location;
   ActivationId activation;
   CallStack call_stack;
   // status / wait state / other execution-model state
@@ -312,7 +315,7 @@ A call frame minimally preserves the caller state required by return:
 
 ```cpp
 struct CallFrame {
-  CodeLocation return_to;
+  common::CodeLocation return_to;
   ActivationId caller_activation;
 };
 ```
@@ -348,25 +351,29 @@ However, the immutable physical instruction storage may be flattened into one
 contiguous vector for locality, serialization, and canonical printing:
 
 ```cpp
+namespace ptxsim::exec_ir {
 struct FunctionLayout {
   common::FunctionId id;
-  ProgramOffset begin;
+  std::size_t begin;
   std::uint32_t instruction_count;
-  RegisterLayout registers;
-  LocalLayout locals;
-  ParameterLayout parameters;
+  std::vector<common::RawWidth> register_widths;
 };
 
 class ExecutableProgram {
   std::vector<Instruction> instructions_;
   std::vector<FunctionLayout> functions_;
 };
+}  // namespace ptxsim::exec_ir
 ```
+
+The initial function layout contains only metadata consumed by implemented
+operations. Frontend-independent local and parameter layouts are added with
+their first executable consumer; no layout contains allocated memory handles.
 
 Fetch uses semantic `CodeLocation`:
 
 ```text
-FunctionLayout.begin + CodeLocation.pc -> flat instruction storage index
+FunctionLayout.begin + location.pc -> flat instruction storage index
 ```
 
 The flat index is a **derived program-layout address**, not the authoritative
@@ -537,7 +544,7 @@ ptx_frontend resolved_ir
         |
         | fully-bound lowering
         v
-ptxsim ExecutableProgram
+ptxsim::exec_ir::ExecutableProgram
         |
         +-- semantic address: FunctionId + function-local PC
         +-- physical storage: flat immutable instruction vector
@@ -553,7 +560,8 @@ Simulator
 
 Key invariants:
 
-1. `FunctionId + function-local PC` is the semantic static code location.
+1. `common::CodeLocation` (`FunctionId + function-local PC`) is the semantic
+   static code location.
 2. A flat instruction index is derived storage/printing information only.
 3. Labels are function-local and lower to local PCs.
 4. Direct calls lower to `FunctionId`; return destinations remain dynamic.

@@ -1,3 +1,21 @@
+> **Archive status:** Historical review snapshot; superseded
+> **Original artifact:** `v2-m2-main-review.md`
+> **Original SHA-256:**
+> `3a67b54782de39421ea277b2f006c01395d8d0ebdc4ade885fee3dee6f7cef9c`
+> **Reviewed branch/SHA:** `feat/v2-m2-exec-ir` at
+> `629783182259479b175172e0e6080d558dc2672c`
+> **Reviewed baseline:** `main@7da3628c0463f586b190921b283b15ab059d2022`
+> **Current milestone mapping:** retired V2-M2 program/lowering design;
+> replacement executable-program planning
+> **Supersedes:** none
+> **Superseded by:**
+> [executable-program architecture](../../.agents/arch/resolved_ir_execution_architecture.md),
+> [active exec_ir plan](../../.agents/milestone_plan/exec_ir_module_execution_plan.md),
+> and [active executor plan](../../.agents/milestone_plan/executor_module_execution_plan.md)
+>
+> The original review body is preserved byte-for-byte below; its internal
+> "Active" status is historical and is not live gate truth.
+---
 # `ptxsim` V2-M2 主 Review 与修复指南
 
 > **文档状态：** Active review / remediation guide  

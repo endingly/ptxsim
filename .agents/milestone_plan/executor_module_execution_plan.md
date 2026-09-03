@@ -1,8 +1,10 @@
 # PTXSim `inst_execute_engine` Module Execution Plan
 
-> **Status:** WP0-WP3 and post-Gate-A fetch/dispatch refactor implemented; WP4 waits for revised `exec_ir` WP1
+> **Status:** WP0-WP3 and the post-Gate-A probe dispatch refactor are
+> implemented; WP4 waits for `exec_ir` WP2 lowering
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
-> **Next dependency:** revised `exec_ir` WP1 immutable instruction stream
+> **Next dependency:** fully-bound `exec_ir::ExecutableProgram` and mandatory
+> resolved-IR lowering
 > **Language/build:** C++23 / CMake / GoogleTest
 > **Primary objective:** establish how one warp issue is prepared and committed before fixing the shape of `exec_ir`
 
@@ -14,15 +16,16 @@ The executor is designed before the C++ `exec_ir` representation.
 
 The stable execution unit is a scheduler-selected
 `execution_model::WarpIssueGroup`, not an isolated Thread and not a complete
-instruction stream. Simulator owns the immutable stream and performs fetch;
-executor consumes the fetched instruction:
+program. The future Simulator owns the immutable `ExecutableProgram` and
+performs fetch; executor consumes the fetched instruction:
 
 ```text
 scheduler selects Warp + WarpIssueGroup
                     |
                     v
-     Simulator fetches stream[issue.pc]
-       and derives the successor PC
+     Simulator forms a common::CodeLocation and fetches
+       ExecutableProgram::fetch(location)
+       and derives the local successor
                     |
                     v
       executor validates / dispatches
@@ -54,14 +57,16 @@ executor.execute(warp, issue, instruction, fallthrough);
 The facade is a convenience for lane-local execution and tests, not a second
 instruction engine. Collective instructions may reject a single-lane issue.
 
-Thread owns the sole authoritative current PC value. Simulator uses the
-transient `issue.pc` to fetch but stores no duplicate PC. The immutable dense
-instruction stream derives fallthrough; executor selects target/fallthrough
-and commits it through Thread.
+Thread owns the sole authoritative current PC value. In the planned production
+path, its function/activation state plus that local PC form
+`common::CodeLocation`;
+Simulator stores no duplicate authoritative PC. `ExecutableProgram` derives
+the flat storage offset and same-function fallthrough; executor selects
+target/fallthrough and commits the local PC through Thread.
 
-The first implementation uses handwritten probe operations and a static
-generated-shaped dispatch table. It does not add generated instruction
-records, a production instruction stream/Simulator, a dynamic handler
+The current executor implementation uses handwritten probe operations and a
+static generated-shaped dispatch table. It does not yet consume the existing
+`ExecutableProgram` or add lowering, a production Simulator, a dynamic handler
 registry, or a general transaction system.
 
 ---
@@ -86,7 +91,7 @@ Therefore:
 
 - `.agents/milestone_plan/exec_ir_module_execution_plan.md` WP0 remains valid;
 - executor WP1-WP3 completed the control-flow and dispatch gate;
-- revised `exec_ir` WP1 is resumed from the proven consumer contract;
+- revised `exec_ir` WP1 is implemented from the proven consumer contract;
 - generated C++ instruction types replace rather than preserve the private
   probe types when executor WP4 begins.
 
@@ -114,9 +119,9 @@ or instruction semantics.
 Current gaps relevant to later integration:
 
 - no production scheduler constructs `WarpIssueGroup` values;
-- no Simulator owns/fetches an immutable instruction stream;
+- no Simulator owns/fetches an `ExecutableProgram` by `common::CodeLocation`;
 - `WaitReason` is stored but has no complete set/get/clear transition API;
-- `Thread` has no current FunctionId or call stack.
+- `Thread` has no current FunctionId, activation, or call stack.
 
 ### 3.2 Memory
 
@@ -133,9 +138,12 @@ the first mutation and initially limit each lane to one storage write.
 `runtime::LaunchRuntime` is the current launch composition layer. It owns the
 Grid and memory managers and binds memory-owned handles to topology IDs.
 
-Register and local-frame lookup requires `(ThreadId, FunctionId)`. Until call
-state exists, the probe executor receives one explicit FunctionId from its
-test/launch context. It must not invent a current-function field or call stack.
+Register and local-frame lookup currently requires `(ThreadId, FunctionId)`.
+The explicit probe `FunctionId` and this binding are MVP assumptions: they are
+sufficient only while a Thread has one live activation for a function. Until
+call state exists, the probe executor receives that ID from its test/launch
+context. It must not invent a current-function field, activation, or call
+stack.
 
 ### 3.4 Arithmetic
 
@@ -155,9 +163,9 @@ common ───────────────> memory
 execution_model + memory ──> runtime
 runtime + arith ───────> executor
 
-future exec_ir ────────> executor input
-future scheduler ──────> executor caller
-future simulator ──────> scheduler + program/fetch + executor + runtime
+future exec_ir lowering ──> fully-bound ExecutableProgram
+future scheduler ─────────> executor caller
+future simulator ─────────> scheduler + program/fetch + executor + runtime
 ```
 
 Forbidden direction:
@@ -166,13 +174,14 @@ Forbidden direction:
 execution_model -X-> executor
 memory          -X-> execution_model
 memory          -X-> executor
-runtime         -X-> exec_ir
+runtime         -X-> frontend symbolic IR
 executor        -X-> ptx_frontend
 arith           -X-> executor/exec_ir/runtime
 ```
 
-The frontend may be used by a future build-time generator and frontend
-adapter. It is never a runtime executor dependency.
+The frontend is mandatory at lowering input, but never a runtime executor
+dependency. An already-built `ExecutableProgram` contains no frontend identity
+needed for execution.
 
 Do not add a separate `semantics` module for the first operations. Handwritten
 executor handlers may call `arith` directly. Split a semantics target only
@@ -239,10 +248,10 @@ thin constrained forwarder.
 PC ownership and transition policy are distinct:
 
 - Thread stores and exposes the authoritative current PC;
-- Simulator reads the transient issue PC to fetch from the immutable stream
-  but stores no duplicate authoritative PC;
-- the stream derives fallthrough from the dense index and the branch record
-  carries an explicit target;
+- Simulator derives `common::CodeLocation` from the issued Thread/activation
+  state and local issue PC, but stores no duplicate authoritative PC;
+- `ExecutableProgram` derives flat storage offsets and local fallthrough;
+  the branch record carries an explicit function-local target;
 - executor receives both the fetched instruction and fallthrough;
 - executor applies the chosen PC only during commit;
 - Thread may later enforce transition invariants, but it never interprets an
@@ -350,8 +359,9 @@ require atomic commit across those resources.
 | wait | deferred | must be defined with its wakeup protocol |
 
 No executor path may assume `ProgramCounter` is a byte address or increment it
-implicitly. The immutable instruction stream defines PC as a checked dense
-index and supplies the successor; executor receives that fallthrough value.
+implicitly. In the planned production path it is a checked function-local index;
+`ExecutableProgram` supplies the same-function successor and executor receives
+that fallthrough value.
 
 Predication is evaluated before non-predicate operands. A predicated-off lane
 must not fault because an unused data operand is uninitialized or invalid.
@@ -587,8 +597,12 @@ types may be replaced rather than preserved for compatibility.
 Gate A and the follow-up dispatch audit decided:
 
 - `Thread` is the only authoritative PC owner;
-- Simulator owns an immutable dense `std::vector<Instruction>`, fetches with
-  `WarpIssueGroup::pc`, derives fallthrough, and calls executor;
+- the current explicit `FunctionId` and `(ThreadId, FunctionId)` runtime
+  bindings are MVP probe assumptions, not a call-capable execution context;
+- the future Simulator owns an immutable `ExecutableProgram`, derives a
+  `common::CodeLocation` from Thread/activation state and `WarpIssueGroup::pc`,
+  fetches by that semantic location, derives function-local fallthrough, and
+  calls executor;
 - executor stores no instruction and exposes
   `execute(warp, issue, instruction, fallthrough)`;
 - top-level `Op` contains only `mov`, `add`, `bra`, and `exit` opcode identity;
@@ -597,14 +611,17 @@ Gate A and the follow-up dispatch audit decided:
 - a static generated-shaped table performs first-level dispatch; no dynamic
   registry or duplicated `Op`/payload tag is permitted.
 
-### WP4 — `exec_ir` consumption and dispatch
+### WP4 — Fully-bound `exec_ir` consumption and dispatch
 
-**Prerequisite:** Gate A and the revised `exec_ir` WP1 are complete.
+**Prerequisite:** Gate A plus `exec_ir` WP1/WP2 are complete.
 
 Tasks are intentionally bounded by the revised plan:
 
-- consume owned frontend-independent instruction values;
-- receive an already-fetched instruction and fallthrough from Simulator;
+- consume fully-bound `ExecutableProgram` instruction values, never frontend
+  symbolic IR;
+- receive an already-fetched instruction and a function-local successor only
+  when that instruction may fall through; the current mandatory fallthrough
+  argument is a probe API and need not survive WP4;
 - dispatch once by pure `Op` through generated static glue;
 - dispatch within the selected handler by normalized type/form/modifier only
   when the implemented opcode requires it;
@@ -612,9 +629,12 @@ Tasks are intentionally bounded by the revised plan:
 - do not add a dynamic registry/factory;
 - keep all runtime handles and topology objects outside `exec_ir`;
 - preserve the prepare/commit behavior proved by WP1-WP3;
+- reject a missing successor before mutation when predication or operation
+  semantics can select fallthrough;
 - reject unsupported operations before mutation.
 
-Do not add program loading or source/frontend ownership to executor.
+Do not add program loading, frontend ownership, or source ownership to
+executor.
 
 ### WP5 — Scalar load/store
 
@@ -688,19 +708,20 @@ dependency.
 
 ### WP8 — Calls and function-scoped resources
 
-**Prerequisites:** a program/function model and call-state owner exist.
+**Prerequisites:** `ExecutableProgram` fetch is integrated and a call-state
+owner exists.
 
 This work package must first resolve:
 
-- authoritative current FunctionId per Thread;
-- call/return PC storage;
-- register/local-frame allocation and destruction;
+- `common::CodeLocation` as authoritative static current location per Thread;
+- `ActivationId` and `CallStack` ownership;
+- `common::CodeLocation return_to` plus caller activation in each call frame;
+- activation-owned register/local/parameter frame allocation and destruction;
 - function-parameter binding, which LaunchRuntime does not currently expose;
 - divergent call behavior.
 
 Executor then implements call/return as explicit prepare/commit transitions.
-Do not add a placeholder call stack merely to remove the probe FunctionId
-parameter.
+Do not add a placeholder call stack merely to remove the MVP probe FunctionId.
 
 ### WP9 — Packaging and simulator integration
 
@@ -709,7 +730,8 @@ After the executor public contract is stable:
 - install/export `ptxsim::inst_execute_engine`;
 - add it to the root package target list;
 - add build-tree and installed-package consumer checks;
-- compose it with the future scheduler/program source in `simulator`;
+- compose it with the future scheduler, `ExecutableProgram` fetch, and runtime
+  in `simulator`;
 - add deterministic step-limit and unsupported-instruction handling to the
   simulator loop, not the arithmetic or memory modules;
 - run GCC/Clang Debug/Release and sanitizer gates.

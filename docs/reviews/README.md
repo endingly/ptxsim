@@ -9,13 +9,18 @@ remediation chain is V2-M1:
 1. [V2-M1 main review](v2-m1-main-review.md)
 2. [V2-M1 remediation review](v2-m1-fix-review.md)
 3. [V2-M1 rereview](v2-m1-fix-rereview.r1.md)
-4. [Current project plan](../../.agents/project_plan.md)
 
 The source artifacts and retained `fix/m5-main-review` branch predate the V2
 milestone reorder. Their `m5` names are historical input/continuity names,
 not V2-M5; V2-M5 remains the future floating/conversion integration milestone.
 
-The active V2-M2 remediation chain currently contains:
+The historical V2-M2 review record is:
 
 1. [V2-M2 main review](v2-m2-main-review.md)
-2. [Current project plan](../../.agents/project_plan.md)
+
+## Live architecture and implementation plans
+
+- [Adopted executable-program architecture](../../.agents/arch/resolved_ir_execution_architecture.md)
+- [Active exec_ir plan](../../.agents/milestone_plan/exec_ir_module_execution_plan.md)
+- [Active executor plan](../../.agents/milestone_plan/executor_module_execution_plan.md)
+- [Historical project plan](../../.agents/project_plan.md)
