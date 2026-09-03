@@ -111,6 +111,16 @@ record. The distinction is not `Add -> some different opcode`; it is:
 symbolic Add -> fully-bound executable Add
 ```
 
+The executable opcode/form topology is generated from a ptxsim backend support
+map validated against the packaged frontend instruction database. That map
+selects execution support and C++ leaf mappings only; it does not duplicate
+PTX legality. Generated records retain frontend-shaped opcode then form
+nesting, while their leaves contain only fully-bound ptxsim values. Every
+active resolved modifier is retained in frontend order: fixed modifiers are
+inline `static constexpr` selectors and dynamic modifiers are record fields.
+A multi-layout frontend variant retains its selected layout records and an
+`Operands` variant even when the current backend selects one layout.
+
 The executable representation therefore must not contain frontend `SymbolId`,
 label/register spelling, lexical scope, or source-range state required only for
 frontend interpretation.

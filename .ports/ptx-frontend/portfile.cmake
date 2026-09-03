@@ -3,8 +3,8 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO endingly/ptx_frontend
-    REF 0c00b51aef600d69d307b2d181e60911e898ac19
-    SHA512 afaf6fdc0f5e2b3b5eef551904a7abe095d5fb54db136e85d62ad8bdec8d1ecb620715b1af435306d0016df8973dd1e7d95d01b2493a5fa73f9af784759264ce
+    REF 2e91093a2858a5902a92783f4aed93bebfa75afb
+    SHA512 0d2ce434c28a1823606137a08b46bfcb6b8f733eda28aea3f3587afeb32e11dab142afc31ff60819a8eb5c61bdf635a252db0cbabe898357505a785eea20fd37
     HEAD_REF dev
 )
 

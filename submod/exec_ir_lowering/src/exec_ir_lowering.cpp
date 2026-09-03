@@ -280,7 +280,7 @@ struct RegisterLayout {
   return slot_for(layout, *base, common::RawWidth::b64, function, instruction);
 }
 
-/** @brief Constrains only resolved scalar memory forms with ignored controls. */
+/** @brief Constrains resolved scalar memory forms carrying modeled controls. */
 template <typename Form>
 concept DefaultMemoryControls = requires(const Form& form) {
   {
@@ -296,18 +296,39 @@ concept DefaultMemoryControls = requires(const Form& form) {
 };
 
 /**
- * @brief Accept controls with no modeled behavior: omitted/weak, no scope,
- *        MMIO, or cache modifier.
+ * @brief Execution-domain memory controls copied from a supported source form.
  */
+struct MemoryControls {
+  /** @brief Memory consistency retained for diagnostics and future execution. */
+  exec_ir::MemoryConsistency semantics;
+  /** @brief Memory visibility scope retained from the source form. */
+  exec_ir::MemoryScope scope;
+  /** @brief Whether the source requested MMIO behavior. */
+  bool mmio;
+  /** @brief Cache hint retained from the source form. */
+  exec_ir::CacheOperator cache;
+};
+
+/** @brief Copy currently supported memory controls into execution-domain types. */
 template <DefaultMemoryControls Form>
-[[nodiscard]] constexpr auto default_memory_controls(const Form& form) -> bool {
-  return (form.semantics.value ==
-              ptx_frontend::base::MemoryConsistency::Omitted ||
-          form.semantics.value ==
-              ptx_frontend::base::MemoryConsistency::Weak) &&
-         form.scope.value == ptx_frontend::base::MemoryScope::None &&
-         !form.mmio.value &&
-         form.cache.value == ptx_frontend::base::CacheOperator::Unspecified;
+[[nodiscard]] constexpr auto memory_controls(const Form& form)
+    -> std::optional<MemoryControls> {
+  if (form.scope.value != ptx_frontend::base::MemoryScope::None ||
+      form.mmio.value ||
+      form.cache.value != ptx_frontend::base::CacheOperator::Unspecified) {
+    return std::nullopt;
+  }
+  if (form.semantics.value == ptx_frontend::base::MemoryConsistency::Omitted) {
+    return MemoryControls{exec_ir::MemoryConsistency::omitted,
+                          exec_ir::MemoryScope::none, false,
+                          exec_ir::CacheOperator::unspecified};
+  }
+  if (form.semantics.value == ptx_frontend::base::MemoryConsistency::Weak) {
+    return MemoryControls{exec_ir::MemoryConsistency::weak,
+                          exec_ir::MemoryScope::none, false,
+                          exec_ir::CacheOperator::unspecified};
+  }
+  return std::nullopt;
 }
 
 [[nodiscard]] auto labels_for(
@@ -348,10 +369,10 @@ template <DefaultMemoryControls Form>
 }
 
 [[nodiscard]] auto branch_for(
-    const ResolvedBranchTarget& target,
+    const ResolvedBranchTarget& target, bool uni,
     const std::unordered_map<std::uint32_t, common::ProgramCounter>& labels,
     std::uint32_t body_size, std::uint32_t function, std::uint32_t instruction)
-    -> std::expected<exec_ir::Branch, LoweringError> {
+    -> std::expected<exec_ir::Bra::Direct, LoweringError> {
   if (!target.symbol_id) {
     return error(LoweringErrorCode::malformed_resolved_ir, function,
                  instruction);
@@ -365,7 +386,7 @@ template <DefaultMemoryControls Form>
     return error(LoweringErrorCode::invalid_branch_target, function,
                  instruction, target.symbol_id->value);
   }
-  return exec_ir::Branch{found->second};
+  return exec_ir::Bra::Direct{uni, found->second};
 }
 
 [[nodiscard]] auto lower_instruction(
@@ -408,9 +429,12 @@ template <DefaultMemoryControls Form>
       return std::unexpected(destination.error());
     if (!source_slot)
       return std::unexpected(source_slot.error());
-    return exec_ir::Instruction{
+    return exec_ir::Mov{
         *predicate,
-        exec_ir::Move{exec_ir::DataType::b32, *destination, *source_slot}};
+        exec_ir::Mov::Variant{exec_ir::Mov::Scalar{
+            exec_ir::DataType::b32,
+            exec_ir::Mov::Scalar::Operands{exec_ir::Mov::Scalar::ScalarOperands{
+                *destination, *source_slot}}}}};
   }
 
   if (const auto* add = std::get_if<Add>(&instruction)) {
@@ -440,9 +464,9 @@ template <DefaultMemoryControls Form>
       return std::unexpected(lhs.error());
     if (!rhs)
       return std::unexpected(rhs.error());
-    return exec_ir::Instruction{
-        *predicate,
-        exec_ir::Add{exec_ir::DataType::u32, *destination, *lhs, *rhs}};
+    return exec_ir::Add{*predicate,
+                        exec_ir::Add::Variant{exec_ir::Add::IntegerNoSat{
+                            exec_ir::DataType::u32, *destination, *lhs, *rhs}}};
   }
 
   if (const auto* bra = std::get_if<Bra>(&instruction)) {
@@ -453,13 +477,14 @@ template <DefaultMemoryControls Form>
     }
     const auto predicate = predicate_for(bra->execution_predicate, registers,
                                          function_index, instruction_index);
-    const auto branch = branch_for(form->target.value, labels, body_size,
-                                   function_index, instruction_index);
+    const auto branch =
+        branch_for(form->target.value, form->uni.value, labels, body_size,
+                   function_index, instruction_index);
     if (!predicate)
       return std::unexpected(predicate.error());
     if (!branch)
       return std::unexpected(branch.error());
-    return exec_ir::Instruction{*predicate, *branch};
+    return exec_ir::Bra{*predicate, exec_ir::Bra::Variant{*branch}};
   }
 
   if (const auto* ld = std::get_if<Ld>(&instruction)) {
@@ -469,7 +494,13 @@ template <DefaultMemoryControls Form>
       return std::unexpected(predicate.error());
     const auto lower = [&](const auto& form, exec_ir::AddressSpace space)
         -> std::expected<exec_ir::Instruction, LoweringError> {
-      if (!default_memory_controls(form)) {
+      const auto controls = memory_controls(form);
+      if (!controls) {
+        return error(LoweringErrorCode::unsupported_form, function_index,
+                     instruction_index);
+      }
+      if (space == exec_ir::AddressSpace::generic &&
+          controls->semantics != exec_ir::MemoryConsistency::omitted) {
         return error(LoweringErrorCode::unsupported_form, function_index,
                      instruction_index);
       }
@@ -486,9 +517,18 @@ template <DefaultMemoryControls Form>
         return std::unexpected(destination.error());
       if (!address)
         return std::unexpected(address.error());
-      return exec_ir::Instruction{
+      if (space == exec_ir::AddressSpace::generic) {
+        return exec_ir::Ld{
+            *predicate, exec_ir::Ld::Variant{exec_ir::Ld::GenericScalar{
+                            controls->semantics, controls->scope,
+                            controls->mmio, controls->cache,
+                            exec_ir::DataType::u32, *destination, *address}}};
+      }
+      return exec_ir::Ld{
           *predicate,
-          exec_ir::Load{exec_ir::DataType::u32, space, *destination, *address}};
+          exec_ir::Ld::Variant{exec_ir::Ld::ExplicitScalar{
+              space, controls->cache, controls->semantics, controls->scope,
+              controls->mmio, exec_ir::DataType::u32, *destination, *address}}};
     };
     if (const auto* form = std::get_if<Ld::GenericScalar>(&ld->variant)) {
       return lower(*form, exec_ir::AddressSpace::generic);
@@ -511,7 +551,13 @@ template <DefaultMemoryControls Form>
       return std::unexpected(predicate.error());
     const auto lower = [&](const auto& form, exec_ir::AddressSpace space)
         -> std::expected<exec_ir::Instruction, LoweringError> {
-      if (!default_memory_controls(form)) {
+      const auto controls = memory_controls(form);
+      if (!controls) {
+        return error(LoweringErrorCode::unsupported_form, function_index,
+                     instruction_index);
+      }
+      if (space == exec_ir::AddressSpace::generic &&
+          controls->semantics != exec_ir::MemoryConsistency::omitted) {
         return error(LoweringErrorCode::unsupported_form, function_index,
                      instruction_index);
       }
@@ -528,9 +574,18 @@ template <DefaultMemoryControls Form>
         return std::unexpected(address.error());
       if (!source)
         return std::unexpected(source.error());
-      return exec_ir::Instruction{
+      if (space == exec_ir::AddressSpace::generic) {
+        return exec_ir::St{
+            *predicate,
+            exec_ir::St::Variant{exec_ir::St::GenericScalar{
+                controls->semantics, controls->scope, controls->mmio,
+                controls->cache, exec_ir::DataType::u32, *address, *source}}};
+      }
+      return exec_ir::St{
           *predicate,
-          exec_ir::Store{exec_ir::DataType::u32, space, *address, *source}};
+          exec_ir::St::Variant{exec_ir::St::ExplicitScalar{
+              space, controls->cache, controls->semantics, controls->scope,
+              controls->mmio, exec_ir::DataType::u32, *address, *source}}};
     };
     if (const auto* form = std::get_if<St::GenericScalar>(&st->variant)) {
       return lower(*form, exec_ir::AddressSpace::generic);
@@ -561,7 +616,8 @@ template <DefaultMemoryControls Form>
     if (!membermask) {
       return std::unexpected(membermask.error());
     }
-    return exec_ir::Instruction{std::nullopt, exec_ir::Bar{*membermask}};
+    return exec_ir::Bar{std::nullopt, exec_ir::Bar::Variant{
+                                          exec_ir::Bar::WarpSync{*membermask}}};
   }
 
   if (const auto* exit = std::get_if<Exit>(&instruction)) {
@@ -573,7 +629,8 @@ template <DefaultMemoryControls Form>
                                          function_index, instruction_index);
     if (!predicate)
       return std::unexpected(predicate.error());
-    return exec_ir::Instruction{*predicate, exec_ir::Exit{}};
+    return exec_ir::Exit{*predicate,
+                         exec_ir::Exit::Variant{exec_ir::Exit::Bare{}}};
   }
 
   return error(LoweringErrorCode::unsupported_instruction, function_index,

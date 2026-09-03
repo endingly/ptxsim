@@ -1,0 +1,82 @@
+schema: ptxsim-exec-ir-backend/v1
+ptx_spec_schema: ptx-instr/v1
+namespace: ptxsim::exec_ir
+
+# Backend storage mappings, not a copy of frontend legality. The frontend
+# database remains authoritative for variants, layouts, and allowed values.
+modifier_kinds:
+  type:
+    cpp_type: DataType
+    values: {b32: DataType::b32, u32: DataType::u32}
+  state_space:
+    cpp_type: AddressSpace
+    values: {global: AddressSpace::global}
+  semantics:
+    cpp_type: MemoryConsistency
+    values: {omitted: MemoryConsistency::omitted, weak: MemoryConsistency::weak}
+  scope:
+    cpp_type: MemoryScope
+    values: {none: MemoryScope::none}
+  cache:
+    cpp_type: CacheOperator
+    values: {unspecified: CacheOperator::unspecified}
+  flag:
+    cpp_type: bool
+    values: {true: "true", false: "false"}
+
+operand_kinds:
+  reg: {cpp_type: common::RegisterSlot, values: {}}
+  reg_or_imm: {cpp_type: B32Operand, values: {}}
+  mov_scalar_src: {cpp_type: common::RegisterSlot, values: {}}
+  addr: {cpp_type: common::RegisterSlot, values: {}}
+  label: {cpp_type: common::ProgramCounter, values: {}}
+
+instructions:
+  - opcode: mov
+    may_fallthrough: true
+    forms:
+      - variant: mov_scalar
+        layouts: [scalar]
+        modifier_values: {type: [b32]}
+  - opcode: add
+    may_fallthrough: true
+    forms:
+      - variant: add_integer_no_sat
+        layouts: [default]
+        modifier_values: {type: [u32]}
+  - opcode: ld
+    may_fallthrough: true
+    forms:
+      - variant: ld_generic_scalar
+        layouts: [default]
+        modifier_values: {semantics: [omitted], scope: [none], mmio: [false], cache: [unspecified], type: [u32]}
+      - variant: ld_explicit_scalar
+        layouts: [default]
+        modifier_values: {state_space: [global], cache: [unspecified], semantics: [omitted, weak], scope: [none], mmio: [false], type: [u32]}
+  - opcode: st
+    may_fallthrough: true
+    forms:
+      - variant: st_generic_scalar
+        layouts: [default]
+        modifier_values: {semantics: [omitted], scope: [none], mmio: [false], cache: [unspecified], type: [u32]}
+      - variant: st_explicit_scalar
+        layouts: [default]
+        modifier_values: {state_space: [global], cache: [unspecified], semantics: [omitted, weak], scope: [none], mmio: [false], type: [u32]}
+  - opcode: bar
+    may_fallthrough: true
+    forms:
+      - variant: bar_warp_sync
+        layouts: [default]
+        modifier_values: {warp: [true], sync: [true]}
+  - opcode: bra
+    may_fallthrough: false
+    forms:
+      - variant: bra_direct
+        layouts: [default]
+        modifier_values: {uni: [false, true]}
+  - opcode: exit
+    may_fallthrough: false
+    forms:
+      - variant: exit_bare
+        layouts: [default]
+        modifier_values: {}

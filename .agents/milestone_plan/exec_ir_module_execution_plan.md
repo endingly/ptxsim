@@ -101,8 +101,9 @@ shape is compatible with that distinction without creating `Activation` or a
 
 ## 3. Instruction and dispatch boundary
 
-`Instruction` is a ptxsim-owned value envelope over only supported executable
-operation records. Its top-level `Op` is pure opcode identity:
+`Instruction` is a generated ptxsim-owned value over only supported executable
+opcode records. Each opcode record owns its execution predicate and a nested
+fully-bound selected-form variant. Its top-level `Op` is pure opcode identity:
 
 ```text
 mov | add | bra | exit | ...
@@ -114,11 +115,16 @@ selected opcode handler performs a second dispatch by the needed form/type or
 modifier. Do not encode their cross-product in `Op`; do not add a registry,
 factory, or virtual handler hierarchy.
 
-Operation records may be generated after the existing generator contract is
-extended for a real supported form. Generated code is structural/dispatch glue;
-it must not reimplement frontend legality. Operand primitives, `Instruction`,
-`ExecutableProgram`, lowering, validation, and execution policy remain
-handwritten.
+The ptxsim backend YAML is a support/mapping selection, not a second PTX
+schema. It is validated against the packaged frontend database, which remains
+the authority for PTX opcode, form, layout, and modifier legality. Generated
+code is structural glue; operand primitives, `ExecutableProgram`, lowering,
+validation, printing, and execution policy remain handwritten.
+
+The current projection is `mov.scalar`, `add.integer_no_sat`, generic and
+global scalar `ld`/`st`, `bar.warp.sync`, `bra.direct`, and `exit.bare`.
+It retains all active memory controls in execution records, while program
+validation limits execution to the controls currently implemented.
 
 ## 4. Frontend lowering contract
 
@@ -284,11 +290,13 @@ For each execution-ready family, add only:
 Do not generate or lower the complete PTX universe speculatively.
 
 The implemented first family is `ld.u32`/`st.u32` generic and
-`ld.global.u32`/`st.global.u32`. The executable records own only an address
-space (`generic` or `global`), a b64 address register slot, and their b32
-data register slot. The transfer is four bytes, four-byte aligned, and
-little-endian. Lowering accepts only an offset-free resolved register address,
-default or weak controls with no cache/MMIO/scope behavior, and leaves no
+`ld.global.u32`/`st.global.u32`. The executable records own an address space
+when explicit, a b64 address register slot, b32 data register slots, and
+copied semantics/scope/MMIO/cache controls. The transfer is four bytes,
+four-byte aligned, and little-endian. Lowering accepts only an offset-free
+resolved register address, omitted controls for generic forms or omitted/weak
+controls for explicit global forms, with no cache/MMIO/scope behavior, and
+leaves no
 frontend identity in the record. Explicit local/shared, symbolic/immediate
 addresses, and offsets remain deferred.
 

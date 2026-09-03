@@ -311,16 +311,20 @@ done:
     const auto instruction =
         program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
     ASSERT_TRUE(instruction);
-    ASSERT_TRUE(instruction->get().predicate);
-    EXPECT_EQ(instruction->get().predicate->source, common::RegisterSlot{0});
+    ASSERT_TRUE(exec_ir::execution_predicate(instruction->get()));
+    EXPECT_EQ(exec_ir::execution_predicate(instruction->get())->source,
+              common::RegisterSlot{0});
   }
-  EXPECT_TRUE(program->fetch({common::FunctionId{0}, common::ProgramCounter{0}})
-                  ->get()
-                  .predicate->negated);
+  EXPECT_TRUE(
+      exec_ir::execution_predicate(
+          program->fetch({common::FunctionId{0}, common::ProgramCounter{0}})
+              ->get())
+          ->negated);
   EXPECT_FALSE(
-      program->fetch({common::FunctionId{0}, common::ProgramCounter{1}})
-          ->get()
-          .predicate->negated);
+      exec_ir::execution_predicate(
+          program->fetch({common::FunctionId{0}, common::ProgramCounter{1}})
+              ->get())
+          ->negated);
 }
 
 TEST(ExecIrLowering, PreservesZeroBodyPrototypes) {

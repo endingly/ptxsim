@@ -222,22 +222,23 @@ auto bytes_b32(const std::array<std::byte, 4>& value) -> std::uint32_t {
 }
 
 auto prepare_operation(const memory::RegisterView& registers,
-                       const arith::context&, const exec_ir::Move& operation,
+                       const arith::context&, const exec_ir::Mov& operation,
                        common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto value =
-      b32_operand(registers, exec_ir::B32Operand{operation.source});
+  const auto& form = std::get<exec_ir::Mov::Scalar>(operation.variant);
+  const auto& operands =
+      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  const auto value = b32_operand(registers, exec_ir::B32Operand{operands.src});
   if (!value) {
     return std::unexpected(value.error());
   }
-  if (const auto destination =
-          b32_destination(registers, operation.destination);
+  if (const auto destination = b32_destination(registers, operands.dst);
       !destination) {
     return std::unexpected(destination.error());
   }
   return PreparedEffect{
-      .write = PreparedWrite{registers, operation.destination,
-                             common::RawValue::b32(*value)},
+      .write =
+          PreparedWrite{registers, operands.dst, common::RawValue::b32(*value)},
       .memory_write = std::nullopt,
       .control = successor,
   };
@@ -248,16 +249,16 @@ auto prepare_operation(const memory::RegisterView& registers,
                        const exec_ir::Add& operation,
                        common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto lhs = b32_operand(registers, operation.lhs);
+  const auto& form = std::get<exec_ir::Add::IntegerNoSat>(operation.variant);
+  const auto lhs = b32_operand(registers, form.src1);
   if (!lhs) {
     return std::unexpected(lhs.error());
   }
-  const auto rhs = b32_operand(registers, operation.rhs);
+  const auto rhs = b32_operand(registers, form.src2);
   if (!rhs) {
     return std::unexpected(rhs.error());
   }
-  if (const auto destination =
-          b32_destination(registers, operation.destination);
+  if (const auto destination = b32_destination(registers, form.dst);
       !destination) {
     return std::unexpected(destination.error());
   }
@@ -267,8 +268,8 @@ auto prepare_operation(const memory::RegisterView& registers,
     return std::unexpected(LaneFaultCause{sum.error()});
   }
   return PreparedEffect{
-      .write = PreparedWrite{registers, operation.destination,
-                             common::RawValue::b32(sum->value)},
+      .write =
+          PreparedWrite{registers, form.dst, common::RawValue::b32(sum->value)},
       .memory_write = std::nullopt,
       .control = successor,
   };
@@ -279,12 +280,15 @@ auto prepare_operation(const memory::RegisterView& registers,
  *
  * No register mutation occurs until the common commit phase.
  */
-auto prepare_operation(LaneResourceResolver& resolver,
-                       const exec_ir::Load& operation,
-                       common::ProgramCounter successor)
+template <typename Form>
+  requires requires(const Form& form) {
+    form.address;
+    form.dst;
+  }
+auto prepare_load(LaneResourceResolver& resolver, const Form& operation,
+                  exec_ir::AddressSpace space, common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto memory =
-      resolver.resolve_memory(operation.space, operation.address);
+  const auto memory = resolver.resolve_memory(space, operation.address);
   if (!memory) {
     return std::unexpected(memory.error());
   }
@@ -296,13 +300,12 @@ auto prepare_operation(LaneResourceResolver& resolver,
   if (!registers) {
     return std::unexpected(registers.error());
   }
-  if (const auto destination =
-          b32_destination(registers->get(), operation.destination);
+  if (const auto destination = b32_destination(registers->get(), operation.dst);
       !destination) {
     return std::unexpected(destination.error());
   }
   return PreparedEffect{
-      .write = PreparedWrite{registers->get(), operation.destination,
+      .write = PreparedWrite{registers->get(), operation.dst,
                              common::RawValue::b32(bytes_b32(bytes))},
       .memory_write = std::nullopt,
       .control = successor,
@@ -314,12 +317,16 @@ auto prepare_operation(LaneResourceResolver& resolver,
  *
  * The validation has no side effects, leaving the actual write for commit.
  */
-auto prepare_operation(LaneResourceResolver& resolver,
-                       const exec_ir::Store& operation,
-                       common::ProgramCounter successor)
+template <typename Form>
+  requires requires(const Form& form) {
+    form.address;
+    form.src;
+  }
+auto prepare_store(LaneResourceResolver& resolver, const Form& operation,
+                   exec_ir::AddressSpace space,
+                   common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto memory =
-      resolver.resolve_memory(operation.space, operation.address);
+  const auto memory = resolver.resolve_memory(space, operation.address);
   if (!memory) {
     return std::unexpected(memory.error());
   }
@@ -327,7 +334,7 @@ auto prepare_operation(LaneResourceResolver& resolver,
   if (!registers) {
     return std::unexpected(registers.error());
   }
-  const auto source = registers->get().read(operation.source);
+  const auto source = registers->get().read(operation.src);
   if (!source) {
     return std::unexpected(LaneFaultCause{source.error()});
   }
@@ -347,12 +354,12 @@ auto prepare_operation(LaneResourceResolver& resolver,
   };
 }
 
-auto prepare_operation(const exec_ir::Branch& operation)
+auto prepare_operation(const exec_ir::Bra& operation)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   return PreparedEffect{
       .write = std::nullopt,
       .memory_write = std::nullopt,
-      .control = operation.target,
+      .control = std::get<exec_ir::Bra::Direct>(operation.variant).target,
   };
 }
 
@@ -393,7 +400,8 @@ auto prepare_operation(LaneResourceResolver& resolver,
                        const exec_ir::Bar& operation,
                        common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto membermask = warp_sync_membermask(resolver, operation.membermask);
+  const auto membermask = warp_sync_membermask(
+      resolver, std::get<exec_ir::Bar::WarpSync>(operation.variant).membermask);
   if (!membermask) {
     return std::unexpected(membermask.error());
   }
@@ -406,12 +414,12 @@ auto prepare_operation(LaneResourceResolver& resolver,
 }
 
 using LanePrepareHandler = std::expected<PreparedEffect, LaneFaultCause> (*)(
-    LaneResourceResolver&, const arith::context&, const exec_ir::Operation&,
+    LaneResourceResolver&, const arith::context&, const exec_ir::Instruction&,
     std::optional<common::ProgramCounter>);
 
 auto prepare_move_b32(LaneResourceResolver& registers,
                       const arith::context& arithmetic,
-                      const exec_ir::Operation& operation,
+                      const exec_ir::Instruction& operation,
                       std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   const auto view = registers.resolve();
@@ -419,12 +427,12 @@ auto prepare_move_b32(LaneResourceResolver& registers,
     return std::unexpected(view.error());
   }
   return prepare_operation(view->get(), arithmetic,
-                           std::get<exec_ir::Move>(operation), *successor);
+                           std::get<exec_ir::Mov>(operation), *successor);
 }
 
 auto prepare_add_u32(LaneResourceResolver& registers,
                      const arith::context& arithmetic,
-                     const exec_ir::Operation& operation,
+                     const exec_ir::Instruction& operation,
                      std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   const auto view = registers.resolve();
@@ -437,26 +445,44 @@ auto prepare_add_u32(LaneResourceResolver& registers,
 
 /** @brief Adapt the u32 load record to the common opcode dispatch signature. */
 auto prepare_load_u32(LaneResourceResolver& registers, const arith::context&,
-                      const exec_ir::Operation& operation,
+                      const exec_ir::Instruction& operation,
                       std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  return prepare_operation(registers, std::get<exec_ir::Load>(operation),
-                           *successor);
+  const auto& load = std::get<exec_ir::Ld>(operation);
+  return std::visit(
+      [&](const auto& form) {
+        using Form = std::remove_cvref_t<decltype(form)>;
+        if constexpr (std::same_as<Form, exec_ir::Ld::GenericScalar>)
+          return prepare_load(registers, form, exec_ir::AddressSpace::generic,
+                              *successor);
+        else
+          return prepare_load(registers, form, form.state_space, *successor);
+      },
+      load.variant);
 }
 
 /** @brief Adapt the u32 store record to the common opcode dispatch signature. */
 auto prepare_store_u32(LaneResourceResolver& registers, const arith::context&,
-                       const exec_ir::Operation& operation,
+                       const exec_ir::Instruction& operation,
                        std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  return prepare_operation(registers, std::get<exec_ir::Store>(operation),
-                           *successor);
+  const auto& store = std::get<exec_ir::St>(operation);
+  return std::visit(
+      [&](const auto& form) {
+        using Form = std::remove_cvref_t<decltype(form)>;
+        if constexpr (std::same_as<Form, exec_ir::St::GenericScalar>)
+          return prepare_store(registers, form, exec_ir::AddressSpace::generic,
+                               *successor);
+        else
+          return prepare_store(registers, form, form.state_space, *successor);
+      },
+      store.variant);
 }
 
 /** @brief Adapt the warp rendezvous record to the common opcode dispatcher. */
 auto prepare_bar_warp_sync(LaneResourceResolver& registers,
                            const arith::context&,
-                           const exec_ir::Operation& operation,
+                           const exec_ir::Instruction& operation,
                            std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   return prepare_operation(registers, std::get<exec_ir::Bar>(operation),
@@ -464,14 +490,14 @@ auto prepare_bar_warp_sync(LaneResourceResolver& registers,
 }
 
 auto prepare_branch(LaneResourceResolver&, const arith::context&,
-                    const exec_ir::Operation& operation,
+                    const exec_ir::Instruction& operation,
                     std::optional<common::ProgramCounter>)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  return prepare_operation(std::get<exec_ir::Branch>(operation));
+  return prepare_operation(std::get<exec_ir::Bra>(operation));
 }
 
 auto prepare_exit(LaneResourceResolver&, const arith::context&,
-                  const exec_ir::Operation& operation,
+                  const exec_ir::Instruction& operation,
                   std::optional<common::ProgramCounter>)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   return prepare_operation(std::get<exec_ir::Exit>(operation));
@@ -489,15 +515,33 @@ struct SelectedPreparer {
 };
 
 using OpFamilySelector = std::expected<SelectedPreparer, StepErrorCode> (*)(
-    const exec_ir::Operation&);
+    const exec_ir::Instruction&);
 
 auto unsupported_instruction() -> std::unexpected<StepErrorCode> {
   return std::unexpected(StepErrorCode::unsupported_instruction);
 }
 
-auto select_move(const exec_ir::Operation& operation)
+/** @brief Keep direct executor callers within the program's memory subset. */
+template <typename Form>
+  requires requires(const Form& form) {
+    form.semantics;
+    form.scope;
+    form.mmio;
+    form.cache;
+  }
+[[nodiscard]] constexpr auto supports_memory_controls(const Form& form)
+    -> bool {
+  return (form.semantics == exec_ir::MemoryConsistency::omitted ||
+          form.semantics == exec_ir::MemoryConsistency::weak) &&
+         form.scope == exec_ir::MemoryScope::none && !form.mmio &&
+         form.cache == exec_ir::CacheOperator::unspecified;
+}
+
+auto select_move(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  switch (std::get<exec_ir::Move>(operation).type) {
+  switch (
+      std::get<exec_ir::Mov::Scalar>(std::get<exec_ir::Mov>(operation).variant)
+          .type) {
     case exec_ir::DataType::b32:
       return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
     case exec_ir::DataType::u32:
@@ -506,9 +550,11 @@ auto select_move(const exec_ir::Operation& operation)
   return unsupported_instruction();
 }
 
-auto select_add(const exec_ir::Operation& operation)
+auto select_add(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  switch (std::get<exec_ir::Add>(operation).type) {
+  switch (std::get<exec_ir::Add::IntegerNoSat>(
+              std::get<exec_ir::Add>(operation).variant)
+              .type) {
     case exec_ir::DataType::u32:
       return SelectedPreparer{prepare_add_u32, PrepareKind::scalar};
     case exec_ir::DataType::b32:
@@ -518,64 +564,66 @@ auto select_add(const exec_ir::Operation& operation)
 }
 
 /** @brief Select only validated scalar-load address spaces and u32 handling. */
-auto select_load(const exec_ir::Operation& operation)
+auto select_load(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  const auto& load = std::get<exec_ir::Load>(operation);
-  switch (load.space) {
-    case exec_ir::AddressSpace::generic:
-    case exec_ir::AddressSpace::global:
-      break;
-    default:
-      return unsupported_instruction();
-  }
-  switch (load.type) {
-    case exec_ir::DataType::u32:
-      return SelectedPreparer{prepare_load_u32, PrepareKind::scalar};
-    case exec_ir::DataType::b32:
-      return unsupported_instruction();
-  }
-  return unsupported_instruction();
+  const auto& load = std::get<exec_ir::Ld>(operation);
+  return std::visit(
+      [](const auto& form) -> std::expected<SelectedPreparer, StepErrorCode> {
+        using Form = std::remove_cvref_t<decltype(form)>;
+        if (form.type != exec_ir::DataType::u32 ||
+            !supports_memory_controls(form))
+          return unsupported_instruction();
+        if constexpr (std::same_as<Form, exec_ir::Ld::GenericScalar>) {
+          if (form.semantics != exec_ir::MemoryConsistency::omitted)
+            return unsupported_instruction();
+        } else if (form.state_space != exec_ir::AddressSpace::global) {
+          return unsupported_instruction();
+        }
+        return SelectedPreparer{prepare_load_u32, PrepareKind::scalar};
+      },
+      load.variant);
 }
 
 /** @brief Select only validated scalar-store address spaces and u32 handling. */
-auto select_store(const exec_ir::Operation& operation)
+auto select_store(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  const auto& store = std::get<exec_ir::Store>(operation);
-  switch (store.space) {
-    case exec_ir::AddressSpace::generic:
-    case exec_ir::AddressSpace::global:
-      break;
-    default:
-      return unsupported_instruction();
-  }
-  switch (store.type) {
-    case exec_ir::DataType::u32:
-      return SelectedPreparer{prepare_store_u32, PrepareKind::scalar};
-    case exec_ir::DataType::b32:
-      return unsupported_instruction();
-  }
-  return unsupported_instruction();
+  const auto& store = std::get<exec_ir::St>(operation);
+  return std::visit(
+      [](const auto& form) -> std::expected<SelectedPreparer, StepErrorCode> {
+        using Form = std::remove_cvref_t<decltype(form)>;
+        if (form.type != exec_ir::DataType::u32 ||
+            !supports_memory_controls(form))
+          return unsupported_instruction();
+        if constexpr (std::same_as<Form, exec_ir::St::GenericScalar>) {
+          if (form.semantics != exec_ir::MemoryConsistency::omitted)
+            return unsupported_instruction();
+        } else if (form.state_space != exec_ir::AddressSpace::global) {
+          return unsupported_instruction();
+        }
+        return SelectedPreparer{prepare_store_u32, PrepareKind::scalar};
+      },
+      store.variant);
 }
 
 /** @brief Select the collective preparation and commit path for warp sync. */
-auto select_bar(const exec_ir::Operation&)
+auto select_bar(const exec_ir::Instruction&)
     -> std::expected<SelectedPreparer, StepErrorCode> {
   return SelectedPreparer{prepare_bar_warp_sync, PrepareKind::warp_sync};
 }
 
-auto select_branch(const exec_ir::Operation&)
+auto select_branch(const exec_ir::Instruction&)
     -> std::expected<SelectedPreparer, StepErrorCode> {
   return SelectedPreparer{prepare_branch, PrepareKind::scalar};
 }
 
-auto select_exit(const exec_ir::Operation&)
+auto select_exit(const exec_ir::Instruction&)
     -> std::expected<SelectedPreparer, StepErrorCode> {
   return SelectedPreparer{prepare_exit, PrepareKind::scalar};
 }
 
-auto select_preparer(const exec_ir::Operation& operation)
+auto select_preparer(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  static_assert(std::variant_size_v<exec_ir::Operation> ==
+  static_assert(std::variant_size_v<exec_ir::Instruction> ==
                 static_cast<std::size_t>(exec_ir::Op::exit) + 1);
   static_assert(static_cast<std::size_t>(exec_ir::Op::mov) == 0);
   static_assert(static_cast<std::size_t>(exec_ir::Op::add) == 1);
@@ -585,7 +633,7 @@ auto select_preparer(const exec_ir::Operation& operation)
   static_assert(static_cast<std::size_t>(exec_ir::Op::bra) == 5);
   static_assert(static_cast<std::size_t>(exec_ir::Op::exit) == 6);
   static constexpr std::array<OpFamilySelector,
-                              std::variant_size_v<exec_ir::Operation>>
+                              std::variant_size_v<exec_ir::Instruction>>
       dispatch{
           select_move, select_add,    select_load, select_store,
           select_bar,  select_branch, select_exit,
@@ -737,11 +785,12 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
     return step_error(StepErrorCode::missing_fallthrough);
   }
 
-  const auto prepare = select_preparer(instruction.operation);
+  const auto prepare = select_preparer(instruction);
   if (!prepare) {
     return step_error(prepare.error());
   }
-  if (prepare->kind == PrepareKind::warp_sync && instruction.predicate) {
+  if (prepare->kind == PrepareKind::warp_sync &&
+      exec_ir::execution_predicate(instruction)) {
     return step_error(StepErrorCode::unsupported_instruction);
   }
 
@@ -757,13 +806,15 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
     }
     auto& thread = warp.thread(lane);
     LaneResourceResolver registers(runtime_, thread, function_);
-    if (instruction.predicate) {
+    if (const auto& instruction_predicate =
+            exec_ir::execution_predicate(instruction);
+        instruction_predicate) {
       const auto view = registers.resolve();
       if (!view) {
         report.faults.push_back({lane, view.error()});
         continue;
       }
-      const auto predicate = view->get().read(instruction.predicate->source);
+      const auto predicate = view->get().read(instruction_predicate->source);
       if (!predicate) {
         report.faults.push_back({lane, predicate.error()});
         continue;
@@ -773,7 +824,7 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
         report.faults.push_back({lane, value.error()});
         continue;
       }
-      if (*value == instruction.predicate->negated) {
+      if (*value == instruction_predicate->negated) {
         prepared.push_back({&thread,
                             {.write = std::nullopt,
                              .memory_write = std::nullopt,
@@ -781,8 +832,8 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
         continue;
       }
     }
-    const auto effect = prepare->handler(registers, arithmetic_,
-                                         instruction.operation, successor);
+    const auto effect =
+        prepare->handler(registers, arithmetic_, instruction, successor);
     if (!effect) {
       report.faults.push_back({lane, effect.error()});
       continue;
