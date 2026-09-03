@@ -27,6 +27,16 @@ enum class StepErrorCode {
   pc_mismatch,
   missing_fallthrough,
   unsupported_instruction,
+  /** A membermask is empty, out of range, or excludes an issued lane. */
+  collective_invalid_mask,
+  /** Issued lanes read different membermask values. */
+  collective_mask_mismatch,
+  /** An arrival conflicts with the active rendezvous PC or participants. */
+  collective_pending_mismatch,
+  /** An issue attempts to arrive a lane already recorded by this rendezvous. */
+  collective_duplicate_arrival,
+  /** A first rendezvous names a lane that cannot reach it. */
+  collective_unreachable_participant,
 };
 
 struct StepError {

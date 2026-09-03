@@ -19,6 +19,7 @@ using ptx_frontend::binding::Symbol;
 using ptx_frontend::binding::SymbolKind;
 using ptx_frontend::binding::SymbolTable;
 using ptx_frontend::resolved_ir::Add;
+using ptx_frontend::resolved_ir::Bar;
 using ptx_frontend::resolved_ir::Bra;
 using ptx_frontend::resolved_ir::Exit;
 using ptx_frontend::resolved_ir::Ld;
@@ -543,6 +544,24 @@ template <DefaultMemoryControls Form>
     }
     return error(LoweringErrorCode::unsupported_form, function_index,
                  instruction_index);
+  }
+
+  if (const auto* bar = std::get_if<Bar>(&instruction)) {
+    if (bar->execution_predicate) {
+      return error(LoweringErrorCode::unsupported_form, function_index,
+                   instruction_index);
+    }
+    const auto* form = std::get_if<Bar::WarpSync>(&bar->variant);
+    if (form == nullptr) {
+      return error(LoweringErrorCode::unsupported_form, function_index,
+                   instruction_index);
+    }
+    const auto membermask = operand_for(form->membermask.value, registers,
+                                        function_index, instruction_index);
+    if (!membermask) {
+      return std::unexpected(membermask.error());
+    }
+    return exec_ir::Instruction{std::nullopt, exec_ir::Bar{*membermask}};
   }
 
   if (const auto* exit = std::get_if<Exit>(&instruction)) {

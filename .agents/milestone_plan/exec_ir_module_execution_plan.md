@@ -292,6 +292,11 @@ default or weak controls with no cache/MMIO/scope behavior, and leaves no
 frontend identity in the record. Explicit local/shared, symbolic/immediate
 addresses, and offsets remain deferred.
 
+The implemented warp-synchronization record is `bar.warp.sync` with one b32
+membermask operand. It is unpredicated, falls through, and has no generalized
+barrier-form enum: CTA synchronization, reductions, and other barrier forms
+remain deferred.
+
 ### Deferred — Calls, activations, and runtime frames
 
 Do not create `Activation`, `ActivationId`, `CallStack`, call-frame storage, or

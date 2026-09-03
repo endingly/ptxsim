@@ -92,7 +92,7 @@ namespace {
   }
 
   return std::visit(
-      [&layout, pc]<detail::OperationAlternative T>(
+      [&instruction, &layout, pc]<detail::OperationAlternative T>(
           const T& operation) -> std::expected<void, ProgramError> {
         if constexpr (std::same_as<T, Move>) {
           if (operation.type != DataType::b32) {
@@ -152,6 +152,13 @@ namespace {
           }
           return validate_slot(layout, layout.id, pc, operation.source,
                                common::RawWidth::b32);
+        } else if constexpr (std::same_as<T, Bar>) {
+          if (instruction.predicate) {
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
+          }
+          return validate_b32_operand(layout, layout.id, pc,
+                                      operation.membermask);
         } else if constexpr (std::same_as<T, Branch>) {
           if (operation.target.value() >= layout.instruction_count) {
             return error(ProgramErrorCode::branch_target_out_of_range,
@@ -257,6 +264,9 @@ void append_instruction(std::string& output, const Instruction& instruction) {
           append_register(output, operation.address);
           output += "], ";
           append_register(output, operation.source);
+        } else if constexpr (std::same_as<T, Bar>) {
+          output += "bar.warp.sync ";
+          append_operand(output, operation.membermask);
         } else if constexpr (std::same_as<T, Branch>) {
           output += "bra pc:";
           output += std::to_string(operation.target.value());

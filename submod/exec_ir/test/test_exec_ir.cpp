@@ -234,5 +234,37 @@ TEST(ExecutableProgram, ValidatesAndPrintsScalarLoadStore) {
             ProgramErrorCode::unsupported_instruction);
 }
 
+TEST(ExecutableProgram, ValidatesAndPrintsWarpSync) {
+  const auto program = ExecutableProgram::create({
+      .instructions =
+          {
+              {.predicate = std::nullopt,
+               .operation = Bar{B32Operand{RawValue::b32(3U)}}},
+              {.predicate = std::nullopt, .operation = Exit{}},
+          },
+      .functions = {{FunctionId{0}, 0, 2, {RawWidth::b32}}},
+  });
+  ASSERT_TRUE(program);
+  EXPECT_EQ(
+      op(program->fetch({FunctionId{0}, ProgramCounter{0}})->get().operation),
+      Op::bar);
+  EXPECT_EQ(to_string(*program),
+            "@0  [func:0 pc:0]  bar.warp.sync b32:0x00000003\n"
+            "@1  [func:0 pc:1]  exit");
+
+  auto predicated = ProgramDefinition{
+      .instructions =
+          {
+              {.predicate = Predicate{RegisterSlot{0}},
+               .operation = Bar{B32Operand{RawValue::b32(1U)}}},
+              {.predicate = std::nullopt, .operation = Exit{}},
+          },
+      .functions = {{FunctionId{0}, 0, 2, {RawWidth::pred}}},
+  };
+  const auto result = ExecutableProgram::create(std::move(predicated));
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, ProgramErrorCode::unsupported_instruction);
+}
+
 }  // namespace
 }  // namespace ptxsim::exec_ir::test

@@ -18,6 +18,12 @@ struct PreparedWrite {
   common::RawValue value;
 };
 
+/** @brief One lane's validated b32 membership value for a warp rendezvous. */
+struct PreparedWarpSync {
+  /** Raw 32-bit lane-membership bitmap read during prepare. */
+  std::uint32_t membermask;
+};
+
 /**
  * @brief One validated scalar store retained until the lane's commit turn.
  *
@@ -42,6 +48,8 @@ struct PreparedEffect {
   /** Present only for a validated scalar store; committed after register writes. */
   std::optional<PreparedMemoryWrite> memory_write;
   PreparedControl control;
+  /** Present only for the collective instruction handled after all lanes prepare. */
+  std::optional<PreparedWarpSync> warp_sync;
 };
 
 struct PreparedLane {
@@ -357,6 +365,46 @@ auto prepare_operation(const exec_ir::Exit&)
   };
 }
 
+/**
+ * @brief Read a warp membership bitmap without resolving unused lane state.
+ *
+ * Immediate operands require no register-frame binding; register operands
+ * resolve only the current lane's frame.
+ */
+auto warp_sync_membermask(LaneResourceResolver& resolver,
+                          const exec_ir::B32Operand& operand)
+    -> std::expected<std::uint32_t, LaneFaultCause> {
+  if (const auto* immediate = std::get_if<common::RawValue>(&operand)) {
+    if (const auto value = immediate->as_b32(); value) {
+      return *value;
+    } else {
+      return std::unexpected(LaneFaultCause{value.error()});
+    }
+  }
+  const auto registers = resolver.resolve();
+  if (!registers) {
+    return std::unexpected(registers.error());
+  }
+  return b32_operand(registers->get(), operand);
+}
+
+/** @brief Stage a rendezvous membership bitmap without changing thread state. */
+auto prepare_operation(LaneResourceResolver& resolver,
+                       const exec_ir::Bar& operation,
+                       common::ProgramCounter successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto membermask = warp_sync_membermask(resolver, operation.membermask);
+  if (!membermask) {
+    return std::unexpected(membermask.error());
+  }
+  return PreparedEffect{
+      .write = std::nullopt,
+      .memory_write = std::nullopt,
+      .control = successor,
+      .warp_sync = PreparedWarpSync{*membermask},
+  };
+}
+
 using LanePrepareHandler = std::expected<PreparedEffect, LaneFaultCause> (*)(
     LaneResourceResolver&, const arith::context&, const exec_ir::Operation&,
     std::optional<common::ProgramCounter>);
@@ -405,6 +453,16 @@ auto prepare_store_u32(LaneResourceResolver& registers, const arith::context&,
                            *successor);
 }
 
+/** @brief Adapt the warp rendezvous record to the common opcode dispatcher. */
+auto prepare_bar_warp_sync(LaneResourceResolver& registers,
+                           const arith::context&,
+                           const exec_ir::Operation& operation,
+                           std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  return prepare_operation(registers, std::get<exec_ir::Bar>(operation),
+                           *successor);
+}
+
 auto prepare_branch(LaneResourceResolver&, const arith::context&,
                     const exec_ir::Operation& operation,
                     std::optional<common::ProgramCounter>)
@@ -419,7 +477,18 @@ auto prepare_exit(LaneResourceResolver&, const arith::context&,
   return prepare_operation(std::get<exec_ir::Exit>(operation));
 }
 
-using OpFamilySelector = std::expected<LanePrepareHandler, StepErrorCode> (*)(
+/** @brief Classifies whether prepared effects commit lane-wise or collectively. */
+enum class PrepareKind { scalar, warp_sync };
+
+/** @brief Opcode-table result with its preparation function and commit mode. */
+struct SelectedPreparer {
+  /** Prepares one issued lane without committing its architectural effects. */
+  LanePrepareHandler handler;
+  /** Selects scalar commit or the single collective commit path. */
+  PrepareKind kind;
+};
+
+using OpFamilySelector = std::expected<SelectedPreparer, StepErrorCode> (*)(
     const exec_ir::Operation&);
 
 auto unsupported_instruction() -> std::unexpected<StepErrorCode> {
@@ -427,10 +496,10 @@ auto unsupported_instruction() -> std::unexpected<StepErrorCode> {
 }
 
 auto select_move(const exec_ir::Operation& operation)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
+    -> std::expected<SelectedPreparer, StepErrorCode> {
   switch (std::get<exec_ir::Move>(operation).type) {
     case exec_ir::DataType::b32:
-      return prepare_move_b32;
+      return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
     case exec_ir::DataType::u32:
       return unsupported_instruction();
   }
@@ -438,10 +507,10 @@ auto select_move(const exec_ir::Operation& operation)
 }
 
 auto select_add(const exec_ir::Operation& operation)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
+    -> std::expected<SelectedPreparer, StepErrorCode> {
   switch (std::get<exec_ir::Add>(operation).type) {
     case exec_ir::DataType::u32:
-      return prepare_add_u32;
+      return SelectedPreparer{prepare_add_u32, PrepareKind::scalar};
     case exec_ir::DataType::b32:
       return unsupported_instruction();
   }
@@ -450,7 +519,7 @@ auto select_add(const exec_ir::Operation& operation)
 
 /** @brief Select only validated scalar-load address spaces and u32 handling. */
 auto select_load(const exec_ir::Operation& operation)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
+    -> std::expected<SelectedPreparer, StepErrorCode> {
   const auto& load = std::get<exec_ir::Load>(operation);
   switch (load.space) {
     case exec_ir::AddressSpace::generic:
@@ -461,7 +530,7 @@ auto select_load(const exec_ir::Operation& operation)
   }
   switch (load.type) {
     case exec_ir::DataType::u32:
-      return prepare_load_u32;
+      return SelectedPreparer{prepare_load_u32, PrepareKind::scalar};
     case exec_ir::DataType::b32:
       return unsupported_instruction();
   }
@@ -470,7 +539,7 @@ auto select_load(const exec_ir::Operation& operation)
 
 /** @brief Select only validated scalar-store address spaces and u32 handling. */
 auto select_store(const exec_ir::Operation& operation)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
+    -> std::expected<SelectedPreparer, StepErrorCode> {
   const auto& store = std::get<exec_ir::Store>(operation);
   switch (store.space) {
     case exec_ir::AddressSpace::generic:
@@ -481,40 +550,133 @@ auto select_store(const exec_ir::Operation& operation)
   }
   switch (store.type) {
     case exec_ir::DataType::u32:
-      return prepare_store_u32;
+      return SelectedPreparer{prepare_store_u32, PrepareKind::scalar};
     case exec_ir::DataType::b32:
       return unsupported_instruction();
   }
   return unsupported_instruction();
 }
 
+/** @brief Select the collective preparation and commit path for warp sync. */
+auto select_bar(const exec_ir::Operation&)
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  return SelectedPreparer{prepare_bar_warp_sync, PrepareKind::warp_sync};
+}
+
 auto select_branch(const exec_ir::Operation&)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
-  return prepare_branch;
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  return SelectedPreparer{prepare_branch, PrepareKind::scalar};
 }
 
 auto select_exit(const exec_ir::Operation&)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
-  return prepare_exit;
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  return SelectedPreparer{prepare_exit, PrepareKind::scalar};
 }
 
 auto select_preparer(const exec_ir::Operation& operation)
-    -> std::expected<LanePrepareHandler, StepErrorCode> {
+    -> std::expected<SelectedPreparer, StepErrorCode> {
   static_assert(std::variant_size_v<exec_ir::Operation> ==
                 static_cast<std::size_t>(exec_ir::Op::exit) + 1);
   static_assert(static_cast<std::size_t>(exec_ir::Op::mov) == 0);
   static_assert(static_cast<std::size_t>(exec_ir::Op::add) == 1);
   static_assert(static_cast<std::size_t>(exec_ir::Op::ld) == 2);
   static_assert(static_cast<std::size_t>(exec_ir::Op::st) == 3);
-  static_assert(static_cast<std::size_t>(exec_ir::Op::bra) == 4);
-  static_assert(static_cast<std::size_t>(exec_ir::Op::exit) == 5);
+  static_assert(static_cast<std::size_t>(exec_ir::Op::bar) == 4);
+  static_assert(static_cast<std::size_t>(exec_ir::Op::bra) == 5);
+  static_assert(static_cast<std::size_t>(exec_ir::Op::exit) == 6);
   static constexpr std::array<OpFamilySelector,
                               std::variant_size_v<exec_ir::Operation>>
       dispatch{
-          select_move,  select_add,    select_load,
-          select_store, select_branch, select_exit,
+          select_move, select_add,    select_load, select_store,
+          select_bar,  select_branch, select_exit,
       };
   return dispatch[static_cast<std::size_t>(exec_ir::op(operation))](operation);
+}
+
+/** @brief Convert a b32 bitmap to the warp's architectural lane-set width. */
+auto participant_mask(const execution_model::Warp& warp, std::uint32_t bits)
+    -> std::optional<execution_model::LaneMask> {
+  const auto width = warp.architectural_warp_size();
+  if (width == 0 || width > 32 || (width < 32 && (bits >> width) != 0U)) {
+    return std::nullopt;
+  }
+  execution_model::LaneMask mask{width};
+  for (std::uint32_t index = 0; index < width; ++index) {
+    if ((bits & (std::uint32_t{1} << index)) != 0U) {
+      mask.set(execution_model::LaneId{index});
+    }
+  }
+  return mask;
+}
+
+/** @brief Validate and commit an all-or-nothing warp rendezvous arrival. */
+auto commit_warp_sync(execution_model::Warp& warp,
+                      const execution_model::WarpIssueGroup& issue,
+                      const std::vector<PreparedLane>& prepared)
+    -> std::expected<void, StepError> {
+  const auto& first = prepared.front().effect.warp_sync;
+  assert(first.has_value());
+  const auto participants = participant_mask(warp, first->membermask);
+  if (!participants || participants->none() ||
+      !participants->contains(issue.lanes) ||
+      !warp.valid_mask().contains(*participants)) {
+    return step_error(StepErrorCode::collective_invalid_mask);
+  }
+  for (const auto& lane : prepared) {
+    if (!lane.effect.warp_sync ||
+        lane.effect.warp_sync->membermask != first->membermask) {
+      return step_error(StepErrorCode::collective_mask_mismatch,
+                        lane.thread->lane_id());
+    }
+  }
+
+  auto& sync = warp.execution_state().sync;
+  if (sync.active()) {
+    const auto& pending = sync.pending();
+    if (pending.pc() != issue.pc || pending.participants() != *participants) {
+      return step_error(StepErrorCode::collective_pending_mismatch);
+    }
+    if ((pending.arrivals() & issue.lanes).any()) {
+      return step_error(StepErrorCode::collective_duplicate_arrival);
+    }
+  } else {
+    for (std::uint32_t index = 0; index < warp.architectural_warp_size();
+         ++index) {
+      const execution_model::LaneId lane{index};
+      if (!participants->test(lane)) {
+        continue;
+      }
+      const auto& thread = warp.thread(lane);
+      if (!thread.ready()) {
+        return step_error(StepErrorCode::collective_unreachable_participant,
+                          lane);
+      }
+    }
+    sync.begin(issue.pc, *participants);
+  }
+
+  auto& pending = sync.pending();
+  pending.arrive(issue.lanes);
+  if (!pending.complete()) {
+    for (const auto& lane : prepared) {
+      lane.thread->mark_waiting(execution_model::WaitReason::WarpSync);
+    }
+    return {};
+  }
+  const auto successor =
+      std::get<common::ProgramCounter>(prepared.front().effect.control);
+  for (std::uint32_t index = 0; index < warp.architectural_warp_size();
+       ++index) {
+    const execution_model::LaneId lane{index};
+    if (!pending.participants().test(lane)) {
+      continue;
+    }
+    auto& thread = warp.thread(lane);
+    thread.set_pc(successor);
+    thread.mark_ready();
+  }
+  sync.clear_completed();
+  return {};
 }
 
 struct ControlCommitter final {
@@ -579,6 +741,9 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
   if (!prepare) {
     return step_error(prepare.error());
   }
+  if (prepare->kind == PrepareKind::warp_sync && instruction.predicate) {
+    return step_error(StepErrorCode::unsupported_instruction);
+  }
 
   StepReport report;
   std::vector<PreparedLane> prepared;
@@ -616,13 +781,27 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
         continue;
       }
     }
-    const auto effect =
-        (*prepare)(registers, arithmetic_, instruction.operation, successor);
+    const auto effect = prepare->handler(registers, arithmetic_,
+                                         instruction.operation, successor);
     if (!effect) {
       report.faults.push_back({lane, effect.error()});
       continue;
     }
     prepared.push_back({&thread, *effect});
+  }
+
+  if (prepare->kind == PrepareKind::warp_sync) {
+    if (!report.faults.empty()) {
+      for (const auto& fault : report.faults) {
+        warp.thread(fault.lane).mark_trapped();
+      }
+      return report;
+    }
+    if (const auto committed = commit_warp_sync(warp, issue, prepared);
+        !committed) {
+      return std::unexpected(committed.error());
+    }
+    return report;
   }
 
   for (auto& lane : prepared) {

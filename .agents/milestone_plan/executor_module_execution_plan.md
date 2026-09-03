@@ -1,6 +1,6 @@
 # PTXSim `inst_execute_engine` Module Execution Plan
 
-> **Status:** WP0-WP5 are implemented
+> **Status:** WP0-WP5 and the minimal WP6 warp synchronization slice are implemented
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
 > **Next dependency:** fully-bound `exec_ir::ExecutableProgram` and mandatory
 > resolved-IR lowering
@@ -331,9 +331,10 @@ architectural transaction. Scalar lanes are independent: a fault in one lane
 does not roll back another lane's successful result. This prevents behavior
 from depending on whether the scheduler issued lanes separately or together.
 
-Collective instructions are different. They require a complete group-level
-prepare rule and are deferred until their participant and fault semantics are
-specified.
+`bar.warp.sync` is the implemented collective instruction. It prepares every
+issued lane as a group and records no arrival until all group validation
+succeeds. Other collective forms remain deferred until their participant and
+fault semantics are specified.
 
 ### 7.3 Initial storage restriction
 
@@ -357,7 +358,9 @@ require atomic commit across those resources.
 | untaken branch | none | fallthrough PC; Ready |
 | lane fault | none | retain faulting PC; Trapped |
 | exit | instruction-specific prior effects only | Exited; PC no longer scheduled |
-| wait | deferred | must be defined with its wakeup protocol |
+| warp sync, incomplete arrival | group prepare succeeds | retain synchronization PC; Waiting(WarpSync) |
+| warp sync, release | all participants arrive | successor PC; Ready |
+| CTA sync / async wait | deferred | deferred |
 
 No executor path may assume `ProgramCounter` is a byte address or increment it
 implicitly. In the planned production path it is a checked function-local index;
@@ -675,7 +678,7 @@ Store preparation reads operands, resolves the address, and calls
 claiming PTX data-race semantics. Explicit local/shared forms and address
 offsets remain deferred.
 
-### WP6 — Warp and CTA synchronization
+### WP6 — Warp and CTA synchronization (minimal warp sync implemented)
 
 **Prerequisites:** wait-state ownership and synchronization PC semantics are
 specified.
@@ -697,10 +700,19 @@ The synchronization PC rule is also decided:
 - scheduler issue excludes waiting Threads; and
 - failed collective prepare validation must not begin or mutate a rendezvous.
 
-The next implementation step is the minimal warp synchronization instruction.
-Barrier instructions and wakeup behavior remain unimplemented.
+The minimal `bar.warp.sync` instruction is implemented. It validates one
+non-empty, identical b32 membership mask across an issue, records partial
+arrivals in `WarpSyncState`, leaves arriving lanes Waiting at the instruction
+PC, and releases all participants to the supplied successor on completion.
+CTA synchronization, reductions, and scheduler-owned wakeup policy remain
+deferred.
 
-Warp synchronization then uses `WarpSyncState`; CTA synchronization first
+At first arrival, the executor accepts only participants that are currently
+Ready. Later deadlock detection and trap propagation remain simulator policy;
+the executor only guarantees that a failed collective prepare does not begin a
+rendezvous or partially add arrivals.
+
+Warp synchronization uses `WarpSyncState`; future CTA synchronization first
 converges participating lanes within each Warp and then updates
 `CtaBarrierState` at warp granularity.
 
@@ -711,7 +723,7 @@ Required tests:
 - partial final Warp;
 - waiting lanes are not issued;
 - all released lanes resume exactly once;
-- collective prepare failure does not leave an impossible participant set;
+- collective prepare failure does not begin a rendezvous or partially add arrivals;
 - reduction result writeback occurs only after barrier completion.
 
 Do not implement CTA wakeup through `memory`; it belongs to executor/simulator

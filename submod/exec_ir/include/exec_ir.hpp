@@ -21,6 +21,7 @@ enum class Op : std::uint8_t {
   add,
   ld,
   st,
+  bar,
   bra,
   exit,
 };
@@ -95,6 +96,14 @@ struct Store {
   constexpr bool operator==(const Store&) const noexcept = default;
 };
 
+/** @brief Warp rendezvous using a fixed set of participating lanes. */
+struct Bar {
+  /** b32 lane-membership bitmap; bit N selects architectural lane N. */
+  B32Operand membermask;
+
+  constexpr bool operator==(const Bar&) const noexcept = default;
+};
+
 struct Branch {
   common::ProgramCounter target;
 
@@ -105,7 +114,7 @@ struct Exit {
   constexpr bool operator==(const Exit&) const noexcept = default;
 };
 
-using Operation = std::variant<Move, Add, Load, Store, Branch, Exit>;
+using Operation = std::variant<Move, Add, Load, Store, Bar, Branch, Exit>;
 
 namespace detail {
 
@@ -114,6 +123,7 @@ concept OperationAlternative = std::same_as<std::remove_cvref_t<T>, Move> ||
                                std::same_as<std::remove_cvref_t<T>, Add> ||
                                std::same_as<std::remove_cvref_t<T>, Load> ||
                                std::same_as<std::remove_cvref_t<T>, Store> ||
+                               std::same_as<std::remove_cvref_t<T>, Bar> ||
                                std::same_as<std::remove_cvref_t<T>, Branch> ||
                                std::same_as<std::remove_cvref_t<T>, Exit>;
 
@@ -130,6 +140,8 @@ concept OperationAlternative = std::same_as<std::remove_cvref_t<T>, Move> ||
           return Op::ld;
         } else if constexpr (std::same_as<T, Store>) {
           return Op::st;
+        } else if constexpr (std::same_as<T, Bar>) {
+          return Op::bar;
         } else if constexpr (std::same_as<T, Branch>) {
           return Op::bra;
         } else {

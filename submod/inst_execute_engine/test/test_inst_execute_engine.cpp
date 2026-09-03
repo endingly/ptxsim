@@ -1029,5 +1029,207 @@ TEST_F(InstExecuteEngineTest, RejectsInvalidAddressSpaceBeforePreparation) {
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
 }
 
+TEST_F(InstExecuteEngineTest,
+       CompletesWarpSyncAcrossPartialArrivalsWithoutRegisterBindings) {
+  const exec_ir::Instruction bar{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RawValue::b32(3U)},
+  };
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+
+  const auto first =
+      engine_.execute(warp(), issue(initial_pc, {0}), bar, ProgramCounter{11});
+  ASSERT_TRUE(first);
+  EXPECT_TRUE(warp().execution_state().sync.active());
+  EXPECT_TRUE(warp().thread(LaneId{0}).waiting());
+  EXPECT_EQ(warp().thread(LaneId{0}).wait_reason(),
+            execution_model::WaitReason::WarpSync);
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+
+  const auto second =
+      engine_.execute(warp(), issue(initial_pc, {1}), bar, ProgramCounter{11});
+  ASSERT_TRUE(second);
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  for (const auto lane : {LaneId{0}, LaneId{1}}) {
+    EXPECT_TRUE(warp().thread(lane).ready());
+    EXPECT_EQ(warp().thread(lane).wait_reason(),
+              execution_model::WaitReason::None);
+    EXPECT_EQ(warp().thread(lane).pc(), ProgramCounter{11});
+  }
+
+  EXPECT_EQ(warp().execution_state().sync.next_generation(), 1U);
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto repeated = engine_.execute(warp(), issue(initial_pc, {0, 1}), bar,
+                                        ProgramCounter{12});
+  ASSERT_TRUE(repeated);
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  EXPECT_EQ(warp().execution_state().sync.next_generation(), 2U);
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{12});
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), ProgramCounter{12});
+}
+
+TEST_F(InstExecuteEngineTest, RejectsInvalidWarpSyncMasksWithoutMutation) {
+  bind(LaneId{0}, {RawWidth::b32});
+  bind(LaneId{1}, {RawWidth::b32});
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto check = [&](RawValue mask,
+                         std::initializer_list<std::uint32_t> lanes,
+                         StepErrorCode code) {
+    const exec_ir::Instruction bar{.predicate = std::nullopt,
+                                   .operation = exec_ir::Bar{mask}};
+    const auto result = engine_.execute(warp(), issue(initial_pc, lanes), bar,
+                                        ProgramCounter{11});
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code, code);
+    EXPECT_FALSE(warp().execution_state().sync.active());
+    EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+    EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+  };
+  check(RawValue::b32(0U), {0}, StepErrorCode::collective_invalid_mask);
+  check(RawValue::b32(16U), {0}, StepErrorCode::collective_invalid_mask);
+  check(RawValue::b32(1U), {1}, StepErrorCode::collective_invalid_mask);
+}
+
+TEST_F(InstExecuteEngineTest, DoesNotArriveWhenWarpSyncPrepareFaults) {
+  const auto first = bind(LaneId{0}, {RawWidth::b32, RawWidth::b32});
+  bind(LaneId{1}, {RawWidth::b32});
+  ASSERT_TRUE(view(first).write(RegisterSlot{1}, RawValue::b32(3U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const exec_ir::Instruction bar{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RegisterSlot{1}},
+  };
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}), bar,
+                                      ProgramCounter{11});
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(result->faults.front().lane, LaneId{1});
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+  EXPECT_TRUE(warp().thread(LaneId{1}).trapped());
+}
+
+TEST_F(InstExecuteEngineTest, RejectsDisagreeingWarpSyncMembermasks) {
+  const auto first = bind(LaneId{0}, {RawWidth::b32});
+  const auto second = bind(LaneId{1}, {RawWidth::b32});
+  ASSERT_TRUE(view(first).write(RegisterSlot{0}, RawValue::b32(3U)));
+  ASSERT_TRUE(view(second).write(RegisterSlot{0}, RawValue::b32(1U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const exec_ir::Instruction bar{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RegisterSlot{0}},
+  };
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}), bar,
+                                      ProgramCounter{11});
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::collective_mask_mismatch);
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+  EXPECT_TRUE(warp().thread(LaneId{1}).ready());
+}
+
+TEST_F(InstExecuteEngineTest,
+       RejectsUnreachableWarpSyncParticipantWithoutBeginning) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).mark_exited();
+  const exec_ir::Instruction bar{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RawValue::b32(3U)},
+  };
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), bar, ProgramCounter{11});
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code,
+            StepErrorCode::collective_unreachable_participant);
+  EXPECT_EQ(result.error().lane, LaneId{1});
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+}
+
+TEST_F(InstExecuteEngineTest, RejectsDirectlyPredicatedWarpSyncBeforePrepare) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction bar{
+      .predicate = exec_ir::Predicate{RegisterSlot{0}, false},
+      .operation = exec_ir::Bar{RawValue::b32(1U)},
+  };
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), bar, ProgramCounter{11});
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_FALSE(warp().execution_state().sync.active());
+  EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+}
+
+TEST_F(InstExecuteEngineTest,
+       RejectsPendingWarpSyncMismatchAndDuplicateArrival) {
+  const exec_ir::Instruction mask_three{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RawValue::b32(3U)},
+  };
+  const exec_ir::Instruction mask_two{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RawValue::b32(2U)},
+  };
+  bind(LaneId{0}, {RawWidth::b32});
+  bind(LaneId{1}, {RawWidth::b32});
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  ASSERT_TRUE(engine_.execute(warp(), issue(initial_pc, {0}), mask_three,
+                              ProgramCounter{11}));
+
+  const auto mismatch = engine_.execute(warp(), issue(initial_pc, {1}),
+                                        mask_two, ProgramCounter{11});
+  ASSERT_FALSE(mismatch);
+  EXPECT_EQ(mismatch.error().code, StepErrorCode::collective_pending_mismatch);
+  EXPECT_TRUE(warp().execution_state().sync.active());
+
+  warp().thread(LaneId{0}).mark_ready();
+  const auto duplicate = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                         mask_three, ProgramCounter{11});
+  ASSERT_FALSE(duplicate);
+  EXPECT_EQ(duplicate.error().code,
+            StepErrorCode::collective_duplicate_arrival);
+  EXPECT_TRUE(warp().execution_state().sync.active());
+  EXPECT_TRUE(
+      warp().execution_state().sync.pending().arrivals().test(LaneId{0}));
+  EXPECT_FALSE(
+      warp().execution_state().sync.pending().arrivals().test(LaneId{1}));
+  EXPECT_TRUE(warp().thread(LaneId{1}).ready());
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+}
+
+TEST(InstExecuteEngineWarpSyncTest, SupportsTheFinalPartialWarp) {
+  runtime::LaunchRuntime runtime{grid_id, three_lane_shape()};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& warp = runtime.grid().cta(CtaId{grid_id, 0}).warp(0);
+  for (const auto lane : {LaneId{0}, LaneId{1}, LaneId{2}}) {
+    const auto frame =
+        runtime.registers().create_frame({.slot_widths = {RawWidth::b32}});
+    ASSERT_TRUE(frame);
+    ASSERT_TRUE(
+        runtime.bind_register_frame(warp.thread(lane).id(), function, *frame));
+    warp.thread(lane).set_pc(initial_pc);
+  }
+  const exec_ir::Instruction bar{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Bar{RawValue::b32(7U)},
+  };
+  const auto result = engine.execute(warp, issue(initial_pc, {0, 1, 2}), bar,
+                                     ProgramCounter{11});
+  ASSERT_TRUE(result);
+  EXPECT_FALSE(warp.execution_state().sync.active());
+  EXPECT_EQ(warp.thread(LaneId{2}).pc(), ProgramCounter{11});
+}
+
 }  // namespace
 }  // namespace ptxsim::inst_execute_engine::test

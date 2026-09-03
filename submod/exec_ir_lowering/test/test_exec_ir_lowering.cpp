@@ -93,6 +93,41 @@ TEST(ExecIrLowering, BindsScalarNamesEndingInDigitsBySymbolIdentity) {
             "@1  [func:0 pc:1]  exit");
 }
 
+TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %mask;
+  bar.warp.sync 3;
+  bar.warp.sync %mask;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  EXPECT_EQ(exec_ir::to_string(*program),
+            "@0  [func:0 pc:0]  bar.warp.sync b32:0x00000003\n"
+            "@1  [func:0 pc:1]  bar.warp.sync reg:0\n"
+            "@2  [func:0 pc:2]  exit");
+
+  const auto predicated = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .pred %p;
+  @%p bar.warp.sync 1;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(predicated);
+  EXPECT_EQ(predicated.error().code, LoweringErrorCode::unsupported_form);
+
+  const auto other_form = lower(resolve(R"ptx(
+.entry kernel() {
+  bar.sync 0;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(other_form);
+  EXPECT_EQ(other_form.error().code, LoweringErrorCode::unsupported_form);
+}
+
 TEST(ExecIrLowering, RejectsUnsupportedAndMalformedResolvedForms) {
   const auto unsupported = lower(resolve(R"ptx(
 .entry kernel() {
