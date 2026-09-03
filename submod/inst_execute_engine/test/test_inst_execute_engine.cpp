@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstddef>
 #include <initializer_list>
 #include <map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -10,6 +13,7 @@
 namespace ptxsim::inst_execute_engine::test {
 namespace {
 
+using common::CodeLocation;
 using common::FunctionId;
 using common::ProgramCounter;
 using common::RawValue;
@@ -24,18 +28,28 @@ using execution_model::Warp;
 using execution_model::WarpIssueGroup;
 
 constexpr GridId grid_id{7};
-constexpr FunctionId function{3};
+constexpr FunctionId function{0};
 constexpr ProgramCounter initial_pc{10};
 constexpr ProgramCounter move_fallthrough{42};
-constexpr MoveProbe move{
-    .type = DataType::b32,
-    .source = RegisterSlot{0},
+constexpr exec_ir::Move move{
+    .type = exec_ir::DataType::b32,
     .destination = RegisterSlot{1},
+    .source = RegisterSlot{0},
 };
-constexpr ProbeInstruction move_instruction{
+constexpr exec_ir::Instruction move_instruction{
     .predicate = std::nullopt,
     .operation = move,
 };
+
+auto executable_move_program()
+    -> std::expected<exec_ir::ExecutableProgram, exec_ir::ProgramError> {
+  return exec_ir::ExecutableProgram::create({
+      .instructions = {move_instruction,
+                       {.predicate = std::nullopt,
+                        .operation = exec_ir::Exit{}}},
+      .functions = {{function, 0, 2, {RawWidth::b32, RawWidth::b32}}},
+  });
+}
 
 auto shape() -> execution_model::GridShape {
   return {
@@ -79,7 +93,7 @@ auto issue(ProgramCounter pc, std::initializer_list<std::uint32_t> lanes)
 class BoundStepAdapter final {
  public:
   BoundStepAdapter(InstExecuteEngine& engine,
-                   const ProbeInstruction& instruction,
+                   const exec_ir::Instruction& instruction,
                    ProgramCounter fallthrough) noexcept
       : engine_(engine), instruction_(instruction), fallthrough_(fallthrough) {}
 
@@ -90,7 +104,7 @@ class BoundStepAdapter final {
 
  private:
   InstExecuteEngine& engine_;
-  const ProbeInstruction& instruction_;
+  const exec_ir::Instruction& instruction_;
   ProgramCounter fallthrough_;
 };
 
@@ -160,6 +174,48 @@ TEST_F(InstExecuteEngineTest, MovesOneLaneAndCommitsExplicitFallthrough) {
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(0x1234'5678U));
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest,
+       ExecutesFetchedExecutableInstructionWithItsSuccessor) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(0x1234U)));
+  auto program = executable_move_program();
+  ASSERT_TRUE(program);
+  const CodeLocation location{function, ProgramCounter{0}};
+  const auto instruction = program->fetch(location);
+  const auto successor = program->fallthrough(location);
+  ASSERT_TRUE(instruction);
+  ASSERT_TRUE(successor);
+  warp().thread(LaneId{0}).set_pc(location.pc);
+
+  const auto result = engine_.execute(warp(), issue(location.pc, {0}),
+                                      instruction->get(), successor->pc);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(0x1234U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), successor->pc);
+}
+
+TEST_F(InstExecuteEngineTest, MissingFallthroughRejectsBeforeAnyLaneMutation) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(7U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(9U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      move_instruction, std::nullopt);
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::missing_fallthrough);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(9U));
 }
 
 TEST_F(InstExecuteEngineTest, MovesTwoLanesThroughIsolatedFrames) {
@@ -261,7 +317,7 @@ TEST_F(InstExecuteEngineTest, RejectsInvalidLaneWithoutMutation) {
 }
 
 TEST_F(InstExecuteEngineTest, RejectsNonReadyLaneWithoutMutation) {
-  warp().thread(LaneId{0}).mark_waiting();
+  warp().thread(LaneId{0}).mark_waiting(execution_model::WaitReason::Other);
   expect_rejected(issue(initial_pc, {0}), StepErrorCode::lane_not_ready);
 }
 
@@ -339,8 +395,8 @@ TEST_F(InstExecuteEngineTest, PredicateTrueExecutesMove) {
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(17U)));
   ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::pred(true)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{2}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{2}},
       .operation = move,
   };
 
@@ -360,8 +416,8 @@ TEST_F(InstExecuteEngineTest, FalsePredicateSuppressesInvalidOperand) {
   ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(9U)));
   ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::pred(false)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{2}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{2}},
       .operation = move,
   };
 
@@ -382,8 +438,9 @@ TEST_F(InstExecuteEngineTest, NegatedFalsePredicateExecutesMove) {
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(23U)));
   ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::pred(false)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{2}, .negated = true},
+  const exec_ir::Instruction instruction{
+      .predicate =
+          exec_ir::Predicate{.source = RegisterSlot{2}, .negated = true},
       .operation = move,
   };
 
@@ -403,12 +460,12 @@ TEST_F(InstExecuteEngineTest, DispatchesAddWithRegisterAndImmediateOperands) {
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(12U)));
   ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(30U)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction register_add{
+  const exec_ir::Instruction register_add{
       .predicate = std::nullopt,
-      .operation = AddProbe{.type = DataType::u32,
-                            .destination = RegisterSlot{2},
-                            .lhs = RegisterSlot{0},
-                            .rhs = RegisterSlot{1}},
+      .operation = exec_ir::Add{.type = exec_ir::DataType::u32,
+                                .destination = RegisterSlot{2},
+                                .lhs = RegisterSlot{0},
+                                .rhs = RegisterSlot{1}},
   };
 
   const auto register_result = engine_.execute(
@@ -420,12 +477,12 @@ TEST_F(InstExecuteEngineTest, DispatchesAddWithRegisterAndImmediateOperands) {
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{46});
 
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction immediate_add{
+  const exec_ir::Instruction immediate_add{
       .predicate = std::nullopt,
-      .operation = AddProbe{.type = DataType::u32,
-                            .destination = RegisterSlot{2},
-                            .lhs = RegisterSlot{0},
-                            .rhs = RawValue::b32(8U)},
+      .operation = exec_ir::Add{.type = exec_ir::DataType::u32,
+                                .destination = RegisterSlot{2},
+                                .lhs = RegisterSlot{0},
+                                .rhs = RawValue::b32(8U)},
   };
 
   const auto immediate_result = engine_.execute(
@@ -441,12 +498,12 @@ TEST_F(InstExecuteEngineTest, AddWrapsU32WithoutArchitecturalStatus) {
   const auto frame = bind(LaneId{0}, {RawWidth::b32});
   auto registers = view(frame);
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const ProbeInstruction instruction{
+  const exec_ir::Instruction instruction{
       .predicate = std::nullopt,
-      .operation = AddProbe{.type = DataType::u32,
-                            .destination = RegisterSlot{0},
-                            .lhs = RawValue::b32(0xffff'ffffU),
-                            .rhs = RawValue::b32(1U)},
+      .operation = exec_ir::Add{.type = exec_ir::DataType::u32,
+                                .destination = RegisterSlot{0},
+                                .lhs = RawValue::b32(0xffff'ffffU),
+                                .rhs = RawValue::b32(1U)},
   };
 
   const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
@@ -459,33 +516,33 @@ TEST_F(InstExecuteEngineTest, AddWrapsU32WithoutArchitecturalStatus) {
 }
 
 TEST(InstExecuteEngineOperationTest, OpIdentityIgnoresDataType) {
-  const ProbeOperation move_b32 = MoveProbe{
-      .type = DataType::b32,
-      .source = RegisterSlot{0},
+  const exec_ir::Operation move_b32 = exec_ir::Move{
+      .type = exec_ir::DataType::b32,
       .destination = RegisterSlot{1},
-  };
-  const ProbeOperation move_u32 = MoveProbe{
-      .type = DataType::u32,
       .source = RegisterSlot{0},
-      .destination = RegisterSlot{1},
   };
-  const ProbeOperation add_u32 = AddProbe{
-      .type = DataType::u32,
+  const exec_ir::Operation move_u32 = exec_ir::Move{
+      .type = exec_ir::DataType::u32,
+      .destination = RegisterSlot{1},
+      .source = RegisterSlot{0},
+  };
+  const exec_ir::Operation add_u32 = exec_ir::Add{
+      .type = exec_ir::DataType::u32,
       .destination = RegisterSlot{0},
       .lhs = RegisterSlot{1},
       .rhs = RegisterSlot{2},
   };
-  const ProbeOperation add_b32 = AddProbe{
-      .type = DataType::b32,
+  const exec_ir::Operation add_b32 = exec_ir::Add{
+      .type = exec_ir::DataType::b32,
       .destination = RegisterSlot{0},
       .lhs = RegisterSlot{1},
       .rhs = RegisterSlot{2},
   };
 
-  EXPECT_EQ(op(move_b32), Op::mov);
-  EXPECT_EQ(op(move_u32), Op::mov);
-  EXPECT_EQ(op(add_u32), Op::add);
-  EXPECT_EQ(op(add_b32), Op::add);
+  EXPECT_EQ(exec_ir::op(move_b32), exec_ir::Op::mov);
+  EXPECT_EQ(exec_ir::op(move_u32), exec_ir::Op::mov);
+  EXPECT_EQ(exec_ir::op(add_u32), exec_ir::Op::add);
+  EXPECT_EQ(exec_ir::op(add_b32), exec_ir::Op::add);
 }
 
 TEST_F(InstExecuteEngineTest,
@@ -499,12 +556,12 @@ TEST_F(InstExecuteEngineTest,
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
 
-  const ProbeInstruction instruction{
+  const exec_ir::Instruction instruction{
       .predicate = std::nullopt,
-      .operation = AddProbe{.type = DataType::b32,
-                            .destination = RegisterSlot{2},
-                            .lhs = RegisterSlot{0},
-                            .rhs = RegisterSlot{1}},
+      .operation = exec_ir::Add{.type = exec_ir::DataType::b32,
+                                .destination = RegisterSlot{2},
+                                .lhs = RegisterSlot{0},
+                                .rhs = RegisterSlot{1}},
   };
   const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
                                       instruction, ProgramCounter{56});
@@ -538,15 +595,15 @@ TEST_F(InstExecuteEngineTest, WidthMismatchFaultsBeforeWrite) {
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Trapped);
 }
 
-TEST_F(InstExecuteEngineTest, UnboundBranchTakesItsDirectTarget) {
-  const ProbeInstruction instruction{
+TEST_F(InstExecuteEngineTest, UnpredicatedBranchDoesNotNeedSuccessor) {
+  const exec_ir::Instruction instruction{
       .predicate = std::nullopt,
-      .operation = BranchProbe{.target = ProgramCounter{80}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{80}},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
   const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
-                                      instruction, ProgramCounter{49});
+                                      instruction, std::nullopt);
 
   ASSERT_TRUE(result);
   EXPECT_TRUE(result->faults.empty());
@@ -554,13 +611,34 @@ TEST_F(InstExecuteEngineTest, UnboundBranchTakesItsDirectTarget) {
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
 }
 
+TEST_F(InstExecuteEngineTest,
+       PredicatedBranchWithoutSuccessorRejectsBeforePreparation) {
+  const auto frame = bind(LaneId{0}, {RawWidth::pred});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(true)));
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{80}},
+  };
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, std::nullopt);
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::missing_fallthrough);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+}
+
 TEST_F(InstExecuteEngineTest, FalsePredicateMakesBranchFallThrough) {
   const auto frame = bind(LaneId{0}, {RawWidth::pred});
   auto registers = view(frame);
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{0}},
-      .operation = BranchProbe{.target = ProgramCounter{80}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{80}},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
@@ -576,9 +654,9 @@ TEST_F(InstExecuteEngineTest, FalsePredicateMakesBranchFallThrough) {
 TEST(InstExecuteEngineBranchTest, DivergentBranchLeavesReadyLanesGroupedByPc) {
   runtime::LaunchRuntime runtime(grid_id, three_lane_shape());
   arith::context arithmetic;
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{0}},
-      .operation = BranchProbe{.target = ProgramCounter{81}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{81}},
   };
   InstExecuteEngine engine(runtime, function, arithmetic);
   auto& warp = runtime.grid().cta(CtaId{grid_id, 0}).warp(0);
@@ -615,9 +693,9 @@ TEST_F(InstExecuteEngineTest, BadBranchPredicateTrapsWithoutChangingPc) {
   const auto frame = bind(LaneId{0}, {RawWidth::b32});
   auto registers = view(frame);
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(1U)));
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{0}},
-      .operation = BranchProbe{.target = ProgramCounter{82}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{82}},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
@@ -635,9 +713,9 @@ TEST_F(InstExecuteEngineTest, BadBranchPredicateTrapsWithoutChangingPc) {
 TEST_F(InstExecuteEngineTest,
        UninitializedBranchPredicateTrapsWithoutChangingPc) {
   bind(LaneId{0}, {RawWidth::pred});
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{0}},
-      .operation = BranchProbe{.target = ProgramCounter{83}},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Branch{.target = ProgramCounter{83}},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
@@ -652,15 +730,15 @@ TEST_F(InstExecuteEngineTest,
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Trapped);
 }
 
-TEST_F(InstExecuteEngineTest, UnboundExitExitsWithoutChangingPc) {
-  const ProbeInstruction instruction{
+TEST_F(InstExecuteEngineTest, UnpredicatedExitDoesNotNeedSuccessor) {
+  const exec_ir::Instruction instruction{
       .predicate = std::nullopt,
-      .operation = ExitProbe{},
+      .operation = exec_ir::Exit{},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
   const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
-                                      instruction, ProgramCounter{54});
+                                      instruction, std::nullopt);
 
   ASSERT_TRUE(result);
   EXPECT_TRUE(result->faults.empty());
@@ -670,13 +748,34 @@ TEST_F(InstExecuteEngineTest, UnboundExitExitsWithoutChangingPc) {
   EXPECT_TRUE(warp().exited_mask().test(LaneId{0}));
 }
 
+TEST_F(InstExecuteEngineTest,
+       PredicatedExitWithoutSuccessorRejectsBeforePreparation) {
+  const auto frame = bind(LaneId{0}, {RawWidth::pred});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(true)));
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Exit{},
+  };
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, std::nullopt);
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::missing_fallthrough);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+}
+
 TEST_F(InstExecuteEngineTest, PredicatedOffExitFallsThroughAndStaysReady) {
   const auto frame = bind(LaneId{0}, {RawWidth::pred});
   auto registers = view(frame);
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
-  const ProbeInstruction instruction{
-      .predicate = PredicateProbe{.source = RegisterSlot{0}},
-      .operation = ExitProbe{},
+  const exec_ir::Instruction instruction{
+      .predicate = exec_ir::Predicate{.source = RegisterSlot{0}},
+      .operation = exec_ir::Exit{},
   };
   warp().thread(LaneId{0}).set_pc(initial_pc);
 
@@ -686,6 +785,247 @@ TEST_F(InstExecuteEngineTest, PredicatedOffExitFallsThroughAndStaysReady) {
   ASSERT_TRUE(result);
   EXPECT_TRUE(result->faults.empty());
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{55});
+  EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest, LoadsAndStoresLittleEndianGlobalU32) {
+  const auto global = runtime_.address_spaces().create_global({8});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  auto memory = runtime_.address_spaces().view(global);
+  ASSERT_TRUE(memory);
+  ASSERT_TRUE(memory->initialize(memory::Address{0},
+                                 std::array{std::byte{0x78}, std::byte{0x56},
+                                            std::byte{0x34}, std::byte{0x12}}));
+  const auto frame = bind(LaneId{0}, {RawWidth::b32, RawWidth::b64});
+  auto registers = view(frame);
+  ASSERT_TRUE(
+      registers.write(RegisterSlot{1}, RawValue::b64(std::uint64_t{0})));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction load{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Load{exec_ir::DataType::u32, exec_ir::AddressSpace::generic,
+                        RegisterSlot{0}, RegisterSlot{1}},
+  };
+  ASSERT_TRUE(engine_.execute(warp(), issue(initial_pc, {0}), load,
+                              ProgramCounter{56}));
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(0x12345678U));
+
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(0xaabbccddU)));
+  const exec_ir::Instruction store{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Store{exec_ir::DataType::u32, exec_ir::AddressSpace::global,
+                         RegisterSlot{1}, RegisterSlot{0}},
+  };
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}), store,
+                                      ProgramCounter{57});
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{std::byte{0xdd}, std::byte{0xcc},
+                                    std::byte{0xbb}, std::byte{0xaa}}));
+}
+
+TEST_F(InstExecuteEngineTest,
+       GenericConstantStoreFaultsAndPredicateSuppressesAddress) {
+  const auto constant = runtime_.address_spaces().create_constant({4});
+  ASSERT_TRUE(runtime_.bind_constant(constant));
+  auto constant_view = runtime_.address_spaces().view(constant);
+  ASSERT_TRUE(constant_view);
+  const std::array bytes{std::byte{1}, std::byte{2}, std::byte{3},
+                         std::byte{4}};
+  ASSERT_TRUE(constant_view->initialize(memory::Address{0}, bytes));
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b64, RawWidth::pred});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::pred(false)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction predicated_store{
+      .predicate = exec_ir::Predicate{RegisterSlot{2}},
+      .operation =
+          exec_ir::Store{exec_ir::DataType::u32, exec_ir::AddressSpace::generic,
+                         RegisterSlot{1}, RegisterSlot{0}},
+  };
+  const auto predicated = engine_.execute(warp(), issue(initial_pc, {0}),
+                                          predicated_store, ProgramCounter{59});
+  ASSERT_TRUE(predicated);
+  EXPECT_TRUE(predicated->faults.empty());
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{59});
+
+  ASSERT_TRUE(registers.write(
+      RegisterSlot{1},
+      RawValue::b64(memory::GenericAddressLayout::constant_base)));
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(9U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction store{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Store{exec_ir::DataType::u32, exec_ir::AddressSpace::generic,
+                         RegisterSlot{1}, RegisterSlot{0}},
+  };
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}), store,
+                                      ProgramCounter{58});
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(std::get<memory::AddressSpaceError>(result->faults[0].cause)
+                .memory_error->code,
+            memory::MemoryErrorCode::WriteToReadOnlyRegion);
+  EXPECT_EQ(*constant_view->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{bytes.begin(), bytes.end()}));
+}
+
+TEST_F(InstExecuteEngineTest, LoadFaultsRetainPcAndDestination) {
+  const auto global = runtime_.address_spaces().create_global({4});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  const auto frame = bind(LaneId{0}, {RawWidth::b32, RawWidth::b64});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(77U)));
+  const exec_ir::Instruction load{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Load{exec_ir::DataType::u32, exec_ir::AddressSpace::global,
+                        RegisterSlot{0}, RegisterSlot{1}},
+  };
+  const auto expect_storage_fault = [&](std::uint64_t address,
+                                        memory::MemoryErrorCode code) {
+    ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b64(address)));
+    auto& thread = warp().thread(LaneId{0});
+    thread.mark_ready();
+    thread.set_pc(initial_pc);
+    const auto result = engine_.execute(warp(), issue(initial_pc, {0}), load,
+                                        ProgramCounter{60});
+    ASSERT_TRUE(result);
+    ASSERT_EQ(result->faults.size(), 1U);
+    const auto& error =
+        std::get<memory::AddressSpaceError>(result->faults[0].cause);
+    ASSERT_TRUE(error.memory_error);
+    EXPECT_EQ(error.memory_error->code, code);
+    EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(77U));
+    EXPECT_EQ(thread.pc(), initial_pc);
+    EXPECT_EQ(thread.status(), ThreadStatus::Trapped);
+  };
+  expect_storage_fault(0, memory::MemoryErrorCode::UninitializedRead);
+  expect_storage_fault(1, memory::MemoryErrorCode::Misaligned);
+  expect_storage_fault(4, memory::MemoryErrorCode::OutOfBounds);
+
+  ASSERT_TRUE(runtime_.address_spaces().destroy(global));
+  auto& thread = warp().thread(LaneId{0});
+  thread.mark_ready();
+  thread.set_pc(initial_pc);
+  const auto stale =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, ProgramCounter{60});
+  ASSERT_TRUE(stale);
+  ASSERT_EQ(stale->faults.size(), 1U);
+  EXPECT_EQ(std::get<memory::AddressSpaceError>(stale->faults[0].cause).code,
+            memory::AddressSpaceErrorCode::stale_resource);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(77U));
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Trapped);
+}
+
+TEST_F(InstExecuteEngineTest, MissingGlobalBindingFaultsOnlyTheLane) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b32, RawWidth::b64});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(77U)));
+  ASSERT_TRUE(
+      registers.write(RegisterSlot{1}, RawValue::b64(std::uint64_t{0})));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction load{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Load{exec_ir::DataType::u32, exec_ir::AddressSpace::global,
+                        RegisterSlot{0}, RegisterSlot{1}},
+  };
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, ProgramCounter{61});
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(
+      std::get<runtime::RuntimeBindingError>(result->faults[0].cause).code,
+      runtime::RuntimeBindingErrorCode::missing_binding);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(77U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Trapped);
+}
+
+TEST_F(InstExecuteEngineTest,
+       StoresIsolateFaultsHonorPartialMasksAndCommitByAscendingLane) {
+  const auto global = runtime_.address_spaces().create_global({4});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  auto memory = runtime_.address_spaces().view(global);
+  ASSERT_TRUE(memory);
+  const auto first = bind(LaneId{0}, {RawWidth::b32, RawWidth::b64});
+  const auto second = bind(LaneId{1}, {RawWidth::b32, RawWidth::b64});
+  auto first_registers = view(first);
+  auto second_registers = view(second);
+  ASSERT_TRUE(first_registers.write(RegisterSlot{0}, RawValue::b32(1U)));
+  ASSERT_TRUE(
+      first_registers.write(RegisterSlot{1}, RawValue::b64(std::uint64_t{0})));
+  ASSERT_TRUE(second_registers.write(RegisterSlot{0}, RawValue::b32(2U)));
+  ASSERT_TRUE(
+      second_registers.write(RegisterSlot{1}, RawValue::b64(std::uint64_t{4})));
+  const exec_ir::Instruction store{
+      .predicate = std::nullopt,
+      .operation =
+          exec_ir::Store{exec_ir::DataType::u32, exec_ir::AddressSpace::global,
+                         RegisterSlot{1}, RegisterSlot{0}},
+  };
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto isolated = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                        store, ProgramCounter{62});
+  ASSERT_TRUE(isolated);
+  ASSERT_EQ(isolated->faults.size(), 1U);
+  EXPECT_EQ(isolated->faults[0].lane, LaneId{1});
+  EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{std::byte{1}, std::byte{0}, std::byte{0},
+                                    std::byte{0}}));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{62});
+  EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{1}).status(), ThreadStatus::Trapped);
+
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).mark_ready();
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto partial = engine_.execute(warp(), issue(initial_pc, {0}), store,
+                                       ProgramCounter{63});
+  ASSERT_TRUE(partial);
+  EXPECT_TRUE(partial->faults.empty());
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{1}).status(), ThreadStatus::Ready);
+
+  ASSERT_TRUE(first_registers.write(RegisterSlot{0}, RawValue::b32(3U)));
+  ASSERT_TRUE(second_registers.write(RegisterSlot{0}, RawValue::b32(4U)));
+  ASSERT_TRUE(
+      second_registers.write(RegisterSlot{1}, RawValue::b64(std::uint64_t{0})));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).mark_ready();
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto ordered = engine_.execute(warp(), issue(initial_pc, {0, 1}), store,
+                                       ProgramCounter{64});
+  ASSERT_TRUE(ordered);
+  EXPECT_TRUE(ordered->faults.empty());
+  EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{std::byte{4}, std::byte{0}, std::byte{0},
+                                    std::byte{0}}));
+}
+
+TEST_F(InstExecuteEngineTest, RejectsInvalidAddressSpaceBeforePreparation) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction load{
+      .predicate = std::nullopt,
+      .operation = exec_ir::Load{exec_ir::DataType::u32,
+                                 static_cast<exec_ir::AddressSpace>(99),
+                                 RegisterSlot{0}, RegisterSlot{1}},
+  };
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, ProgramCounter{65});
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
 }
 

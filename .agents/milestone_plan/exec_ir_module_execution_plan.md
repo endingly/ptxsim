@@ -1,8 +1,9 @@
 # PTXSim `exec_ir` Module Execution Plan
 
-> **Status:** WP0 generator contract probe, WP1 executable program core, and
-> the source-built frontend overlay port are implemented; WP2 waits for the
-> frontend label-boundary contract
+> **Status:** WP0 generator contract probe, WP1 executable program core, the
+> source-built frontend overlay port, WP2 resolved-IR lowering, and WP5
+> scalar load/store are
+> implemented
 > **Architecture authority:**
 > [`../arch/resolved_ir_execution_architecture.md`](../arch/resolved_ir_execution_architecture.md)
 > **Primary objective:** lower checked frontend semantic IR into a ptxsim-owned,
@@ -46,7 +47,7 @@ frontend-legal forms that ptxsim does not implement.
 
 The current executor probe remains authoritative evidence for issue,
 predication, prepare/commit, lane-fault, branch, and exit behavior. WP1 now
-provides the executable program; frontend lowering remains unimplemented.
+provides the executable program and WP2 binds checked frontend IR into it.
 
 ## 2. Static program model
 
@@ -158,7 +159,8 @@ so lowering tests can use it for concise diagnostics and golden checks.
 
 ## 6. Current repository shape
 
-The existing Python probe and the WP1 C++ core are isolated from each other:
+The existing Python probe, frontend-free WP1 C++ core, and mandatory WP2
+lowering boundary are isolated from each other:
 
 ```text
 submod/exec_ir/
@@ -170,13 +172,17 @@ submod/exec_ir/
     ├── setup.cfg
     ├── codegen/
     └── instructions/
+submod/exec_ir_lowering/
+├── include/exec_ir_lowering.hpp
+├── src/exec_ir_lowering.cpp
+└── test/test_exec_ir_lowering.cpp
 ```
 
 The core `ptxsim::exec_ir` target exposes only fully-bound values/programs,
-links only `ptxsim::common`, and accepts no frontend types. A separate
-planned `ptxsim::exec_ir_lowering` component will be mandatory for converting
-`ResolvedModule`; it will link `ptx_frontend::resolved_ir` and produce
-`ExecutableProgram`. Consumers of an already-built program will need neither
+links only `ptxsim::common`, and accepts no frontend types. The separate
+`ptxsim::exec_ir_lowering` component is mandatory for converting
+`ResolvedModule`; it links `ptx_frontend::resolved_ir` and produces an owned
+`ExecutableProgram`. Consumers of an already-built program need neither
 frontend headers nor linkage. Keep CMake/Python generation out of
 configure/build network paths.
 
@@ -224,21 +230,23 @@ Acceptance:
 - flat offsets are derivable and never become Thread's authoritative PC; and
 - canonical output is deterministic for the same executable program.
 
-### WP2 — Resolved-IR lowering for the proven subset (blocked)
+### WP2 — Resolved-IR lowering for the proven subset (implemented)
 
-First obtain the frontend label-boundary contract described in section 4. Add
-the separate, mandatory `ptxsim::exec_ir_lowering` component that consumes a
-checked `ResolvedModule` and lowers exactly the WP1 supported subset.
+`ptxsim::exec_ir_lowering` consumes a checked `ResolvedModule` and lowers only
+the WP1 `mov.b32`, `add.u32`, direct `bra`, and bare `exit` forms. The frontend
+pin exports function-local `label_positions`, so branches bind only through
+their resolved label `SymbolId` and boundary offset; lowering never recovers
+targets from spelling or source ranges.
 
-Frontend `v0.0.1b0` and remote `dev` currently retain a branch target's label
-`SymbolId`, but expose no mapping from that ID to an instruction boundary.
-Do not start lowering by reconstructing this mapping from source ranges.
+Function IDs follow resolved function order. Register slots follow bound
+declaration/symbol order, including nested scopes and contiguous parameterized
+members. The lowering result contains only ptxsim values and wraps core program
+validation failures in a structured lowering error. Unsupported frontend-legal
+forms remain errors; calls still have no execution path.
 
-Tests cover function/register/label identity binding, owned immediates,
-unsupported-but-frontend-legal forms, no partial output, and frontend lifetime
-independence of the resulting executable program. The first supported set has
-no call execution path; binding a direct call remains unimplemented until its
-operation is selected for execution.
+Tests resolve real PTX, cover deterministic slots and function-local PCs,
+predication, branches, owned immediates, frontend lifetime independence, and
+unsupported/malformed/trailing-label/program-validation failures.
 
 ### WP3 — Static generated glue and build integration
 
@@ -264,7 +272,7 @@ Replace private probe instruction use only after equivalent `mov`, `add`,
 Preserve prepare/commit and lane-local fault behavior; executor owns neither
 frontend resolution nor program loading.
 
-### WP5 — Add instruction families on demand
+### WP5 — Add instruction families on demand (scalar load/store implemented)
 
 For each execution-ready family, add only:
 
@@ -274,6 +282,15 @@ For each execution-ready family, add only:
 - one focused lowering-to-execution test.
 
 Do not generate or lower the complete PTX universe speculatively.
+
+The implemented first family is `ld.u32`/`st.u32` generic and
+`ld.global.u32`/`st.global.u32`. The executable records own only an address
+space (`generic` or `global`), a b64 address register slot, and their b32
+data register slot. The transfer is four bytes, four-byte aligned, and
+little-endian. Lowering accepts only an offset-free resolved register address,
+default or weak controls with no cache/MMIO/scope behavior, and leaves no
+frontend identity in the record. Explicit local/shared, symbolic/immediate
+addresses, and offsets remain deferred.
 
 ### Deferred — Calls, activations, and runtime frames
 

@@ -190,5 +190,49 @@ TEST(ExecutableProgram, PrintsCanonicalExecutableProgram) {
             "@3  [func:1 pc:0]  exit");
 }
 
+TEST(ExecutableProgram, ValidatesAndPrintsScalarLoadStore) {
+  const auto program = ExecutableProgram::create({
+      .instructions =
+          {
+              {.predicate = std::nullopt,
+               .operation = Load{DataType::u32, AddressSpace::generic,
+                                 RegisterSlot{0}, RegisterSlot{1}}},
+              {.predicate = std::nullopt,
+               .operation = Store{DataType::u32, AddressSpace::global,
+                                  RegisterSlot{1}, RegisterSlot{0}}},
+              {.predicate = std::nullopt, .operation = Exit{}},
+          },
+      .functions = {{FunctionId{0}, 0, 3, {RawWidth::b32, RawWidth::b64}}},
+  });
+  ASSERT_TRUE(program);
+  EXPECT_EQ(to_string(*program),
+            "@0  [func:0 pc:0]  ld.u32 reg:0, [reg:1]\n"
+            "@1  [func:0 pc:1]  st.global.u32 [reg:1], reg:0\n"
+            "@2  [func:0 pc:2]  exit");
+
+  auto invalid = ProgramDefinition{
+      .instructions = {{.predicate = std::nullopt,
+                        .operation = Load{DataType::u32, AddressSpace::generic,
+                                          RegisterSlot{0}, RegisterSlot{0}}},
+                       {.predicate = std::nullopt, .operation = Exit{}}},
+      .functions = {{FunctionId{0}, 0, 2, {RawWidth::b32}}},
+  };
+  const auto result = ExecutableProgram::create(std::move(invalid));
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, ProgramErrorCode::operand_width_mismatch);
+
+  auto invalid_space = valid_definition();
+  invalid_space.instructions[0].operation =
+      Load{DataType::u32, static_cast<AddressSpace>(99), RegisterSlot{1},
+           RegisterSlot{0}};
+  invalid_space.functions[0].register_widths[0] = RawWidth::b64;
+  invalid_space.functions[0].register_widths[1] = RawWidth::b32;
+  const auto invalid_space_result =
+      ExecutableProgram::create(std::move(invalid_space));
+  ASSERT_FALSE(invalid_space_result);
+  EXPECT_EQ(invalid_space_result.error().code,
+            ProgramErrorCode::unsupported_instruction);
+}
+
 }  // namespace
 }  // namespace ptxsim::exec_ir::test

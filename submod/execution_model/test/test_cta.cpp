@@ -204,9 +204,9 @@ TEST(CtaTest, WaitingThreadsRemainLive) {
 
   auto& cta = grid.cta(CtaId{grid_id, 0});
 
-  cta.warp(0).thread(LaneId{2}).mark_waiting();
+  cta.warp(0).thread(LaneId{2}).mark_waiting(WaitReason::CtaBarrier);
 
-  cta.warp(0).thread(LaneId{6}).mark_waiting();
+  cta.warp(0).thread(LaneId{6}).mark_waiting(WaitReason::CtaBarrier);
 
   EXPECT_EQ(cta.live_thread_count(), 8u);
   EXPECT_FALSE(cta.completed());
@@ -693,7 +693,7 @@ TEST(CtaTest, TopologyAddressesRemainStableAcrossRuntimeMutation) {
 
   // Mutate Thread runtime state.
   thread->set_pc(ProgramCounter{100});
-  thread->mark_waiting();
+  thread->mark_waiting(WaitReason::CtaBarrier);
   thread->mark_ready();
 
   // Mutate CTA runtime state.

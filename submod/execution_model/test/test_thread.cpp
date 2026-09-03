@@ -76,6 +76,7 @@ TEST(ThreadTest, InitialExecutionState) {
   EXPECT_EQ(thread.pc(), ProgramCounter{0});
 
   EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
 
   EXPECT_TRUE(thread.ready());
   EXPECT_FALSE(thread.waiting());
@@ -107,26 +108,38 @@ TEST(ThreadTest, StatusTransitions) {
   auto& thread = grid.thread(ThreadId{GridId{0}, 0});
 
   ASSERT_TRUE(thread.ready());
+  thread.set_pc(ProgramCounter{42});
 
-  thread.mark_waiting();
+  thread.mark_waiting(WaitReason::CtaBarrier);
 
   EXPECT_TRUE(thread.waiting());
   EXPECT_FALSE(thread.ready());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::CtaBarrier);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
   thread.mark_ready();
 
   EXPECT_TRUE(thread.ready());
   EXPECT_FALSE(thread.waiting());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
+  thread.mark_waiting(WaitReason::AsyncOperation);
   thread.mark_trapped();
 
   EXPECT_TRUE(thread.trapped());
   EXPECT_FALSE(thread.ready());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
+  thread.mark_ready();
+  thread.mark_waiting(WaitReason::WarpSync);
   thread.mark_exited();
 
   EXPECT_TRUE(thread.exited());
   EXPECT_FALSE(thread.trapped());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 }
 
 TEST(ThreadTest, StepIsThinEngineFacade) {

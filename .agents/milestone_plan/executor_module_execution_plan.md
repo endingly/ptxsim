@@ -1,7 +1,6 @@
 # PTXSim `inst_execute_engine` Module Execution Plan
 
-> **Status:** WP0-WP3 and the post-Gate-A probe dispatch refactor are
-> implemented; WP4 waits for `exec_ir` WP2 lowering
+> **Status:** WP0-WP5 are implemented
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
 > **Next dependency:** fully-bound `exec_ir::ExecutableProgram` and mandatory
 > resolved-IR lowering
@@ -64,10 +63,10 @@ Simulator stores no duplicate authoritative PC. `ExecutableProgram` derives
 the flat storage offset and same-function fallthrough; executor selects
 target/fallthrough and commits the local PC through Thread.
 
-The current executor implementation uses handwritten probe operations and a
-static generated-shaped dispatch table. It does not yet consume the existing
-`ExecutableProgram` or add lowering, a production Simulator, a dynamic handler
-registry, or a general transaction system.
+The current executor implementation consumes an already-fetched `exec_ir`
+instruction through its existing handwritten static dispatch table. It does not
+add a production Simulator, a dynamic handler registry, or a general
+transaction system.
 
 ---
 
@@ -92,8 +91,8 @@ Therefore:
 - `.agents/milestone_plan/exec_ir_module_execution_plan.md` WP0 remains valid;
 - executor WP1-WP3 completed the control-flow and dispatch gate;
 - revised `exec_ir` WP1 is implemented from the proven consumer contract;
-- generated C++ instruction types replace rather than preserve the private
-  probe types when executor WP4 begins.
+- fully-bound `exec_ir` instruction types replace rather than preserve the
+  private probe types in executor WP4.
 
 This plan supersedes the single-thread-first executor sequence in V2-M4 of
 `.agents/project_plan.md`. It does not supersede the completed arithmetic,
@@ -120,7 +119,9 @@ Current gaps relevant to later integration:
 
 - no production scheduler constructs `WarpIssueGroup` values;
 - no Simulator owns/fetches an `ExecutableProgram` by `common::CodeLocation`;
-- `WaitReason` is stored but has no complete set/get/clear transition API;
+- `Thread` owns the authoritative wait state: `Waiting` iff `WaitReason` is
+  non-`None`. Entering, releasing, exiting, and trapping clear/set that reason
+  through the Thread API without changing the authoritative PC;
 - `Thread` has no current FunctionId, activation, or call stack.
 
 ### 3.2 Memory
@@ -608,27 +609,30 @@ Gate A and the follow-up dispatch audit decided:
 - top-level `Op` contains only `mov`, `add`, `bra`, and `exit` opcode identity;
 - data type, modifier, and operand form remain per-op record fields and may
   drive a second dispatch inside that opcode handler;
-- a static generated-shaped table performs first-level dispatch; no dynamic
+- the existing handwritten static table performs first-level dispatch; static
+  generation remains conditional on demonstrated repetition, and no dynamic
   registry or duplicated `Op`/payload tag is permitted.
 
-### WP4 — Fully-bound `exec_ir` consumption and dispatch
+### WP4 — Fully-bound `exec_ir` consumption and dispatch (implemented)
 
 **Prerequisite:** Gate A plus `exec_ir` WP1/WP2 are complete.
 
 Tasks are intentionally bounded by the revised plan:
 
-- consume fully-bound `ExecutableProgram` instruction values, never frontend
-  symbolic IR;
-- receive an already-fetched instruction and a function-local successor only
-  when that instruction may fall through; the current mandatory fallthrough
-  argument is a probe API and need not survive WP4;
-- dispatch once by pure `Op` through generated static glue;
+- consume fully-bound `exec_ir::Instruction` values, never frontend symbolic
+  IR;
+- receive an already-fetched instruction and an optional function-local
+  successor; use `exec_ir::may_fallthrough()` to reject a missing required
+  successor before any lane mutation;
+- dispatch once by pure `exec_ir::Op` through the existing handwritten static
+  table; static generation remains conditional on demonstrated repetition;
 - dispatch within the selected handler by normalized type/form/modifier only
   when the implemented opcode requires it;
 - do not encode type/modifier combinations in `Op`;
 - do not add a dynamic registry/factory;
 - keep all runtime handles and topology objects outside `exec_ir`;
-- preserve the prepare/commit behavior proved by WP1-WP3;
+- preserve the prepare/commit behavior proved by WP1-WP3 and the
+  constructor-bound MVP `FunctionId` frame context;
 - reject a missing successor before mutation when predication or operation
   semantics can select fallthrough;
 - reject unsupported operations before mutation.
@@ -636,7 +640,7 @@ Tasks are intentionally bounded by the revised plan:
 Do not add program loading, frontend ownership, or source ownership to
 executor.
 
-### WP5 — Scalar load/store
+### WP5 — Scalar load/store (implemented)
 
 **Goal:** connect executor sequencing to existing address-space resources.
 
@@ -660,16 +664,41 @@ Requirements:
 Acceptance includes bounds, alignment, missing binding, initialization,
 read-only storage, partial-warp masks, and lane-local fault isolation.
 
+Implemented scope is four-byte-aligned, little-endian `ld.u32`/`st.u32`.
+Explicit global treats the b64 register value as a region-relative address;
+generic resolves through the bound `ExecutionAddressContext`, including any
+bound byte-addressable space (and therefore naturally reports read-only
+constant writes). Load preparation reads memory then stages register writeback.
+Store preparation reads operands, resolves the address, and calls
+`validate_write` before staging its sole memory write. Commit is ascending
+`LaneId`; same-address stores therefore leave the highest lane's value, without
+claiming PTX data-race semantics. Explicit local/shared forms and address
+offsets remain deferred.
+
 ### WP6 — Warp and CTA synchronization
 
-**Prerequisites:** participant rules and wait-state ownership are specified.
+**Prerequisites:** wait-state ownership and synchronization PC semantics are
+specified.
 
-Before implementation, complete the execution-model wait API:
+The Thread wait-state prerequisite is complete: a waiting Thread records a
+non-`None` `WaitReason`, all non-waiting statuses record `None`, and the
+transition APIs preserve PC. Thread owns this state and scheduler eligibility.
 
-- observable WaitReason;
-- entering Waiting with a reason;
-- returning to Ready while clearing the reason;
-- explicit PC rule for arrival, blocking, release, and re-execution.
+The synchronization PC rule is also decided:
+
+- the Thread transition API itself never changes PC;
+- when a synchronization arrival does not complete its generation, the owner
+  marks each participating Thread Waiting and retains that synchronization
+  instruction's current PC;
+- when the generation completes, the synchronization owner/executor writes
+  that instruction's successor PC to every participant and calls
+  `mark_ready`; participants do not re-execute the synchronization
+  instruction;
+- scheduler issue excludes waiting Threads; and
+- failed collective prepare validation must not begin or mutate a rendezvous.
+
+The next implementation step is the minimal warp synchronization instruction.
+Barrier instructions and wakeup behavior remain unimplemented.
 
 Warp synchronization then uses `WarpSyncState`; CTA synchronization first
 converges participating lanes within each Warp and then updates

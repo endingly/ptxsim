@@ -9,84 +9,14 @@
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/common/ids.hpp>
 #include <ptxsim/common/raw_value.hpp>
+#include <ptxsim/exec_ir/exec_ir.hpp>
 #include <ptxsim/execution_model/warp.hpp>
+#include <ptxsim/memory/address_space/address_space_error.hpp>
+#include <ptxsim/memory/address_space/generic_address.hpp>
 #include <ptxsim/memory/register/register_error.hpp>
 #include <ptxsim/runtime/runtime.hpp>
 
 namespace ptxsim::inst_execute_engine {
-
-enum class Op {
-  mov,
-  add,
-  bra,
-  exit,
-};
-
-enum class DataType {
-  b32,
-  u32,
-};
-
-struct MoveProbe {
-  DataType type;
-  common::RegisterSlot source;
-  common::RegisterSlot destination;
-};
-
-using B32ProbeOperand = std::variant<common::RegisterSlot, common::RawValue>;
-
-struct AddProbe {
-  DataType type;
-  common::RegisterSlot destination;
-  B32ProbeOperand lhs;
-  B32ProbeOperand rhs;
-};
-
-struct BranchProbe {
-  common::ProgramCounter target;
-};
-
-struct ExitProbe {};
-
-struct PredicateProbe {
-  common::RegisterSlot source;
-  bool negated = false;
-};
-
-using ProbeOperation =
-    std::variant<MoveProbe, AddProbe, BranchProbe, ExitProbe>;
-
-namespace detail {
-
-struct OperationOpVisitor final {
-  constexpr auto operator()(const MoveProbe&) const noexcept -> Op {
-    return Op::mov;
-  }
-
-  constexpr auto operator()(const AddProbe&) const noexcept -> Op {
-    return Op::add;
-  }
-
-  constexpr auto operator()(const BranchProbe&) const noexcept -> Op {
-    return Op::bra;
-  }
-
-  constexpr auto operator()(const ExitProbe&) const noexcept -> Op {
-    return Op::exit;
-  }
-};
-
-}  // namespace detail
-
-[[nodiscard]] constexpr auto op(const ProbeOperation& operation) noexcept
-    -> Op {
-  return std::visit(detail::OperationOpVisitor{}, operation);
-}
-
-struct ProbeInstruction {
-  std::optional<PredicateProbe> predicate;
-  ProbeOperation operation;
-};
 
 enum class StepErrorCode {
   foreign_warp,
@@ -95,6 +25,7 @@ enum class StepErrorCode {
   invalid_lane,
   lane_not_ready,
   pc_mismatch,
+  missing_fallthrough,
   unsupported_instruction,
 };
 
@@ -107,7 +38,8 @@ struct StepError {
 
 using LaneFaultCause =
     std::variant<runtime::RuntimeBindingError, memory::RegisterError,
-                 common::RawValueError, arith::arithmetic_error>;
+                 common::RawValueError, arith::arithmetic_error,
+                 memory::AddressResolutionError, memory::AddressSpaceError>;
 
 struct LaneFault {
   execution_model::LaneId lane;
@@ -126,8 +58,8 @@ class InstExecuteEngine final {
 
   [[nodiscard]] auto execute(execution_model::Warp& warp,
                              const execution_model::WarpIssueGroup& issue,
-                             const ProbeInstruction& instruction,
-                             common::ProgramCounter fallthrough)
+                             const exec_ir::Instruction& instruction,
+                             std::optional<common::ProgramCounter> successor)
       -> std::expected<StepReport, StepError>;
 
  private:

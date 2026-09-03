@@ -471,6 +471,18 @@ auto AddressSpaceView::is_initialized(Address address, std::size_t size) const
   return (*value)->region.is_initialized(address, size);
 }
 
+auto AddressSpaceView::validate_write(Address address, std::size_t size,
+                                      std::size_t alignment) const
+    -> std::expected<void, AddressSpaceError> {
+  auto value = resource(state_, locator_);
+  if (!value) {
+    return std::unexpected(value.error());
+  }
+  return storage_result(
+      (*value)->region.validate_write(address, size, alignment),
+      locator_.index);
+}
+
 auto AddressSpaceView::read(Address address, std::span<std::byte> destination,
                             std::size_t alignment,
                             ReadRequirement requirement) const

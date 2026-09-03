@@ -58,6 +58,16 @@ class AddressSpaceView final {
       -> std::expected<RegionAccess, AddressSpaceError>;
   [[nodiscard]] auto is_initialized(Address address, std::size_t size) const
       -> std::expected<bool, AddressSpaceError>;
+  /**
+   * @brief Validate a pending write while retaining the view's stale-handle
+   *        checks and storage-error wrapping.
+   *
+   * This is side-effect free and has the same write-precondition result as
+   * `write` for the supplied byte count and alignment.
+   */
+  [[nodiscard]] auto validate_write(Address address, std::size_t size,
+                                    std::size_t alignment = 1) const
+      -> std::expected<void, AddressSpaceError>;
   [[nodiscard]] auto read(
       Address address, std::span<std::byte> destination,
       std::size_t alignment = 1,

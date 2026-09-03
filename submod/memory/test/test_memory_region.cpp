@@ -112,6 +112,26 @@ TEST(MemoryRegion, ReadOnlyRegionAllowsLoaderInitializationOnly) {
   EXPECT_EQ(destination, payload);
 }
 
+TEST(MemoryRegion, ValidateWriteMatchesWriteFailureWithoutMutation) {
+  MemoryRegion region(4, RegionAccess::ReadOnly);
+  const std::array payload{std::byte{1}, std::byte{2}, std::byte{3},
+                           std::byte{4}};
+  ASSERT_TRUE(region.initialize(Address{0}, payload));
+  const auto before = region.snapshot(Address{0}, 4);
+  ASSERT_TRUE(before);
+  const auto validated = region.validate_write(Address{0}, 4, 4);
+  const auto written = region.write(Address{0}, payload, 4);
+  ASSERT_FALSE(validated);
+  ASSERT_FALSE(written);
+  EXPECT_EQ(validated.error().code, written.error().code);
+  EXPECT_EQ(validated.error().address, written.error().address);
+  EXPECT_EQ(validated.error().size, written.error().size);
+  EXPECT_EQ(validated.error().required_alignment,
+            written.error().required_alignment);
+  EXPECT_EQ(*region.snapshot(Address{0}, 4), *before);
+  EXPECT_TRUE(region.is_initialized(Address{0}, 4));
+}
+
 TEST(MemoryRegion, ResetFillAndZeroInitializationUpdateStateAndBytes) {
   MemoryRegion region(3);
   region.fill_initialized(std::byte{0x5a});

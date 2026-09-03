@@ -1,0 +1,357 @@
+#include <gtest/gtest.h>
+
+#include <limits>
+#include <string_view>
+#include <utility>
+
+#include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
+#include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
+#include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
+
+namespace ptxsim::exec_ir_lowering::test {
+namespace {
+
+using ptx_frontend::resolved_ir::Mov;
+using ptx_frontend::resolved_ir::ResolvedModule;
+
+auto resolve(std::string_view source) -> ResolvedModule {
+  ptx_frontend::PtxSyntaxParser parser(source);
+  const auto ast = parser.parseModule();
+  if (!ast) {
+    ADD_FAILURE() << "PTX parse failed";
+    return {};
+  }
+  auto module = ptx_frontend::resolved_ir::resolveModule(*ast);
+  if (!module) {
+    ADD_FAILURE() << "PTX resolve failed";
+    return {};
+  }
+  return std::move(*module);
+}
+
+auto lowered_after_frontend_dies()
+    -> std::expected<exec_ir::ExecutableProgram, LoweringError> {
+  return lower(resolve(R"ptx(
+.entry first() {
+  .reg .pred %p;
+  .reg .b32 %b<2>;
+  .reg .u32 %r<3>;
+start:
+  @!%p mov.b32 %b1, %b0;
+  @%p add.u32 %r2, %r0, 7;
+  bra done;
+  add.u32 %r0, %r0, %r1;
+  {
+    .reg .u32 %nested;
+    add.u32 %nested, %r0, %r1;
+  }
+done:
+  exit;
+}
+.entry second() {
+  .reg .b32 %x<2>;
+  mov.b32 %x1, %x0;
+  exit;
+}
+)ptx"));
+}
+}  // namespace
+
+TEST(ExecIrLowering, LowersBoundProgramsWithoutFrontendLifetime) {
+  auto program_result = lowered_after_frontend_dies();
+  ASSERT_TRUE(program_result);
+  const auto& program = *program_result;
+
+  EXPECT_EQ(exec_ir::to_string(program),
+            "@0  [func:0 pc:0]  @!reg:0 mov.b32 reg:2, reg:1\n"
+            "@1  [func:0 pc:1]  @reg:0 add.u32 reg:5, reg:3, "
+            "b32:0x00000007\n"
+            "@2  [func:0 pc:2]  bra pc:5\n"
+            "@3  [func:0 pc:3]  add.u32 reg:3, reg:3, reg:4\n"
+            "@4  [func:0 pc:4]  add.u32 reg:6, reg:3, reg:4\n"
+            "@5  [func:0 pc:5]  exit\n"
+            "@6  [func:1 pc:0]  mov.b32 reg:1, reg:0\n"
+            "@7  [func:1 pc:1]  exit");
+  EXPECT_TRUE(
+      program.fetch({common::FunctionId{0}, common::ProgramCounter{0}}));
+  EXPECT_TRUE(
+      program.fetch({common::FunctionId{1}, common::ProgramCounter{0}}));
+}
+
+TEST(ExecIrLowering, BindsScalarNamesEndingInDigitsBySymbolIdentity) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %r0;
+  mov.b32 %r0, %r0;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  EXPECT_EQ(exec_ir::to_string(*program),
+            "@0  [func:0 pc:0]  mov.b32 reg:0, reg:0\n"
+            "@1  [func:0 pc:1]  exit");
+}
+
+TEST(ExecIrLowering, RejectsUnsupportedAndMalformedResolvedForms) {
+  const auto unsupported = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r<2>;
+  mov.u32 %r0, %r1;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported);
+  EXPECT_EQ(unsupported.error().code, LoweringErrorCode::unsupported_type);
+  EXPECT_EQ(unsupported.error().instruction, 0U);
+
+  const auto unsupported_instruction = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r<2>;
+  sub.u32 %r0, %r0, %r1;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported_instruction);
+  EXPECT_EQ(unsupported_instruction.error().code,
+            LoweringErrorCode::unsupported_instruction);
+
+  const auto unsupported_form = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .pred %p<2>;
+  mov.pred %p0, %p1;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported_form);
+  EXPECT_EQ(unsupported_form.error().code, LoweringErrorCode::unsupported_form);
+
+  const auto unsupported_vector_layout = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .v2 .u32 %vector;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported_vector_layout);
+  EXPECT_EQ(unsupported_vector_layout.error().code,
+            LoweringErrorCode::unsupported_type);
+
+  auto malformed_module = resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %r<2>;
+  mov.b32 %r0, %r1;
+  exit;
+}
+)ptx");
+  auto& mov = std::get<Mov>(malformed_module.functions[0].body[0]);
+  auto& form = std::get<Mov::Scalar>(mov.variant);
+  auto& operands = std::get<Mov::Scalar::ScalarOperands>(form.operands);
+  std::get<ptx_frontend::resolved_ir::ResolvedRegisterRef>(operands.src.value)
+      .symbol_id.reset();
+  const auto malformed = lower(malformed_module);
+  ASSERT_FALSE(malformed);
+  EXPECT_EQ(malformed.error().code, LoweringErrorCode::malformed_resolved_ir);
+
+  auto malformed_scalar_member = resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %r0;
+  mov.b32 %r0, %r0;
+  exit;
+}
+)ptx");
+  auto& scalar_mov =
+      std::get<Mov>(malformed_scalar_member.functions[0].body[0]);
+  auto& scalar_form = std::get<Mov::Scalar>(scalar_mov.variant);
+  auto& scalar_operands =
+      std::get<Mov::Scalar::ScalarOperands>(scalar_form.operands);
+  std::get<ptx_frontend::resolved_ir::ResolvedRegisterRef>(
+      scalar_operands.src.value)
+      .parameterized_index = std::numeric_limits<std::uint32_t>::max();
+  const auto malformed_member = lower(malformed_scalar_member);
+  ASSERT_FALSE(malformed_member);
+  EXPECT_EQ(malformed_member.error().code,
+            LoweringErrorCode::malformed_resolved_ir);
+}
+
+TEST(ExecIrLowering, RejectsTrailingTargetsAndWrapsProgramValidation) {
+  const auto trailing_target = lower(resolve(R"ptx(
+.entry kernel() {
+  bra trailing;
+trailing:
+}
+)ptx"));
+  ASSERT_FALSE(trailing_target);
+  EXPECT_EQ(trailing_target.error().code,
+            LoweringErrorCode::invalid_branch_target);
+  EXPECT_EQ(trailing_target.error().instruction, 0U);
+
+  auto unbound_label_module = resolve(R"ptx(
+.entry kernel() {
+  bra target;
+target:
+  exit;
+}
+)ptx");
+  auto& branch = std::get<ptx_frontend::resolved_ir::Bra>(
+      unbound_label_module.functions[0].body[0]);
+  std::get<ptx_frontend::resolved_ir::Bra::Direct>(branch.variant)
+      .target.value.symbol_id.reset();
+  const auto unbound_label = lower(unbound_label_module);
+  ASSERT_FALSE(unbound_label);
+  EXPECT_EQ(unbound_label.error().code,
+            LoweringErrorCode::malformed_resolved_ir);
+
+  auto missing_label_position = resolve(R"ptx(
+.entry kernel() {
+  bra target;
+target:
+  exit;
+}
+)ptx");
+  missing_label_position.functions[0].label_positions.clear();
+  const auto missing_label = lower(missing_label_position);
+  ASSERT_FALSE(missing_label);
+  EXPECT_EQ(missing_label.error().code,
+            LoweringErrorCode::malformed_resolved_ir);
+
+  auto duplicate_label_position = resolve(R"ptx(
+.entry kernel() {
+  bra target;
+target:
+  exit;
+}
+)ptx");
+  duplicate_label_position.functions[0].label_positions.push_back(
+      duplicate_label_position.functions[0].label_positions.front());
+  const auto duplicate_label = lower(duplicate_label_position);
+  ASSERT_FALSE(duplicate_label);
+  EXPECT_EQ(duplicate_label.error().code,
+            LoweringErrorCode::malformed_resolved_ir);
+
+  auto out_of_range_label_position = resolve(R"ptx(
+.entry kernel() {
+  bra target;
+target:
+  exit;
+}
+)ptx");
+  out_of_range_label_position.functions[0]
+      .label_positions[0]
+      .instruction_offset = 3U;
+  const auto out_of_range_label = lower(out_of_range_label_position);
+  ASSERT_FALSE(out_of_range_label);
+  EXPECT_EQ(out_of_range_label.error().code,
+            LoweringErrorCode::malformed_resolved_ir);
+
+  const auto predicated_exit = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .pred %p;
+  @%p exit;
+}
+)ptx"));
+  ASSERT_FALSE(predicated_exit);
+  EXPECT_EQ(predicated_exit.error().code,
+            LoweringErrorCode::program_validation_failed);
+  ASSERT_TRUE(predicated_exit.error().program_error);
+  EXPECT_EQ(predicated_exit.error().program_error->code,
+            exec_ir::ProgramErrorCode::no_fallthrough);
+}
+
+TEST(ExecIrLowering, LowersPredicatesForEverySupportedOperation) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .pred %p;
+  .reg .b32 %b<2>;
+  .reg .u32 %r<2>;
+  @!%p mov.b32 %b1, %b0;
+  @%p add.u32 %r1, %r0, 1;
+  @%p bra done;
+  @!%p exit;
+done:
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  for (std::uint32_t pc = 0; pc < 4; ++pc) {
+    const auto instruction =
+        program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
+    ASSERT_TRUE(instruction);
+    ASSERT_TRUE(instruction->get().predicate);
+    EXPECT_EQ(instruction->get().predicate->source, common::RegisterSlot{0});
+  }
+  EXPECT_TRUE(program->fetch({common::FunctionId{0}, common::ProgramCounter{0}})
+                  ->get()
+                  .predicate->negated);
+  EXPECT_FALSE(
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{1}})
+          ->get()
+          .predicate->negated);
+}
+
+TEST(ExecIrLowering, PreservesZeroBodyPrototypes) {
+  const auto program = lower(resolve(R"ptx(
+.func prototype();
+.entry kernel() {
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  EXPECT_EQ(exec_ir::to_string(*program), "@0  [func:1 pc:0]  exit");
+}
+
+TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  .reg .b64 %a;
+  ld.u32 %r, [%a];
+  ld.global.u32 %r, [%a];
+  st.u32 [%a], %r;
+  st.global.u32 [%a], %r;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  EXPECT_EQ(exec_ir::to_string(*program),
+            "@0  [func:0 pc:0]  ld.u32 reg:0, [reg:1]\n"
+            "@1  [func:0 pc:1]  ld.global.u32 reg:0, [reg:1]\n"
+            "@2  [func:0 pc:2]  st.u32 [reg:1], reg:0\n"
+            "@3  [func:0 pc:3]  st.global.u32 [reg:1], reg:0\n"
+            "@4  [func:0 pc:4]  exit");
+}
+
+TEST(ExecIrLowering, RejectsDeferredScalarMemoryForms) {
+  const auto type = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u64 %r, %a;
+  ld.u64 %r, [%a];
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(type);
+  EXPECT_EQ(type.error().code, LoweringErrorCode::unsupported_type);
+
+  const auto space = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  .reg .b64 %a;
+  ld.shared.u32 %r, [%a];
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(space);
+  EXPECT_EQ(space.error().code, LoweringErrorCode::unsupported_form);
+
+  const auto offset = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  .reg .b64 %a;
+  ld.u32 %r, [%a+4];
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(offset);
+  EXPECT_EQ(offset.error().code, LoweringErrorCode::unsupported_operand);
+}
+
+}  // namespace ptxsim::exec_ir_lowering::test

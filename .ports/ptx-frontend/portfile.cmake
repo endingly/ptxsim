@@ -3,9 +3,9 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO endingly/ptx_frontend
-    REF 3458bc53eacbc051d3ba4e2685c59aced4bf50af
-    SHA512 c497ca0fc964897f0529bfecd513467c919a01d34b1abd6f803109f66972487e6c78cb34a1507e66ffa070d94ec7dbf79fa1d37ba8d7175ccdaf67f6c96cadc3
-    HEAD_REF main
+    REF 0c00b51aef600d69d307b2d181e60911e898ac19
+    SHA512 afaf6fdc0f5e2b3b5eef551904a7abe095d5fb54db136e85d62ad8bdec8d1ecb620715b1af435306d0016df8973dd1e7d95d01b2493a5fa73f9af784759264ce
+    HEAD_REF dev
 )
 
 # The requirements file's editable path is relative to the source checkout;

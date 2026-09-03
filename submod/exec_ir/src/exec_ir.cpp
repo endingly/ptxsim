@@ -20,6 +20,17 @@ namespace {
   return false;
 }
 
+/** @brief Reject cast-in enum values before they reach executable dispatch. */
+[[nodiscard]] constexpr auto valid_address_space(AddressSpace space) noexcept
+    -> bool {
+  switch (space) {
+    case AddressSpace::generic:
+    case AddressSpace::global:
+      return true;
+  }
+  return false;
+}
+
 [[nodiscard]] auto error(
     ProgramErrorCode code,
     std::optional<common::FunctionId> function = std::nullopt,
@@ -113,6 +124,34 @@ namespace {
             return std::unexpected(result.error());
           }
           return validate_b32_operand(layout, layout.id, pc, operation.rhs);
+        } else if constexpr (std::same_as<T, Load>) {
+          if (operation.type != DataType::u32 ||
+              !valid_address_space(operation.space)) {
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
+          }
+          if (const auto result =
+                  validate_slot(layout, layout.id, pc, operation.destination,
+                                common::RawWidth::b32);
+              !result) {
+            return std::unexpected(result.error());
+          }
+          return validate_slot(layout, layout.id, pc, operation.address,
+                               common::RawWidth::b64);
+        } else if constexpr (std::same_as<T, Store>) {
+          if (operation.type != DataType::u32 ||
+              !valid_address_space(operation.space)) {
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
+          }
+          if (const auto result =
+                  validate_slot(layout, layout.id, pc, operation.address,
+                                common::RawWidth::b64);
+              !result) {
+            return std::unexpected(result.error());
+          }
+          return validate_slot(layout, layout.id, pc, operation.source,
+                               common::RawWidth::b32);
         } else if constexpr (std::same_as<T, Branch>) {
           if (operation.target.value() >= layout.instruction_count) {
             return error(ProgramErrorCode::branch_target_out_of_range,
@@ -186,6 +225,38 @@ void append_instruction(std::string& output, const Instruction& instruction) {
           append_operand(output, operation.lhs);
           output += ", ";
           append_operand(output, operation.rhs);
+        } else if constexpr (std::same_as<T, Load>) {
+          switch (operation.space) {
+            case AddressSpace::generic:
+              output += "ld.u32 ";
+              break;
+            case AddressSpace::global:
+              output += "ld.global.u32 ";
+              break;
+            default:
+              output += "ld.invalid.u32 ";
+              break;
+          }
+          append_register(output, operation.destination);
+          output += ", [";
+          append_register(output, operation.address);
+          output += "]";
+        } else if constexpr (std::same_as<T, Store>) {
+          switch (operation.space) {
+            case AddressSpace::generic:
+              output += "st.u32 ";
+              break;
+            case AddressSpace::global:
+              output += "st.global.u32 ";
+              break;
+            default:
+              output += "st.invalid.u32 ";
+              break;
+          }
+          output += "[";
+          append_register(output, operation.address);
+          output += "], ";
+          append_register(output, operation.source);
         } else if constexpr (std::same_as<T, Branch>) {
           output += "bra pc:";
           output += std::to_string(operation.target.value());

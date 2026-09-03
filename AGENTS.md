@@ -12,6 +12,16 @@ When delegating:
 
 These files define project-wide delegation behavior.
 
+## Code documentation policy
+
+- Add Doxygen comments to every newly introduced function, class, and struct.
+- Add Doxygen comments to important variables and data members, documenting
+  their meaning, ownership or lifetime, units, and invariants where relevant.
+- Comments must describe the useful contract or intent rather than merely
+  restating the identifier.
+- Source-code comments must not mention milestone or work-package identifiers;
+  describe the stable behavior or constraint instead.
+
 ## Primary agent responsibilities
 
 The primary Sol agent is responsible for:

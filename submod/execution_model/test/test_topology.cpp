@@ -383,7 +383,7 @@ TEST(GridTest, NodeAddressesRemainStable) {
 
   // Mutate legal runtime state; topology identity must not move.
   thread->set_pc(ProgramCounter{123});
-  thread->mark_waiting();
+  thread->mark_waiting(WaitReason::Other);
   thread->mark_ready();
 
   EXPECT_EQ(grid.find_cta(cta_id), cta);

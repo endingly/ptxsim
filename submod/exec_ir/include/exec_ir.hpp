@@ -19,6 +19,8 @@ namespace ptxsim::exec_ir {
 enum class Op : std::uint8_t {
   mov,
   add,
+  ld,
+  st,
   bra,
   exit,
 };
@@ -26,6 +28,17 @@ enum class Op : std::uint8_t {
 enum class DataType : std::uint8_t {
   b32,
   u32,
+};
+
+/**
+ * @brief Address interpretation selected by the scalar memory instructions.
+ *
+ * `generic` is resolved through the lane's runtime address context; `global`
+ * treats the b64 address operand as an offset in the bound global region.
+ */
+enum class AddressSpace : std::uint8_t {
+  generic,
+  global,
 };
 
 struct Predicate {
@@ -54,6 +67,34 @@ struct Add {
   bool operator==(const Add&) const noexcept = default;
 };
 
+/** @brief Fully-bound four-byte scalar load operation. */
+struct Load {
+  /** PTX scalar type; executable validation currently accepts only `u32`. */
+  DataType type;
+  /** Determines whether `address` is generic or global-region-relative. */
+  AddressSpace space;
+  /** b32 register slot that receives the little-endian loaded value. */
+  common::RegisterSlot destination;
+  /** b64 register slot holding the byte address with no embedded offset. */
+  common::RegisterSlot address;
+
+  constexpr bool operator==(const Load&) const noexcept = default;
+};
+
+/** @brief Fully-bound four-byte scalar store operation. */
+struct Store {
+  /** PTX scalar type; executable validation currently accepts only `u32`. */
+  DataType type;
+  /** Determines whether `address` is generic or global-region-relative. */
+  AddressSpace space;
+  /** b64 register slot holding the byte address with no embedded offset. */
+  common::RegisterSlot address;
+  /** b32 register slot copied to memory in little-endian byte order. */
+  common::RegisterSlot source;
+
+  constexpr bool operator==(const Store&) const noexcept = default;
+};
+
 struct Branch {
   common::ProgramCounter target;
 
@@ -64,13 +105,15 @@ struct Exit {
   constexpr bool operator==(const Exit&) const noexcept = default;
 };
 
-using Operation = std::variant<Move, Add, Branch, Exit>;
+using Operation = std::variant<Move, Add, Load, Store, Branch, Exit>;
 
 namespace detail {
 
 template <typename T>
 concept OperationAlternative = std::same_as<std::remove_cvref_t<T>, Move> ||
                                std::same_as<std::remove_cvref_t<T>, Add> ||
+                               std::same_as<std::remove_cvref_t<T>, Load> ||
+                               std::same_as<std::remove_cvref_t<T>, Store> ||
                                std::same_as<std::remove_cvref_t<T>, Branch> ||
                                std::same_as<std::remove_cvref_t<T>, Exit>;
 
@@ -83,6 +126,10 @@ concept OperationAlternative = std::same_as<std::remove_cvref_t<T>, Move> ||
           return Op::mov;
         } else if constexpr (std::same_as<T, Add>) {
           return Op::add;
+        } else if constexpr (std::same_as<T, Load>) {
+          return Op::ld;
+        } else if constexpr (std::same_as<T, Store>) {
+          return Op::st;
         } else if constexpr (std::same_as<T, Branch>) {
           return Op::bra;
         } else {

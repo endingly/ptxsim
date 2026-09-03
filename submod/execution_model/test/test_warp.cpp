@@ -246,8 +246,8 @@ TEST(WarpTest, DerivedMasksFollowThreadState) {
 
   auto& warp = grid.warp(WarpId{grid_id, 0});
 
-  warp.thread(LaneId{1}).mark_waiting();
-  warp.thread(LaneId{3}).mark_waiting();
+  warp.thread(LaneId{1}).mark_waiting(WaitReason::WarpSync);
+  warp.thread(LaneId{3}).mark_waiting(WaitReason::WarpSync);
 
   warp.thread(LaneId{5}).mark_exited();
 
@@ -627,7 +627,7 @@ TEST(WarpTest, WarpAndThreadAddressesRemainStableDuringRuntimeMutation) {
   auto* const thread = &warp->thread(LaneId{7});
 
   thread->set_pc(ProgramCounter{100});
-  thread->mark_waiting();
+  thread->mark_waiting(WaitReason::WarpSync);
   thread->mark_ready();
 
   LaneMask participants{32};

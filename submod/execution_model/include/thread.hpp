@@ -1,14 +1,16 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <ptxsim/common/shape.hpp>
+#include <ptxsim/execution_model/execution_state.hpp>
 #include <ptxsim/execution_model/forward_def.hpp>
 #include <ptxsim/execution_model/ids.hpp>
-#include <ptxsim/execution_model/execution_state.hpp>
 #include <ptxsim/execution_model/warp_state.hpp>
 
 namespace ptxsim::execution_model {
 
+/** @brief Scheduler-visible lifecycle state of one thread. */
 enum class ThreadStatus : std::uint8_t {
   Ready,
   Waiting,
@@ -16,6 +18,11 @@ enum class ThreadStatus : std::uint8_t {
   Trapped,
 };
 
+/**
+ * @brief Cause recorded while a thread is not eligible for issue.
+ *
+ * `None` is required for every state other than `ThreadStatus::Waiting`.
+ */
 enum class WaitReason : std::uint8_t {
   None,
   WarpSync,
@@ -28,6 +35,7 @@ struct ThreadExecutionState {
   ProgramCounter pc{0};
   ThreadStatus status{ThreadStatus::Ready};
 
+  /** Must be non-None exactly when `status` is Waiting. */
   WaitReason wait_reason{WaitReason::None};
 
   // CallStack call_stack;
@@ -96,13 +104,42 @@ class Thread final {
     return this->status() == ThreadStatus::Trapped;
   }
 
-  void mark_ready() noexcept { this->state_.status = ThreadStatus::Ready; }
+  /** @brief Return the blocking cause, or None when the thread is issuable. */
+  [[nodiscard]]
+  WaitReason wait_reason() const noexcept {
+    return this->state_.wait_reason;
+  }
 
-  void mark_waiting() noexcept { this->state_.status = ThreadStatus::Waiting; }
+  /** @brief Make the thread issuable and clear any previous blocking cause. */
+  void mark_ready() noexcept {
+    this->state_.status = ThreadStatus::Ready;
+    this->state_.wait_reason = WaitReason::None;
+  }
 
-  void mark_exited() noexcept { this->state_.status = ThreadStatus::Exited; }
+  /**
+   * @brief Stop issuing a ready thread while preserving its current PC.
+   *
+   * The reason must identify an actual wait condition; callers resume via
+   * `mark_ready` after the condition is released.
+   */
+  void mark_waiting(WaitReason reason) noexcept {
+    assert(reason != WaitReason::None);
+    assert(this->ready());
+    this->state_.status = ThreadStatus::Waiting;
+    this->state_.wait_reason = reason;
+  }
 
-  void mark_trapped() noexcept { this->state_.status = ThreadStatus::Trapped; }
+  /** @brief Mark completion without changing PC and clear any wait cause. */
+  void mark_exited() noexcept {
+    this->state_.status = ThreadStatus::Exited;
+    this->state_.wait_reason = WaitReason::None;
+  }
+
+  /** @brief Mark a lane fault without changing PC and clear any wait cause. */
+  void mark_trapped() noexcept {
+    this->state_.status = ThreadStatus::Trapped;
+    this->state_.wait_reason = WaitReason::None;
+  }
 
   [[nodiscard]]
   Warp& warp() noexcept;

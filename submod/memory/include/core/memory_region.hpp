@@ -113,6 +113,17 @@ class MemoryRegion final {
       Address address, std::size_t size,
       std::size_t alignment = 1) const noexcept;
 
+  /**
+   * @brief Check runtime write permission, alignment, and range together.
+   *
+   * Returns the same error as `write` would for these preconditions without
+   * changing bytes or initialization state.
+   */
+  [[nodiscard]]
+  std::expected<void, MemoryError> validate_write(
+      Address address, std::size_t size,
+      std::size_t alignment = 1) const noexcept;
+
   // -------------------------------------------------------------------------
   // Initialization state
   // -------------------------------------------------------------------------
