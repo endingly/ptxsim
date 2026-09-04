@@ -94,7 +94,8 @@ jobs:
         run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
 
       - name: Restore APT package cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/apt/archives
           key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml') }}
@@ -132,6 +133,13 @@ jobs:
             unzip \
             zip
           sudo chmod -R a+rX "$APT_CACHE_DIR"
+
+      - name: Save APT package cache
+        if: success() && matrix.preset == 'ci-linux-gcc-debug' && steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/apt/archives
+          key: ${{ steps.apt-cache.outputs.cache-primary-key }}
 
       - name: Show compiler identity
         shell: bash
