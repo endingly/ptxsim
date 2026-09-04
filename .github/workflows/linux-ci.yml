@@ -192,6 +192,10 @@ jobs:
           ccache --version
           ccache --show-config
 
+      - name: Reset compiler cache statistics
+        shell: bash
+        run: ccache --zero-stats
+
       - name: Run core CMake workflow preset
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
