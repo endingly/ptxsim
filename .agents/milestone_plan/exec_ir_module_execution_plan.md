@@ -1,9 +1,8 @@
 # PTXSim `exec_ir` Module Execution Plan
 
 > **Status:** WP0 generator contract probe, WP1 executable program core, the
-> source-built frontend overlay port, WP2 resolved-IR lowering, and WP5
-> scalar load/store are
-> implemented
+> source-built frontend overlay port, WP2 resolved-IR lowering, WP3 generated
+> declarations, and WP5 scalar load/store are implemented
 > **Architecture authority:**
 > [`../arch/resolved_ir_execution_architecture.md`](../arch/resolved_ir_execution_architecture.md)
 > **Primary objective:** lower checked frontend semantic IR into a ptxsim-owned,
@@ -101,9 +100,10 @@ shape is compatible with that distinction without creating `Activation` or a
 
 ## 3. Instruction and dispatch boundary
 
-`Instruction` is a generated ptxsim-owned value over only supported executable
-opcode records. Each opcode record owns its execution predicate and a nested
-fully-bound selected-form variant. Its top-level `Op` is pure opcode identity:
+`Instruction` is a generated ptxsim-owned value over the complete opcode and
+form topology exported by the pinned frontend specification. Each opcode record
+owns its execution predicate and a nested fully-bound form variant. Its
+top-level `Op` is pure opcode identity:
 
 ```text
 mov | add | bra | exit | ...
@@ -115,16 +115,18 @@ selected opcode handler performs a second dispatch by the needed form/type or
 modifier. Do not encode their cross-product in `Op`; do not add a registry,
 factory, or virtual handler hierarchy.
 
-The ptxsim backend YAML is a support/mapping selection, not a second PTX
-schema. It is validated against the packaged frontend database, which remains
-the authority for PTX opcode, form, layout, and modifier legality. Generated
-code is structural glue; operand primitives, `ExecutableProgram`, lowering,
-validation, printing, and execution policy remain handwritten.
+The ptxsim backend YAML is a leaf-type mapping, not a support selection or a
+second PTX schema. It is validated against the packaged frontend database,
+which remains the authority for PTX opcode, form, layout, modifier values, and
+legality. Generated code is structural glue; operand primitives,
+`ExecutableProgram`, lowering, validation, printing, and execution policy
+remain handwritten.
 
-The current projection is `mov.scalar`, `add.integer_no_sat`, generic and
-global scalar `ld`/`st`, `bar.warp.sync`, `bra.direct`, and `exit.bare`.
-It retains all active memory controls in execution records, while program
-validation limits execution to the controls currently implemented.
+The generated projection covers every frontend opcode, form, and operand
+layout. The current executable subset remains `mov.scalar`,
+`add.integer_no_sat`, generic and global scalar `ld`/`st`, `bar.warp.sync`,
+`bra.direct`, and `exit.bare`. Lowering and program validation reject every
+other declaration until its execution semantics are implemented.
 
 ## 4. Frontend lowering contract
 
@@ -149,19 +151,26 @@ retained AST.
 
 ## 5. Canonical executable printing
 
-The printer describes the program actually executed, not original PTX source:
+The printer describes the program actually executed with stable PTX-like bound
+diagnostics, not original PTX source:
 
 ```text
-@0  [func:0 pc:0]  mov.b32 reg:0, reg:1
-@1  [func:0 pc:1]  bra pc:3
-@2  [func:0 pc:2]  exit
-@3  [func:0 pc:3]  add.u32 reg:2, reg:0, 1
+gpc0  [func:0 pc:0]  mov.b32 register:0, register:1
+gpc1  [func:0 pc:1]  bra pc:3
+gpc2  [func:0 pc:2]  exit
 ```
 
-`@N` is a derived flat storage offset; `[func:F pc:P]` is the semantic address.
-Source text, comments, labels, and register spellings are intentionally not
-reconstructed. The printer is part of the executable representation contract,
-so lowering tests can use it for concise diagnostics and golden checks.
+`gpcN` is a derived global/flat program counter; `[func:F pc:P]` is the
+semantic address. The instruction's `@...` prefix remains its execution
+predicate marker.
+Each instruction occupies exactly one line; its metadata and instruction text
+share that line.
+Normalized opcodes and frontend modifier tokens are printed with bound IDs and
+raw values in specification operand order. Source text, comments, labels, and
+register spellings are intentionally not reconstructed; this diagnostic does
+not promise parser round-tripping. The printer is part of the executable
+representation contract, so lowering tests can use it for concise diagnostics
+and golden checks.
 
 ## 6. Current repository shape
 
@@ -171,7 +180,9 @@ lowering boundary are isolated from each other:
 ```text
 submod/exec_ir/
 ├── include/exec_ir.hpp
+├── include/exec_ir_types.hpp
 ├── src/exec_ir.cpp
+├── src/exec_ir_types.cpp
 ├── test/test_exec_ir.cpp
 └── python/
     ├── pyproject.toml
@@ -185,7 +196,11 @@ submod/exec_ir_lowering/
 ```
 
 The core `ptxsim::exec_ir` target exposes only fully-bound values/programs,
-links only `ptxsim::common`, and accepts no frontend types. The separate
+accepts no frontend types, and keeps diagnostic implementations and
+dependencies out of public headers.
+Generated declarations and stable leaf diagnostic declarations are public;
+their generated and leaf definitions use `fmt` and `magic_enum` privately.
+`ptxsim::common` remains the only public link dependency. The separate
 `ptxsim::exec_ir_lowering` component is mandatory for converting
 `ResolvedModule`; it links `ptx_frontend::resolved_ir` and produces an owned
 `ExecutableProgram`. Consumers of an already-built program need neither
@@ -254,13 +269,13 @@ Tests resolve real PTX, cover deterministic slots and function-local PCs,
 predication, branches, owned immediates, frontend lifetime independence, and
 unsupported/malformed/trailing-label/program-validation failures.
 
-### WP3 — Static generated glue and build integration
+### WP3 — Static generated glue and build integration (implemented)
 
-Only if WP1/WP2 demonstrate repetitive supported-record structure, extend the
-existing generator to emit the bounded operation declarations or static
-first-level dispatch glue. Its manifest must select only ptxsim-supported
-forms. Keep the handwritten executable program and lowering validation as the
-authority.
+The generator emits the frontend's complete opcode/form/layout declaration
+topology and maps its leaves to ptxsim-owned C++ values. Its backend manifest
+contains only leaf mappings; it must not repeat frontend structure or select
+the executable subset. Keep the handwritten executable program, lowering
+validation, and executor dispatch as the support authority.
 
 Add CMake generation/installation checks only for files actually emitted.
 CI may prepare the pinned Python environment before configuration; CMake must

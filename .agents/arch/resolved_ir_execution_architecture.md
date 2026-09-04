@@ -111,15 +111,21 @@ record. The distinction is not `Add -> some different opcode`; it is:
 symbolic Add -> fully-bound executable Add
 ```
 
-The executable opcode/form topology is generated from a ptxsim backend support
-map validated against the packaged frontend instruction database. That map
-selects execution support and C++ leaf mappings only; it does not duplicate
-PTX legality. Generated records retain frontend-shaped opcode then form
-nesting, while their leaves contain only fully-bound ptxsim values. Every
-active resolved modifier is retained in frontend order: fixed modifiers are
-inline `static constexpr` selectors and dynamic modifiers are record fields.
-A multi-layout frontend variant retains its selected layout records and an
-`Operands` variant even when the current backend selects one layout.
+The complete executable-IR opcode/form topology is generated from the packaged
+frontend instruction database. The ptxsim backend YAML maps frontend modifier
+and operand kinds to ptxsim-owned C++ leaf types; it does not select opcodes,
+forms, layouts, modifier values, or PTX legality. Generated records retain the
+frontend opcode then form nesting, while their leaves contain only fully-bound
+ptxsim values. Every active resolved modifier is retained in frontend order:
+fixed modifiers are inline `static constexpr` selectors and dynamic modifiers
+are record fields. A multi-layout frontend variant retains all layout records
+in an `Operands` variant.
+
+Declaration coverage is deliberately broader than execution support. Lowering,
+program validation, and executor dispatch explicitly whitelist the forms they
+implement and reject all other generated records as unsupported. Adding a
+frontend instruction therefore keeps the C++ model aligned without silently
+adding simulator behavior.
 
 The executable representation therefore must not contain frontend `SymbolId`,
 label/register spelling, lexical scope, or source-range state required only for
@@ -402,24 +408,20 @@ The simulator requirement is to print the program it actually executes, not to
 reconstruct the original PTX source.
 
 Therefore the executable IR does not need a debug-info/source-spelling sidecar
-for this requirement. The canonical printer should use executable identities:
+for this requirement. The canonical printer uses PTX-like bound identities,
+but is deliberately not PTX re-emission or a parser round-trip format:
 
 ```text
-@0  [func:0 pc:0]  mov.b32 reg:0, reg:1
-@1  [func:0 pc:1]  call func:2
-@2  [func:0 pc:2]  exit
-
-@3  [func:1 pc:0]  ...
-@4  [func:1 pc:1]  ret
-
-@5  [func:2 pc:0]  add.u32 reg:2, reg:0, 1
-@6  [func:2 pc:1]  ret
+gpc0  [func:0 pc:0]  mov.b32 register:0, register:1
+gpc1  [func:0 pc:1]  exit
 ```
 
-The leading `@N` is the derived flat program-layout index. The bracketed
+The leading `gpcN` is the derived global/flat program counter. The bracketed
 `[func:F pc:P]` preserves the semantic address. A printer may display branch
 and call targets using derived flat addresses for readability, but those values
 remain presentation/layout data rather than execution semantics.
+Each instruction occupies exactly one line; its metadata and instruction text
+share that line.
 
 This canonical textual form is useful for:
 
@@ -430,7 +432,16 @@ This canonical textual form is useful for:
 - serialization/debug tooling later.
 
 Original whitespace, comments, label names, register spellings, and source text
-are intentionally not recoverable from the executable representation.
+are intentionally not recoverable from the executable representation. Generated
+instruction diagnostics use PTX-like normalized opcodes and frontend modifier
+tokens with bound IDs and raw values in specification operand order. They are
+stable diagnostics, not source spellings, and do not promise parser round trips.
+
+The generated public header declares topology records and diagnostic functions
+only. A generated implementation source defines form/layout and instruction
+printers, while stable leaf printers are out of line. `fmt` and `magic_enum`
+are absent from public headers and the public compile interface, and linked
+with `PRIVATE` visibility by `ptxsim::exec_ir`.
 
 ## 11. Lowering pipeline
 

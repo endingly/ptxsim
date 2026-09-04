@@ -68,6 +68,23 @@ struct ProgramError {
   constexpr bool operator==(const ProgramError&) const noexcept = default;
 };
 
+/**
+ * @brief Report fallthrough only after executable-program validation succeeded.
+ *
+ * Validation admits only the currently implemented instruction forms, so this
+ * helper never assigns control-flow semantics to declaration-only opcodes.
+ */
+[[nodiscard]] constexpr auto may_fallthrough(
+    const Instruction& instruction) noexcept -> bool {
+  switch (op(instruction)) {
+    case Op::bra:
+    case Op::exit:
+      return execution_predicate(instruction).has_value();
+    default:
+      return true;
+  }
+}
+
 /** @brief Validated, owning execution program safe for instruction dispatch. */
 class ExecutableProgram final {
  public:

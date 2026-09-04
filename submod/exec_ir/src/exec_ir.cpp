@@ -1,7 +1,10 @@
 #include <ptxsim/exec_ir/exec_ir.hpp>
 
+#include <iterator>
 #include <limits>
 #include <utility>
+
+#include <fmt/format.h>
 
 namespace ptxsim::exec_ir {
 namespace {
@@ -90,10 +93,46 @@ namespace {
   return {};
 }
 
+/** @brief Report whether validation implements an instruction's selected form. */
+[[nodiscard]] auto supported_instruction_shape(const Instruction& instruction)
+    -> bool {
+  return std::visit(
+      []<InstructionAlternative T>(const T& operation) {
+        if constexpr (std::same_as<T, Mov>) {
+          if (!std::holds_alternative<Mov::Scalar>(operation.variant))
+            return false;
+          const auto& form = std::get<Mov::Scalar>(operation.variant);
+          const auto* operands =
+              std::get_if<Mov::Scalar::ScalarOperands>(&form.operands);
+          return operands != nullptr &&
+                 std::holds_alternative<common::RegisterSlot>(operands->src);
+        } else if constexpr (std::same_as<T, Add>) {
+          return std::holds_alternative<Add::IntegerNoSat>(operation.variant);
+        } else if constexpr (std::same_as<T, Ld>) {
+          return std::holds_alternative<Ld::GenericScalar>(operation.variant) ||
+                 std::holds_alternative<Ld::ExplicitScalar>(operation.variant);
+        } else if constexpr (std::same_as<T, St>) {
+          return std::holds_alternative<St::GenericScalar>(operation.variant) ||
+                 std::holds_alternative<St::ExplicitScalar>(operation.variant);
+        } else if constexpr (std::same_as<T, Bar>) {
+          return std::holds_alternative<Bar::WarpSync>(operation.variant);
+        } else if constexpr (std::same_as<T, Bra>) {
+          return std::holds_alternative<Bra::Direct>(operation.variant);
+        } else if constexpr (std::same_as<T, Exit>) {
+          return std::holds_alternative<Exit::Bare>(operation.variant);
+        } else {
+          return false;
+        }
+      },
+      instruction);
+}
+
 [[nodiscard]] auto validate_instruction(const Instruction& instruction,
                                         const FunctionLayout& layout,
                                         common::ProgramCounter pc)
     -> std::expected<void, ProgramError> {
+  if (!supported_instruction_shape(instruction))
+    return error(ProgramErrorCode::unsupported_instruction, layout.id, pc);
   if (const auto& predicate = execution_predicate(instruction); predicate) {
     if (const auto result = validate_slot(
             layout, layout.id, pc, predicate->source, common::RawWidth::pred);
@@ -106,6 +145,9 @@ namespace {
       [&instruction, &layout, pc]<InstructionAlternative T>(
           const T& operation) -> std::expected<void, ProgramError> {
         if constexpr (std::same_as<T, Mov>) {
+          if (!std::holds_alternative<Mov::Scalar>(operation.variant))
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
           const auto& form = std::get<Mov::Scalar>(operation.variant);
           const auto& operands =
               std::get<Mov::Scalar::ScalarOperands>(form.operands);
@@ -118,9 +160,16 @@ namespace {
               !result) {
             return std::unexpected(result.error());
           }
-          return validate_slot(layout, layout.id, pc, operands.src,
+          const auto* source = std::get_if<common::RegisterSlot>(&operands.src);
+          if (source == nullptr)
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
+          return validate_slot(layout, layout.id, pc, *source,
                                common::RawWidth::b32);
         } else if constexpr (std::same_as<T, Add>) {
+          if (!std::holds_alternative<Add::IntegerNoSat>(operation.variant))
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
           const auto& form = std::get<Add::IntegerNoSat>(operation.variant);
           if (form.type != DataType::u32) {
             return error(ProgramErrorCode::unsupported_instruction, layout.id,
@@ -140,59 +189,85 @@ namespace {
         } else if constexpr (std::same_as<T, Ld>) {
           return std::visit(
               [&](const auto& form) -> std::expected<void, ProgramError> {
-                if (form.type != DataType::u32)
+                using Form = std::remove_cvref_t<decltype(form)>;
+                if constexpr (!std::same_as<Form, Ld::GenericScalar> &&
+                              !std::same_as<Form, Ld::ExplicitScalar>) {
                   return error(ProgramErrorCode::unsupported_instruction,
                                layout.id, pc);
-                if (!valid_memory_controls(form.semantics, form.scope,
-                                           form.mmio, form.cache))
-                  return error(ProgramErrorCode::unsupported_instruction,
-                               layout.id, pc);
-                if constexpr (std::same_as<std::remove_cvref_t<decltype(form)>,
-                                           Ld::GenericScalar>) {
-                  if (form.semantics != MemoryConsistency::omitted)
+                } else {
+                  if (form.type != DataType::u32)
                     return error(ProgramErrorCode::unsupported_instruction,
                                  layout.id, pc);
-                } else if (!valid_address_space(form.state_space)) {
-                  return error(ProgramErrorCode::unsupported_instruction,
-                               layout.id, pc);
+                  if (!valid_memory_controls(form.semantics, form.scope,
+                                             form.mmio, form.cache))
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  if constexpr (std::same_as<Form, Ld::GenericScalar>) {
+                    if (form.semantics != MemoryConsistency::omitted)
+                      return error(ProgramErrorCode::unsupported_instruction,
+                                   layout.id, pc);
+                  } else if (!valid_address_space(form.state_space)) {
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  }
+                  if (const auto result =
+                          validate_slot(layout, layout.id, pc, form.dst,
+                                        common::RawWidth::b32);
+                      !result)
+                    return std::unexpected(result.error());
+                  const auto* address =
+                      std::get_if<common::RegisterSlot>(&form.address.base);
+                  if (address == nullptr || form.address.offset)
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  return validate_slot(layout, layout.id, pc, *address,
+                                       common::RawWidth::b64);
                 }
-                if (const auto result = validate_slot(
-                        layout, layout.id, pc, form.dst, common::RawWidth::b32);
-                    !result)
-                  return std::unexpected(result.error());
-                return validate_slot(layout, layout.id, pc, form.address,
-                                     common::RawWidth::b64);
               },
               operation.variant);
         } else if constexpr (std::same_as<T, St>) {
           return std::visit(
               [&](const auto& form) -> std::expected<void, ProgramError> {
-                if (form.type != DataType::u32)
+                using Form = std::remove_cvref_t<decltype(form)>;
+                if constexpr (!std::same_as<Form, St::GenericScalar> &&
+                              !std::same_as<Form, St::ExplicitScalar>) {
                   return error(ProgramErrorCode::unsupported_instruction,
                                layout.id, pc);
-                if (!valid_memory_controls(form.semantics, form.scope,
-                                           form.mmio, form.cache))
-                  return error(ProgramErrorCode::unsupported_instruction,
-                               layout.id, pc);
-                if constexpr (std::same_as<std::remove_cvref_t<decltype(form)>,
-                                           St::GenericScalar>) {
-                  if (form.semantics != MemoryConsistency::omitted)
+                } else {
+                  if (form.type != DataType::u32)
                     return error(ProgramErrorCode::unsupported_instruction,
                                  layout.id, pc);
-                } else if (!valid_address_space(form.state_space)) {
-                  return error(ProgramErrorCode::unsupported_instruction,
-                               layout.id, pc);
+                  if (!valid_memory_controls(form.semantics, form.scope,
+                                             form.mmio, form.cache))
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  if constexpr (std::same_as<Form, St::GenericScalar>) {
+                    if (form.semantics != MemoryConsistency::omitted)
+                      return error(ProgramErrorCode::unsupported_instruction,
+                                   layout.id, pc);
+                  } else if (!valid_address_space(form.state_space)) {
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  }
+                  const auto* address =
+                      std::get_if<common::RegisterSlot>(&form.address.base);
+                  if (address == nullptr || form.address.offset)
+                    return error(ProgramErrorCode::unsupported_instruction,
+                                 layout.id, pc);
+                  if (const auto result =
+                          validate_slot(layout, layout.id, pc, *address,
+                                        common::RawWidth::b64);
+                      !result)
+                    return std::unexpected(result.error());
+                  return validate_slot(layout, layout.id, pc, form.src,
+                                       common::RawWidth::b32);
                 }
-                if (const auto result =
-                        validate_slot(layout, layout.id, pc, form.address,
-                                      common::RawWidth::b64);
-                    !result)
-                  return std::unexpected(result.error());
-                return validate_slot(layout, layout.id, pc, form.src,
-                                     common::RawWidth::b32);
               },
               operation.variant);
         } else if constexpr (std::same_as<T, Bar>) {
+          if (!std::holds_alternative<Bar::WarpSync>(operation.variant))
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
           if (execution_predicate(instruction)) {
             return error(ProgramErrorCode::unsupported_instruction, layout.id,
                          pc);
@@ -201,15 +276,23 @@ namespace {
               layout, layout.id, pc,
               std::get<Bar::WarpSync>(operation.variant).membermask);
         } else if constexpr (std::same_as<T, Bra>) {
+          if (!std::holds_alternative<Bra::Direct>(operation.variant))
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
           const auto& form = std::get<Bra::Direct>(operation.variant);
           if (form.target.value() >= layout.instruction_count) {
             return error(ProgramErrorCode::branch_target_out_of_range,
                          layout.id, pc);
           }
           return {};
-        } else {
-          static_assert(std::same_as<T, Exit>);
+        } else if constexpr (std::same_as<T, Exit>) {
+          if (!std::holds_alternative<Exit::Bare>(operation.variant))
+            return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                         pc);
           return {};
+        } else {
+          return error(ProgramErrorCode::unsupported_instruction, layout.id,
+                       pc);
         }
       },
       instruction);
@@ -238,132 +321,6 @@ namespace {
                  location.pc);
   }
   return layout;
-}
-
-void append_register(std::string& output, common::RegisterSlot slot) {
-  output += "reg:";
-  output += std::to_string(slot.value());
-}
-
-void append_operand(std::string& output, const B32Operand& operand) {
-  if (const auto* slot = std::get_if<common::RegisterSlot>(&operand)) {
-    append_register(output, *slot);
-    return;
-  }
-  output += common::to_string(std::get<common::RawValue>(operand));
-}
-
-/** @brief Append the data-type selector stored by an execution form. */
-void append_data_type(std::string& output, DataType type) {
-  switch (type) {
-    case DataType::b32:
-      output += "b32";
-      return;
-    case DataType::u32:
-      output += "u32";
-      return;
-  }
-  output += "invalid";
-}
-
-/** @brief Append non-default memory controls retained in an execution record. */
-void append_memory_controls(std::string& output, MemoryConsistency semantics,
-                            MemoryScope scope, bool mmio, CacheOperator cache) {
-  if (semantics == MemoryConsistency::weak)
-    output += ".weak";
-  if (scope != MemoryScope::none)
-    output += ".invalid_scope";
-  if (mmio)
-    output += ".mmio";
-  if (cache != CacheOperator::unspecified)
-    output += ".invalid_cache";
-}
-
-void append_instruction(std::string& output, const Instruction& instruction) {
-  if (const auto& predicate = execution_predicate(instruction); predicate) {
-    output += predicate->negated ? "@!" : "@";
-    append_register(output, predicate->source);
-    output.push_back(' ');
-  }
-
-  std::visit(
-      [&output]<InstructionAlternative T>(const T& operation) {
-        if constexpr (std::same_as<T, Mov>) {
-          const auto& form = std::get<Mov::Scalar>(operation.variant);
-          const auto& operands =
-              std::get<Mov::Scalar::ScalarOperands>(form.operands);
-          output += "mov.";
-          append_data_type(output, form.type);
-          output += " ";
-          append_register(output, operands.dst);
-          output += ", ";
-          append_register(output, operands.src);
-        } else if constexpr (std::same_as<T, Add>) {
-          const auto& form = std::get<Add::IntegerNoSat>(operation.variant);
-          output += "add.";
-          append_data_type(output, form.type);
-          output += " ";
-          append_register(output, form.dst);
-          output += ", ";
-          append_operand(output, form.src1);
-          output += ", ";
-          append_operand(output, form.src2);
-        } else if constexpr (std::same_as<T, Ld>) {
-          std::visit(
-              [&](const auto& form) {
-                using Form = std::remove_cvref_t<decltype(form)>;
-                output += "ld";
-                if constexpr (!std::same_as<Form, Ld::GenericScalar>) {
-                  output += form.state_space == AddressSpace::global
-                                ? ".global"
-                                : ".invalid";
-                }
-                append_memory_controls(output, form.semantics, form.scope,
-                                       form.mmio, form.cache);
-                output += ".";
-                append_data_type(output, form.type);
-                output += " ";
-                append_register(output, form.dst);
-                output += ", [";
-                append_register(output, form.address);
-                output += "]";
-              },
-              operation.variant);
-        } else if constexpr (std::same_as<T, St>) {
-          std::visit(
-              [&](const auto& form) {
-                using Form = std::remove_cvref_t<decltype(form)>;
-                output += "st";
-                if constexpr (!std::same_as<Form, St::GenericScalar>) {
-                  output += form.state_space == AddressSpace::global
-                                ? ".global"
-                                : ".invalid";
-                }
-                append_memory_controls(output, form.semantics, form.scope,
-                                       form.mmio, form.cache);
-                output += ".";
-                append_data_type(output, form.type);
-                output += " ";
-                output += "[";
-                append_register(output, form.address);
-                output += "], ";
-                append_register(output, form.src);
-              },
-              operation.variant);
-        } else if constexpr (std::same_as<T, Bar>) {
-          output += "bar.warp.sync ";
-          append_operand(output,
-                         std::get<Bar::WarpSync>(operation.variant).membermask);
-        } else if constexpr (std::same_as<T, Bra>) {
-          const auto& form = std::get<Bra::Direct>(operation.variant);
-          output += form.uni ? "bra.uni pc:" : "bra pc:";
-          output += std::to_string(form.target.value());
-        } else {
-          static_assert(std::same_as<T, Exit>);
-          output += "exit";
-        }
-      },
-      instruction);
 }
 
 }  // namespace
@@ -468,14 +425,9 @@ auto to_string(const ExecutableProgram& program) -> std::string {
       }
       const auto flat_offset =
           layout.begin + static_cast<std::size_t>(local_pc);
-      output += "@";
-      output += std::to_string(flat_offset);
-      output += "  [func:";
-      output += std::to_string(layout.id.value());
-      output += " pc:";
-      output += std::to_string(local_pc);
-      output += "]  ";
-      append_instruction(output, program.instructions_[flat_offset]);
+      fmt::format_to(std::back_inserter(output), "gpc{}  [func:{} pc:{}]  {}",
+                     flat_offset, layout.id.value(), local_pc,
+                     to_string(program.instructions_[flat_offset]));
     }
   }
   return output;

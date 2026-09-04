@@ -17,7 +17,12 @@ using common::RawValue;
 using common::RawWidth;
 using common::RegisterSlot;
 
-static_assert(std::variant_size_v<Instruction> == 7);
+static_assert(std::variant_size_v<Instruction> ==
+              static_cast<std::size_t>(Op::count));
+static_assert(InstructionAlternative<Add>);
+static_assert(InstructionAlternative<And>);
+static_assert(Add::opcode == Op::add);
+static_assert(And::opcode == Op::and_);
 
 /** @brief Build a generated scalar move instruction. */
 auto mov(std::optional<Predicate> predicate, DataType type, RegisterSlot dst,
@@ -264,11 +269,14 @@ TEST(ExecutableProgram, PrintsCanonicalExecutableProgram) {
   const auto program = make_program();
 
   EXPECT_EQ(to_string(program),
-            "@0  [func:0 pc:0]  mov.b32 reg:1, reg:0\n"
-            "@1  [func:0 pc:1]  @!reg:2 add.u32 reg:1, reg:1, "
-            "b32:0x00000001\n"
-            "@2  [func:0 pc:2]  bra pc:0\n"
-            "@3  [func:1 pc:0]  exit");
+            "gpc0  [func:0 pc:0]  "
+            "mov.b32 register:1, register:0\n"
+            "gpc1  [func:0 pc:1]  "
+            "@!predicate:2 add.u32 register:1, register:1, b32:0x00000001\n"
+            "gpc2  [func:0 pc:2]  "
+            "bra pc:0\n"
+            "gpc3  [func:1 pc:0]  "
+            "exit");
 }
 
 TEST(ExecutableProgram, ValidatesAndPrintsScalarLoadStore) {
@@ -281,10 +289,14 @@ TEST(ExecutableProgram, ValidatesAndPrintsScalarLoadStore) {
       .functions = {{FunctionId{0}, 0, 3, {RawWidth::b32, RawWidth::b64}}},
   });
   ASSERT_TRUE(program);
-  EXPECT_EQ(to_string(*program),
-            "@0  [func:0 pc:0]  ld.u32 reg:0, [reg:1]\n"
-            "@1  [func:0 pc:1]  st.global.u32 [reg:1], reg:0\n"
-            "@2  [func:0 pc:2]  exit");
+  EXPECT_EQ(
+      to_string(*program),
+      "gpc0  [func:0 pc:0]  "
+      "ld.u32 register:0, [register:1]\n"
+      "gpc1  [func:0 pc:1]  "
+      "st.global.u32 [register:1], register:0\n"
+      "gpc2  [func:0 pc:2]  "
+      "exit");
 
   auto invalid = ProgramDefinition{
       .instructions = {load(std::nullopt, DataType::u32, AddressSpace::generic,
@@ -319,8 +331,10 @@ TEST(ExecutableProgram, ValidatesAndPrintsWarpSync) {
   EXPECT_EQ(op(program->fetch({FunctionId{0}, ProgramCounter{0}})->get()),
             Op::bar);
   EXPECT_EQ(to_string(*program),
-            "@0  [func:0 pc:0]  bar.warp.sync b32:0x00000003\n"
-            "@1  [func:0 pc:1]  exit");
+            "gpc0  [func:0 pc:0]  "
+            "bar.warp.sync b32:0x00000003\n"
+            "gpc1  [func:0 pc:1]  "
+            "exit");
 
   auto predicated = ProgramDefinition{
       .instructions = {bar(Predicate{RegisterSlot{0}},
@@ -331,6 +345,50 @@ TEST(ExecutableProgram, ValidatesAndPrintsWarpSync) {
   const auto result = ExecutableProgram::create(std::move(predicated));
   ASSERT_FALSE(result);
   EXPECT_EQ(result.error().code, ProgramErrorCode::unsupported_instruction);
+}
+
+TEST(ExecutableProgram, RejectsDeclarationOnlyOpcode) {
+  const Sub::IntegerNoSat form{DataType::u32, RegisterSlot{0},
+                               ScalarOperand{RegisterSlot{1}},
+                               ScalarOperand{RegisterSlot{2}}};
+  const auto program = ExecutableProgram::create({
+      .instructions = {Sub{Predicate{RegisterSlot{99}}, Sub::Variant{form}},
+                       exit()},
+      .functions = {{FunctionId{0},
+                     0,
+                     2,
+                     {RawWidth::b32, RawWidth::b32, RawWidth::b32}}},
+  });
+  ASSERT_FALSE(program);
+  EXPECT_EQ(program.error().code, ProgramErrorCode::unsupported_instruction);
+}
+
+TEST(InstructionDiagnostic, FormatsDeclarationOnlyOpcodeWithoutValidation) {
+  const Sub::IntegerNoSat form{DataType::u32, RegisterSlot{0},
+                               ScalarOperand{RegisterSlot{1}},
+                               ScalarOperand{RawValue::b32(1U)}};
+  EXPECT_EQ(to_string(Instruction{Sub{std::nullopt, Sub::Variant{form}}}),
+            "sub.u32 register:0, register:1, b32:0x00000001");
+  EXPECT_EQ(to_string(bar(std::nullopt, B32Operand{RawValue::b32(3U)})),
+            "bar.warp.sync b32:0x00000003");
+}
+
+TEST(InstructionDiagnostic, FormatsStableModifierAliases) {
+  EXPECT_EQ(to_string(Predicate{RegisterSlot{3}, false}), "predicate:3");
+  EXPECT_EQ(to_string(Predicate{RegisterSlot{3}, true}), "!predicate:3");
+  EXPECT_EQ(to_string(BooleanOperator::and_), "and");
+  EXPECT_EQ(to_string(MemoryConsistency::volatile_), "volatile");
+  EXPECT_EQ(to_string(AddressSpace::const_), "const");
+  EXPECT_EQ(to_string(AddressSpace::param_entry), "param::entry");
+  EXPECT_EQ(to_string(AddressSpace::param_func), "param::func");
+  EXPECT_EQ(to_string(MbarrierPhaseType::conditional),
+            "phase_type::conditional");
+  EXPECT_EQ(to_string(MbarrierPhaseType::primary), "phase_type::primary");
+  EXPECT_EQ(to_string(MbarrierLayout::v0), "layout::v0");
+  EXPECT_EQ(to_string(MbarrierLayout::v1), "layout::v1");
+  EXPECT_EQ(to_string(AsyncProxyKind::async_shared_cta), "async.shared::cta");
+  EXPECT_EQ(to_string(ProxyKindPair::async_generic), "async::generic");
+  EXPECT_EQ(to_string(static_cast<DataType>(255)), "<invalid>");
 }
 
 }  // namespace ptxsim::exec_ir::test

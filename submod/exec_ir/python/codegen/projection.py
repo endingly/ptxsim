@@ -1,4 +1,4 @@
-"""Join normalized frontend facts with one backend support selection."""
+"""Project normalized frontend facts through backend C++ leaf mappings."""
 
 from __future__ import annotations
 
@@ -15,8 +15,8 @@ from .model import (
     BackendSpec,
     BackendValue,
     GenerationError,
-    SelectedForm,
-    SelectedInstruction,
+    ProjectedForm,
+    ProjectedInstruction,
 )
 
 
@@ -27,102 +27,55 @@ def database(spec_dir: Path | None = None) -> PtxSpecDatabase:
     return load_packaged_spec_database()
 
 
-def select_projection(
+def project_database(
     database: PtxSpecDatabase,
     backend: BackendSpec,
-) -> tuple[SelectedInstruction, ...]:
-    """Validate selectors and return the ordered executable projection."""
+) -> tuple[ProjectedInstruction, ...]:
+    """Validate C++ leaves and return the complete frontend topology."""
     if backend.ptx_spec_schema != database.spec_schema:
         raise GenerationError("frontend spec schema mismatch")
 
-    selected: list[SelectedInstruction] = []
-    for instruction_mapping in backend.instructions:
-        instruction = next(
-            (
-                item
-                for item in database.instructions
-                if item.opcode == instruction_mapping.opcode
-            ),
-            None,
-        )
-        if instruction is None:
-            raise GenerationError(
-                f"unknown opcode selector: {instruction_mapping.opcode!r}"
-            )
-        selected_forms: list[SelectedForm] = []
-        for form_mapping in instruction_mapping.forms:
-            variant = next(
-                (
-                    item
-                    for item in instruction.variants
-                    if item.name == form_mapping.variant
-                ),
-                None,
-            )
-            if variant is None:
-                raise GenerationError(
-                    f"unknown variant selector: {form_mapping.variant!r}"
-                )
-            known_layouts = {
-                layout.name: layout for layout in variant.operand_layouts
-            }
-            if any(layout not in known_layouts for layout in form_mapping.layouts):
-                raise GenerationError(
-                    f"unknown layout selector for {variant.name!r}"
-                )
-            active = [
-                modifier
-                for modifier in variant.modifiers
-                if modifier.presence != "absent"
-            ]
-            if set(form_mapping.modifier_values) != {
-                modifier.name for modifier in active
-            }:
-                raise GenerationError(
-                    "modifier_values must select every active modifier for "
-                    f"{variant.name!r}"
-                )
-            for modifier in active:
-                requested = form_mapping.modifier_values[modifier.name]
-                if not set(requested).issubset(_modifier_values(modifier)):
-                    raise GenerationError(
-                        f"unknown modifier value selector for {modifier.name!r}"
-                    )
-                kind_mapping = backend.modifier_kinds.get(modifier.kind)
-                if kind_mapping is None or any(
-                    value not in kind_mapping.values for value in requested
+    modifier_kinds = {
+        modifier.kind
+        for instruction in database.instructions
+        for variant in instruction.variants
+        for modifier in variant.modifiers
+        if modifier.presence != "absent"
+    }
+    operand_kinds = {
+        operand.kind
+        for instruction in database.instructions
+        for variant in instruction.variants
+        for layout in variant.operand_layouts
+        for operand in layout.operands
+    }
+    if set(backend.modifier_kinds) != modifier_kinds:
+        raise GenerationError("modifier_kinds must exactly map frontend kinds")
+    if set(backend.operand_kinds) != operand_kinds:
+        raise GenerationError("operand_kinds must exactly map frontend kinds")
+    for instruction in database.instructions:
+        for variant in instruction.variants:
+            for modifier in variant.modifiers:
+                if modifier.presence == "absent":
+                    continue
+                mapping = backend.modifier_kinds[modifier.kind]
+                if any(
+                    value not in mapping.values
+                    for value in _modifier_values(modifier)
                 ):
                     raise GenerationError(
                         f"missing C++ value mapping for modifier {modifier.name!r}"
                     )
-                if modifier.presence == "fixed" and requested != (
-                    modifier.value,
-                ):
-                    raise GenerationError(
-                        f"fixed modifier {modifier.name!r} must select "
-                        f"{modifier.value!r}"
-                    )
-            for layout_name in form_mapping.layouts:
-                for operand in known_layouts[layout_name].operands:
-                    if operand.kind not in backend.operand_kinds:
-                        raise GenerationError(
-                            "missing C++ operand mapping for kind "
-                            f"{operand.kind!r}"
-                        )
-            selected_forms.append(
-                SelectedForm(
-                    variant,
-                    tuple(known_layouts[name] for name in form_mapping.layouts),
-                )
-            )
-        selected.append(
-            SelectedInstruction(
-                instruction_mapping.opcode,
-                tuple(selected_forms),
-                instruction_mapping.may_fallthrough,
-            )
+    return tuple(
+        ProjectedInstruction(
+            instruction.opcode,
+            tuple(
+                ProjectedForm(variant, variant.operand_layouts)
+                for variant in instruction.variants
+            ),
         )
-    return tuple(selected)
+        for instruction in database.instructions
+    )
 
 
 def _modifier_values(modifier: ModifierSpec) -> set[BackendValue]:

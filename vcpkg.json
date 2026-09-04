@@ -6,7 +6,9 @@
   "dependencies": [
     "softfloat",
     "dynamic-bitset",
-    "ptx-frontend"
+    "ptx-frontend",
+    "fmt",
+    "magic-enum"
   ],
   "features": {
     "tests": {

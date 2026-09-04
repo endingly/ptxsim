@@ -64,15 +64,22 @@ TEST(ExecIrLowering, LowersBoundProgramsWithoutFrontendLifetime) {
   const auto& program = *program_result;
 
   EXPECT_EQ(exec_ir::to_string(program),
-            "@0  [func:0 pc:0]  @!reg:0 mov.b32 reg:2, reg:1\n"
-            "@1  [func:0 pc:1]  @reg:0 add.u32 reg:5, reg:3, "
-            "b32:0x00000007\n"
-            "@2  [func:0 pc:2]  bra pc:5\n"
-            "@3  [func:0 pc:3]  add.u32 reg:3, reg:3, reg:4\n"
-            "@4  [func:0 pc:4]  add.u32 reg:6, reg:3, reg:4\n"
-            "@5  [func:0 pc:5]  exit\n"
-            "@6  [func:1 pc:0]  mov.b32 reg:1, reg:0\n"
-            "@7  [func:1 pc:1]  exit");
+            "gpc0  [func:0 pc:0]  "
+            "@!predicate:0 mov.b32 register:2, register:1\n"
+            "gpc1  [func:0 pc:1]  "
+            "@predicate:0 add.u32 register:5, register:3, b32:0x00000007\n"
+            "gpc2  [func:0 pc:2]  "
+            "bra pc:5\n"
+            "gpc3  [func:0 pc:3]  "
+            "add.u32 register:3, register:3, register:4\n"
+            "gpc4  [func:0 pc:4]  "
+            "add.u32 register:6, register:3, register:4\n"
+            "gpc5  [func:0 pc:5]  "
+            "exit\n"
+            "gpc6  [func:1 pc:0]  "
+            "mov.b32 register:1, register:0\n"
+            "gpc7  [func:1 pc:1]  "
+            "exit");
   EXPECT_TRUE(
       program.fetch({common::FunctionId{0}, common::ProgramCounter{0}}));
   EXPECT_TRUE(
@@ -89,8 +96,10 @@ TEST(ExecIrLowering, BindsScalarNamesEndingInDigitsBySymbolIdentity) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "@0  [func:0 pc:0]  mov.b32 reg:0, reg:0\n"
-            "@1  [func:0 pc:1]  exit");
+            "gpc0  [func:0 pc:0]  "
+            "mov.b32 register:0, register:0\n"
+            "gpc1  [func:0 pc:1]  "
+            "exit");
 }
 
 TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
@@ -104,9 +113,12 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "@0  [func:0 pc:0]  bar.warp.sync b32:0x00000003\n"
-            "@1  [func:0 pc:1]  bar.warp.sync reg:0\n"
-            "@2  [func:0 pc:2]  exit");
+            "gpc0  [func:0 pc:0]  "
+            "bar.warp.sync b32:0x00000003\n"
+            "gpc1  [func:0 pc:1]  "
+            "bar.warp.sync register:0\n"
+            "gpc2  [func:0 pc:2]  "
+            "exit");
 
   const auto predicated = lower(resolve(R"ptx(
 .entry kernel() {
@@ -335,7 +347,9 @@ TEST(ExecIrLowering, PreservesZeroBodyPrototypes) {
 }
 )ptx"));
   ASSERT_TRUE(program);
-  EXPECT_EQ(exec_ir::to_string(*program), "@0  [func:1 pc:0]  exit");
+  EXPECT_EQ(exec_ir::to_string(*program),
+            "gpc0  [func:1 pc:0]  "
+            "exit");
 }
 
 TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
@@ -351,12 +365,18 @@ TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
 }
 )ptx"));
   ASSERT_TRUE(program);
-  EXPECT_EQ(exec_ir::to_string(*program),
-            "@0  [func:0 pc:0]  ld.u32 reg:0, [reg:1]\n"
-            "@1  [func:0 pc:1]  ld.global.u32 reg:0, [reg:1]\n"
-            "@2  [func:0 pc:2]  st.u32 [reg:1], reg:0\n"
-            "@3  [func:0 pc:3]  st.global.u32 [reg:1], reg:0\n"
-            "@4  [func:0 pc:4]  exit");
+  EXPECT_EQ(
+      exec_ir::to_string(*program),
+      "gpc0  [func:0 pc:0]  "
+      "ld.u32 register:0, [register:1]\n"
+      "gpc1  [func:0 pc:1]  "
+      "ld.global.u32 register:0, [register:1]\n"
+      "gpc2  [func:0 pc:2]  "
+      "st.u32 [register:1], register:0\n"
+      "gpc3  [func:0 pc:3]  "
+      "st.global.u32 [register:1], register:0\n"
+      "gpc4  [func:0 pc:4]  "
+      "exit");
 }
 
 TEST(ExecIrLowering, RejectsDeferredScalarMemoryForms) {

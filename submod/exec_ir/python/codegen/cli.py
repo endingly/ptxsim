@@ -9,9 +9,9 @@ from pathlib import Path
 import tempfile
 
 from .backend import load_yaml
-from .gen_exec_ir import header
+from .gen_exec_ir import header, source
 from .model import GenerationError
-from .projection import database, select_projection
+from .projection import database, project_database
 
 
 def _write(path: Path, content: str) -> None:
@@ -32,11 +32,12 @@ def _write(path: Path, content: str) -> None:
 
 
 def main() -> None:
-    """Validate backend support and emit its public C++ instruction header."""
+    """Validate mappings and emit public declarations plus private diagnostics."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", type=Path)
     parser.add_argument("--spec-dir", type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--source-output", type=Path)
     args = parser.parse_args()
     try:
         if args.backend is None:
@@ -47,7 +48,9 @@ def main() -> None:
                 backend = load_yaml(path)
         else:
             backend = load_yaml(args.backend)
-        selected = select_projection(database(args.spec_dir), backend)
-        _write(args.output, header(backend, selected))
+        projected = project_database(database(args.spec_dir), backend)
+        _write(args.output, header(backend, projected))
+        if args.source_output is not None:
+            _write(args.source_output, source(backend, projected))
     except (GenerationError, ImportError, OSError, ValueError) as error:
         raise SystemExit(f"exec_ir generation error: {error}") from error

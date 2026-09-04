@@ -1,4 +1,4 @@
-"""Typed backend mappings and selected normalized PTX instruction records."""
+"""Typed C++ leaf mappings and full normalized PTX instruction records."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from ptx_frontend.spec.model import OperandLayoutSpec, VariantSpec
 
 
 class GenerationError(Exception):
-    """A backend support selection does not match the frontend PTX database."""
+    """A backend leaf mapping does not match the frontend PTX database."""
 
 
 BackendValue = str | bool | int
@@ -28,47 +28,27 @@ class CppKindMapping:
 
 
 @dataclass(frozen=True)
-class FormMapping:
-    """One selected frontend variant, layouts, and supported modifier values."""
-
-    variant: str
-    layouts: tuple[str, ...]
-    modifier_values: Mapping[str, tuple[BackendValue, ...]]
-
-
-@dataclass(frozen=True)
-class InstructionMapping:
-    """One selected opcode and its executable forms."""
-
-    opcode: str
-    forms: tuple[FormMapping, ...]
-    may_fallthrough: bool
-
-
-@dataclass(frozen=True)
 class BackendSpec:
-    """The typed ptxsim support projection and C++ representation mappings."""
+    """C++ storage mappings for the complete frontend PTX topology."""
 
     schema: str
     ptx_spec_schema: str
     namespace: str
     modifier_kinds: Mapping[str, CppKindMapping]
     operand_kinds: Mapping[str, CppKindMapping]
-    instructions: tuple[InstructionMapping, ...]
 
 
 @dataclass(frozen=True)
-class SelectedForm:
-    """One frontend variant and its backend-supported modifier projection."""
+class ProjectedForm:
+    """One frontend variant and all of its operand layouts."""
 
     variant: VariantSpec
     layouts: tuple[OperandLayoutSpec, ...]
 
 
 @dataclass(frozen=True)
-class SelectedInstruction:
-    """One executable opcode selected by the backend mapping."""
+class ProjectedInstruction:
+    """One frontend opcode retained in the generated execution declaration."""
 
     opcode: str
-    forms: tuple[SelectedForm, ...]
-    may_fallthrough: bool
+    forms: tuple[ProjectedForm, ...]

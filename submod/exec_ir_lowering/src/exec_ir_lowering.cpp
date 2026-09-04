@@ -434,7 +434,7 @@ template <DefaultMemoryControls Form>
         exec_ir::Mov::Variant{exec_ir::Mov::Scalar{
             exec_ir::DataType::b32,
             exec_ir::Mov::Scalar::Operands{exec_ir::Mov::Scalar::ScalarOperands{
-                *destination, *source_slot}}}}};
+                *destination, exec_ir::MovSource{*source_slot}}}}}};
   }
 
   if (const auto* add = std::get_if<Add>(&instruction)) {
@@ -519,16 +519,18 @@ template <DefaultMemoryControls Form>
         return std::unexpected(address.error());
       if (space == exec_ir::AddressSpace::generic) {
         return exec_ir::Ld{
-            *predicate, exec_ir::Ld::Variant{exec_ir::Ld::GenericScalar{
-                            controls->semantics, controls->scope,
-                            controls->mmio, controls->cache,
-                            exec_ir::DataType::u32, *destination, *address}}};
+            *predicate,
+            exec_ir::Ld::Variant{exec_ir::Ld::GenericScalar{
+                controls->semantics, controls->scope, controls->mmio,
+                controls->cache, exec_ir::DataType::u32, *destination,
+                exec_ir::Address{*address, std::nullopt}}}};
       }
       return exec_ir::Ld{
           *predicate,
           exec_ir::Ld::Variant{exec_ir::Ld::ExplicitScalar{
               space, controls->cache, controls->semantics, controls->scope,
-              controls->mmio, exec_ir::DataType::u32, *destination, *address}}};
+              controls->mmio, exec_ir::DataType::u32, *destination,
+              exec_ir::Address{*address, std::nullopt}}}};
     };
     if (const auto* form = std::get_if<Ld::GenericScalar>(&ld->variant)) {
       return lower(*form, exec_ir::AddressSpace::generic);
@@ -579,13 +581,15 @@ template <DefaultMemoryControls Form>
             *predicate,
             exec_ir::St::Variant{exec_ir::St::GenericScalar{
                 controls->semantics, controls->scope, controls->mmio,
-                controls->cache, exec_ir::DataType::u32, *address, *source}}};
+                controls->cache, exec_ir::DataType::u32,
+                exec_ir::Address{*address, std::nullopt}, *source}}};
       }
       return exec_ir::St{
           *predicate,
           exec_ir::St::Variant{exec_ir::St::ExplicitScalar{
               space, controls->cache, controls->semantics, controls->scope,
-              controls->mmio, exec_ir::DataType::u32, *address, *source}}};
+              controls->mmio, exec_ir::DataType::u32,
+              exec_ir::Address{*address, std::nullopt}, *source}}};
     };
     if (const auto* form = std::get_if<St::GenericScalar>(&st->variant)) {
       return lower(*form, exec_ir::AddressSpace::generic);
