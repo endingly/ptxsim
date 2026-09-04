@@ -48,7 +48,7 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   const auto program = exec_ir_lowering::lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r<2>;
-  add.u32 %r0, 10, 0;
+  mov.u32 %r0, %tid.x;
   add.u32 %r1, %r0, 7;
   exit;
 }
@@ -72,9 +72,9 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
     const auto registers = runtime.registers().view(*frame);
     ASSERT_TRUE(registers);
     EXPECT_EQ(*registers->read(common::RegisterSlot{0}),
-              common::RawValue::b32(10U));
+              common::RawValue::b32(lane));
     EXPECT_EQ(*registers->read(common::RegisterSlot{1}),
-              common::RawValue::b32(17U));
+              common::RawValue::b32(7U + lane));
   }
 }
 

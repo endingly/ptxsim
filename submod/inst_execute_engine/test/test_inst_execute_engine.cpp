@@ -34,9 +34,9 @@ constexpr ProgramCounter move_fallthrough{42};
 
 /** @brief Build a generated move instruction with the requested predicate. */
 auto mov(std::optional<exec_ir::Predicate> predicate, exec_ir::DataType type,
-         RegisterSlot destination, RegisterSlot source)
+         RegisterSlot destination, exec_ir::MovSource source)
     -> exec_ir::Instruction {
-  exec_ir::Mov::Scalar::ScalarOperands operands{destination, source};
+  exec_ir::Mov::Scalar::ScalarOperands operands{destination, std::move(source)};
   exec_ir::Mov::Scalar form{type, operands};
   return exec_ir::Mov{std::move(predicate), exec_ir::Mov::Variant{form}};
 }
@@ -337,6 +337,48 @@ TEST_F(InstExecuteEngineTest, MovesTwoLanesThroughIsolatedFrames) {
   EXPECT_EQ(*second_registers.read(RegisterSlot{1}), RawValue::b32(2U));
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
   EXPECT_EQ(warp().thread(LaneId{1}).pc(), move_fallthrough);
+}
+
+TEST_F(InstExecuteEngineTest, MovesThreadIdXForEachIssuedLane) {
+  const auto first = bind(LaneId{0}, {RawWidth::b32});
+  const auto second = bind(LaneId{1}, {RawWidth::b32});
+  auto first_registers = view(first);
+  auto second_registers = view(second);
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const exec_ir::Instruction instruction =
+      mov(std::nullopt, exec_ir::DataType::u32, RegisterSlot{0},
+          exec_ir::SpecialRegisterRef{.id = exec_ir::kThreadIdSpecialRegister,
+                                      .component = 0U});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*first_registers.read(RegisterSlot{0}), RawValue::b32(0U));
+  EXPECT_EQ(*second_registers.read(RegisterSlot{0}), RawValue::b32(1U));
+}
+
+TEST_F(InstExecuteEngineTest, TrapsUnsupportedSpecialMoveSource) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b32});
+  auto registers = view(frame);
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction instruction =
+      mov(std::nullopt, exec_ir::DataType::u32, RegisterSlot{0},
+          exec_ir::SpecialRegisterRef{.id = common::SpecialRegisterId{1},
+                                      .component = 0U});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(result->faults.front().lane, LaneId{0});
+  EXPECT_EQ(std::get<common::RawValueError>(result->faults.front().cause),
+            (common::RawValueError{RawWidth::b32, RawWidth::b64}));
+  EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Trapped);
+  EXPECT_FALSE(*registers.initialized(RegisterSlot{0}));
 }
 
 TEST_F(InstExecuteEngineTest, PreparesAllLanesBeforeCommittingSuccessfulOnes) {

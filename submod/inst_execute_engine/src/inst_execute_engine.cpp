@@ -7,6 +7,7 @@
 
 #include <ptxsim/arith/controls.hpp>
 #include <ptxsim/arith/scalar.hpp>
+#include <ptxsim/execution_model/thread.hpp>
 #include <ptxsim/memory/register/register_view.hpp>
 
 namespace ptxsim::inst_execute_engine {
@@ -87,6 +88,11 @@ class LaneResourceResolver final {
       registers_ = *view;
     }
     return std::cref(*registers_);
+  }
+
+  /** @brief Return the lane whose topology supplies special-register values. */
+  [[nodiscard]] auto thread() const noexcept -> const execution_model::Thread& {
+    return thread_;
   }
 
   /**
@@ -188,6 +194,30 @@ auto b32_operand(const memory::RegisterView& registers,
   }
 }
 
+/** @brief Resolve an implemented scalar move source to its b32 raw bits. */
+auto b32_move_source(const memory::RegisterView& registers,
+                     const execution_model::Thread& thread,
+                     const exec_ir::MovSource& source)
+    -> std::expected<std::uint32_t, LaneFaultCause> {
+  if (const auto* register_slot = std::get_if<common::RegisterSlot>(&source))
+    return b32_operand(registers, exec_ir::B32Operand{*register_slot});
+  if (const auto* immediate = std::get_if<common::RawValue>(&source)) {
+    const auto value = immediate->as_b32();
+    if (!value)
+      return std::unexpected(LaneFaultCause{value.error()});
+    return *value;
+  }
+  if (const auto* special_register =
+          std::get_if<exec_ir::SpecialRegisterRef>(&source);
+      special_register != nullptr &&
+      special_register->id == exec_ir::kThreadIdSpecialRegister &&
+      special_register->component == std::optional<std::uint8_t>{0U}) {
+    return thread.position().x;
+  }
+  return std::unexpected(LaneFaultCause{
+      common::RawValueError{common::RawWidth::b32, common::RawWidth::b64}});
+}
+
 auto b32_destination(const memory::RegisterView& registers,
                      common::RegisterSlot destination)
     -> std::expected<void, LaneFaultCause> {
@@ -232,17 +262,14 @@ auto bytes_b32(const std::array<std::byte, 4>& value) -> std::uint32_t {
 }
 
 auto prepare_operation(const memory::RegisterView& registers,
+                       const execution_model::Thread& thread,
                        const arith::context&, const exec_ir::Mov& operation,
                        common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
   const auto& form = std::get<exec_ir::Mov::Scalar>(operation.variant);
   const auto& operands =
       std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
-  const auto* source = std::get_if<common::RegisterSlot>(&operands.src);
-  if (source == nullptr)
-    return std::unexpected(LaneFaultCause{
-        common::RawValueError{common::RawWidth::b32, common::RawWidth::b64}});
-  const auto value = b32_operand(registers, exec_ir::B32Operand{*source});
+  const auto value = b32_move_source(registers, thread, operands.src);
   if (!value) {
     return std::unexpected(value.error());
   }
@@ -448,7 +475,7 @@ auto prepare_move_b32(LaneResourceResolver& registers,
   if (!view) {
     return std::unexpected(view.error());
   }
-  return prepare_operation(view->get(), arithmetic,
+  return prepare_operation(view->get(), registers.thread(), arithmetic,
                            std::get<exec_ir::Mov>(operation), *successor);
 }
 
@@ -575,7 +602,7 @@ auto select_move(const exec_ir::Instruction& operation)
     case exec_ir::DataType::b32:
       return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
     case exec_ir::DataType::u32:
-      return unsupported_instruction();
+      return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
   }
   return unsupported_instruction();
 }

@@ -102,6 +102,51 @@ TEST(ExecIrLowering, BindsScalarNamesEndingInDigitsBySymbolIdentity) {
             "exit");
 }
 
+TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  mov.u32 %r, %tid.x;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto instruction =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& mov = std::get<exec_ir::Mov>(instruction->get());
+  const auto& form = std::get<exec_ir::Mov::Scalar>(mov.variant);
+  const auto& operands =
+      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
+            (exec_ir::SpecialRegisterRef{
+                .id = exec_ir::kThreadIdSpecialRegister,
+                .component = 0U,
+            }));
+
+  const auto unsupported_component = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  mov.u32 %r, %tid.y;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported_component);
+  EXPECT_EQ(unsupported_component.error().code,
+            LoweringErrorCode::unsupported_operand);
+
+  const auto unsupported_identity = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  mov.u32 %r, %ntid.x;
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(unsupported_identity);
+  EXPECT_EQ(unsupported_identity.error().code,
+            LoweringErrorCode::unsupported_operand);
+}
+
 TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
   const auto program = lower(resolve(R"ptx(
 .entry kernel() {

@@ -142,6 +142,20 @@ template <typename Target, typename Source>
         return std::unexpected(slot.error());
       return exec_ir::MovSource{*slot};
     }
+    if (const auto* special_register =
+            std::get_if<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(
+                &source);
+        special_register != nullptr &&
+        special_register->id.kind ==
+            ptx_frontend::base::SpecialRegisterKind::Tid &&
+        special_register->id.index == 0U && special_register->component &&
+        *special_register->component ==
+            ptx_frontend::base::VectorComponent::X) {
+      return exec_ir::MovSource{exec_ir::SpecialRegisterRef{
+          .id = exec_ir::kThreadIdSpecialRegister,
+          .component = 0U,
+      }};
+    }
     return unsupported_operand(context);
   } else if constexpr (std::same_as<Target, common::ProgramCounter> &&
                        std::same_as<

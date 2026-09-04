@@ -154,6 +154,14 @@ using ScalarOperand = std::variant<common::RegisterSlot, common::RawValue>;
 /** @brief Compatibility spelling for existing b32 execution helpers. */
 using B32Operand = ScalarOperand;
 
+/**
+ * @brief Canonical executable special-register identity for PTX `%tid`.
+ *
+ * Component zero denotes `%tid.x`; other `%tid` components are not yet
+ * lowered or executed.
+ */
+inline constexpr common::SpecialRegisterId kThreadIdSpecialRegister{0};
+
 /** @brief A scalar destination that may be the PTX underscore sink. */
 struct RegisterOrSink {
   /** @brief Present only when the destination writes a register. */
