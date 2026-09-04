@@ -49,7 +49,7 @@ The execution engine could then dispatch directly with visitors:
 
 ```text
 std::visit over ResolvedInstruction     -> opcode handler
-std::visit over opcode.variant          -> supported form handler
+std::visit over opcode.variant          -> generated form/layout lowering
 prepare all participating lanes         -> commit effects
 ```
 
@@ -121,11 +121,20 @@ fixed modifiers are inline `static constexpr` selectors and dynamic modifiers
 are record fields. A multi-layout frontend variant retains all layout records
 in an `Operands` variant.
 
-Declaration coverage is deliberately broader than execution support. Lowering,
-program validation, and executor dispatch explicitly whitelist the forms they
-implement and reject all other generated records as unsupported. Adding a
-frontend instruction therefore keeps the C++ model aligned without silently
-adding simulator behavior.
+Declaration and structural-lowering coverage are deliberately broader than
+execution support. The generator pairs every frontend opcode, variant, layout,
+and resolved field with its ptxsim target record. It emits the opcode/form/layout
+visitors, modifier conversions, leaf-binding calls, and target aggregate
+construction. The source-side C++ names, storage classes, and member aliases
+come from the packaged frontend backend model rather than duplicated naming
+rules.
+
+Handwritten lowering is limited to runtime identity tables and reusable leaf
+binders. A leaf binder may still reject a resolved value category that ptxsim
+cannot yet represent without frontend ownership. Once all leaves of a legal
+record are bound, the record may enter `ExecutableProgram` even when no executor
+handler exists for its opcode. `ExecutableProgram` validates only container and
+layout invariants; the executor remains the sole execution-capability gate.
 
 The executable representation therefore must not contain frontend `SymbolId`,
 label/register spelling, lexical scope, or source-range state required only for
@@ -219,8 +228,8 @@ struct Branch {
 };
 ```
 
-The label table may be discarded after lowering when no other supported
-operation requires it.
+The label table may be discarded after lowering when no other executable
+binding requires it.
 
 ## 6. Function identity and call lowering
 
@@ -453,11 +462,11 @@ ResolvedModule
     | 1. allocate FunctionId values
     | 2. establish function-local instruction boundaries / label PCs
     | 3. allocate static register/local/parameter layouts
-    | 4. bind every supported operand to executable identity
+    | 4. bind every representable operand to executable identity
     | 5. bind branch labels to local PCs
     | 6. bind direct calls to FunctionId
     | 7. copy/normalize owned immediates and execution controls
-    | 8. reject frontend-legal forms not implemented by ptxsim
+    | 8. reject resolved leaves without an executable binding
     v
 ExecutableProgram
     |
@@ -469,8 +478,20 @@ ExecutableProgram
 No instruction may survive lowering with an unresolved frontend symbolic
 identity required for execution.
 
-The lowering pass owns simulator-support validation. Frontend checker success
-proves PTX legality, not simulator implementation support.
+The lowering pass owns executable-identity binding, not instruction-execution
+support. Frontend checker success proves PTX legality; successful lowering proves
+that no required frontend identity remains. Neither result implies that the
+executor implements the resulting opcode.
+
+The executor is the final capability gate. It selects a supported preparer
+before deriving or requiring a fallthrough successor, so an unsupported record
+is rejected without mutating execution state even when it has no successor.
+
+CMake invokes the lowering generator without a physical frontend resource path.
+The Python generator reads both the instruction specification and the C++
+backend model from the pinned frontend wheel. Its custom command tracks only the
+local generator and target leaf-mapping inputs. This keeps generated source
+member access aligned with the same frontend revision that supplies the C++ IR.
 
 ## 12. Instruction representation consequences
 
@@ -504,10 +525,10 @@ Resolved Call function SymbolId  -> FunctionId
 ```
 
 The exec IR generator must not copy PTX legality facts merely to own them a
-second time. Generated records and dispatch glue may still be useful for
-repetitive structure, but legality remains owned by the frontend specification
-and checker. Handwritten lowering and execution own ptxsim support and
-semantics.
+second time. Generated records and lowering glue derive repetitive structure
+from the frontend models, while legality remains owned by the frontend
+specification and checker. Handwritten lowering owns runtime leaf binding;
+handwritten execution owns simulator behavior.
 
 ## 13. Relationship to executor and warp-issue work
 

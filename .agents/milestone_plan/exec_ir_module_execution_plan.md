@@ -2,7 +2,7 @@
 
 > **Status:** WP0 generator contract probe, WP1 executable program core, the
 > source-built frontend overlay port, WP2 resolved-IR lowering, WP3 generated
-> declarations, and WP5 scalar load/store are implemented
+> topology/lowering, and WP5 scalar load/store are implemented
 > **Architecture authority:**
 > [`../arch/resolved_ir_execution_architecture.md`](../arch/resolved_ir_execution_architecture.md)
 > **Primary objective:** lower checked frontend semantic IR into a ptxsim-owned,
@@ -20,7 +20,7 @@ the representation that the simulator executes:
 ```text
 ptx_frontend::resolved_ir::ResolvedModule
                  |
-                 | mandatory lowering and support validation
+                 | mandatory lowering and identity binding
                  v
           ptxsim::exec_ir::ExecutableProgram
                  |
@@ -42,7 +42,8 @@ immediate / execution controls    -> owned executable values
 No executable instruction may retain a frontend `SymbolId`, spelling,
 lexical-scope state, source range, or frontend-owned reference needed to run.
 Frontend checker success proves PTX legality; lowering additionally rejects
-frontend-legal forms that ptxsim does not implement.
+resolved leaves that ptxsim cannot bind to an executable identity. The executor
+rejects bound instructions whose behavior it does not implement.
 
 The current executor probe remains authoritative evidence for issue,
 predication, prepare/commit, lane-fault, branch, and exit behavior. WP1 now
@@ -115,18 +116,20 @@ selected opcode handler performs a second dispatch by the needed form/type or
 modifier. Do not encode their cross-product in `Op`; do not add a registry,
 factory, or virtual handler hierarchy.
 
-The ptxsim backend YAML is a leaf-type mapping, not a support selection or a
-second PTX schema. It is validated against the packaged frontend database,
+The ptxsim backend YAML is a target leaf-type mapping, not a support selection
+or a second PTX schema. It is validated against the packaged frontend database,
 which remains the authority for PTX opcode, form, layout, modifier values, and
-legality. Generated code is structural glue; operand primitives,
-`ExecutableProgram`, lowering, validation, printing, and execution policy
-remain handwritten.
+legality. The generator also consumes the packaged frontend C++ backend model,
+so source-side type names, field aliases, and static-versus-instance storage do
+not drift from the pinned C++ library.
 
 The generated projection covers every frontend opcode, form, and operand
-layout. The current executable subset remains `mov.scalar`,
-`add.integer_no_sat`, generic and global scalar `ld`/`st`, `bar.warp.sync`,
-`bra.direct`, and `exit.bare`. Lowering and program validation reject every
-other declaration until its execution semantics are implemented.
+layout. It emits all structural lowering visitors, semantic modifier
+conversions, leaf-binding calls, and target aggregate construction. Handwritten
+code owns runtime identity tables and reusable operand binders. Missing leaf
+binders are structured lowering errors; missing instruction semantics are
+executor capability errors. `ExecutableProgram` validates only container and
+layout invariants and may retain bound records the executor does not implement.
 
 ## 4. Frontend lowering contract
 
@@ -141,7 +144,8 @@ The required order is:
 3. allocate static register, local, and parameter layouts per function;
 4. bind operands, branch targets, and direct calls;
 5. copy/normalize immediate and execution-control values;
-6. reject unsupported executable forms; and
+6. reject resolved leaf categories that cannot yet be bound without frontend
+   ownership; and
 7. construct immutable function layouts and instruction storage.
 
 The frontend must preserve each function-local label `SymbolId` with its
@@ -174,8 +178,8 @@ and golden checks.
 
 ## 6. Current repository shape
 
-The existing Python probe, frontend-free WP1 C++ core, and mandatory WP2
-lowering boundary are isolated from each other:
+The generated Python topology, frontend-free C++ core, and mandatory lowering
+boundary are isolated from each other:
 
 ```text
 submod/exec_ir/
@@ -192,7 +196,13 @@ submod/exec_ir/
 submod/exec_ir_lowering/
 ├── include/exec_ir_lowering.hpp
 ├── src/exec_ir_lowering.cpp
+├── src/lowering_detail.hpp
+├── src/lowering_detail.cpp
 └── test/test_exec_ir_lowering.cpp
+
+<build>/submod/exec_ir_lowering/generated/
+├── exec_ir_lowering.gen.hpp
+└── exec_ir_lowering.gen.cpp
 ```
 
 The core `ptxsim::exec_ir` target exposes only fully-bound values/programs,
@@ -207,10 +217,10 @@ their generated and leaf definitions use `fmt` and `magic_enum` privately.
 frontend headers nor linkage. Keep CMake/Python generation out of
 configure/build network paths.
 
-`.ports/ptx-frontend` pins frontend `v0.0.1b0`, installs its declared Python
-requirements in a vcpkg buildtree virtual environment, and generates the C++
-artifacts from upstream sources. It contains no generated snapshot. The root
-manifest will depend on this port only when the lowering target exists.
+`.ports/ptx-frontend` and the exec-IR Python package pin the same exact frontend
+development commit. The port installs the frontend's declared Python
+requirements in a vcpkg buildtree virtual environment and generates the C++
+artifacts from upstream sources. It contains no generated snapshot.
 
 ## 7. Work packages
 
@@ -237,45 +247,54 @@ Define the smallest core `ptxsim::exec_ir` target needed to own:
 - canonical executable-program printing.
 
 Use only fully-bound operands (`RegisterSlot`, local PC, `FunctionId`, and
-owned raw values). Hand-constructed test programs are sufficient at this
-stage; do not add simulator composition, source retention, calls, activations,
-or a broad PTX opcode universe.
+owned raw values). Hand-constructed test programs were sufficient at this
+stage; simulator composition, source retention, calls, and activations remained
+deferred. The complete generated opcode topology was added later in WP3.
 
 Acceptance:
 
 - fetch distinguishes `{func:0, pc:0}` from `{func:1, pc:0}`;
 - branch targets and fallthrough remain function-local;
-- construction rejects a final instruction that may fall through, while an
-  unpredicated terminal branch or exit needs no successor;
+- construction validates only container/layout invariants; the engine checks
+  fallthrough after selecting a supported instruction, while an unpredicated
+  terminal branch or exit needs no successor;
 - invalid function IDs and local PCs return structured errors;
 - flat offsets are derivable and never become Thread's authoritative PC; and
 - canonical output is deterministic for the same executable program.
 
-### WP2 — Resolved-IR lowering for the proven subset (implemented)
+### WP2 — Resolved-IR executable binding (implemented)
 
-`ptxsim::exec_ir_lowering` consumes a checked `ResolvedModule` and lowers only
-the WP1 `mov.b32`, `add.u32`, direct `bra`, and bare `exit` forms. The frontend
-pin exports function-local `label_positions`, so branches bind only through
-their resolved label `SymbolId` and boundary offset; lowering never recovers
-targets from spelling or source ranges.
+`ptxsim::exec_ir_lowering` consumes a checked `ResolvedModule` and follows the
+complete generated opcode/form/layout topology. The initial handwritten leaf
+set binds scalar registers and register-or-immediate values, scalar move
+register sources, direct branch labels, register-based addresses, and execution
+predicates. More complex call, vector, symbol, and special-register leaves may
+remain structured `unsupported_operand` results until their runtime identity
+contracts are implemented. The frontend pin exports function-local
+`label_positions`, so branches bind only through their resolved label
+`SymbolId` and boundary offset; lowering never recovers targets from spelling
+or source ranges.
 
 Function IDs follow resolved function order. Register slots follow bound
 declaration/symbol order, including nested scopes and contiguous parameterized
 members. The lowering result contains only ptxsim values and wraps core program
-validation failures in a structured lowering error. Unsupported frontend-legal
-forms remain errors; calls still have no execution path.
+validation failures in a structured lowering error. Frontend leaves without an
+executable identity remain lowering errors; calls still have no execution path.
 
 Tests resolve real PTX, cover deterministic slots and function-local PCs,
-predication, branches, owned immediates, frontend lifetime independence, and
-unsupported/malformed/trailing-label/program-validation failures.
+predication, generated lowering beyond the executor subset, branches, owned
+immediates, frontend lifetime independence, and
+unsupported-leaf/malformed/trailing-label/program-validation failures.
 
 ### WP3 — Static generated glue and build integration (implemented)
 
 The generator emits the frontend's complete opcode/form/layout declaration
-topology and maps its leaves to ptxsim-owned C++ values. Its backend manifest
-contains only leaf mappings; it must not repeat frontend structure or select
-the executable subset. Keep the handwritten executable program, lowering
-validation, and executor dispatch as the support authority.
+topology, diagnostic printers, and lowering implementations to ptxsim-owned C++
+values. It pairs the packaged resolved-IR model with the target projection and
+fails generation on opcode, variant, layout, or operand-field drift. The
+backend manifest remains only target leaf mappings; it must not repeat frontend
+structure or select the executable subset. Keep runtime identity binding, the
+executable program, and executor policy as handwritten authorities.
 
 Add CMake generation/installation checks only for files actually emitted.
 CI may prepare the pinned Python environment before configuration; CMake must
@@ -293,16 +312,22 @@ Replace private probe instruction use only after equivalent `mov`, `add`,
 Preserve prepare/commit and lane-local fault behavior; executor owns neither
 frontend resolution nor program loading.
 
+The executor selects a preparer before checking a fallthrough successor. This
+makes unsupported records fail at the capability gate without execution-state
+mutation, including when no successor is available.
+
 ### WP5 — Add instruction families on demand (scalar load/store implemented)
 
 For each execution-ready family, add only:
 
 - the fully-bound record fields it needs;
-- lowering/support validation;
+- any missing reusable leaf binding;
 - static dispatch glue when repetition justifies it; and
 - one focused lowering-to-execution test.
 
-Do not generate or lower the complete PTX universe speculatively.
+The complete generated topology does not imply execution support. Do not add
+leaf binders or executor behavior for an instruction family before it has an
+executable consumer.
 
 The implemented first family is `ld.u32`/`st.u32` generic and
 `ld.global.u32`/`st.global.u32`. The executable records own an address space

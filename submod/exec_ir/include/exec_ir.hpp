@@ -13,7 +13,7 @@
 
 namespace ptxsim::exec_ir {
 
-/** @brief Function-local executable instruction and register layout. */
+/** @brief Function-local instruction range and register layout. */
 struct FunctionLayout {
   /** @brief Dense function identity used by code locations. */
   common::FunctionId id;
@@ -25,7 +25,12 @@ struct FunctionLayout {
   std::vector<common::RawWidth> register_widths;
 };
 
-/** @brief Input records used to validate and construct an executable program. */
+/**
+ * @brief Input records used to construct a self-consistent executable container.
+ *
+ * Construction validates ownership and layout invariants, not whether a
+ * particular executor supports every contained instruction.
+ */
 struct ProgramDefinition {
   /** @brief Flat instruction records, owned by the definition. */
   std::vector<Instruction> instructions;
@@ -33,7 +38,7 @@ struct ProgramDefinition {
   std::vector<FunctionLayout> functions;
 };
 
-/** @brief Reasons an executable-program definition can be rejected. */
+/** @brief Reasons an executable-program operation can fail. */
 enum class ProgramErrorCode : std::uint8_t {
   function_id_not_dense,
   function_count_not_representable,
@@ -43,14 +48,9 @@ enum class ProgramErrorCode : std::uint8_t {
   function_not_found,
   pc_out_of_range,
   no_fallthrough,
-  operand_slot_out_of_range,
-  operand_width_mismatch,
-  immediate_width_mismatch,
-  unsupported_instruction,
-  branch_target_out_of_range,
 };
 
-/** @brief Context attached to a rejected executable-program definition. */
+/** @brief Context attached to a failed executable-program operation. */
 struct ProgramError {
   /** @brief Stable category of the rejected invariant. */
   ProgramErrorCode code;
@@ -58,10 +58,6 @@ struct ProgramError {
   std::optional<common::FunctionId> function;
   /** @brief Function-relative instruction location when applicable. */
   std::optional<common::ProgramCounter> pc;
-  /** @brief Register slot involved in a width or bounds failure. */
-  std::optional<common::RegisterSlot> slot;
-  /** @brief Expected width for an operand when applicable. */
-  std::optional<common::RawWidth> expected;
   /** @brief Observed invalid width when applicable. */
   std::optional<common::RawWidth> actual;
 
@@ -69,10 +65,9 @@ struct ProgramError {
 };
 
 /**
- * @brief Report fallthrough only after executable-program validation succeeded.
+ * @brief Report an instruction's control-flow classification for an executor.
  *
- * Validation admits only the currently implemented instruction forms, so this
- * helper never assigns control-flow semantics to declaration-only opcodes.
+ * Executors call this only after selecting a supported instruction form.
  */
 [[nodiscard]] constexpr auto may_fallthrough(
     const Instruction& instruction) noexcept -> bool {
@@ -85,7 +80,12 @@ struct ProgramError {
   }
 }
 
-/** @brief Validated, owning execution program safe for instruction dispatch. */
+/**
+ * @brief Validated, owning execution-program container.
+ *
+ * A valid container can include declaration-only instructions that a particular
+ * executor does not support.
+ */
 class ExecutableProgram final {
  public:
   ExecutableProgram(const ExecutableProgram&) = default;
@@ -94,7 +94,7 @@ class ExecutableProgram final {
   ExecutableProgram& operator=(ExecutableProgram&&) noexcept = default;
   ~ExecutableProgram() = default;
 
-  /** @brief Validate a definition and take ownership on success. */
+  /** @brief Validate container and layout invariants, then take ownership. */
   [[nodiscard]] static auto create(ProgramDefinition definition)
       -> std::expected<ExecutableProgram, ProgramError>;
 

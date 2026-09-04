@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
-from ptx_frontend.base.utils import file_stem_to_pascal_case
 from ptx_frontend.spec.model import ModifierSpec, OperandLayoutSpec, OperandSpec
 
+from .cpp_names import (
+    instruction_cpp_name,
+    layout_cpp_name,
+    op_enum_name,
+    variant_cpp_name,
+)
 from .model import (
     BackendSpec,
     BackendValue,
@@ -12,24 +17,6 @@ from .model import (
     ProjectedForm,
     ProjectedInstruction,
 )
-
-_OP_ENUM_NAMES = {"and": "and_", "or": "or_", "xor": "xor_", "not": "not_"}
-
-
-def _op_enum_name(opcode: str) -> str:
-    """Return the non-keyword C++ enum spelling for one PTX opcode."""
-    return _OP_ENUM_NAMES.get(opcode, opcode)
-
-
-def _variant_cpp_name(opcode: str, name: str) -> str:
-    """Translate a normalized frontend variant id to its stable C++ name."""
-    return file_stem_to_pascal_case(name.removeprefix(f"{opcode}_"))
-
-
-def _layout_cpp_name(name: str) -> str:
-    """Translate an operand-layout selector to a C++ nested record name."""
-    return f"{file_stem_to_pascal_case(name)}Operands"
-
 
 def _emit_operand_appends(
     operands: tuple[OperandSpec, ...], prefix: str, output: str, indent: str
@@ -51,7 +38,7 @@ def _emit_operand(backend: BackendSpec, operand: OperandSpec, indent: str) -> st
 
 def _emit_layout(backend: BackendSpec, layout: OperandLayoutSpec, indent: str) -> str:
     """Emit one operand record declaration in normalized frontend order."""
-    name = _layout_cpp_name(layout.name)
+    name = layout_cpp_name(layout.name)
     operands = "".join(
         _emit_operand(backend, operand, f"{indent}  ") for operand in layout.operands
     )
@@ -180,7 +167,7 @@ def _emit_form_operands(backend: BackendSpec, form: ProjectedForm) -> str:
         _emit_layout(backend, layout, "    ") for layout in form.layouts
     )
     alternatives = ", ".join(
-        _layout_cpp_name(layout.name) for layout in form.layouts
+        layout_cpp_name(layout.name) for layout in form.layouts
     )
     return f"""\
 {layouts}
@@ -197,7 +184,7 @@ def _emit_form(
     form: ProjectedForm,
 ) -> str:
     """Emit one projected frontend variant declaration."""
-    name = _variant_cpp_name(instruction.opcode, form.variant.name)
+    name = variant_cpp_name(instruction.opcode, form.variant.name)
     layout_markers = "".join(
         f"    // YAML layout: {form.variant.name}/{layout.name}\n"
         for layout in form.layouts
@@ -216,19 +203,19 @@ def _emit_form(
 
 def _emit_instruction(backend: BackendSpec, instruction: ProjectedInstruction) -> str:
     """Emit one opcode record declaration and every frontend form it declares."""
-    class_name = file_stem_to_pascal_case(instruction.opcode)
+    class_name = instruction_cpp_name(instruction.opcode)
     forms = "\n".join(
         _emit_form(backend, instruction, form) for form in instruction.forms
     )
     alternatives = ", ".join(
-        _variant_cpp_name(instruction.opcode, form.variant.name)
+        variant_cpp_name(instruction.opcode, form.variant.name)
         for form in instruction.forms
     )
     return f"""\
 /** @brief Fully-bound `{instruction.opcode}` execution instruction. */
 struct {class_name} {{
   /** @brief Pure opcode tag used by generic instruction dispatch. */
-  inline static constexpr Op opcode = Op::{_op_enum_name(instruction.opcode)};
+  inline static constexpr Op opcode = Op::{op_enum_name(instruction.opcode)};
 {forms}
   /** @brief Projected frontend form for this opcode. */
   using Variant = std::variant<{alternatives}>;
@@ -249,9 +236,9 @@ def _emit_layout_source(
     layout: OperandLayoutSpec,
 ) -> str:
     """Emit the out-of-line diagnostic definition for one operand layout."""
-    class_name = file_stem_to_pascal_case(instruction.opcode)
-    form_name = _variant_cpp_name(instruction.opcode, form.variant.name)
-    layout_name = _layout_cpp_name(layout.name)
+    class_name = instruction_cpp_name(instruction.opcode)
+    form_name = variant_cpp_name(instruction.opcode, form.variant.name)
+    layout_name = layout_cpp_name(layout.name)
     operands = _emit_operand_appends(layout.operands, "", "output", "  ")
     return f"""\
 auto {class_name}::{form_name}::{layout_name}::to_string() const -> std::string {{
@@ -267,8 +254,8 @@ def _emit_form_source(
     form: ProjectedForm,
 ) -> str:
     """Emit the out-of-line diagnostic definition for one instruction form."""
-    class_name = file_stem_to_pascal_case(instruction.opcode)
-    form_name = _variant_cpp_name(instruction.opcode, form.variant.name)
+    class_name = instruction_cpp_name(instruction.opcode)
+    form_name = variant_cpp_name(instruction.opcode, form.variant.name)
     modifiers = _emit_modifier_appends(backend, form)
     if len(form.layouts) == 1 and len(form.variant.operand_layouts) == 1:
         fields = _emit_operand_appends(
@@ -304,7 +291,7 @@ def _emit_instruction_source(
     backend: BackendSpec, instruction: ProjectedInstruction
 ) -> str:
     """Emit out-of-line diagnostics for one opcode record and its forms."""
-    class_name = file_stem_to_pascal_case(instruction.opcode)
+    class_name = instruction_cpp_name(instruction.opcode)
     layouts = "\n\n".join(
         _emit_layout_source(instruction, form, layout)
         for form in instruction.forms
@@ -335,8 +322,8 @@ auto {class_name}::to_string() const -> std::string {{
 
 def header(backend: BackendSpec, projected: tuple[ProjectedInstruction, ...]) -> str:
     """Return the public C++ declarations derived from frontend topology."""
-    classes = [file_stem_to_pascal_case(item.opcode) for item in projected]
-    opcodes = ", ".join(_op_enum_name(item.opcode) for item in projected)
+    classes = [instruction_cpp_name(item.opcode) for item in projected]
+    opcodes = ", ".join(op_enum_name(item.opcode) for item in projected)
     instructions = "\n\n".join(
         _emit_instruction(backend, instruction) for instruction in projected
     )

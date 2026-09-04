@@ -839,13 +839,12 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
     }
   }
 
-  if (exec_ir::may_fallthrough(instruction) && !successor) {
-    return step_error(StepErrorCode::missing_fallthrough);
-  }
-
   const auto prepare = select_preparer(instruction);
   if (!prepare) {
     return step_error(prepare.error());
+  }
+  if (exec_ir::may_fallthrough(instruction) && !successor) {
+    return step_error(StepErrorCode::missing_fallthrough);
   }
   if (prepare->kind == PrepareKind::warp_sync &&
       exec_ir::execution_predicate(instruction)) {

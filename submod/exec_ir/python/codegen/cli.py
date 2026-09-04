@@ -10,6 +10,8 @@ import tempfile
 
 from .backend import load_yaml
 from .gen_exec_ir import header, source
+from .gen_lowering import header as lowering_header
+from .gen_lowering import source as lowering_source
 from .model import GenerationError
 from .projection import database, project_database
 
@@ -32,12 +34,14 @@ def _write(path: Path, content: str) -> None:
 
 
 def main() -> None:
-    """Validate mappings and emit public declarations plus private diagnostics."""
+    """Validate mappings and emit requested execution-IR generated artifacts."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", type=Path)
     parser.add_argument("--spec-dir", type=Path)
-    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--source-output", type=Path)
+    parser.add_argument("--lowering-header-output", type=Path)
+    parser.add_argument("--lowering-source-output", type=Path)
     args = parser.parse_args()
     try:
         if args.backend is None:
@@ -48,9 +52,25 @@ def main() -> None:
                 backend = load_yaml(path)
         else:
             backend = load_yaml(args.backend)
+        if args.output is None and args.source_output is not None:
+            raise GenerationError("--source-output requires --output")
+        if (args.lowering_header_output is None) != (
+            args.lowering_source_output is None
+        ):
+            raise GenerationError(
+                "lowering generation requires both header and source outputs"
+            )
+        if args.output is None and args.lowering_header_output is None:
+            raise GenerationError("at least one generated artifact is required")
+
         projected = project_database(database(args.spec_dir), backend)
-        _write(args.output, header(backend, projected))
+        if args.output is not None:
+            _write(args.output, header(backend, projected))
         if args.source_output is not None:
             _write(args.source_output, source(backend, projected))
+        if args.lowering_header_output is not None:
+            assert args.lowering_source_output is not None
+            _write(args.lowering_header_output, lowering_header(backend, projected))
+            _write(args.lowering_source_output, lowering_source(backend, projected))
     except (GenerationError, ImportError, OSError, ValueError) as error:
         raise SystemExit(f"exec_ir generation error: {error}") from error

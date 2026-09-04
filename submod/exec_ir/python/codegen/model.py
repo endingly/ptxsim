@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
+import ptx_frontend.ir.resolved_ir
 from ptx_frontend.spec.model import OperandLayoutSpec, VariantSpec
 
 
@@ -44,6 +45,7 @@ class ProjectedForm:
 
     variant: VariantSpec
     layouts: tuple[OperandLayoutSpec, ...]
+    source: ptx_frontend.ir.resolved_ir.ResolvedVariant
 
 
 @dataclass(frozen=True)
@@ -52,3 +54,4 @@ class ProjectedInstruction:
 
     opcode: str
     forms: tuple[ProjectedForm, ...]
+    source: ptx_frontend.ir.resolved_ir.ResolvedInstruction

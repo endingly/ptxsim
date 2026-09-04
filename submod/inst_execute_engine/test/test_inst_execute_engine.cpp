@@ -295,6 +295,29 @@ TEST_F(InstExecuteEngineTest, MissingFallthroughRejectsBeforeAnyLaneMutation) {
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(9U));
 }
 
+TEST_F(InstExecuteEngineTest,
+       UnsupportedInstructionPrecedesMissingFallthroughWithoutMutation) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(7U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Sub::IntegerNoSat form{exec_ir::DataType::u32, RegisterSlot{0},
+                                        RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::Instruction instruction{
+      exec_ir::Sub{std::nullopt, exec_ir::Sub::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, std::nullopt);
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
+}
+
 TEST_F(InstExecuteEngineTest, MovesTwoLanesThroughIsolatedFrames) {
   const auto first = bind(LaneId{0}, {RawWidth::b32, RawWidth::b32});
   const auto second = bind(LaneId{1}, {RawWidth::b32, RawWidth::b32});

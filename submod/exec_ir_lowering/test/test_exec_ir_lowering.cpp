@@ -127,8 +127,7 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(predicated);
-  EXPECT_EQ(predicated.error().code, LoweringErrorCode::unsupported_form);
+  ASSERT_TRUE(predicated);
 
   const auto other_form = lower(resolve(R"ptx(
 .entry kernel() {
@@ -137,41 +136,38 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
 }
 )ptx"));
   ASSERT_FALSE(other_form);
-  EXPECT_EQ(other_form.error().code, LoweringErrorCode::unsupported_form);
+  EXPECT_EQ(other_form.error().code, LoweringErrorCode::unsupported_operand);
 }
 
-TEST(ExecIrLowering, RejectsUnsupportedAndMalformedResolvedForms) {
-  const auto unsupported = lower(resolve(R"ptx(
+TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
+  const auto lowered_mov_u32 = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r<2>;
   mov.u32 %r0, %r1;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported);
-  EXPECT_EQ(unsupported.error().code, LoweringErrorCode::unsupported_type);
-  EXPECT_EQ(unsupported.error().instruction, 0U);
+  ASSERT_TRUE(lowered_mov_u32);
 
-  const auto unsupported_instruction = lower(resolve(R"ptx(
+  const auto lowered_sub = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r<2>;
   sub.u32 %r0, %r0, %r1;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_instruction);
-  EXPECT_EQ(unsupported_instruction.error().code,
-            LoweringErrorCode::unsupported_instruction);
+  ASSERT_TRUE(lowered_sub);
 
-  const auto unsupported_form = lower(resolve(R"ptx(
+  const auto unsupported_predicate = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .pred %p<2>;
   mov.pred %p0, %p1;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_form);
-  EXPECT_EQ(unsupported_form.error().code, LoweringErrorCode::unsupported_form);
+  ASSERT_FALSE(unsupported_predicate);
+  EXPECT_EQ(unsupported_predicate.error().code,
+            LoweringErrorCode::unsupported_operand);
 
   const auto unsupported_vector_layout = lower(resolve(R"ptx(
 .entry kernel() {
@@ -220,7 +216,7 @@ TEST(ExecIrLowering, RejectsUnsupportedAndMalformedResolvedForms) {
             LoweringErrorCode::malformed_resolved_ir);
 }
 
-TEST(ExecIrLowering, RejectsTrailingTargetsAndWrapsProgramValidation) {
+TEST(ExecIrLowering, RejectsTrailingTargetsAndLowersPredicatedExit) {
   const auto trailing_target = lower(resolve(R"ptx(
 .entry kernel() {
   bra trailing;
@@ -296,12 +292,11 @@ target:
   @%p exit;
 }
 )ptx"));
-  ASSERT_FALSE(predicated_exit);
-  EXPECT_EQ(predicated_exit.error().code,
-            LoweringErrorCode::program_validation_failed);
-  ASSERT_TRUE(predicated_exit.error().program_error);
-  EXPECT_EQ(predicated_exit.error().program_error->code,
-            exec_ir::ProgramErrorCode::no_fallthrough);
+  ASSERT_TRUE(predicated_exit);
+  const auto instruction = predicated_exit->fetch(
+      {common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  EXPECT_TRUE(exec_ir::execution_predicate(instruction->get()));
 }
 
 TEST(ExecIrLowering, LowersPredicatesForEverySupportedOperation) {
@@ -365,21 +360,20 @@ TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
 }
 )ptx"));
   ASSERT_TRUE(program);
-  EXPECT_EQ(
-      exec_ir::to_string(*program),
-      "gpc0  [func:0 pc:0]  "
-      "ld.u32 register:0, [register:1]\n"
-      "gpc1  [func:0 pc:1]  "
-      "ld.global.u32 register:0, [register:1]\n"
-      "gpc2  [func:0 pc:2]  "
-      "st.u32 [register:1], register:0\n"
-      "gpc3  [func:0 pc:3]  "
-      "st.global.u32 [register:1], register:0\n"
-      "gpc4  [func:0 pc:4]  "
-      "exit");
+  EXPECT_EQ(exec_ir::to_string(*program),
+            "gpc0  [func:0 pc:0]  "
+            "ld.u32 register:0, [register:1]\n"
+            "gpc1  [func:0 pc:1]  "
+            "ld.global.u32 register:0, [register:1]\n"
+            "gpc2  [func:0 pc:2]  "
+            "st.u32 [register:1], register:0\n"
+            "gpc3  [func:0 pc:3]  "
+            "st.global.u32 [register:1], register:0\n"
+            "gpc4  [func:0 pc:4]  "
+            "exit");
 }
 
-TEST(ExecIrLowering, RejectsDeferredScalarMemoryForms) {
+TEST(ExecIrLowering, LowersScalarMemoryFormsAndRejectsOffsets) {
   const auto type = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u64 %r, %a;
@@ -387,8 +381,7 @@ TEST(ExecIrLowering, RejectsDeferredScalarMemoryForms) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(type);
-  EXPECT_EQ(type.error().code, LoweringErrorCode::unsupported_type);
+  ASSERT_TRUE(type);
 
   const auto space = lower(resolve(R"ptx(
 .entry kernel() {
@@ -398,8 +391,7 @@ TEST(ExecIrLowering, RejectsDeferredScalarMemoryForms) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(space);
-  EXPECT_EQ(space.error().code, LoweringErrorCode::unsupported_form);
+  ASSERT_TRUE(space);
 
   const auto offset = lower(resolve(R"ptx(
 .entry kernel() {
