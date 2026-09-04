@@ -2,8 +2,8 @@
 
 > **Status:** WP0-WP5 and the minimal WP6 warp synchronization slice are implemented
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
-> **Next dependency:** fully-bound `exec_ir::ExecutableProgram` and mandatory
-> resolved-IR lowering
+> **Next integration:** deterministic program fetch and issue orchestration in
+> the [simulator module plan](simulator_module_execution_plan.md)
 > **Language/build:** C++23 / CMake / GoogleTest
 > **Primary objective:** establish how one warp issue is prepared and committed before fixing the shape of `exec_ir`
 
@@ -764,18 +764,11 @@ This work package must first resolve:
 Executor then implements call/return as explicit prepare/commit transitions.
 Do not add a placeholder call stack merely to remove the MVP probe FunctionId.
 
-### WP9 — Packaging and simulator integration
+### WP9 — Packaging and simulator integration (moved)
 
-After the executor public contract is stable:
-
-- install/export `ptxsim::inst_execute_engine`;
-- add it to the root package target list;
-- add build-tree and installed-package consumer checks;
-- compose it with the future scheduler, `ExecutableProgram` fetch, and runtime
-  in `simulator`;
-- add deterministic step-limit and unsupported-instruction handling to the
-  simulator loop, not the arithmetic or memory modules;
-- run GCC/Clang Debug/Release and sanitizer gates.
+The executor contract is stable enough for composition. Program fetch,
+deterministic issue, step limits, packaging, and installed-consumer checks are
+now owned by the [simulator module plan](simulator_module_execution_plan.md).
 
 ---
 

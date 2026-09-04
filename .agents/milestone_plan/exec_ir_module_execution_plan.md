@@ -300,21 +300,12 @@ Add CMake generation/installation checks only for files actually emitted.
 CI may prepare the pinned Python environment before configuration; CMake must
 not run `pip` or download dependencies.
 
-### WP4 — Executor consumption
+### WP4 — Executor consumption (implemented; orchestration moved)
 
-This is paired with executor WP4. Simulator constructs a
-`common::CodeLocation` from the issued Thread/activation state, fetches from
-`ExecutableProgram`, derives the same-function fallthrough, and calls the
-existing executor lower entry.
-
-Replace private probe instruction use only after equivalent `mov`, `add`,
-`bra`, and `exit` behavior passes through the fully-bound representation.
-Preserve prepare/commit and lane-local fault behavior; executor owns neither
-frontend resolution nor program loading.
-
-The executor selects a preparer before checking a fallthrough successor. This
-makes unsupported records fail at the capability gate without execution-state
-mutation, including when no successor is available.
+`InstExecuteEngine` now consumes fully-bound records and preserves
+prepare/commit, lane-local fault, branch, exit, and missing-successor behavior.
+Program fetch, warp selection, and the repeated execution loop are tracked by
+the [simulator module plan](simulator_module_execution_plan.md).
 
 ### WP5 — Add instruction families on demand (scalar load/store implemented)
 
