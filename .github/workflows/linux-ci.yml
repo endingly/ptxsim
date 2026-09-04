@@ -24,6 +24,9 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
     concurrency:
       group: linux-ci-${{ github.ref }}-${{ matrix.preset }}
       cancel-in-progress: true
@@ -33,14 +36,39 @@ jobs:
         include:
           - name: GCC Debug
             preset: ci-linux-gcc-debug
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: true
+            writes_vcpkg_binaries: true
           - name: GCC Release
             preset: ci-linux-gcc-release
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
           - name: Clang Debug
             preset: ci-linux-clang-debug
+            cc: /usr/bin/clang
+            cxx: /usr/bin/clang++
+            vcpkg_cache: clang
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: true
           - name: Clang Release
             preset: ci-linux-clang-release
+            cc: /usr/bin/clang
+            cxx: /usr/bin/clang++
+            vcpkg_cache: clang
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
           - name: GCC ASan + UBSan
             preset: ci-linux-gcc-asan-ubsan
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
 
     steps:
       - name: Check out source
@@ -66,7 +94,8 @@ jobs:
         run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
 
       - name: Restore APT package cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        id: apt-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/apt/archives
           key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml') }}
@@ -105,6 +134,22 @@ jobs:
             zip
           sudo chmod -R a+rX "$APT_CACHE_DIR"
 
+      - name: Save APT package cache
+        if: success() && matrix.preset == 'ci-linux-gcc-debug' && steps.apt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/apt/archives
+          key: ${{ steps.apt-cache.outputs.cache-primary-key }}
+
+      - name: Show compiler identity
+        shell: bash
+        run: |
+          printf 'CC=%s\nCXX=%s\n' "$CC" "$CXX"
+          readlink -f "$(command -v "$CC")"
+          readlink -f "$(command -v "$CXX")"
+          "$CC" --version
+          "$CXX" --version
+
       - name: Set up Python environment
         shell: bash
         run: |
@@ -113,15 +158,21 @@ jobs:
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
 
-      - name: Restore vcpkg binary cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      - name: Restore vcpkg downloads cache
+        id: vcpkg-downloads-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: |
-            .cache/vcpkg/archives
-            .cache/vcpkg/downloads
-          key: vcpkg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json') }}
+          path: .cache/vcpkg/downloads
+          key: vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ runner.arch }}-
+            vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-binaries-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/archives
+          key: vcpkg-binaries-${{ runner.os }}-${{ runner.arch }}-${{ matrix.vcpkg_cache }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
 
       - name: Prepare vcpkg cache directories
         shell: bash
@@ -139,13 +190,37 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml', 'CMakeLists.txt', 'CMakePresets.json', '**/CMakeLists.txt', '**/*.cmake', 'vcpkg.json') }}
+          key: ccache-v4-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
           restore-keys: |
-            ccache-v3-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+            ccache-v4-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+
+      - name: Show compiler cache configuration
+        shell: bash
+        run: |
+          ccache --version
+          ccache --show-config
+
+      - name: Reset compiler cache statistics
+        shell: bash
+        run: ccache --zero-stats
 
       - name: Run core CMake workflow preset
         shell: bash
         run: cmake --workflow --preset "${{ matrix.preset }}"
+
+      - name: Save vcpkg downloads cache
+        if: success() && matrix.writes_vcpkg_downloads && steps.vcpkg-downloads-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/downloads
+          key: ${{ steps.vcpkg-downloads-cache.outputs.cache-primary-key }}
+
+      - name: Save vcpkg binary cache
+        if: success() && matrix.writes_vcpkg_binaries && steps.vcpkg-binaries-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/archives
+          key: ${{ steps.vcpkg-binaries-cache.outputs.cache-primary-key }}
 
       - name: Show compiler cache statistics
         if: always()
