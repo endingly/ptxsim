@@ -1,0 +1,47 @@
+schema: ptxsim-exec-ir-backend/v2
+ptx_spec_schema: ptx-instr/v1
+namespace: ptxsim::exec_ir
+
+# This maps normalized frontend leaf kinds to independent exec-IR C++ storage.
+# Opcode, variant, layout, and legality topology comes from PtxSpecDatabase.
+modifier_kinds:
+  type: {cpp_type: DataType, values: {pred: DataType::pred, b8: DataType::b8, b16: DataType::b16, b32: DataType::b32, b64: DataType::b64, b128: DataType::b128, u8: DataType::u8, u16: DataType::u16, u32: DataType::u32, u64: DataType::u64, s8: DataType::s8, s16: DataType::s16, s32: DataType::s32, s64: DataType::s64, f16: DataType::f16, f16x2: DataType::f16x2, f32: DataType::f32, f32x2: DataType::f32x2, f64: DataType::f64, bf16: DataType::bf16, bf16x2: DataType::bf16x2, u8x4: DataType::u8x4, u16x2: DataType::u16x2, s8x4: DataType::s8x4, s16x2: DataType::s16x2}}
+  rounding: {cpp_type: RoundingMode, values: {rn: RoundingMode::rn, rz: RoundingMode::rz, rm: RoundingMode::rm, rp: RoundingMode::rp, rzi: RoundingMode::rzi}}
+  comparison: {cpp_type: ComparisonOperator, values: {eq: ComparisonOperator::eq, lt: ComparisonOperator::lt, ge: ComparisonOperator::ge}}
+  boolean_op: {cpp_type: BooleanOperator, values: {and: BooleanOperator::and_, or: BooleanOperator::or_, xor: BooleanOperator::xor_}}
+  cache: {cpp_type: CacheOperator, values: {ca: CacheOperator::ca, cg: CacheOperator::cg, cs: CacheOperator::cs, cv: CacheOperator::cv, lu: CacheOperator::lu, unspecified: CacheOperator::unspecified, wb: CacheOperator::wb, wt: CacheOperator::wt}}
+  eviction_priority: {cpp_type: EvictionPriority, values: {evict_first: EvictionPriority::evict_first, evict_last: EvictionPriority::evict_last, evict_normal: EvictionPriority::evict_normal, no_allocate: EvictionPriority::no_allocate}}
+  semantics: {cpp_type: MemoryConsistency, values: {acq_rel: MemoryConsistency::acq_rel, acquire: MemoryConsistency::acquire, omitted: MemoryConsistency::omitted, relaxed: MemoryConsistency::relaxed, release: MemoryConsistency::release, volatile: MemoryConsistency::volatile_, weak: MemoryConsistency::weak}}
+  scope: {cpp_type: MemoryScope, values: {cluster: MemoryScope::cluster, cta: MemoryScope::cta, gpu: MemoryScope::gpu, none: MemoryScope::none, sys: MemoryScope::sys}}
+  vector: {cpp_type: VectorArity, values: {v2: VectorArity::v2, v4: VectorArity::v4, v8: VectorArity::v8}}
+  state_space: {cpp_type: AddressSpace, values: {const: AddressSpace::const_, generic: AddressSpace::generic, global: AddressSpace::global, local: AddressSpace::local, param: AddressSpace::param, "param::entry": AddressSpace::param_entry, "param::func": AddressSpace::param_func, shared: AddressSpace::shared}}
+  phase_type: {cpp_type: MbarrierPhaseType, values: {"phase_type::conditional": MbarrierPhaseType::conditional, "phase_type::primary": MbarrierPhaseType::primary}}
+  mbarrier_layout: {cpp_type: MbarrierLayout, values: {"layout::v0": MbarrierLayout::v0, "layout::v1": MbarrierLayout::v1}}
+  proxy: {cpp_type: AsyncProxyKind, values: {async: AsyncProxyKind::async, "async.global": AsyncProxyKind::async_global, "async.shared::cluster": AsyncProxyKind::async_shared_cluster, "async.shared::cta": AsyncProxyKind::async_shared_cta}}
+  proxy_pair: {cpp_type: ProxyKindPair, values: {"async::generic": ProxyKindPair::async_generic, "tensormap::generic": ProxyKindPair::tensormap_generic}}
+  flag: {cpp_type: bool, values: {true: "true", false: "false"}}
+
+operand_kinds:
+  reg: {cpp_type: common::RegisterSlot, values: {}}
+  imm: {cpp_type: common::RawValue, values: {}}
+  reg_or_imm: {cpp_type: ScalarOperand, values: {}}
+  reg_or_sink: {cpp_type: RegisterOrSink, values: {}}
+  shfl_dest: {cpp_type: ShflDestination, values: {}}
+  pred_pair: {cpp_type: PredicatePair, values: {}}
+  mov_scalar_src: {cpp_type: MovSource, values: {}}
+  cluster_address: {cpp_type: MovSource, values: {}}
+  vector_reg: {cpp_type: VectorRegisterRef, values: {}}
+  vector_sreg: {cpp_type: VectorSpecialRegisterRef, values: {}}
+  pred: {cpp_type: Predicate, values: {}}
+  pred_or_sreg: {cpp_type: PredicateSource, values: {}}
+  pred_or_not: {cpp_type: Predicate, values: {}}
+  label: {cpp_type: common::ProgramCounter, values: {}}
+  addr: {cpp_type: Address, values: {}}
+  reg_vector: {cpp_type: RegisterVector, values: {}}
+  direct_call_target: {cpp_type: FunctionRef, values: {}}
+  indirect_call_target: {cpp_type: IndirectCallee, values: {}}
+  indirect_call_metadata: {cpp_type: IndirectCallee, values: {}}
+  branch_target_set: {cpp_type: BranchTargetSet, values: {}}
+  call_return_param: {cpp_type: CallParameterRef, values: {}}
+  call_arguments: {cpp_type: CallArguments, values: {}}
+  mbarrier_state_token: {cpp_type: MbarrierStateToken, values: {}}

@@ -21,9 +21,10 @@ artifact.
   branch/SHA and baseline, current milestone mapping, and
   supersedes/superseded-by links.
 - When a source exists, preserve its report body byte-for-byte immediately
-  after a banner separator, with no injected blank byte. The current
-  `project_plan.md` owns live gate truth; archived bodies are snapshots and
-  are not rewritten for later state.
+  after a banner separator, with no injected blank byte. Adopted decisions in
+  `.agents/arch/` and active implementation gates in
+  `.agents/milestone_plan/` own live truth; `project_plan.md` and archived
+  bodies are snapshots and are not rewritten for later state.
 - Never delete a tracked historical review to hide stale status. Move or rename
   it, add a Historical/Superseded banner, and repair canonical links.
 - If an original is missing, do not fabricate it. Record transparent provenance

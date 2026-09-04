@@ -1,3 +1,5 @@
+#include <utility>
+
 #include <ptxsim/execution_model/cta.hpp>
 #include <ptxsim/execution_model/grid.hpp>
 #include <ptxsim/execution_model/thread.hpp>
@@ -35,6 +37,16 @@ Grid& Thread::grid() noexcept {
 
 const Grid& Thread::grid() const noexcept {
   return parent_->grid();
+}
+
+WarpIssueGroup Thread::singleton_issue_group() const {
+  LaneMask lanes{parent_->architectural_warp_size()};
+  lanes.set(lane_id_);
+
+  return WarpIssueGroup{
+      .pc = pc(),
+      .lanes = std::move(lanes),
+  };
 }
 
 }  // namespace ptxsim::execution_model

@@ -78,6 +78,20 @@ std::expected<void, MemoryError> MemoryRegion::validate(
   return validate_range(address, requested_size);
 }
 
+std::expected<void, MemoryError> MemoryRegion::validate_write(
+    Address address, std::size_t requested_size,
+    std::size_t alignment) const noexcept {
+  if (access_ == RegionAccess::ReadOnly) {
+    return std::unexpected(MemoryError{
+        .code = MemoryErrorCode::WriteToReadOnlyRegion,
+        .address = address,
+        .size = requested_size,
+        .required_alignment = alignment,
+    });
+  }
+  return validate(address, requested_size, alignment);
+}
+
 bool MemoryRegion::is_initialized(Address address,
                                   std::size_t requested_size) const noexcept {
   if (!contains(address, requested_size)) {
@@ -155,16 +169,8 @@ std::expected<void, MemoryError> MemoryRegion::read(
 std::expected<void, MemoryError> MemoryRegion::write(
     Address address, std::span<const std::byte> source,
     std::size_t alignment) noexcept {
-  if (access_ == RegionAccess::ReadOnly) {
-    return std::unexpected(MemoryError{
-        .code = MemoryErrorCode::WriteToReadOnlyRegion,
-        .address = address,
-        .size = source.size(),
-        .required_alignment = alignment,
-    });
-  }
-
-  if (auto result = validate(address, source.size(), alignment); !result) {
+  if (auto result = validate_write(address, source.size(), alignment);
+      !result) {
     return result;
   }
 

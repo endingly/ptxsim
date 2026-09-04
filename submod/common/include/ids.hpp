@@ -2,6 +2,7 @@
 
 #include <charconv>
 #include <compare>
+#include <concepts>
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -59,6 +60,13 @@ using SymbolId = detail::Id<detail::SymbolIdTag>;
 using LabelId = detail::Id<detail::LabelIdTag>;
 using SourceLocationId = detail::Id<detail::SourceLocationIdTag>;
 using SpecialRegisterId = detail::Id<detail::SpecialRegisterIdTag>;
+
+struct CodeLocation {
+  FunctionId function;
+  ProgramCounter pc;
+
+  constexpr auto operator<=>(const CodeLocation&) const noexcept = default;
+};
 
 template <typename Tag>
 [[nodiscard]] inline auto to_string(detail::Id<Tag> id) -> std::string {

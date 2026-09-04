@@ -12,6 +12,23 @@ static_assert(!std::is_copy_constructible_v<Warp>);
 static_assert(!std::is_copy_assignable_v<Warp>);
 static_assert(!std::is_move_constructible_v<Warp>);
 static_assert(!std::is_move_assignable_v<Warp>);
+
+struct WarpOnlyEngine {
+  int step(Warp&, const WarpIssueGroup&) { return 1234; }
+};
+
+struct WarpWithoutIssueEngine {
+  int step(Warp&) { return 1234; }
+};
+
+template <typename Engine>
+concept WarpStepCallable = requires(Warp& warp, Engine& engine,
+                                    const WarpIssueGroup& issue) {
+  warp.step(engine, issue);
+};
+
+static_assert(WarpStepCallable<WarpOnlyEngine>);
+static_assert(!WarpStepCallable<WarpWithoutIssueEngine>);
 }  // namespace
 // -----------------------------------------------------------------------------
 // Basic warp topology
@@ -229,8 +246,8 @@ TEST(WarpTest, DerivedMasksFollowThreadState) {
 
   auto& warp = grid.warp(WarpId{grid_id, 0});
 
-  warp.thread(LaneId{1}).mark_waiting();
-  warp.thread(LaneId{3}).mark_waiting();
+  warp.thread(LaneId{1}).mark_waiting(WaitReason::WarpSync);
+  warp.thread(LaneId{3}).mark_waiting(WaitReason::WarpSync);
 
   warp.thread(LaneId{5}).mark_exited();
 
@@ -287,6 +304,37 @@ TEST(WarpTest, ReadyMaskNeverIncludesInvalidPartialWarpLanes) {
 // -----------------------------------------------------------------------------
 // WarpIssueGroup
 // -----------------------------------------------------------------------------
+
+TEST(WarpTest, StepForwardsIssueToCanonicalEngineEntry) {
+  struct RecordingEngine {
+    Warp* warp = nullptr;
+    const WarpIssueGroup* issue = nullptr;
+
+    int step(Warp& received_warp, const WarpIssueGroup& received_issue) {
+      warp = &received_warp;
+      issue = &received_issue;
+      return 1234;
+    }
+  };
+
+  Grid grid(GridId{0}, GridShape{
+                           .cta_dim = {1, 1, 1},
+                           .thread_dim = {8, 1, 1},
+                           .warp_size = 32,
+                       });
+  auto& warp = grid.warp(WarpId{GridId{0}, 0});
+  LaneMask lanes{32};
+  lanes.set(LaneId{3});
+  const WarpIssueGroup issue{
+      .pc = ProgramCounter{42},
+      .lanes = lanes,
+  };
+  RecordingEngine engine;
+
+  EXPECT_EQ(warp.step(engine, issue), 1234);
+  EXPECT_EQ(engine.warp, &warp);
+  EXPECT_EQ(engine.issue, &issue);
+}
 
 TEST(WarpIssueGroupTest, RepresentsPcAndLaneSet) {
   LaneMask lanes{32};
@@ -579,7 +627,7 @@ TEST(WarpTest, WarpAndThreadAddressesRemainStableDuringRuntimeMutation) {
   auto* const thread = &warp->thread(LaneId{7});
 
   thread->set_pc(ProgramCounter{100});
-  thread->mark_waiting();
+  thread->mark_waiting(WaitReason::WarpSync);
   thread->mark_ready();
 
   LaneMask participants{32};

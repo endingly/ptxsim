@@ -19,8 +19,16 @@ class FakeEngine {
     ProgramCounter old_pc;
   };
 
-  Result step(Thread& thread) {
+  Result step(Warp& warp, const WarpIssueGroup& issue) {
+    EXPECT_EQ(issue.size(), 1u);
+
+    const auto lane = LaneId{7};
+    EXPECT_TRUE(issue.lanes.test(lane));
+
+    auto& thread = warp.thread(lane);
     const auto old_pc = thread.pc();
+
+    EXPECT_EQ(issue.pc, old_pc);
 
     thread.set_pc(ProgramCounter{
         old_pc.value() + 1,
@@ -42,6 +50,18 @@ class FakeEngine {
  private:
   std::uint32_t calls_ = 0;
 };
+
+class ThreadOnlyEngine {
+ public:
+  void step(Thread&) {}
+};
+
+template <typename Engine>
+concept ThreadStepCallable = requires(Thread& thread, Engine& engine) {
+  thread.step(engine);
+};
+
+static_assert(!ThreadStepCallable<ThreadOnlyEngine>);
 }  // namespace
 
 TEST(ThreadTest, InitialExecutionState) {
@@ -56,6 +76,7 @@ TEST(ThreadTest, InitialExecutionState) {
   EXPECT_EQ(thread.pc(), ProgramCounter{0});
 
   EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
 
   EXPECT_TRUE(thread.ready());
   EXPECT_FALSE(thread.waiting());
@@ -87,36 +108,48 @@ TEST(ThreadTest, StatusTransitions) {
   auto& thread = grid.thread(ThreadId{GridId{0}, 0});
 
   ASSERT_TRUE(thread.ready());
+  thread.set_pc(ProgramCounter{42});
 
-  thread.mark_waiting();
+  thread.mark_waiting(WaitReason::CtaBarrier);
 
   EXPECT_TRUE(thread.waiting());
   EXPECT_FALSE(thread.ready());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::CtaBarrier);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
   thread.mark_ready();
 
   EXPECT_TRUE(thread.ready());
   EXPECT_FALSE(thread.waiting());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
+  thread.mark_waiting(WaitReason::AsyncOperation);
   thread.mark_trapped();
 
   EXPECT_TRUE(thread.trapped());
   EXPECT_FALSE(thread.ready());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 
+  thread.mark_ready();
+  thread.mark_waiting(WaitReason::WarpSync);
   thread.mark_exited();
 
   EXPECT_TRUE(thread.exited());
   EXPECT_FALSE(thread.trapped());
+  EXPECT_EQ(thread.wait_reason(), WaitReason::None);
+  EXPECT_EQ(thread.pc(), ProgramCounter{42});
 }
 
 TEST(ThreadTest, StepIsThinEngineFacade) {
   Grid grid(GridId{9}, GridShape{
                            .cta_dim = {1, 1, 1},
-                           .thread_dim = {1, 1, 1},
+                           .thread_dim = {8, 1, 1},
                            .warp_size = 32,
                        });
 
-  auto& thread = grid.thread(ThreadId{GridId{9}, 0});
+  auto& thread = grid.thread(ThreadId{GridId{9}, 7});
 
   thread.set_pc(ProgramCounter{17});
 
@@ -135,7 +168,7 @@ TEST(ThreadTest, StepIsThinEngineFacade) {
 
 TEST(ThreadTest, StepDoesNotRequireExecutionModelToKnowEngineType) {
   struct AnotherEngine {
-    int step(Thread&) { return 1234; }
+    int step(Warp&, const WarpIssueGroup&) { return 1234; }
   };
 
   Grid grid(GridId{0}, GridShape{
@@ -149,6 +182,36 @@ TEST(ThreadTest, StepDoesNotRequireExecutionModelToKnowEngineType) {
   AnotherEngine engine;
 
   EXPECT_EQ(thread.step(engine), 1234);
+}
+
+TEST(ThreadTest, StepBuildsSingletonIssueWithArchitecturalWarpWidth) {
+  struct RecordingEngine {
+    Warp* warp = nullptr;
+    WarpIssueGroup issue;
+
+    void step(Warp& received_warp, const WarpIssueGroup& received_issue) {
+      warp = &received_warp;
+      issue = received_issue;
+    }
+  };
+
+  Grid grid(GridId{0}, GridShape{
+                           .cta_dim = {1, 1, 1},
+                           .thread_dim = {35, 1, 1},
+                           .warp_size = 32,
+                       });
+  auto& thread = grid.thread(ThreadId{GridId{0}, 34});
+  thread.set_pc(ProgramCounter{23});
+
+  RecordingEngine engine;
+  thread.step(engine);
+
+  ASSERT_NE(engine.warp, nullptr);
+  EXPECT_EQ(engine.warp, &thread.warp());
+  EXPECT_EQ(engine.issue.pc, ProgramCounter{23});
+  EXPECT_EQ(engine.issue.lanes.size(), 32u);
+  EXPECT_EQ(engine.issue.lanes.count(), 1u);
+  EXPECT_TRUE(engine.issue.lanes.test(LaneId{2}));
 }
 
 }  // namespace ptxsim::execution_model::test

@@ -39,6 +39,7 @@ TEST(CoreIds, ConstructCompareAndFormat) {
 
   static_assert(!std::is_constructible_v<FunctionId, ProgramCounter>);
   static_assert(!std::is_convertible_v<ProgramCounter, FunctionId>);
+  static_assert(std::is_trivially_copyable_v<CodeLocation>);
 
   check_id<ProgramCounter>("pc");
   check_id<FunctionId>("function");
@@ -51,6 +52,10 @@ TEST(CoreIds, ConstructCompareAndFormat) {
   EXPECT_EQ(
       to_string(ProgramCounter{std::numeric_limits<std::uint32_t>::max()}),
       "pc:4294967295");
+  EXPECT_EQ((CodeLocation{FunctionId{1}, ProgramCounter{2}}),
+            (CodeLocation{FunctionId{1}, ProgramCounter{2}}));
+  EXPECT_LT((CodeLocation{FunctionId{0}, ProgramCounter{9}}),
+            (CodeLocation{FunctionId{1}, ProgramCounter{0}}));
 }
 
 }  // namespace

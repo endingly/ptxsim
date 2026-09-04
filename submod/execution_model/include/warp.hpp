@@ -90,8 +90,13 @@ class Warp final {
   auto end() const noexcept { return threads_.end(); }
 
   template <typename Engine>
-  decltype(auto) step(Engine& engine) noexcept(noexcept(engine.step(*this))) {
-    return engine.step(*this);
+    requires requires(Engine& engine, Warp& warp,
+                      const WarpIssueGroup& issue) {
+      engine.step(warp, issue);
+    }
+  decltype(auto) step(Engine& engine, const WarpIssueGroup& issue)
+      noexcept(noexcept(engine.step(*this, issue))) {
+    return engine.step(*this, issue);
   }
 
   /**
