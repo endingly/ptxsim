@@ -99,6 +99,16 @@ auto ExecutableProgram::create(ProgramDefinition definition)
   return ExecutableProgram{std::move(definition)};
 }
 
+auto ExecutableProgram::function_layout(common::FunctionId function) const
+    -> std::expected<std::reference_wrapper<const FunctionLayout>,
+                     ProgramError> {
+  const auto* layout = layout_for(functions_, function);
+  if (layout == nullptr) {
+    return error(ProgramErrorCode::function_not_found, function);
+  }
+  return std::cref(*layout);
+}
+
 auto ExecutableProgram::fetch(common::CodeLocation location) const
     -> std::expected<std::reference_wrapper<const Instruction>, ProgramError> {
   const auto layout = validate_location(functions_, location);

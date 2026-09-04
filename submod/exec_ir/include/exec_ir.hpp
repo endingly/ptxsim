@@ -98,6 +98,15 @@ class ExecutableProgram final {
   [[nodiscard]] static auto create(ProgramDefinition definition)
       -> std::expected<ExecutableProgram, ProgramError>;
 
+  /**
+   * @brief Return the validated layout for one dense function identity.
+   *
+   * The returned reference remains valid for this program's lifetime and
+   * exposes the register frame layout required by an executor.
+   */
+  [[nodiscard]] auto function_layout(common::FunctionId function) const
+      -> std::expected<std::reference_wrapper<const FunctionLayout>,
+                       ProgramError>;
   /** @brief Return the instruction at one validated function-relative location. */
   [[nodiscard]] auto fetch(common::CodeLocation location) const
       -> std::expected<std::reference_wrapper<const Instruction>, ProgramError>;

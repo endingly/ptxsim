@@ -131,11 +131,16 @@ auto make_program() -> ExecutableProgram {
 TEST(ExecutableProgram, FetchUsesFunctionLocalProgramCounters) {
   const auto program = make_program();
 
+  const auto first_layout = program.function_layout(FunctionId{0});
   const auto first = program.fetch({FunctionId{0}, ProgramCounter{0}});
   const auto second = program.fetch({FunctionId{1}, ProgramCounter{0}});
 
+  ASSERT_TRUE(first_layout);
   ASSERT_TRUE(first);
   ASSERT_TRUE(second);
+  EXPECT_EQ(first_layout->get().id, FunctionId{0});
+  EXPECT_EQ(first_layout->get().register_widths,
+            (std::vector{RawWidth::b32, RawWidth::b32, RawWidth::pred}));
   EXPECT_NE(&first->get(), &second->get());
   EXPECT_TRUE(std::holds_alternative<Mov>(first->get()));
   EXPECT_TRUE(std::holds_alternative<Exit>(second->get()));
@@ -159,6 +164,9 @@ TEST(ExecutableProgram, DerivesFlatOffsetsAndSameFunctionFallthrough) {
 
 TEST(ExecutableProgram, RejectsInvalidLocationsAndDefinitions) {
   const auto program = make_program();
+  const auto missing_layout = program.function_layout(FunctionId{2});
+  ASSERT_FALSE(missing_layout);
+  EXPECT_EQ(missing_layout.error().code, ProgramErrorCode::function_not_found);
   const auto missing_function =
       program.fetch({FunctionId{2}, ProgramCounter{0}});
   ASSERT_FALSE(missing_function);
