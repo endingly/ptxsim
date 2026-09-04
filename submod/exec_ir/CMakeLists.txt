@@ -1,35 +1,19 @@
-find_package(ptx_frontend 0.0.1 CONFIG REQUIRED COMPONENTS codegen ptx_spec)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(PTXSIM_EXEC_IR_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR "${PTXSIM_EXEC_IR_GENERATED_DIR}/public")
 set(PTXSIM_EXEC_IR_GENERATED_HEADER
     "${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}/ptxsim/exec_ir/exec_ir.gen.hpp")
-set(PTXSIM_EXEC_IR_BACKEND
-    "${CMAKE_CURRENT_SOURCE_DIR}/python/instructions/backend.yaml")
 file(GLOB_RECURSE PTXSIM_EXEC_IR_CODEGEN_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/python/codegen/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/python/instructions/*.yaml")
-file(GLOB_RECURSE PTXSIM_EXEC_IR_FRONTEND_SPEC_FILES CONFIGURE_DEPENDS
-    "${ptx_frontend_PTX_SPEC_DIR}/*.yaml")
-file(GLOB_RECURSE PTXSIM_EXEC_IR_FRONTEND_CODEGEN_FILES CONFIGURE_DEPENDS
-    "${ptx_frontend_CODEGEN_PYTHON_ROOT}/base/*.py"
-    "${ptx_frontend_CODEGEN_PYTHON_ROOT}/code_gen/*.py")
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-    "${PTXSIM_EXEC_IR_BACKEND}"
-    ${PTXSIM_EXEC_IR_CODEGEN_FILES}
-    ${PTXSIM_EXEC_IR_FRONTEND_SPEC_FILES}
-    ${PTXSIM_EXEC_IR_FRONTEND_CODEGEN_FILES})
 
 add_custom_command(
     OUTPUT "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
-    COMMAND "${ptx_frontend_CODEGEN_PYTHON_EXECUTABLE}" -m ptxsim_exec_ir_codegen
-            --backend "${PTXSIM_EXEC_IR_BACKEND}"
-            --spec-dir "${ptx_frontend_PTX_SPEC_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" -m ptxsim_exec_ir_codegen
             --output "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
-    DEPENDS "${PTXSIM_EXEC_IR_BACKEND}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/python/setup.cfg"
             ${PTXSIM_EXEC_IR_CODEGEN_FILES}
-            ${PTXSIM_EXEC_IR_FRONTEND_SPEC_FILES}
-            ${PTXSIM_EXEC_IR_FRONTEND_CODEGEN_FILES}
     COMMENT "Generating PTXSim execution IR"
     VERBATIM)
 add_custom_target(ptxsim_exec_ir_codegen DEPENDS

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from code_gen.model import OperandLayoutSpec, VariantSpec
+from ptx_frontend.spec.model import OperandLayoutSpec, VariantSpec
 
 
 class GenerationError(Exception):

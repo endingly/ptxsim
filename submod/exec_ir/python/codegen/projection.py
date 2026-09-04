@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
-import importlib.resources
 from pathlib import Path
 
-from code_gen.database import CodegenDatabase, load_codegen_database
-from code_gen.model import ModifierSpec
+from ptx_frontend.spec import (
+    PtxSpecDatabase,
+    load_packaged_spec_database,
+    load_spec_database,
+)
+from ptx_frontend.spec.model import ModifierSpec
 
 from .model import (
     BackendSpec,
@@ -17,17 +20,15 @@ from .model import (
 )
 
 
-def database(spec_dir: Path | None = None) -> CodegenDatabase:
+def database(spec_dir: Path | None = None) -> PtxSpecDatabase:
     """Load normalized PTX facts from an explicit or packaged specification."""
     if spec_dir is not None:
-        return load_codegen_database(spec_dir=spec_dir)
-    resource = importlib.resources.files("code_gen.resources").joinpath("ptx_spec")
-    with importlib.resources.as_file(resource) as resource_dir:
-        return load_codegen_database(spec_dir=resource_dir)
+        return load_spec_database(spec_dir=spec_dir)
+    return load_packaged_spec_database()
 
 
 def select_projection(
-    database: CodegenDatabase,
+    database: PtxSpecDatabase,
     backend: BackendSpec,
 ) -> tuple[SelectedInstruction, ...]:
     """Validate selectors and return the ordered executable projection."""

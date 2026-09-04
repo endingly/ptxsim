@@ -10,6 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from ptx_frontend.spec.resources import packaged_spec_dir
+
 
 MODULE = "ptxsim_exec_ir_codegen"
 BACKEND = Path(__file__).parents[1] / "instructions" / "backend.yaml"
@@ -73,8 +75,7 @@ class GenerateTests(unittest.TestCase):
     def test_accepts_an_explicit_frontend_spec_directory(self) -> None:
         """An installed CMake port can select its exported specification tree."""
         with tempfile.TemporaryDirectory() as directory:
-            resource = importlib.resources.files("code_gen.resources").joinpath("ptx_spec")
-            with importlib.resources.as_file(resource) as spec_dir:
+            with importlib.resources.as_file(packaged_spec_dir()) as spec_dir:
                 result = self.generate(Path(directory) / "header.hpp", BACKEND,
                                        spec_dir)
             self.assertEqual(result.returncode, 0, result.stderr)

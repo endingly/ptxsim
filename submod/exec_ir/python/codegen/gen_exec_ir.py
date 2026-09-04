@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from base.utils import file_stem_to_pascal_case
-from code_gen.model import OperandLayoutSpec
+from ptx_frontend.base.utils import file_stem_to_pascal_case
+from ptx_frontend.spec.model import OperandLayoutSpec
 
 from .model import BackendSpec, SelectedForm, SelectedInstruction
 
