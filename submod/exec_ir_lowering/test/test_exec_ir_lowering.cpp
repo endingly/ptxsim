@@ -147,6 +147,27 @@ TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
             LoweringErrorCode::unsupported_operand);
 }
 
+TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .pred %p;
+  .reg .u32 %r;
+  setp.lt.u32 %p, %r, 1;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto instruction =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& setp = std::get<exec_ir::Setp>(instruction->get());
+  const auto& form = std::get<exec_ir::Setp::LtU32>(setp.variant);
+  EXPECT_EQ(form.comparison, exec_ir::ComparisonOperator::lt);
+  EXPECT_EQ(form.dst, (exec_ir::Predicate{common::RegisterSlot{0}}));
+  EXPECT_EQ(form.src1, (exec_ir::ScalarOperand{common::RegisterSlot{1}}));
+  EXPECT_EQ(form.src2, (exec_ir::ScalarOperand{common::RawValue::b32(1U)}));
+}
+
 TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
   const auto program = lower(resolve(R"ptx(
 .entry kernel() {

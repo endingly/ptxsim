@@ -1,6 +1,7 @@
 # PTXSim `simulator` Module Execution Plan
 
-> **Status:** active; implementation has not started
+> **Status:** active; WP0--WP2 and package export are implemented through
+> `Simulator::step()`/`run()`; WP3 is next
 > **Prerequisites:** `execution_model`, `memory`, `runtime`, `exec_ir`,
 > `exec_ir_lowering`, and `inst_execute_engine` are implemented
 > **Primary objective:** compose the existing modules into the first
@@ -29,9 +30,9 @@ Simulator: select -> issue -> fetch -> execute -> repeat
 all Threads exited, or a structured stop/error result
 ```
 
-The first accepted program is one function and one warp executing existing
-`mov`, `add`, and `exit` semantics. Branch and scalar memory instructions are
-added only after this path works end to end.
+The current accepted program is one function and one warp executing existing
+`mov`, `add`, `setp.lt.u32`, predicated `bra`, and `exit` semantics. Scalar
+memory is the next vertical slice.
 
 ## 2. Architectural boundary
 
@@ -71,36 +72,11 @@ is implemented; it must not become duplicated permanent state in `Simulator`.
 
 ## 3. Minimal public contract
 
-The first implementation should expose one concrete `Simulator`; do not add a
-scheduler interface, factory hierarchy, pipeline model, or event bus.
-
-Conceptually:
-
-```cpp
-class Simulator final {
- public:
-  Simulator(exec_ir::ExecutableProgram program,
-            runtime::LaunchRuntime& runtime,
-            common::FunctionId entry_function,
-            const arith::context& arithmetic) noexcept;
-
-  [[nodiscard]] auto step()
-      -> std::expected<SimulatorStepReport, SimulatorError>;
-
-  [[nodiscard]] auto run(std::size_t step_limit)
-      -> std::expected<SimulatorRunReport, SimulatorError>;
-};
-```
-
-This shape owns the program and explicitly borrows the already-prepared launch
-runtime and arithmetic context. Those borrowed objects must outlive the
-simulator. The exact report fields should stay limited to values required by
-tests and callers: issued warp/PC, participating lanes, lane faults, executed
-step count, and stop reason.
-
-`run()` is always bounded. A zero limit executes nothing; reaching any supplied
-limit is an ordinary, inspectable stop result rather than an infinite loop or
-process abort.
+The current implementation exposes an owning `Simulator` with bounded `step()`
+and `run()` operations. It owns the immutable program and borrows the prepared
+runtime and arithmetic context. `step()` reports issued/completed/trapped/
+deadlocked state, an optional issue group, and lane faults; `run()` counts only
+groups issued by that call.
 
 ## 4. Deterministic issue and step algorithm
 
@@ -146,16 +122,13 @@ must retain the originating structured error for:
 
 Lane faults remain part of the executor step report: affected lanes are
 trapped according to executor commit rules, while valid lanes may commit.
-Simulator-level `trapped`, `stalled`, `completed`, and `step_limit` describe why
-the outer loop stopped and are not instruction errors.
-
-The first simulator is fail-fast across steps: valid lanes may commit during an
-issue that traps another lane, but the next `step()` or the enclosing `run()`
-observes the trapped Thread and stops before issuing more work.
+`Simulator::step()` and `run()` retain the faulting issue's lane-local faults
+and stop immediately after that commit. A pre-existing trapped runtime has no
+recorded issuing source and therefore reports no faults.
 
 ## 6. Work packages
 
-### WP0 — Module and integration contract
+### WP0 — Module and integration contract (implemented)
 
 Add `submod/simulator` with one public header, one implementation file, one
 test executable, and one CMake target. Install/export work may wait until the
@@ -169,7 +142,7 @@ Acceptance:
   results; and
 - no instruction semantics or memory forwarding facade appears in the module.
 
-### WP1 — Single-warp execution loop
+### WP1 — Single-warp execution loop (implemented)
 
 Implement deterministic issue grouping, program fetch, optional fallthrough,
 executor invocation, and bounded `run()` for one entry function.
@@ -191,7 +164,7 @@ Acceptance:
 - the run report contains the exact number of issued groups; and
 - a too-small step limit stops deterministically without corrupting state.
 
-### WP2 — Branch and divergent PCs
+### WP2 — Branch and divergent PCs (implemented)
 
 Use the same grouping algorithm for lanes at different PCs. Add direct and
 predicated branch coverage without a divergence stack.
@@ -203,7 +176,7 @@ Acceptance:
 - a terminal branch/exit does not require a successor; and
 - an unsupported instruction is reported before a missing-fallthrough error.
 
-### WP3 — Existing scalar memory path
+### WP3 — Existing scalar memory path (next)
 
 Exercise existing generic/global scalar `ld` and `st` through prepared
 `LaunchRuntime` bindings. Simulator passes context to the executor and does not
@@ -217,16 +190,17 @@ Acceptance:
   executor policy; and
 - `memory` still has no dependency on `execution_model` or `simulator`.
 
-### WP4 — Multiple warps and packaging
+### WP4 — Multiple warps
 
-Extend the existing topology-order selection from one warp to multiple warps,
-then install/export the proven `inst_execute_engine` and `simulator` targets.
+Extend the existing topology-order selection from one warp to multiple warps.
+The execution chain through `simulator` is already installed/exported and
+covered by build-tree and installed-package consumers.
 
 Acceptance:
 
 - two warps make independent progress in deterministic order;
 - completion and trapped/stalled results are derived from Thread states;
-- build-tree and installed-package consumers link successfully; and
+- build-tree and installed-package consumers continue to link successfully; and
 - GCC/Clang Debug/Release plus sanitizer gates pass.
 
 ## 7. Deferred work
@@ -236,7 +210,7 @@ The following are not prerequisites for the first simulator loop:
 - call/return, activation records, per-thread function identity, and call-stack
   resource lifetimes;
 - async-memory progress, wakeup, `mbarrier`, and CTA/grid synchronization;
-- special-register execution;
+- special-register execution beyond the implemented `%tid.x` source;
 - reconvergence stacks, scoreboards, latency, or cycle timing;
 - pluggable scheduling policies;
 - CLI loading, tracing/event sinks, or a device/context layer;

@@ -48,6 +48,14 @@ auto add(std::optional<exec_ir::Predicate> predicate, exec_ir::DataType type,
                                   std::move(rhs)};
   return exec_ir::Add{std::move(predicate), exec_ir::Add::Variant{form}};
 }
+/** @brief Build the implemented scalar unsigned less-than predicate comparison. */
+auto setp_lt_u32(exec_ir::Predicate destination, exec_ir::ScalarOperand lhs,
+                 exec_ir::ScalarOperand rhs) -> exec_ir::Instruction {
+  exec_ir::Setp::LtU32 form{exec_ir::ComparisonOperator::lt,
+                            std::move(destination), std::move(lhs),
+                            std::move(rhs)};
+  return exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}};
+}
 /** @brief Build a generated scalar load using its selected address space. */
 auto make_load(std::optional<exec_ir::Predicate> predicate,
                exec_ir::DataType type, exec_ir::AddressSpace space,
@@ -337,6 +345,57 @@ TEST_F(InstExecuteEngineTest, MovesTwoLanesThroughIsolatedFrames) {
   EXPECT_EQ(*second_registers.read(RegisterSlot{1}), RawValue::b32(2U));
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
   EXPECT_EQ(warp().thread(LaneId{1}).pc(), move_fallthrough);
+}
+
+TEST_F(InstExecuteEngineTest, ComparesUnsignedU32ForEachIssuedLane) {
+  const auto first = bind(LaneId{0}, {RawWidth::pred, RawWidth::b32});
+  const auto second = bind(LaneId{1}, {RawWidth::pred, RawWidth::b32});
+  auto first_registers = view(first);
+  auto second_registers = view(second);
+  ASSERT_TRUE(first_registers.write(RegisterSlot{1}, RawValue::b32(0U)));
+  ASSERT_TRUE(second_registers.write(RegisterSlot{1}, RawValue::b32(1U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto instruction = setp_lt_u32(exec_ir::Predicate{RegisterSlot{0}},
+                                       RegisterSlot{1}, RawValue::b32(1U));
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*first_registers.read(RegisterSlot{0}), RawValue::pred(true));
+  EXPECT_EQ(*second_registers.read(RegisterSlot{0}), RawValue::pred(false));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), move_fallthrough);
+}
+
+TEST_F(InstExecuteEngineTest,
+       RejectsUnsupportedPredicateComparisonBeforeMutation) {
+  const auto frame = bind(LaneId{0}, {RawWidth::pred, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(7U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Setp::GeS32 form{
+      exec_ir::ComparisonOperator::ge,
+      exec_ir::Predicate{RegisterSlot{0}},
+      RegisterSlot{1},
+      RawValue::b32(0U),
+  };
+  const exec_ir::Instruction instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(7U));
 }
 
 TEST_F(InstExecuteEngineTest, MovesThreadIdXForEachIssuedLane) {

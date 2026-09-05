@@ -2,12 +2,13 @@
 
 #include <string_view>
 #include <utility>
-#include <vector>
+#include <variant>
 
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
+#include <ptxsim/memory/register/register_error.hpp>
 #include <ptxsim/simulator/simulator.hpp>
 
 namespace ptxsim::simulator::test {
@@ -45,7 +46,7 @@ auto warp(runtime::LaunchRuntime& runtime) -> execution_model::Warp& {
 }  // namespace
 
 TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
-  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r<2>;
   mov.u32 %r0, %tid.x;
@@ -58,11 +59,18 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   runtime::LaunchRuntime runtime{execution_model::GridId{1}, shape()};
 
   const arith::context arithmetic;
-  const auto run = run_to_completion(runtime, *program, common::FunctionId{0},
-                                     arithmetic, 3);
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto first_step = simulator.step();
+  ASSERT_TRUE(first_step);
+  EXPECT_EQ(first_step->termination, StepTermination::issued);
+  ASSERT_TRUE(first_step->issue);
+  EXPECT_EQ(first_step->issue->lanes.count(), 2U);
+
+  const auto run = simulator.run(2);
 
   ASSERT_TRUE(run);
-  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 3}));
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 2}));
   EXPECT_TRUE(runtime.grid().completed());
   for (std::uint32_t lane = 0; lane < 2; ++lane) {
     const auto frame = runtime.register_frame(
@@ -78,13 +86,15 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   }
 }
 
-TEST(Simulator, GroupsDivergentLanesByProgramCounter) {
-  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+TEST(Simulator, SelectsDivergentGroupsByLowestReadyLane) {
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
 .entry kernel() {
   .reg .pred %p;
   .reg .u32 %r<2>;
+  mov.u32 %r0, %tid.x;
+  setp.lt.u32 %p, %r0, 1;
   @%p bra target;
-  add.u32 %r0, %r0, 1;
+  add.u32 %r0, %r0, 10;
 target:
   add.u32 %r1, %r0, 2;
   exit;
@@ -93,41 +103,55 @@ target:
   ASSERT_TRUE(program);
 
   runtime::LaunchRuntime runtime{execution_model::GridId{2}, shape()};
-  std::vector<memory::RegisterFrameHandle> frames;
-  frames.reserve(2);
-  for (std::uint32_t lane = 0; lane < 2; ++lane) {
-    const auto frame = runtime.registers().create_frame(
-        {.slot_widths = {common::RawWidth::pred, common::RawWidth::b32,
-                         common::RawWidth::b32}});
-    ASSERT_TRUE(frame);
-    frames.push_back(*frame);
-    ASSERT_TRUE(runtime.bind_register_frame(
-        warp(runtime).thread(execution_model::LaneId{lane}).id(),
-        common::FunctionId{0}, *frame));
-    auto registers = runtime.registers().view(*frame);
-    ASSERT_TRUE(registers);
-    ASSERT_TRUE(registers->write(common::RegisterSlot{0},
-                                 common::RawValue::pred(lane == 0U)));
-    ASSERT_TRUE(registers->write(common::RegisterSlot{1},
-                                 common::RawValue::b32(10U + lane * 10U)));
-  }
 
   const arith::context arithmetic;
-  const auto run = run_to_completion(runtime, *program, common::FunctionId{0},
-                                     arithmetic, 4);
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto run = simulator.run(8);
 
   ASSERT_TRUE(run);
-  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 4}));
-  for (std::uint32_t lane = 0; lane < frames.size(); ++lane) {
-    const auto bound_frame = runtime.register_frame(
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 8}));
+  for (std::uint32_t lane = 0; lane < 2; ++lane) {
+    const auto frame = runtime.register_frame(
         warp(runtime).thread(execution_model::LaneId{lane}).id(),
         common::FunctionId{0});
-    ASSERT_TRUE(bound_frame);
-    EXPECT_EQ(*bound_frame, frames[lane]);
-    const auto registers = runtime.registers().view(frames[lane]);
+    ASSERT_TRUE(frame);
+    const auto registers = runtime.registers().view(*frame);
     ASSERT_TRUE(registers);
+    EXPECT_EQ(*registers->read(common::RegisterSlot{1}),
+              common::RawValue::b32(lane == 0U ? 0U : 11U));
     EXPECT_EQ(*registers->read(common::RegisterSlot{2}),
-              common::RawValue::b32(lane == 0U ? 12U : 23U));
+              common::RawValue::b32(lane == 0U ? 2U : 13U));
+  }
+}
+
+TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r<2>;
+  mov.u32 %r1, %r0;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+
+  runtime::LaunchRuntime runtime{execution_model::GridId{3}, shape()};
+
+  const arith::context arithmetic;
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto run = simulator.run(2);
+
+  ASSERT_TRUE(run);
+  EXPECT_EQ(run->termination, RunTermination::trapped);
+  EXPECT_EQ(run->issued_groups, 1U);
+  ASSERT_EQ(run->faults.size(), 2U);
+  for (std::uint32_t lane = 0; lane < 2; ++lane) {
+    EXPECT_EQ(run->faults[lane].lane, execution_model::LaneId{lane});
+    ASSERT_TRUE(
+        std::holds_alternative<memory::RegisterError>(run->faults[lane].cause));
+    EXPECT_EQ(std::get<memory::RegisterError>(run->faults[lane].cause).code,
+              memory::RegisterErrorCode::uninitialized_read);
   }
 }
 

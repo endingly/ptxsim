@@ -11,7 +11,11 @@ set(ptxsim_known_components
     arith_validation
     execution_model
     memory
-    runtime)
+    runtime
+    exec_ir
+    exec_ir_lowering
+    inst_execute_engine
+    simulator)
 foreach(ptxsim_component IN LISTS ptxsim_FIND_COMPONENTS)
     if(ptxsim_component IN_LIST ptxsim_known_components)
         set("ptxsim_${ptxsim_component}_FOUND" TRUE)

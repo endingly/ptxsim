@@ -81,18 +81,33 @@ install_project_targets(
         ptxsim_execution_model
         ptxsim_memory
         ptxsim_runtime
+        ptxsim_exec_ir
+        ptxsim_exec_ir_lowering
+        ptxsim_inst_execute_engine
+        ptxsim_simulator
     INCLUDE_DIRS
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/common/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/arith/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/execution_model/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/memory/include"
         "${CMAKE_CURRENT_SOURCE_DIR}/submod/runtime/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/exec_ir_lowering/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/inst_execute_engine/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/submod/simulator/include"
     INCLUDE_DESTINATIONS
         "${PROJECT_NAME}/common"
         "${PROJECT_NAME}/arith"
         "${PROJECT_NAME}/execution_model"
         "${PROJECT_NAME}/memory"
         "${PROJECT_NAME}/runtime"
+        "${PROJECT_NAME}/exec_ir"
+        "${PROJECT_NAME}/exec_ir_lowering"
+        "${PROJECT_NAME}/inst_execute_engine"
+        "${PROJECT_NAME}/simulator"
     DEPENDENCIES
         "softfloat CONFIG REQUIRED"
-        "sul-dynamic_bitset CONFIG REQUIRED")
+        "sul-dynamic_bitset CONFIG REQUIRED"
+        "fmt CONFIG REQUIRED"
+        "magic_enum CONFIG REQUIRED"
+        "ptx_frontend 0.0.1 CONFIG REQUIRED COMPONENTS resolved_ir")

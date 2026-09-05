@@ -29,6 +29,21 @@ static_assert(!std::same_as<LocalFrameHandle, EntryParameterHandle>);
 static_assert(!std::same_as<FunctionParameterHandle, SharedSpaceHandle>);
 }  // namespace
 
+TEST(AddressSpaceError, ComparesNestedMemoryErrorContext) {
+  const AddressSpaceError error{
+      .code = AddressSpaceErrorCode::storage_failure,
+      .memory_error = MemoryError{.code = MemoryErrorCode::UninitializedRead,
+                                  .address = Address{4},
+                                  .size = 8,
+                                  .required_alignment = 4},
+      .resource_index = 2};
+  auto changed = error;
+  changed.memory_error->address = Address{8};
+
+  EXPECT_EQ(error, error);
+  EXPECT_NE(error, changed);
+}
+
 TEST(AddressSpaceManager, GlobalAllocatesAlignedStableRangesAndStoresBytes) {
   AddressSpaceManager manager;
   const auto global = manager.create_global({16});
