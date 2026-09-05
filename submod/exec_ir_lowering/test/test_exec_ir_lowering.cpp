@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstdint>
 #include <limits>
 #include <string_view>
 #include <utility>
@@ -145,6 +146,40 @@ TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
   ASSERT_FALSE(unsupported_identity);
   EXPECT_EQ(unsupported_identity.error().code,
             LoweringErrorCode::unsupported_operand);
+}
+
+TEST(ExecIrLowering, BindsB64MoveImmediate) {
+  const auto module = resolve(R"ptx(
+.entry kernel() {
+  .reg .b64 %addr;
+  mov.b64 %addr, 0;
+  exit;
+}
+)ptx");
+  const auto& resolved_mov = std::get<Mov>(module.functions[0].body[0]);
+  const auto& resolved_form = std::get<Mov::Scalar>(resolved_mov.variant);
+  const auto& resolved_operands =
+      std::get<Mov::Scalar::ScalarOperands>(resolved_form.operands);
+  const auto& immediate =
+      std::get<ptx_frontend::resolved_ir::ResolvedImmediate>(
+          resolved_operands.src.value);
+  EXPECT_EQ(immediate.type, ptx_frontend::base::ScalarType::B64);
+  EXPECT_EQ(immediate.bits, 0U);
+  EXPECT_FALSE(immediate.is_negative);
+
+  const auto program = lower(module);
+  ASSERT_TRUE(program);
+  const auto instruction =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& mov = std::get<exec_ir::Mov>(instruction->get());
+  const auto& form = std::get<exec_ir::Mov::Scalar>(mov.variant);
+  const auto& operands =
+      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  EXPECT_EQ(form.type, exec_ir::DataType::b64);
+  EXPECT_EQ(operands.dst, common::RegisterSlot{0});
+  EXPECT_EQ(std::get<common::RawValue>(operands.src),
+            common::RawValue::b64(std::uint64_t{0}));
 }
 
 TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {

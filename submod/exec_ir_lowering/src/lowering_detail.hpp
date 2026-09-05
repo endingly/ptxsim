@@ -165,6 +165,13 @@ template <typename Target, typename Source>
           .component = 0U,
       }};
     }
+    if (const auto* immediate =
+            std::get_if<ptx_frontend::resolved_ir::ResolvedImmediate>(&source);
+        immediate != nullptr &&
+        immediate->type == ptx_frontend::base::ScalarType::B64 &&
+        !immediate->is_negative) {
+      return exec_ir::MovSource{common::RawValue::b64(immediate->bits)};
+    }
     return unsupported_operand(context);
   } else if constexpr (std::same_as<Target, common::ProgramCounter> &&
                        std::same_as<
