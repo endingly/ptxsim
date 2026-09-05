@@ -31,17 +31,6 @@ auto execution_error(inst_execute_engine::StepError error) -> RunError {
   return {.code = RunErrorCode::execution_error, .execution_error = error};
 }
 
-/** @brief Return the sole warp after the caller established the one-warp limit. */
-auto only_warp(runtime::LaunchRuntime& runtime) noexcept
-    -> execution_model::Warp& {
-  for (auto& cta : runtime.grid()) {
-    for (auto& warp : cta) {
-      return warp;
-    }
-  }
-  std::unreachable();
-}
-
 /**
  * @brief Select the PC of the lowest-ID ready lane and all ready lanes at it.
  *
@@ -71,6 +60,33 @@ auto ready_group(const execution_model::Warp& warp)
   }
   return execution_model::WarpIssueGroup{.pc = *selected_pc,
                                          .lanes = std::move(lanes)};
+}
+
+/** @brief A topology-selected warp and the ready lanes it will issue. */
+struct SelectedWarpGroup {
+  /** @brief Non-owning warp selected from the runtime's stable topology. */
+  execution_model::Warp* warp;
+  /** @brief Same-PC ready lanes selected within @ref warp. */
+  execution_model::WarpIssueGroup group;
+};
+
+/**
+ * @brief Return the first topology-order warp containing a ready issue group.
+ *
+ * CTAs and their warps retain construction order, which defines this
+ * deterministic cross-warp policy.
+ */
+auto ready_warp_group(runtime::LaunchRuntime& runtime)
+    -> std::optional<SelectedWarpGroup> {
+  for (auto& cta : runtime.grid()) {
+    for (auto& warp : cta) {
+      const auto group = ready_group(warp);
+      if (group) {
+        return SelectedWarpGroup{.warp = &warp, .group = *group};
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 /**
@@ -132,22 +148,20 @@ auto Simulator::initialize() -> std::expected<void, RunError> {
   if (initialized_) {
     return {};
   }
-  if (runtime_.grid().warp_count() != 1U) {
-    initialization_error_ = RunError{.code = RunErrorCode::requires_one_warp};
-    return std::unexpected(*initialization_error_);
-  }
-
-  const auto& warp = only_warp(runtime_);
   const auto layout = program_.function_layout(entry_function_);
   if (!layout) {
     initialization_error_ = program_error(layout.error());
     return std::unexpected(*initialization_error_);
   }
-  const auto provisioned =
-      provision_register_frames(runtime_, warp, layout->get(), entry_function_);
-  if (!provisioned) {
-    initialization_error_ = provisioned.error();
-    return std::unexpected(*initialization_error_);
+  for (const auto& cta : runtime_.grid()) {
+    for (const auto& warp : cta) {
+      const auto provisioned = provision_register_frames(
+          runtime_, warp, layout->get(), entry_function_);
+      if (!provisioned) {
+        initialization_error_ = provisioned.error();
+        return std::unexpected(*initialization_error_);
+      }
+    }
   }
   initialized_ = true;
   return {};
@@ -165,12 +179,11 @@ auto Simulator::step() -> std::expected<StepReport, RunError> {
     return StepReport{.termination = StepTermination::trapped};
   }
 
-  auto& warp = only_warp(runtime_);
-  const auto group = ready_group(warp);
-  if (!group) {
+  const auto selected = ready_warp_group(runtime_);
+  if (!selected) {
     return StepReport{.termination = StepTermination::deadlocked};
   }
-  const common::CodeLocation location{entry_function_, group->pc};
+  const common::CodeLocation location{entry_function_, selected->group.pc};
   const auto instruction = program_.fetch(location);
   if (!instruction) {
     return std::unexpected(program_error(instruction.error()));
@@ -187,21 +200,25 @@ auto Simulator::step() -> std::expected<StepReport, RunError> {
 
   inst_execute_engine::InstExecuteEngine engine{runtime_, entry_function_,
                                                 arithmetic_};
-  const auto result =
-      engine.execute(warp, *group, instruction->get(), successor);
+  const auto result = engine.execute(*selected->warp, selected->group,
+                                     instruction->get(), successor);
   if (!result) {
     return std::unexpected(execution_error(result.error()));
   }
   if (!result->faults.empty() || runtime_.grid().trapped()) {
     return StepReport{.termination = StepTermination::trapped,
-                      .issue = *group,
+                      .issue = IssuedWarpGroup{.warp = selected->warp->id(),
+                                               .group = selected->group},
                       .faults = result->faults};
   }
   if (runtime_.grid().completed()) {
     return StepReport{.termination = StepTermination::completed,
-                      .issue = *group};
+                      .issue = IssuedWarpGroup{.warp = selected->warp->id(),
+                                               .group = selected->group}};
   }
-  return StepReport{.termination = StepTermination::issued, .issue = *group};
+  return StepReport{.termination = StepTermination::issued,
+                    .issue = IssuedWarpGroup{.warp = selected->warp->id(),
+                                             .group = selected->group}};
 }
 
 auto Simulator::run(std::size_t maximum_issued_groups)
@@ -226,8 +243,10 @@ auto Simulator::run(std::size_t maximum_issued_groups)
       case StepTermination::completed:
         return RunReport{RunTermination::completed, issued_groups};
       case StepTermination::trapped:
-        return RunReport{RunTermination::trapped, issued_groups,
-                         step_report->faults};
+        return RunReport{
+            RunTermination::trapped, issued_groups, step_report->faults,
+            step_report->issue ? std::optional{step_report->issue->warp}
+                               : std::nullopt};
       case StepTermination::deadlocked:
         return RunReport{RunTermination::deadlocked, issued_groups};
     }
@@ -239,7 +258,7 @@ auto Simulator::run(std::size_t maximum_issued_groups)
   if (runtime_.grid().trapped()) {
     return RunReport{RunTermination::trapped, issued_groups};
   }
-  if (!ready_group(only_warp(runtime_))) {
+  if (!ready_warp_group(runtime_)) {
     return RunReport{RunTermination::deadlocked, issued_groups};
   }
   return RunReport{RunTermination::step_limit_exhausted, issued_groups};

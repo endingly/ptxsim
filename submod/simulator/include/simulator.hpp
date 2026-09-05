@@ -16,11 +16,18 @@ namespace ptxsim::simulator {
 
 /** @brief Categories of failure before the runner reaches a terminal state. */
 enum class RunErrorCode {
-  requires_one_warp,
   program_error,
   register_error,
   runtime_binding_error,
   execution_error,
+};
+
+/** @brief A same-PC issue group together with the warp that issued it. */
+struct IssuedWarpGroup {
+  /** @brief Stable identity of the warp whose lanes form @ref group. */
+  execution_model::WarpId warp;
+  /** @brief Ready lanes from @ref warp that issued one instruction. */
+  execution_model::WarpIssueGroup group;
 };
 
 /** @brief Structured reason the runner could not perform an issue step. */
@@ -63,8 +70,8 @@ enum class StepTermination {
 struct StepReport {
   /** @brief Terminal or progress state observed by the step. */
   StepTermination termination;
-  /** @brief Issued same-PC lane group, absent when no instruction was issued. */
-  std::optional<execution_model::WarpIssueGroup> issue;
+  /** @brief Issued warp and same-PC lane group, absent when no instruction was issued. */
+  std::optional<IssuedWarpGroup> issue;
   /** @brief Lane-local causes from a faulting @ref issue, if any. */
   std::vector<inst_execute_engine::LaneFault> faults{};
 };
@@ -82,12 +89,18 @@ struct RunReport {
    * that was already trapped when the runner began.
    */
   std::vector<inst_execute_engine::LaneFault> faults{};
+  /**
+   * @brief Warp that issued the retained faults, when this run observed one.
+   *
+   * Empty for a runtime that was already trapped before this run could issue.
+   */
+  std::optional<execution_model::WarpId> faulting_warp{};
 
   constexpr bool operator==(const RunReport&) const = default;
 };
 
 /**
- * @brief Own one executable program and drive it on one borrowed runtime warp.
+ * @brief Own one executable program and drive it on a borrowed runtime grid.
  *
  * The program is immutable after construction. The runtime and arithmetic
  * context remain borrowed and must outlive this simulator.
@@ -118,14 +131,14 @@ class Simulator final {
       -> std::expected<RunReport, RunError>;
 
  private:
-  /** @brief Initialize the one-warp runtime binding state exactly once. */
+  /** @brief Initialize entry-function frame bindings for every grid thread once. */
   [[nodiscard]] auto initialize() -> std::expected<void, RunError>;
 
   /** @brief Immutable instruction storage owned for this simulator lifetime. */
   exec_ir::ExecutableProgram program_;
   /** @brief Borrowed launch state mutated by issued instruction effects. */
   runtime::LaunchRuntime& runtime_;
-  /** @brief Entry function executed by every thread in the sole warp. */
+  /** @brief Entry function executed by every thread in the borrowed grid. */
   common::FunctionId entry_function_;
   /** @brief Borrowed arithmetic semantics used by the instruction engine. */
   const arith::context& arithmetic_;
