@@ -1,7 +1,7 @@
 # PTXSim `simulator` Module Execution Plan
 
-> **Status:** active; WP0--WP2 and package export are implemented through
-> `Simulator::step()`/`run()`; WP3 is next
+> **Status:** active; WP0--WP3 and package export are implemented through
+> `Simulator::step()`/`run()`; WP4 is next
 > **Prerequisites:** `execution_model`, `memory`, `runtime`, `exec_ir`,
 > `exec_ir_lowering`, and `inst_execute_engine` are implemented
 > **Primary objective:** compose the existing modules into the first
@@ -31,8 +31,8 @@ all Threads exited, or a structured stop/error result
 ```
 
 The current accepted program is one function and one warp executing existing
-`mov`, `add`, `setp.lt.u32`, predicated `bra`, and `exit` semantics. Scalar
-memory is the next vertical slice.
+`mov`, `add`, `setp.lt.u32`, predicated `bra`, scalar global `ld`/`st`, and
+`exit` semantics. The next vertical slice is multi-warp execution.
 
 ## 2. Architectural boundary
 
@@ -176,11 +176,15 @@ Acceptance:
 - a terminal branch/exit does not require a successor; and
 - an unsupported instruction is reported before a missing-fallthrough error.
 
-### WP3 — Existing scalar memory path (next)
+### WP3 — Existing scalar memory path (implemented)
 
 Exercise existing generic/global scalar `ld` and `st` through prepared
 `LaunchRuntime` bindings. Simulator passes context to the executor and does not
 resolve addresses itself.
+
+The implemented global path materializes address zero with `mov.b64`, performs
+u32 load/add/store through an automatically provisioned register frame, and
+retains a missing-global-binding lane fault in the trapped report.
 
 Acceptance:
 
@@ -190,7 +194,7 @@ Acceptance:
   executor policy; and
 - `memory` still has no dependency on `execution_model` or `simulator`.
 
-### WP4 — Multiple warps
+### WP4 — Multiple warps (next)
 
 Extend the existing topology-order selection from one warp to multiple warps.
 The execution chain through `simulator` is already installed/exported and

@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <map>
 #include <utility>
@@ -259,6 +260,45 @@ TEST_F(InstExecuteEngineTest, MovesOneLaneAndCommitsExplicitFallthrough) {
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(0x1234'5678U));
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest, MovesB64ImmediateAndAdvancesProgramCounter) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b64});
+  auto registers = view(frame);
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const auto instruction =
+      mov(std::nullopt, exec_ir::DataType::b64, RegisterSlot{0},
+          RawValue::b64(std::uint64_t{0}));
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b64(std::uint64_t{0}));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), move_fallthrough);
+}
+
+TEST_F(InstExecuteEngineTest, B64MoveRejectsWrongDestinationWidthWithoutWrite) {
+  const auto frame = bind(LaneId{0}, {RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(7U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const auto instruction =
+      mov(std::nullopt, exec_ir::DataType::b64, RegisterSlot{0},
+          RawValue::b64(std::uint64_t{0}));
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(std::get<common::RawValueError>(result->faults.front().cause),
+            (common::RawValueError{RawWidth::b64, RawWidth::b32}));
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Trapped);
 }
 
 TEST_F(InstExecuteEngineTest,

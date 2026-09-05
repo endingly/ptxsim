@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstddef>
 #include <string_view>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
@@ -153,6 +156,61 @@ TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
     EXPECT_EQ(std::get<memory::RegisterError>(run->faults[lane].cause).code,
               memory::RegisterErrorCode::uninitialized_read);
   }
+}
+
+TEST(Simulator, ExecutesGlobalMemoryProgramAndRetainsMissingBindingFaults) {
+  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .b64 %addr;
+  .reg .u32 %value;
+  mov.b64 %addr, 0;
+  ld.global.u32 %value, [%addr];
+  add.u32 %value, %value, 1;
+  st.global.u32 [%addr], %value;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const arith::context arithmetic;
+
+  runtime::LaunchRuntime successful_runtime{execution_model::GridId{4},
+                                            shape()};
+  const auto global = successful_runtime.address_spaces().create_global({4});
+  ASSERT_TRUE(successful_runtime.bind_global(global));
+  auto memory = successful_runtime.address_spaces().view(global);
+  ASSERT_TRUE(memory);
+  ASSERT_TRUE(memory->initialize(
+      memory::Address{0},
+      std::array{std::byte{41}, std::byte{0}, std::byte{0}, std::byte{0}}));
+  Simulator successful_simulator{*program, successful_runtime,
+                                 common::FunctionId{0}, arithmetic};
+  const auto successful_run = successful_simulator.run(5);
+
+  ASSERT_TRUE(successful_run);
+  EXPECT_EQ(*successful_run, (RunReport{RunTermination::completed, 5}));
+  EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{std::byte{42}, std::byte{0}, std::byte{0},
+                                    std::byte{0}}));
+
+  runtime::LaunchRuntime unbound_runtime{execution_model::GridId{5}, shape()};
+  Simulator unbound_simulator{*program, unbound_runtime, common::FunctionId{0},
+                              arithmetic};
+  const auto unbound_run = unbound_simulator.run(5);
+
+  ASSERT_TRUE(unbound_run);
+  EXPECT_EQ(unbound_run->termination, RunTermination::trapped);
+  EXPECT_EQ(unbound_run->issued_groups, 2U);
+  EXPECT_EQ(unbound_run->faults,
+            (std::vector<inst_execute_engine::LaneFault>{
+                {execution_model::LaneId{0},
+                 runtime::RuntimeBindingError{
+                     runtime::RuntimeBindingErrorCode::missing_binding,
+                     runtime::RuntimeResourceKind::global}},
+                {execution_model::LaneId{1},
+                 runtime::RuntimeBindingError{
+                     runtime::RuntimeBindingErrorCode::missing_binding,
+                     runtime::RuntimeResourceKind::global}},
+            }));
 }
 
 }  // namespace ptxsim::simulator::test

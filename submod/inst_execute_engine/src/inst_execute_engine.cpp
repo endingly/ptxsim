@@ -232,6 +232,47 @@ auto b32_destination(const memory::RegisterView& registers,
   return {};
 }
 
+/** @brief Resolve a scalar move source to its b64 raw bits. */
+auto b64_move_source(const memory::RegisterView& registers,
+                     const exec_ir::MovSource& source)
+    -> std::expected<std::uint64_t, LaneFaultCause> {
+  if (const auto* register_slot = std::get_if<common::RegisterSlot>(&source)) {
+    const auto value = registers.read(*register_slot);
+    if (!value) {
+      return std::unexpected(LaneFaultCause{value.error()});
+    }
+    if (const auto b64 = value->as_b64(); b64) {
+      return *b64;
+    } else {
+      return std::unexpected(LaneFaultCause{b64.error()});
+    }
+  }
+  if (const auto* immediate = std::get_if<common::RawValue>(&source)) {
+    if (const auto b64 = immediate->as_b64(); b64) {
+      return *b64;
+    } else {
+      return std::unexpected(LaneFaultCause{b64.error()});
+    }
+  }
+  return std::unexpected(LaneFaultCause{
+      common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
+}
+
+/** @brief Verify that one scalar move destination accepts b64 raw bits. */
+auto b64_destination(const memory::RegisterView& registers,
+                     common::RegisterSlot destination)
+    -> std::expected<void, LaneFaultCause> {
+  const auto width = registers.declared_width(destination);
+  if (!width) {
+    return std::unexpected(LaneFaultCause{width.error()});
+  }
+  if (*width != common::RawWidth::b64) {
+    return std::unexpected(
+        LaneFaultCause{common::RawValueError{common::RawWidth::b64, *width}});
+  }
+  return {};
+}
+
 /** @brief Verify that one scalar write destination is a predicate register. */
 auto predicate_destination(const memory::RegisterView& registers,
                            common::RegisterSlot destination)
@@ -295,6 +336,30 @@ auto prepare_operation(const memory::RegisterView& registers,
   return PreparedEffect{
       .write =
           PreparedWrite{registers, operands.dst, common::RawValue::b32(*value)},
+      .memory_write = std::nullopt,
+      .control = successor,
+  };
+}
+
+/** @brief Stage one b64 scalar move without changing its destination frame. */
+auto prepare_move_b64_operation(const memory::RegisterView& registers,
+                                const exec_ir::Mov& operation,
+                                common::ProgramCounter successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto& form = std::get<exec_ir::Mov::Scalar>(operation.variant);
+  const auto& operands =
+      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  const auto value = b64_move_source(registers, operands.src);
+  if (!value) {
+    return std::unexpected(value.error());
+  }
+  if (const auto destination = b64_destination(registers, operands.dst);
+      !destination) {
+    return std::unexpected(destination.error());
+  }
+  return PreparedEffect{
+      .write =
+          PreparedWrite{registers, operands.dst, common::RawValue::b64(*value)},
       .memory_write = std::nullopt,
       .control = successor,
   };
@@ -521,6 +586,19 @@ auto prepare_move_b32(LaneResourceResolver& registers,
                            std::get<exec_ir::Mov>(operation), *successor);
 }
 
+/** @brief Adapt the implemented scalar b64 move to opcode dispatch. */
+auto prepare_move_b64(LaneResourceResolver& registers, const arith::context&,
+                      const exec_ir::Instruction& operation,
+                      std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto view = registers.resolve();
+  if (!view) {
+    return std::unexpected(view.error());
+  }
+  return prepare_move_b64_operation(
+      view->get(), std::get<exec_ir::Mov>(operation), *successor);
+}
+
 auto prepare_add_u32(LaneResourceResolver& registers,
                      const arith::context& arithmetic,
                      const exec_ir::Instruction& operation,
@@ -658,6 +736,8 @@ auto select_move(const exec_ir::Instruction& operation)
       return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
     case exec_ir::DataType::u32:
       return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
+    case exec_ir::DataType::b64:
+      return SelectedPreparer{prepare_move_b64, PrepareKind::scalar};
   }
   return unsupported_instruction();
 }
