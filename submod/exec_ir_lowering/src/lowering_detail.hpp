@@ -125,6 +125,15 @@ template <typename Target, typename Source>
                        std::same_as<SourceValue,
                                     ptx_frontend::resolved_ir::RegOrImm>) {
     return bind_b32_operand(source, context);
+  } else if constexpr (std::same_as<Target, exec_ir::Predicate> &&
+                       std::same_as<
+                           SourceValue,
+                           ptx_frontend::resolved_ir::ResolvedPredicate>) {
+    const auto slot =
+        bind_register(source.register_ref, common::RawWidth::pred, context);
+    if (!slot)
+      return std::unexpected(slot.error());
+    return exec_ir::Predicate{*slot, source.negated};
   } else if constexpr (std::same_as<Target, exec_ir::MovSource> &&
                        std::same_as<
                            SourceValue,

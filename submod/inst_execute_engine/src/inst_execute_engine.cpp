@@ -232,6 +232,21 @@ auto b32_destination(const memory::RegisterView& registers,
   return {};
 }
 
+/** @brief Verify that one scalar write destination is a predicate register. */
+auto predicate_destination(const memory::RegisterView& registers,
+                           common::RegisterSlot destination)
+    -> std::expected<void, LaneFaultCause> {
+  const auto width = registers.declared_width(destination);
+  if (!width) {
+    return std::unexpected(LaneFaultCause{width.error()});
+  }
+  if (*width != common::RawWidth::pred) {
+    return std::unexpected(
+        LaneFaultCause{common::RawValueError{common::RawWidth::pred, *width}});
+  }
+  return {};
+}
+
 /** @brief Return the register-backed address accepted by the current engine. */
 auto register_address(const exec_ir::Address& address)
     -> std::optional<common::RegisterSlot> {
@@ -311,6 +326,33 @@ auto prepare_operation(const memory::RegisterView& registers,
   return PreparedEffect{
       .write =
           PreparedWrite{registers, form.dst, common::RawValue::b32(sum->value)},
+      .memory_write = std::nullopt,
+      .control = successor,
+  };
+}
+
+/** @brief Stage one unsigned less-than predicate comparison without mutation. */
+auto prepare_operation(const memory::RegisterView& registers,
+                       const exec_ir::Setp& operation,
+                       common::ProgramCounter successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto& form = std::get<exec_ir::Setp::LtU32>(operation.variant);
+  const auto lhs = b32_operand(registers, form.src1);
+  if (!lhs) {
+    return std::unexpected(lhs.error());
+  }
+  const auto rhs = b32_operand(registers, form.src2);
+  if (!rhs) {
+    return std::unexpected(rhs.error());
+  }
+  if (const auto destination =
+          predicate_destination(registers, form.dst.source);
+      !destination) {
+    return std::unexpected(destination.error());
+  }
+  return PreparedEffect{
+      .write = PreparedWrite{registers, form.dst.source,
+                             common::RawValue::pred(*lhs < *rhs)},
       .memory_write = std::nullopt,
       .control = successor,
   };
@@ -492,6 +534,19 @@ auto prepare_add_u32(LaneResourceResolver& registers,
                            std::get<exec_ir::Add>(operation), *successor);
 }
 
+/** @brief Adapt the implemented scalar predicate comparison to opcode dispatch. */
+auto prepare_setp_lt_u32(LaneResourceResolver& registers, const arith::context&,
+                         const exec_ir::Instruction& operation,
+                         std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto view = registers.resolve();
+  if (!view) {
+    return std::unexpected(view.error());
+  }
+  return prepare_operation(view->get(), std::get<exec_ir::Setp>(operation),
+                           *successor);
+}
+
 /** @brief Adapt the u32 load record to the common opcode dispatch signature. */
 auto prepare_load_u32(LaneResourceResolver& registers, const arith::context&,
                       const exec_ir::Instruction& operation,
@@ -624,6 +679,19 @@ auto select_add(const exec_ir::Instruction& operation)
   return unsupported_instruction();
 }
 
+/** @brief Select only the scalar unsigned less-than predicate comparison. */
+auto select_setp(const exec_ir::Instruction& operation)
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  const auto& setp = std::get<exec_ir::Setp>(operation);
+  if (!std::holds_alternative<exec_ir::Setp::LtU32>(setp.variant))
+    return unsupported_instruction();
+  if (std::get<exec_ir::Setp::LtU32>(setp.variant).comparison !=
+      exec_ir::ComparisonOperator::lt) {
+    return unsupported_instruction();
+  }
+  return SelectedPreparer{prepare_setp_lt_u32, PrepareKind::scalar};
+}
+
 /** @brief Select only validated scalar-load address spaces and u32 handling. */
 auto select_load(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
@@ -711,6 +779,8 @@ auto select_preparer(const exec_ir::Instruction& operation)
       return select_move(operation);
     case exec_ir::Op::add:
       return select_add(operation);
+    case exec_ir::Op::setp:
+      return select_setp(operation);
     case exec_ir::Op::ld:
       return select_load(operation);
     case exec_ir::Op::st:
