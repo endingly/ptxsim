@@ -37,6 +37,8 @@ struct BindingContext {
   const RegisterLayout& registers;
   /** @brief Function-local labels; owned by the enclosing lower call. */
   const LabelTable& labels;
+  /** @brief Sole supported entry-parameter symbol, if this function has one. */
+  std::optional<std::uint32_t> entry_parameter_symbol;
   /** @brief Number of executable instructions in the current function body. */
   std::uint32_t body_size;
   /** @brief Dense function index reported in lowering diagnostics. */
@@ -80,11 +82,11 @@ struct BindingContext {
     const BindingContext& context)
     -> std::expected<exec_ir::B32Operand, LoweringError>;
 
-/** @brief Bind an offset-free b64 register address. */
+/** @brief Bind an offset-free b64 register or supported entry-parameter address. */
 [[nodiscard]] auto bind_b64_address(
     const ptx_frontend::resolved_ir::ResolvedAddress& address,
     const BindingContext& context)
-    -> std::expected<common::RegisterSlot, LoweringError>;
+    -> std::expected<exec_ir::Address, LoweringError>;
 
 /** @brief Bind a direct resolved branch label to a function-local PC. */
 [[nodiscard]] auto bind_label(
@@ -182,10 +184,7 @@ template <typename Target, typename Source>
                        std::same_as<
                            SourceValue,
                            ptx_frontend::resolved_ir::ResolvedAddress>) {
-    const auto base = bind_b64_address(source, context);
-    if (!base)
-      return std::unexpected(base.error());
-    return exec_ir::Address{*base};
+    return bind_b64_address(source, context);
   } else {
     return unsupported_operand(context);
   }

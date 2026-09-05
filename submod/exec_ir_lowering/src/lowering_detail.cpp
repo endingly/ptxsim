@@ -153,15 +153,33 @@ auto bind_b32_operand(const ptx_frontend::resolved_ir::RegOrImm& operand,
 
 auto bind_b64_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
                       const BindingContext& context)
-    -> std::expected<common::RegisterSlot, LoweringError> {
+    -> std::expected<exec_ir::Address, LoweringError> {
   if (address.offset) {
     return binding_error(LoweringErrorCode::unsupported_operand, context);
   }
-  const auto* base = std::get_if<ResolvedRegisterRef>(&address.base);
-  if (base == nullptr) {
+  if (const auto* base = std::get_if<ResolvedRegisterRef>(&address.base)) {
+    const auto slot = bind_register(*base, common::RawWidth::b64, context);
+    if (!slot) {
+      return std::unexpected(slot.error());
+    }
+    return exec_ir::Address{*slot};
+  }
+  const auto* parameter =
+      std::get_if<ptx_frontend::resolved_ir::ResolvedSymbolRef>(&address.base);
+  if (parameter == nullptr || !parameter->symbol_id ||
+      !context.entry_parameter_symbol ||
+      parameter->symbol_id->value != *context.entry_parameter_symbol ||
+      parameter->parameterized_index ||
+      parameter->declaration_kind !=
+          ptx_frontend::binding::SymbolKind::InputParameter ||
+      parameter->declaration_state_space !=
+          ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
+      parameter->address_state_space !=
+          ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
+      parameter->declared_type != ScalarType::U32) {
     return binding_error(LoweringErrorCode::unsupported_operand, context);
   }
-  return bind_register(*base, common::RawWidth::b64, context);
+  return exec_ir::Address{common::RawValue::b64(std::uint64_t{0})};
 }
 
 auto bind_label(const ptx_frontend::resolved_ir::ResolvedBranchTarget& target,

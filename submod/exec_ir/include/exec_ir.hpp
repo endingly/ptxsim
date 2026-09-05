@@ -23,6 +23,8 @@ struct FunctionLayout {
   std::uint32_t instruction_count;
   /** @brief Declared width for each function-local register slot. */
   std::vector<common::RawWidth> register_widths;
+  /** @brief Packed entry-parameter byte count required before execution. */
+  std::size_t entry_parameter_size = 0;
 };
 
 /**

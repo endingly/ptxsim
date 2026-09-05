@@ -1,7 +1,8 @@
 # PTXSim `simulator` Module Execution Plan
 
-> **Status:** active; WP0--WP3 and package export are implemented through
-> `Simulator::step()`/`run()`; WP4 is next
+> **Status:** active; WP0--WP4, package export, and one scalar entry parameter
+> are implemented through `Simulator::step()`/`run()`; broader entry ABI and
+> launch arguments need a separate focused slice
 > **Prerequisites:** `execution_model`, `memory`, `runtime`, `exec_ir`,
 > `exec_ir_lowering`, and `inst_execute_engine` are implemented
 > **Primary objective:** compose the existing modules into the first
@@ -30,9 +31,10 @@ Simulator: select -> issue -> fetch -> execute -> repeat
 all Threads exited, or a structured stop/error result
 ```
 
-The current accepted program is one function and one warp executing existing
-`mov`, `add`, `setp.lt.u32`, predicated `bra`, scalar global `ld`/`st`, and
-`exit` semantics. The next vertical slice is multi-warp execution.
+The current accepted program is one function across topology-ordered warps
+executing existing `mov`, `add`, `setp.lt.u32`, predicated `bra`, scalar
+global `ld`/`st`, `ld.param.u32` from one entry parameter, and `exit`
+semantics.
 
 ## 2. Architectural boundary
 
@@ -74,9 +76,11 @@ is implemented; it must not become duplicated permanent state in `Simulator`.
 
 The current implementation exposes an owning `Simulator` with bounded `step()`
 and `run()` operations. It owns the immutable program and borrows the prepared
-runtime and arithmetic context. `step()` reports issued/completed/trapped/
-deadlocked state, an optional issue group, and lane faults; `run()` counts only
-groups issued by that call.
+runtime and arithmetic context. It also owns caller-provided packed entry
+bytes, which must exactly match the selected function layout. `step()` reports
+issued/completed/trapped/deadlocked state, an optional warp-identified issue
+group, and lane faults; `run()` counts only groups issued by that call and
+identifies the warp that issued retained faults.
 
 ## 4. Deterministic issue and step algorithm
 
@@ -194,11 +198,15 @@ Acceptance:
   executor policy; and
 - `memory` still has no dependency on `execution_model` or `simulator`.
 
-### WP4 — Multiple warps (next)
+### WP4 — Multiple warps (implemented)
 
-Extend the existing topology-order selection from one warp to multiple warps.
-The execution chain through `simulator` is already installed/exported and
-covered by build-tree and installed-package consumers.
+`Simulator` provisions entry frames for every thread in stable CTA/warp
+topology order. Each step selects the first topology-order warp with ready
+lanes, then applies the existing lowest-ready-lane PC rule within that warp.
+Fault reports retain lane-local causes and the issuing `WarpId`, so a
+grid-wide fail-fast trap remains unambiguous. The execution chain through
+`simulator` is already installed/exported and covered by build-tree and
+installed-package consumers.
 
 Acceptance:
 
@@ -206,6 +214,20 @@ Acceptance:
 - completion and trapped/stalled results are derived from Thread states;
 - build-tree and installed-package consumers continue to link successfully; and
 - GCC/Clang Debug/Release plus sanitizer gates pass.
+
+### Entry parameter input (implemented)
+
+One entry function may declare exactly one direct scalar `.param .u32` input.
+Lowering records its four-byte packed size and materializes its address as b64
+offset zero. `Simulator` owns supplied packed bytes, validates their exact
+size, and creates, initializes, and binds the existing entry-parameter region
+before the first issue. The executor supports the resulting `ld.param.u32`
+form without adding parameter stores or a general ABI object.
+
+The pinned resolved frontend representation does not retain entry parameter
+array or pointer shape. Multiple parameters, arrays, and broader parameter
+types therefore require frontend ABI-shape retention before a later focused
+extension. Launch arguments beyond the one packed slot remain separate work.
 
 ## 7. Deferred work
 

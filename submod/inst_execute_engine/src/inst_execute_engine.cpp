@@ -156,6 +156,21 @@ class LaneResourceResolver final {
         memory::GenericAddress{*value}, std::nullopt}});
   }
 
+  /** @brief Resolve one entry-parameter byte offset to its bound memory view. */
+  auto resolve_entry_parameter(std::uint64_t address)
+      -> std::expected<std::pair<memory::AddressSpaceView, memory::Address>,
+                       LaneFaultCause> {
+    const auto parameter = runtime_.entry_parameter();
+    if (!parameter) {
+      return std::unexpected(LaneFaultCause{parameter.error()});
+    }
+    const auto view = runtime_.address_spaces().view(*parameter);
+    if (!view) {
+      return std::unexpected(LaneFaultCause{view.error()});
+    }
+    return std::pair{*view, memory::Address{address}};
+  }
+
  private:
   /** Non-owning launch resource owner for the current executor call. */
   runtime::LaunchRuntime& runtime_;
@@ -298,6 +313,25 @@ auto register_address(const exec_ir::Address& address)
   return std::nullopt;
 }
 
+/** @brief Read the b64 immediate accepted as an entry-parameter byte offset. */
+auto entry_parameter_address(const exec_ir::Address& address)
+    -> std::expected<std::uint64_t, LaneFaultCause> {
+  if (address.offset) {
+    return std::unexpected(LaneFaultCause{
+        common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
+  }
+  const auto* immediate = std::get_if<common::RawValue>(&address.base);
+  if (immediate == nullptr) {
+    return std::unexpected(LaneFaultCause{
+        common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
+  }
+  const auto value = immediate->as_b64();
+  if (!value) {
+    return std::unexpected(LaneFaultCause{value.error()});
+  }
+  return *value;
+}
+
 /** @brief Serialize one u32 into the four PTX little-endian memory bytes. */
 auto b32_bytes(std::uint32_t value) -> std::array<std::byte, 4> {
   return {std::byte{static_cast<std::uint8_t>(value)},
@@ -436,11 +470,23 @@ template <typename Form>
 auto prepare_load(LaneResourceResolver& resolver, const Form& operation,
                   exec_ir::AddressSpace space, common::ProgramCounter successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto address = register_address(operation.address);
-  if (!address)
-    return std::unexpected(LaneFaultCause{
-        common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
-  const auto memory = resolver.resolve_memory(space, *address);
+  const auto memory = [&]()
+      -> std::expected<std::pair<memory::AddressSpaceView, memory::Address>,
+                       LaneFaultCause> {
+    if (space == exec_ir::AddressSpace::param) {
+      const auto address = entry_parameter_address(operation.address);
+      if (!address) {
+        return std::unexpected(address.error());
+      }
+      return resolver.resolve_entry_parameter(*address);
+    }
+    const auto address = register_address(operation.address);
+    if (!address) {
+      return std::unexpected(LaneFaultCause{
+          common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
+    }
+    return resolver.resolve_memory(space, *address);
+  }();
   if (!memory) {
     return std::unexpected(memory.error());
   }
@@ -789,7 +835,8 @@ auto select_load(const exec_ir::Instruction& operation)
           if constexpr (std::same_as<Form, exec_ir::Ld::GenericScalar>) {
             if (form.semantics != exec_ir::MemoryConsistency::omitted)
               return unsupported_instruction();
-          } else if (form.state_space != exec_ir::AddressSpace::global) {
+          } else if (form.state_space != exec_ir::AddressSpace::global &&
+                     form.state_space != exec_ir::AddressSpace::param) {
             return unsupported_instruction();
           }
           return SelectedPreparer{prepare_load_u32, PrepareKind::scalar};

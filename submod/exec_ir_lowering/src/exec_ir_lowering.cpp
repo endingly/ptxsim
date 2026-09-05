@@ -104,6 +104,43 @@ using ptx_frontend::binding::SymbolTable;
   return result;
 }
 
+/**
+ * @brief Return the only supported direct entry-parameter symbol, if present.
+ *
+ * The resolved frontend representation does not retain broader parameter ABI
+ * shape, so this lowering boundary accepts exactly one scalar `.u32` slot.
+ */
+[[nodiscard]] auto entry_parameter_symbol(const SymbolTable& symbols,
+                                          const Symbol& function_symbol,
+                                          std::uint32_t function)
+    -> std::expected<std::optional<std::uint32_t>, LoweringError> {
+  if (!function_symbol.function_is_entry) {
+    return std::nullopt;
+  }
+  if (!function_symbol.owned_scope ||
+      function_symbol.owned_scope->value >= symbols.scopes().size()) {
+    return error(LoweringErrorCode::malformed_resolved_ir, function,
+                 std::nullopt, function_symbol.id.value);
+  }
+
+  std::optional<std::uint32_t> parameter;
+  for (const Symbol& symbol : symbols.symbols()) {
+    if (symbol.scope != *function_symbol.owned_scope ||
+        symbol.kind != SymbolKind::InputParameter) {
+      continue;
+    }
+    if (parameter ||
+        symbol.state_space !=
+            ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
+        symbol.type != std::optional<std::string>{".u32"} ||
+        symbol.vector_width || symbol.parameterized_count) {
+      return error(LoweringErrorCode::unsupported_operand, function,
+                   std::nullopt, symbol.id.value);
+    }
+    parameter = symbol.id.value;
+  }
+  return parameter;
+}
 
 [[nodiscard]] auto labels_for(
     const ptx_frontend::resolved_ir::ResolvedFunction& function,
@@ -143,7 +180,6 @@ using ptx_frontend::binding::SymbolTable;
 
 }  // namespace
 
-
 auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     -> std::expected<exec_ir::ExecutableProgram, LoweringError> {
   if (module.functions.size() > std::numeric_limits<std::uint32_t>::max()) {
@@ -167,9 +203,13 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     }
     auto registers = register_layout(module.symbols, function_symbol,
                                      function_index, function.body.empty());
+    const auto entry_parameter =
+        entry_parameter_symbol(module.symbols, function_symbol, function_index);
     const auto labels = labels_for(function, module.symbols, function_index);
     if (!registers)
       return std::unexpected(registers.error());
+    if (!entry_parameter)
+      return std::unexpected(entry_parameter.error());
     if (!labels)
       return std::unexpected(labels.error());
     if (function.body.size() > std::numeric_limits<std::uint32_t>::max()) {
@@ -180,11 +220,9 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     for (std::size_t instruction_index = 0;
          instruction_index < function.body.size(); ++instruction_index) {
       const detail::BindingContext context{
-          *registers,
-          *labels,
-          static_cast<std::uint32_t>(function.body.size()),
-          function_index,
-          static_cast<std::uint32_t>(instruction_index),
+          *registers,       *labels,
+          *entry_parameter, static_cast<std::uint32_t>(function.body.size()),
+          function_index,   static_cast<std::uint32_t>(instruction_index),
       };
       auto lowered = generated::lower_instruction(
           function.body[instruction_index], context);
@@ -195,7 +233,7 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     definition.functions.push_back(
         {common::FunctionId{function_index}, begin,
          static_cast<std::uint32_t>(function.body.size()),
-         std::move(registers->widths)});
+         std::move(registers->widths), *entry_parameter ? 4U : 0U});
   }
 
   auto program = exec_ir::ExecutableProgram::create(std::move(definition));

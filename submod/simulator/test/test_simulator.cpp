@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -39,11 +40,17 @@ auto shape() -> execution_model::GridShape {
   return {.cta_dim = {1, 1, 1}, .thread_dim = {2, 1, 1}, .warp_size = 2};
 }
 
-/** @brief Return the only warp in the test runtime. */
-auto warp(runtime::LaunchRuntime& runtime) -> execution_model::Warp& {
+/** @brief Return the warp at @p index in the test runtime's only CTA. */
+auto warp(runtime::LaunchRuntime& runtime, std::uint32_t index = 0)
+    -> execution_model::Warp& {
   return runtime.grid()
       .cta(execution_model::CtaId{runtime.grid().id(), 0})
-      .warp(0);
+      .warp(index);
+}
+
+/** @brief Return one CTA containing four threads split into two warps. */
+auto two_warp_shape() -> execution_model::GridShape {
+  return {.cta_dim = {1, 1, 1}, .thread_dim = {4, 1, 1}, .warp_size = 2};
 }
 
 }  // namespace
@@ -68,7 +75,7 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   ASSERT_TRUE(first_step);
   EXPECT_EQ(first_step->termination, StepTermination::issued);
   ASSERT_TRUE(first_step->issue);
-  EXPECT_EQ(first_step->issue->lanes.count(), 2U);
+  EXPECT_EQ(first_step->issue->group.lanes.count(), 2U);
 
   const auto run = simulator.run(2);
 
@@ -86,6 +93,53 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
               common::RawValue::b32(lane));
     EXPECT_EQ(*registers->read(common::RegisterSlot{1}),
               common::RawValue::b32(7U + lane));
+  }
+}
+
+TEST(Simulator, StepsWarpsInTopologyOrderWithIndependentFrames) {
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r;
+  mov.u32 %r, %tid.x;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+
+  runtime::LaunchRuntime runtime{execution_model::GridId{6}, two_warp_shape()};
+  const arith::context arithmetic;
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const std::array expected_warps{warp(runtime, 0).id(), warp(runtime, 0).id(),
+                                  warp(runtime, 1).id(), warp(runtime, 1).id()};
+
+  for (std::size_t step = 0; step < expected_warps.size(); ++step) {
+    const auto report = simulator.step();
+    ASSERT_TRUE(report);
+    ASSERT_TRUE(report->issue);
+    EXPECT_EQ(report->issue->warp, expected_warps[step]);
+    EXPECT_EQ(report->issue->group.lanes.count(), 2U);
+    EXPECT_EQ(report->termination, step + 1U == expected_warps.size()
+                                       ? StepTermination::completed
+                                       : StepTermination::issued);
+  }
+
+  std::vector<memory::RegisterFrameHandle> frames;
+  std::uint32_t expected_tid = 0;
+  for (std::uint32_t warp_index = 0; warp_index < 2; ++warp_index) {
+    for (const auto& thread : warp(runtime, warp_index)) {
+      const auto frame =
+          runtime.register_frame(thread.id(), common::FunctionId{0});
+      ASSERT_TRUE(frame);
+      for (const auto previous : frames) {
+        EXPECT_NE(*frame, previous);
+      }
+      frames.push_back(*frame);
+      const auto registers = runtime.registers().view(*frame);
+      ASSERT_TRUE(registers);
+      EXPECT_EQ(*registers->read(common::RegisterSlot{0}),
+                common::RawValue::b32(expected_tid++));
+    }
   }
 }
 
@@ -138,7 +192,7 @@ TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
 )ptx"));
   ASSERT_TRUE(program);
 
-  runtime::LaunchRuntime runtime{execution_model::GridId{3}, shape()};
+  runtime::LaunchRuntime runtime{execution_model::GridId{3}, two_warp_shape()};
 
   const arith::context arithmetic;
   Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
@@ -148,6 +202,7 @@ TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
   ASSERT_TRUE(run);
   EXPECT_EQ(run->termination, RunTermination::trapped);
   EXPECT_EQ(run->issued_groups, 1U);
+  EXPECT_EQ(run->faulting_warp, warp(runtime, 0).id());
   ASSERT_EQ(run->faults.size(), 2U);
   for (std::uint32_t lane = 0; lane < 2; ++lane) {
     EXPECT_EQ(run->faults[lane].lane, execution_model::LaneId{lane});
@@ -155,6 +210,10 @@ TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
         std::holds_alternative<memory::RegisterError>(run->faults[lane].cause));
     EXPECT_EQ(std::get<memory::RegisterError>(run->faults[lane].cause).code,
               memory::RegisterErrorCode::uninitialized_read);
+  }
+  for (const auto& thread : warp(runtime, 1)) {
+    EXPECT_TRUE(thread.ready());
+    EXPECT_EQ(thread.pc(), common::ProgramCounter{0});
   }
 }
 
@@ -211,6 +270,55 @@ TEST(Simulator, ExecutesGlobalMemoryProgramAndRetainsMissingBindingFaults) {
                      runtime::RuntimeBindingErrorCode::missing_binding,
                      runtime::RuntimeResourceKind::global}},
             }));
+}
+
+TEST(Simulator, InitializesAndLoadsTheSingleEntryParameter) {
+  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel(.param .u32 input) {
+  .reg .u32 %value;
+  ld.param.u32 %value, [input];
+  add.u32 %value, %value, 1;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const arith::context arithmetic;
+
+  runtime::LaunchRuntime runtime{execution_model::GridId{7}, shape()};
+  Simulator simulator{
+      *program,
+      runtime,
+      common::FunctionId{0},
+      arithmetic,
+      {std::byte{41}, std::byte{0}, std::byte{0}, std::byte{0}}};
+  const auto run = simulator.run(3);
+
+  ASSERT_TRUE(run);
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 3}));
+  for (std::uint32_t lane = 0; lane < 2; ++lane) {
+    const auto frame = runtime.register_frame(
+        warp(runtime).thread(execution_model::LaneId{lane}).id(),
+        common::FunctionId{0});
+    ASSERT_TRUE(frame);
+    const auto registers = runtime.registers().view(*frame);
+    ASSERT_TRUE(registers);
+    EXPECT_EQ(*registers->read(common::RegisterSlot{0}),
+              common::RawValue::b32(42U));
+  }
+
+  runtime::LaunchRuntime invalid_runtime{execution_model::GridId{8}, shape()};
+  Simulator invalid_simulator{*program,
+                              invalid_runtime,
+                              common::FunctionId{0},
+                              arithmetic,
+                              {std::byte{41}}};
+  const auto invalid_run = invalid_simulator.run(3);
+
+  ASSERT_FALSE(invalid_run);
+  EXPECT_EQ(invalid_run.error().code,
+            RunErrorCode::entry_parameter_size_mismatch);
+  EXPECT_EQ(invalid_run.error().entry_parameter_size_error,
+            (EntryParameterSizeError{.expected = 4U, .actual = 1U}));
 }
 
 }  // namespace ptxsim::simulator::test
