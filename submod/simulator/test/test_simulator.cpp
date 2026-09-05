@@ -2,11 +2,13 @@
 
 #include <string_view>
 #include <utility>
+#include <variant>
 
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
+#include <ptxsim/memory/register/register_error.hpp>
 #include <ptxsim/simulator/simulator.hpp>
 
 namespace ptxsim::simulator::test {
@@ -44,7 +46,7 @@ auto warp(runtime::LaunchRuntime& runtime) -> execution_model::Warp& {
 }  // namespace
 
 TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
-  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r<2>;
   mov.u32 %r0, %tid.x;
@@ -57,11 +59,18 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   runtime::LaunchRuntime runtime{execution_model::GridId{1}, shape()};
 
   const arith::context arithmetic;
-  const auto run = run_to_completion(runtime, *program, common::FunctionId{0},
-                                     arithmetic, 3);
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto first_step = simulator.step();
+  ASSERT_TRUE(first_step);
+  EXPECT_EQ(first_step->termination, StepTermination::issued);
+  ASSERT_TRUE(first_step->issue);
+  EXPECT_EQ(first_step->issue->lanes.count(), 2U);
+
+  const auto run = simulator.run(2);
 
   ASSERT_TRUE(run);
-  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 3}));
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 2}));
   EXPECT_TRUE(runtime.grid().completed());
   for (std::uint32_t lane = 0; lane < 2; ++lane) {
     const auto frame = runtime.register_frame(
@@ -77,8 +86,8 @@ TEST(Simulator, RunsLoweredMoveAddAndExitToCompletion) {
   }
 }
 
-TEST(Simulator, GroupsDivergentLanesByProgramCounter) {
-  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+TEST(Simulator, SelectsDivergentGroupsByLowestReadyLane) {
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
 .entry kernel() {
   .reg .pred %p;
   .reg .u32 %r<2>;
@@ -96,11 +105,12 @@ target:
   runtime::LaunchRuntime runtime{execution_model::GridId{2}, shape()};
 
   const arith::context arithmetic;
-  const auto run = run_to_completion(runtime, *program, common::FunctionId{0},
-                                     arithmetic, 6);
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto run = simulator.run(8);
 
   ASSERT_TRUE(run);
-  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 6}));
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 8}));
   for (std::uint32_t lane = 0; lane < 2; ++lane) {
     const auto frame = runtime.register_frame(
         warp(runtime).thread(execution_model::LaneId{lane}).id(),
@@ -112,6 +122,36 @@ target:
               common::RawValue::b32(lane == 0U ? 0U : 11U));
     EXPECT_EQ(*registers->read(common::RegisterSlot{2}),
               common::RawValue::b32(lane == 0U ? 2U : 13U));
+  }
+}
+
+TEST(Simulator, RetainsFaultingLaneCausesInTrappedReport) {
+  auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .u32 %r<2>;
+  mov.u32 %r1, %r0;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+
+  runtime::LaunchRuntime runtime{execution_model::GridId{3}, shape()};
+
+  const arith::context arithmetic;
+  Simulator simulator{std::move(*program), runtime, common::FunctionId{0},
+                      arithmetic};
+  const auto run = simulator.run(2);
+
+  ASSERT_TRUE(run);
+  EXPECT_EQ(run->termination, RunTermination::trapped);
+  EXPECT_EQ(run->issued_groups, 1U);
+  ASSERT_EQ(run->faults.size(), 2U);
+  for (std::uint32_t lane = 0; lane < 2; ++lane) {
+    EXPECT_EQ(run->faults[lane].lane, execution_model::LaneId{lane});
+    ASSERT_TRUE(
+        std::holds_alternative<memory::RegisterError>(run->faults[lane].cause));
+    EXPECT_EQ(std::get<memory::RegisterError>(run->faults[lane].cause).code,
+              memory::RegisterErrorCode::uninitialized_read);
   }
 }
 

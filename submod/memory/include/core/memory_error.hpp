@@ -4,9 +4,8 @@
 #include <cstdint>
 #include <string_view>
 
-#include <ptxsim/memory/core/state_space.hpp>
 #include <ptxsim/memory/core/address.hpp>
-
+#include <ptxsim/memory/core/state_space.hpp>
 
 namespace ptxsim::memory {
 
@@ -39,6 +38,9 @@ struct MemoryError {
    * @brief Required alignment when code is Misaligned or InvalidAlignment.
    */
   std::size_t required_alignment = 1;
+
+  /** @brief Compare all storage-error context retained for diagnostics. */
+  constexpr bool operator==(const MemoryError&) const noexcept = default;
 };
 
 [[nodiscard]]

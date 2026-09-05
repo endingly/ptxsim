@@ -28,6 +28,7 @@ add_library(ptxsim_exec_ir
     ${ptxsim_exec_ir_srcs}
     "${PTXSIM_EXEC_IR_GENERATED_SOURCE}")
 add_library(ptxsim::exec_ir ALIAS ptxsim_exec_ir)
+set_target_properties(ptxsim_exec_ir PROPERTIES EXPORT_NAME exec_ir)
 target_compile_features(ptxsim_exec_ir PUBLIC cxx_std_23)
 find_package(fmt CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
@@ -39,6 +40,8 @@ target_include_directories(ptxsim_exec_ir PUBLIC
     $<BUILD_INTERFACE:${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}>
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 register_headers(ptxsim_exec_ir exec_ir PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+install(FILES "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ptxsim/exec_ir")
 ptxsim_enable_sanitizers(ptxsim_exec_ir)
 
 if(BUILD_TESTING)

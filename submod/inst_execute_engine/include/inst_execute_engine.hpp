@@ -52,8 +52,13 @@ using LaneFaultCause =
                  memory::AddressResolutionError, memory::AddressSpaceError>;
 
 struct LaneFault {
+  /** @brief Lane whose instruction preparation could not complete. */
   execution_model::LaneId lane;
+  /** @brief Structured cause retained after other lanes in the issue commit. */
   LaneFaultCause cause;
+
+  /** @brief Compare both the faulting lane and its typed execution cause. */
+  constexpr bool operator==(const LaneFault&) const = default;
 };
 
 struct StepReport {

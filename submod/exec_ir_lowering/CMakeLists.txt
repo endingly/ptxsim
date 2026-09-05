@@ -29,6 +29,7 @@ add_library(ptxsim_exec_ir_lowering
     ${ptxsim_exec_ir_lowering_srcs}
     "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}")
 add_library(ptxsim::exec_ir_lowering ALIAS ptxsim_exec_ir_lowering)
+set_target_properties(ptxsim_exec_ir_lowering PROPERTIES EXPORT_NAME exec_ir_lowering)
 target_compile_features(ptxsim_exec_ir_lowering PUBLIC cxx_std_23)
 target_link_libraries(ptxsim_exec_ir_lowering PUBLIC
     ptxsim::exec_ir

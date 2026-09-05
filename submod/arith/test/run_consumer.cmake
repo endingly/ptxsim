@@ -31,6 +31,9 @@ set(ptxsim_consumer_args
     "-Dptxsim_DIR=${ptxsim_package_dir}"
     "-Dsoftfloat_DIR=${PTXSIM_SOFTFLOAT_DIR}"
     "-Dsul-dynamic_bitset_DIR=${PTXSIM_DYNAMIC_BITSET_DIR}"
+    "-Dfmt_DIR=${PTXSIM_FMT_DIR}"
+    "-Dmagic_enum_DIR=${PTXSIM_MAGIC_ENUM_DIR}"
+    "-Dptx_frontend_DIR=${PTXSIM_PTX_FRONTEND_DIR}"
     "-DCMAKE_CXX_COMPILER=${PTXSIM_CXX_COMPILER}")
 if(PTXSIM_MAKE_PROGRAM)
     list(APPEND ptxsim_consumer_args

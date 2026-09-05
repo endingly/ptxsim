@@ -1,6 +1,5 @@
 #include <ptxsim/simulator/simulator.hpp>
 
-#include <map>
 #include <utility>
 
 #include <ptxsim/execution_model/cta.hpp>
@@ -43,20 +42,35 @@ auto only_warp(runtime::LaunchRuntime& runtime) noexcept
   std::unreachable();
 }
 
-/** @brief Partition ready lanes into full-width issue masks by current PC. */
-auto ready_groups(const execution_model::Warp& warp)
-    -> std::map<common::ProgramCounter, execution_model::LaneMask> {
-  std::map<common::ProgramCounter, execution_model::LaneMask> groups;
+/**
+ * @brief Select the PC of the lowest-ID ready lane and all ready lanes at it.
+ *
+ * The explicit minimum preserves this policy even if Warp changes its thread
+ * storage order.
+ */
+auto ready_group(const execution_model::Warp& warp)
+    -> std::optional<execution_model::WarpIssueGroup> {
+  std::optional<common::ProgramCounter> selected_pc;
+  std::optional<execution_model::LaneId> selected_lane;
   for (const auto& thread : warp) {
-    if (!thread.ready()) {
-      continue;
+    if (thread.ready() &&
+        (!selected_lane || thread.lane_id() < *selected_lane)) {
+      selected_lane = thread.lane_id();
+      selected_pc = thread.pc();
     }
-    auto [group, inserted] = groups.try_emplace(
-        thread.pc(), execution_model::LaneMask{warp.architectural_warp_size()});
-    (void)inserted;
-    group->second.set(thread.lane_id());
   }
-  return groups;
+  if (!selected_pc) {
+    return std::nullopt;
+  }
+
+  execution_model::LaneMask lanes{warp.architectural_warp_size()};
+  for (const auto& thread : warp) {
+    if (thread.ready() && thread.pc() == *selected_pc) {
+      lanes.set(thread.lane_id());
+    }
+  }
+  return execution_model::WarpIssueGroup{.pc = *selected_pc,
+                                         .lanes = std::move(lanes)};
 }
 
 /**
@@ -102,73 +116,130 @@ auto provision_register_frames(runtime::LaunchRuntime& runtime,
 
 }  // namespace
 
-auto run_to_completion(runtime::LaunchRuntime& runtime,
-                       const exec_ir::ExecutableProgram& program,
-                       common::FunctionId entry_function,
-                       const arith::context& arithmetic,
-                       std::size_t maximum_issued_groups)
-    -> std::expected<RunReport, RunError> {
-  if (runtime.grid().warp_count() != 1U) {
-    return std::unexpected(RunError{.code = RunErrorCode::requires_one_warp});
+Simulator::Simulator(exec_ir::ExecutableProgram program,
+                     runtime::LaunchRuntime& runtime,
+                     common::FunctionId entry_function,
+                     const arith::context& arithmetic) noexcept
+    : program_(std::move(program)),
+      runtime_(runtime),
+      entry_function_(entry_function),
+      arithmetic_(arithmetic) {}
+
+auto Simulator::initialize() -> std::expected<void, RunError> {
+  if (initialization_error_) {
+    return std::unexpected(*initialization_error_);
+  }
+  if (initialized_) {
+    return {};
+  }
+  if (runtime_.grid().warp_count() != 1U) {
+    initialization_error_ = RunError{.code = RunErrorCode::requires_one_warp};
+    return std::unexpected(*initialization_error_);
   }
 
-  auto& warp = only_warp(runtime);
-  const auto layout = program.function_layout(entry_function);
+  const auto& warp = only_warp(runtime_);
+  const auto layout = program_.function_layout(entry_function_);
   if (!layout) {
-    return std::unexpected(program_error(layout.error()));
+    initialization_error_ = program_error(layout.error());
+    return std::unexpected(*initialization_error_);
   }
   const auto provisioned =
-      provision_register_frames(runtime, warp, layout->get(), entry_function);
+      provision_register_frames(runtime_, warp, layout->get(), entry_function_);
   if (!provisioned) {
-    return std::unexpected(provisioned.error());
+    initialization_error_ = provisioned.error();
+    return std::unexpected(*initialization_error_);
   }
-  inst_execute_engine::InstExecuteEngine engine{runtime, entry_function,
-                                                arithmetic};
+  initialized_ = true;
+  return {};
+}
+
+auto Simulator::step() -> std::expected<StepReport, RunError> {
+  const auto initialized = initialize();
+  if (!initialized) {
+    return std::unexpected(initialized.error());
+  }
+  if (runtime_.grid().completed()) {
+    return StepReport{.termination = StepTermination::completed};
+  }
+  if (runtime_.grid().trapped()) {
+    return StepReport{.termination = StepTermination::trapped};
+  }
+
+  auto& warp = only_warp(runtime_);
+  const auto group = ready_group(warp);
+  if (!group) {
+    return StepReport{.termination = StepTermination::deadlocked};
+  }
+  const common::CodeLocation location{entry_function_, group->pc};
+  const auto instruction = program_.fetch(location);
+  if (!instruction) {
+    return std::unexpected(program_error(instruction.error()));
+  }
+
+  std::optional<common::ProgramCounter> successor;
+  if (exec_ir::may_fallthrough(instruction->get())) {
+    const auto fallthrough = program_.fallthrough(location);
+    if (!fallthrough) {
+      return std::unexpected(program_error(fallthrough.error()));
+    }
+    successor = fallthrough->pc;
+  }
+
+  inst_execute_engine::InstExecuteEngine engine{runtime_, entry_function_,
+                                                arithmetic_};
+  const auto result =
+      engine.execute(warp, *group, instruction->get(), successor);
+  if (!result) {
+    return std::unexpected(execution_error(result.error()));
+  }
+  if (!result->faults.empty() || runtime_.grid().trapped()) {
+    return StepReport{.termination = StepTermination::trapped,
+                      .issue = *group,
+                      .faults = result->faults};
+  }
+  if (runtime_.grid().completed()) {
+    return StepReport{.termination = StepTermination::completed,
+                      .issue = *group};
+  }
+  return StepReport{.termination = StepTermination::issued, .issue = *group};
+}
+
+auto Simulator::run(std::size_t maximum_issued_groups)
+    -> std::expected<RunReport, RunError> {
+  const auto initialized = initialize();
+  if (!initialized) {
+    return std::unexpected(initialized.error());
+  }
+
   std::size_t issued_groups = 0;
   while (issued_groups < maximum_issued_groups) {
-    if (runtime.grid().completed()) {
-      return RunReport{RunTermination::completed, issued_groups};
+    const auto step_report = step();
+    if (!step_report) {
+      return std::unexpected(step_report.error());
     }
-    if (runtime.grid().trapped()) {
-      return RunReport{RunTermination::trapped, issued_groups};
+    if (step_report->issue) {
+      ++issued_groups;
     }
-
-    auto groups = ready_groups(warp);
-    if (groups.empty()) {
-      return RunReport{RunTermination::deadlocked, issued_groups};
+    switch (step_report->termination) {
+      case StepTermination::issued:
+        continue;
+      case StepTermination::completed:
+        return RunReport{RunTermination::completed, issued_groups};
+      case StepTermination::trapped:
+        return RunReport{RunTermination::trapped, issued_groups,
+                         step_report->faults};
+      case StepTermination::deadlocked:
+        return RunReport{RunTermination::deadlocked, issued_groups};
     }
-    auto group = std::move(*groups.begin());
-    const common::CodeLocation location{entry_function, group.first};
-    const auto instruction = program.fetch(location);
-    if (!instruction) {
-      return std::unexpected(program_error(instruction.error()));
-    }
-
-    std::optional<common::ProgramCounter> successor;
-    if (exec_ir::may_fallthrough(instruction->get())) {
-      const auto fallthrough = program.fallthrough(location);
-      if (!fallthrough) {
-        return std::unexpected(program_error(fallthrough.error()));
-      }
-      successor = fallthrough->pc;
-    }
-
-    const auto result = engine.execute(
-        warp, {.pc = group.first, .lanes = std::move(group.second)},
-        instruction->get(), successor);
-    if (!result) {
-      return std::unexpected(execution_error(result.error()));
-    }
-    ++issued_groups;
   }
 
-  if (runtime.grid().completed()) {
+  if (runtime_.grid().completed()) {
     return RunReport{RunTermination::completed, issued_groups};
   }
-  if (runtime.grid().trapped()) {
+  if (runtime_.grid().trapped()) {
     return RunReport{RunTermination::trapped, issued_groups};
   }
-  if (ready_groups(warp).empty()) {
+  if (!ready_group(only_warp(runtime_))) {
     return RunReport{RunTermination::deadlocked, issued_groups};
   }
   return RunReport{RunTermination::step_limit_exhausted, issued_groups};
