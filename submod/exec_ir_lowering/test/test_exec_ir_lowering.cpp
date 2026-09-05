@@ -182,6 +182,38 @@ TEST(ExecIrLowering, BindsB64MoveImmediate) {
             common::RawValue::b64(std::uint64_t{0}));
 }
 
+TEST(ExecIrLowering, LowersTheSingleEntryParameterAsOffsetZero) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel(.param .u32 input) {
+  .reg .u32 %r;
+  ld.param.u32 %r, [input];
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto layout = program->function_layout(common::FunctionId{0});
+  ASSERT_TRUE(layout);
+  EXPECT_EQ(layout->get().entry_parameter_size, 4U);
+  const auto instruction =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& load = std::get<exec_ir::Ld>(instruction->get());
+  const auto& form = std::get<exec_ir::Ld::ExplicitScalar>(load.variant);
+  EXPECT_EQ(form.state_space, exec_ir::AddressSpace::param);
+  EXPECT_EQ(form.dst, common::RegisterSlot{0});
+  EXPECT_EQ(form.address,
+            (exec_ir::Address{common::RawValue::b64(std::uint64_t{0})}));
+
+  const auto multiple_parameters = lower(resolve(R"ptx(
+.entry kernel(.param .u32 first, .param .u32 second) {
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(multiple_parameters);
+  EXPECT_EQ(multiple_parameters.error().code,
+            LoweringErrorCode::unsupported_operand);
+}
+
 TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {
   const auto program = lower(resolve(R"ptx(
 .entry kernel() {

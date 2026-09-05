@@ -272,4 +272,53 @@ TEST(Simulator, ExecutesGlobalMemoryProgramAndRetainsMissingBindingFaults) {
             }));
 }
 
+TEST(Simulator, InitializesAndLoadsTheSingleEntryParameter) {
+  const auto program = exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel(.param .u32 input) {
+  .reg .u32 %value;
+  ld.param.u32 %value, [input];
+  add.u32 %value, %value, 1;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const arith::context arithmetic;
+
+  runtime::LaunchRuntime runtime{execution_model::GridId{7}, shape()};
+  Simulator simulator{
+      *program,
+      runtime,
+      common::FunctionId{0},
+      arithmetic,
+      {std::byte{41}, std::byte{0}, std::byte{0}, std::byte{0}}};
+  const auto run = simulator.run(3);
+
+  ASSERT_TRUE(run);
+  EXPECT_EQ(*run, (RunReport{RunTermination::completed, 3}));
+  for (std::uint32_t lane = 0; lane < 2; ++lane) {
+    const auto frame = runtime.register_frame(
+        warp(runtime).thread(execution_model::LaneId{lane}).id(),
+        common::FunctionId{0});
+    ASSERT_TRUE(frame);
+    const auto registers = runtime.registers().view(*frame);
+    ASSERT_TRUE(registers);
+    EXPECT_EQ(*registers->read(common::RegisterSlot{0}),
+              common::RawValue::b32(42U));
+  }
+
+  runtime::LaunchRuntime invalid_runtime{execution_model::GridId{8}, shape()};
+  Simulator invalid_simulator{*program,
+                              invalid_runtime,
+                              common::FunctionId{0},
+                              arithmetic,
+                              {std::byte{41}}};
+  const auto invalid_run = invalid_simulator.run(3);
+
+  ASSERT_FALSE(invalid_run);
+  EXPECT_EQ(invalid_run.error().code,
+            RunErrorCode::entry_parameter_size_mismatch);
+  EXPECT_EQ(invalid_run.error().entry_parameter_size_error,
+            (EntryParameterSizeError{.expected = 4U, .actual = 1U}));
+}
+
 }  // namespace ptxsim::simulator::test

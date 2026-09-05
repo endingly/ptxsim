@@ -20,6 +20,21 @@ auto register_error(memory::RegisterError error) -> RunError {
   return {.code = RunErrorCode::register_error, .register_error = error};
 }
 
+/** @brief Package an entry-parameter byte-count mismatch as a runner error. */
+auto entry_parameter_size_error(std::size_t expected, std::size_t actual)
+    -> RunError {
+  RunError result{.code = RunErrorCode::entry_parameter_size_mismatch};
+  result.entry_parameter_size_error =
+      EntryParameterSizeError{.expected = expected, .actual = actual};
+  return result;
+}
+
+/** @brief Package an address-space operation failure as a runner error. */
+auto address_space_error(memory::AddressSpaceError error) -> RunError {
+  return {.code = RunErrorCode::address_space_error,
+          .address_space_error = error};
+}
+
 /** @brief Package a runtime binding failure as a runner error. */
 auto runtime_binding_error(runtime::RuntimeBindingError error) -> RunError {
   return {.code = RunErrorCode::runtime_binding_error,
@@ -135,11 +150,13 @@ auto provision_register_frames(runtime::LaunchRuntime& runtime,
 Simulator::Simulator(exec_ir::ExecutableProgram program,
                      runtime::LaunchRuntime& runtime,
                      common::FunctionId entry_function,
-                     const arith::context& arithmetic) noexcept
+                     const arith::context& arithmetic,
+                     std::vector<std::byte> entry_parameters) noexcept
     : program_(std::move(program)),
       runtime_(runtime),
       entry_function_(entry_function),
-      arithmetic_(arithmetic) {}
+      arithmetic_(arithmetic),
+      entry_parameters_(std::move(entry_parameters)) {}
 
 auto Simulator::initialize() -> std::expected<void, RunError> {
   if (initialization_error_) {
@@ -152,6 +169,31 @@ auto Simulator::initialize() -> std::expected<void, RunError> {
   if (!layout) {
     initialization_error_ = program_error(layout.error());
     return std::unexpected(*initialization_error_);
+  }
+  if (entry_parameters_.size() != layout->get().entry_parameter_size) {
+    initialization_error_ = entry_parameter_size_error(
+        layout->get().entry_parameter_size, entry_parameters_.size());
+    return std::unexpected(*initialization_error_);
+  }
+  if (layout->get().entry_parameter_size != 0U) {
+    const auto parameter = runtime_.address_spaces().create_entry_parameter(
+        {.size = layout->get().entry_parameter_size});
+    auto parameter_view = runtime_.address_spaces().view(parameter);
+    if (!parameter_view) {
+      initialization_error_ = address_space_error(parameter_view.error());
+      return std::unexpected(*initialization_error_);
+    }
+    const auto initialized =
+        parameter_view->initialize(memory::Address{0}, entry_parameters_);
+    if (!initialized) {
+      initialization_error_ = address_space_error(initialized.error());
+      return std::unexpected(*initialization_error_);
+    }
+    const auto bound = runtime_.bind_entry_parameter(parameter);
+    if (!bound) {
+      initialization_error_ = runtime_binding_error(bound.error());
+      return std::unexpected(*initialization_error_);
+    }
   }
   for (const auto& cta : runtime_.grid()) {
     for (const auto& warp : cta) {

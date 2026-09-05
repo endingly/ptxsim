@@ -60,7 +60,7 @@ auto setp_lt_u32(exec_ir::Predicate destination, exec_ir::ScalarOperand lhs,
 /** @brief Build a generated scalar load using its selected address space. */
 auto make_load(std::optional<exec_ir::Predicate> predicate,
                exec_ir::DataType type, exec_ir::AddressSpace space,
-               RegisterSlot destination, RegisterSlot address)
+               RegisterSlot destination, exec_ir::Address address)
     -> exec_ir::Instruction {
   if (space == exec_ir::AddressSpace::generic) {
     exec_ir::Ld::GenericScalar form{exec_ir::MemoryConsistency::omitted,
@@ -1008,6 +1008,30 @@ TEST_F(InstExecuteEngineTest, LoadsAndStoresLittleEndianGlobalU32) {
   EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
             (std::vector<std::byte>{std::byte{0xdd}, std::byte{0xcc},
                                     std::byte{0xbb}, std::byte{0xaa}}));
+}
+
+TEST_F(InstExecuteEngineTest, LoadsEntryParameterU32FromImmediateOffset) {
+  const auto parameter = runtime_.address_spaces().create_entry_parameter({4});
+  ASSERT_TRUE(runtime_.bind_entry_parameter(parameter));
+  auto memory = runtime_.address_spaces().view(parameter);
+  ASSERT_TRUE(memory);
+  ASSERT_TRUE(memory->initialize(memory::Address{0},
+                                 std::array{std::byte{0x78}, std::byte{0x56},
+                                            std::byte{0x34}, std::byte{0x12}}));
+  const auto frame = bind(LaneId{0}, {RawWidth::b32});
+  auto registers = view(frame);
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction load = make_load(
+      std::nullopt, exec_ir::DataType::u32, exec_ir::AddressSpace::param,
+      RegisterSlot{0}, exec_ir::Address{RawValue::b64(std::uint64_t{0})});
+
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, ProgramCounter{57});
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(0x12345678U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{57});
 }
 
 TEST_F(InstExecuteEngineTest,
