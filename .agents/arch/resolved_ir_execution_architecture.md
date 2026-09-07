@@ -4,8 +4,8 @@
 > follow-up executable-lowering architecture adopted
 > **Scope:** program representation, instruction lowering, code location,
 > call/return state, register identity, and executable-program printing
-> **Current authority:** this document records the architecture decision that
-> should guide the next revision of the `exec_ir` and simulator plans
+> **Current authority:** this document records the architecture decision used
+> by the active `exec_ir` and simulator plans
 > **Purpose:** preserve the original audit evidence and the later design
 > discussion that resolved its open questions
 
@@ -532,8 +532,8 @@ handwritten execution owns simulator behavior.
 
 ## 13. Relationship to executor and warp-issue work
 
-The existing executor probe remains useful for the already-proven execution
-properties:
+The completed executor probes established the following execution properties,
+which the current `InstExecuteEngine` and `Simulator` retain:
 
 - scheduler-selected `WarpIssueGroup` is the stable issue unit;
 - Thread remains authoritative for dynamic control state;
@@ -543,11 +543,11 @@ properties:
 - executor consumes an already-fetched instruction and does not own scheduling
   or program loading.
 
-The future production fetch path becomes:
+The current no-call production fetch path is:
 
 ```text
 WarpIssueGroup identifies current local PC
-Thread/activation identifies current FunctionId
+Simulator entry FunctionId identifies the current function
                  |
                  v
             CodeLocation
@@ -559,8 +559,8 @@ ExecutableProgram::fetch(CodeLocation)
         InstExecuteEngine
 ```
 
-The current probe constructor's explicit `FunctionId` and the current
-`(ThreadId, FunctionId)` register binding are temporary assumptions to revisit
+The executor's explicit entry `FunctionId` and the current
+`(ThreadId, FunctionId)` register binding are no-call restrictions to revisit
 when call/activation support is implemented.
 
 ## 14. Required frontend completion
@@ -595,9 +595,8 @@ ptxsim::exec_ir::ExecutableProgram
         v
 Simulator
         |
-        +-- CodeLocation
-        +-- Activation
-        +-- CallStack
+        +-- forms CodeLocation from entry FunctionId + local PC
+        +-- later: Activation + CallStack for call/return
 ```
 
 Key invariants:
@@ -613,8 +612,8 @@ Key invariants:
    required for execution.
 8. Printing is canonical executable-program printing and does not require
    original-source debug information.
-9. The next `exec_ir`/simulator plan revision should use this model rather than
-   the earlier single global `InstructionStream` abstraction.
+9. The active `exec_ir` and simulator plans use this model rather than the
+   earlier single global `InstructionStream` abstraction.
 
 ## References
 

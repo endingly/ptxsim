@@ -6,7 +6,8 @@
 > `docs/execution_model.md`. Live architecture and implementation gates are
 > [the adopted executable-program decision](arch/resolved_ir_execution_architecture.md),
 > [the active exec_ir plan](milestone_plan/exec_ir_module_execution_plan.md),
-> and [the active executor plan](milestone_plan/executor_module_execution_plan.md).
+> [the active executor plan](milestone_plan/executor_module_execution_plan.md),
+> and [the active simulator plan](milestone_plan/simulator_module_execution_plan.md).
 > **Supersedes:** `.agents/project_plan.md` v0.4  
 > **Specification baseline:** NVIDIA PTX ISA 9.3  
 > **Current work (historical snapshot):** retained modules were `common`,
