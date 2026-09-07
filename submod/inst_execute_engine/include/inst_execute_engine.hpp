@@ -2,75 +2,25 @@
 
 #include <expected>
 #include <optional>
-#include <variant>
-#include <vector>
 
 #include <ptxsim/arith/context.hpp>
-#include <ptxsim/arith/error.hpp>
 #include <ptxsim/common/ids.hpp>
-#include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir/exec_ir.hpp>
 #include <ptxsim/execution_model/warp.hpp>
-#include <ptxsim/memory/address_space/address_space_error.hpp>
-#include <ptxsim/memory/address_space/generic_address.hpp>
-#include <ptxsim/memory/register/register_error.hpp>
+#include <ptxsim/inst_execute_engine/step_outcome.hpp>
 #include <ptxsim/runtime/runtime.hpp>
 
 namespace ptxsim::inst_execute_engine {
 
-enum class StepErrorCode {
-  foreign_warp,
-  lane_mask_width,
-  empty_issue,
-  invalid_lane,
-  lane_not_ready,
-  pc_mismatch,
-  missing_fallthrough,
-  unsupported_instruction,
-  /** A membermask is empty, out of range, or excludes an issued lane. */
-  collective_invalid_mask,
-  /** Issued lanes read different membermask values. */
-  collective_mask_mismatch,
-  /** An arrival conflicts with the active rendezvous PC or participants. */
-  collective_pending_mismatch,
-  /** An issue attempts to arrive a lane already recorded by this rendezvous. */
-  collective_duplicate_arrival,
-  /** A first rendezvous names a lane that cannot reach it. */
-  collective_unreachable_participant,
-};
-
-struct StepError {
-  StepErrorCode code;
-  std::optional<execution_model::LaneId> lane;
-
-  constexpr bool operator==(const StepError&) const noexcept = default;
-};
-
-using LaneFaultCause =
-    std::variant<runtime::RuntimeBindingError, memory::RegisterError,
-                 common::RawValueError, arith::arithmetic_error,
-                 memory::AddressResolutionError, memory::AddressSpaceError>;
-
-struct LaneFault {
-  /** @brief Lane whose instruction preparation could not complete. */
-  execution_model::LaneId lane;
-  /** @brief Structured cause retained after other lanes in the issue commit. */
-  LaneFaultCause cause;
-
-  /** @brief Compare both the faulting lane and its typed execution cause. */
-  constexpr bool operator==(const LaneFault&) const = default;
-};
-
-struct StepReport {
-  std::vector<LaneFault> faults;
-};
-
+/** @brief Executes one validated PTX instruction issue against a warp. */
 class InstExecuteEngine final {
  public:
+  /** @brief Bind execution to one launch runtime and function register layout. */
   InstExecuteEngine(runtime::LaunchRuntime& runtime,
                     common::FunctionId function,
                     const arith::context& arithmetic) noexcept;
 
+  /** @brief Prepare and commit an issue, returning rejections or lane faults. */
   [[nodiscard]] auto execute(execution_model::Warp& warp,
                              const execution_model::WarpIssueGroup& issue,
                              const exec_ir::Instruction& instruction,
@@ -78,8 +28,11 @@ class InstExecuteEngine final {
       -> std::expected<StepReport, StepError>;
 
  private:
+  /** Launch state borrowed for the lifetime of this engine. */
   runtime::LaunchRuntime& runtime_;
+  /** Function identity selecting each thread's register frame. */
   common::FunctionId function_;
+  /** Arithmetic configuration borrowed for instruction preparation. */
   const arith::context& arithmetic_;
 };
 
