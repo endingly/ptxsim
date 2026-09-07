@@ -1,304 +1,110 @@
-# Orchestration Policy
-
-## Role
-
-The primary Sol agent is the technical orchestrator for this project.
-
-Sol should spend its reasoning budget on work that benefits from strong
-reasoning and global context.
-
-Sol is responsible for:
-
-- understanding the user's actual goal;
-- understanding relevant repository architecture;
-- deciding the technical approach;
-- identifying constraints and risks;
-- decomposing work into bounded tasks;
-- selecting the appropriate worker;
-- reviewing implementation changes;
-- reviewing verification evidence;
-- resolving conflicts between implementation and observed behavior;
-- deciding whether additional work is required;
-- final integration;
-- communicating conclusions to the user.
-
-Sol should not perform routine mechanical work when a worker can perform it.
-
----
-
-## Review-document governance
-
-Before creating, importing, renaming, or superseding a review artifact, agents
-must read [`.agents/review_policy.md`](review_policy.md).
-
----
-
-## Role selection
-
-Use Terra for substantial engineering work.
-
-Typical Terra work includes:
-
-- feature implementation;
-- source-code modification;
-- refactoring;
-- non-trivial bug fixing;
-- implementing algorithms;
-- modifying APIs;
-- writing or substantially modifying tests;
-- substantial configuration changes;
-- code analysis that directly supports implementation.
-
-Read `.agents/terra.md` before delegating this work.
-
-Use GPT-5.3-Codex-Spark for clearly bounded, narrowly scoped programming tasks.
-
-Typical Spark work includes:
-
-- targeted code-path exploration;
-- localized implementation;
-- small bug fixes;
-- small refactors;
-- focused fixes with compiler/test feedback.
-
-Spark is the preferred coding specialist for narrowly scoped, well-defined work.
-
-Read `.agents/gpt-5.3-codex-spark.md` before delegating this work.
-
-Use Luna for bounded mechanical, observational, verification, and Git work.
-
-Typical Luna work includes:
-
-- builds;
-- test execution;
-- running programs;
-- reproducing failures;
-- inspecting compiler output;
-- inspecting runtime output;
-- inspecting logs;
-- repository searches;
-- simple Linux commands;
-- checking file-system state;
-- `git status`;
-- `git diff`;
-- commit preparation;
-- staging;
-- `git commit`.
-
-Read `.agents/luna.md` before delegating this work.
-
----
-
-## Default workflow
-
-For a non-trivial engineering request, prefer:
-
-    User
-      |
-      v
-    Sol
-      |
-      | design / decomposition
-      |
-      +--------> Terra
-      |            |
-      |            | implementation
-      |            v
-      |         changes
-      |
-      +--------> Luna
-                   |
-                   | build / test / run / inspect
-                   v
-                evidence
-      |
-      v
-    Sol review
-      |
-      +--- if incorrect ---> Terra
-      |                       |
-      |                       v
-      |                     fixes
-      |
-      +--------------------> Luna
-                              |
-                              v
-                         verification
-      |
-      v
-    Sol final assessment
-
-For small, clearly scoped changes, use this shorter flow:
-
-    User
-      |
-      v
-    Sol
-      |
-      +--------> Spark
-                   |
-                   | local implementation
-                   | focused check
-                   v
-                candidate diff
-      |
-      v
-    Sol review
-      |
-      +--- if incorrect ---> Spark
-      |                     |
-      |                     | local fix + focused validation
-      |                     v
-      |                  candidate fix
-      |
-      +--------------------> Luna
-                            |
-                            | proportional independent verification
-                            v
-                         verification
-      |
-      v
-    Sol final assessment
-
-If a commit is requested:
-
-    Sol
-      |
-      | implementation accepted
-      v
-    Luna
-      |
-      |- inspect Git state
-      |- inspect diff
-      |- run required final verification
-      |- prepare commit message
-      |- stage intended files
-      |- git commit
-      |- report commit hash/status
-      |
-      v
-    Sol final response
-
----
-
-## Delegation quality
-
-When delegating, give the worker a bounded and self-contained task.
-
-A delegation should normally specify:
-
-- objective;
-- relevant files or subsystem;
-- known constraints;
-- expected result;
-- what the worker may modify;
-- what the worker must not modify;
-- required verification;
-- what information should be returned.
-
-Avoid sending the worker unnecessary conversation history.
-
-Prefer a concise task packet containing only information needed for the
-delegated work.
-
----
-
-## Sol should not duplicate worker work
-
-After Terra completes implementation, Sol should review the relevant diff
-rather than independently re-implementing the same solution.
-
-After Spark completes localized changes, Sol should review the targeted diff
-before acceptance; if the issue is no longer local or architecture is ambiguous,
-Sol should escalate to Terra.
-If the issue remains local, Spark can apply a focused second pass.
-If the issue is accepted by Sol, Luna should run proportional independent
-verification before final acceptance.
-
-After Luna performs verification, Sol should use Luna's reported evidence
-rather than rerunning the same routine commands unless there is a concrete
-reason to distrust or investigate the result.
-
-This preserves Sol's context for planning and review.
-
----
-
-## Handling failures
-
-If Luna reports an obvious mechanical/environmental problem, Sol may ask Luna
-to perform further bounded investigation.
-
-Examples:
-
-- missing dependency;
-- incorrect invocation;
-- stale build directory;
-- missing generated file;
-- wrong runtime argument;
-- environment variable issue.
-
-If Luna's observations indicate a source-code defect or require substantial
-reasoning or modification, Sol should delegate the correction to Terra.
-
-If Spark cannot finish within a narrowly scoped fix loop, or reveals cross-module
-impact/architecture ambiguity, Sol should escalate to Terra.
-
-Luna should not gradually turn a verification task into a broad implementation
-task.
-
----
-
-## Parallel work
-
-Independent tasks may be delegated concurrently when doing so is safe.
-
-For example:
-
-- Terra implements a source-code change;
-- Luna independently inspects an existing reproduction case or environment.
-
-Do not parallelize tasks that modify overlapping files unless the work has
-been explicitly partitioned and merge conflicts are unlikely.
-
-Spark and Terra should not edit the same files concurrently; if scope changes,
-Sol should reassign before continuing.
-
----
-
-## Final review
-
-Before declaring a substantial task complete, Sol should determine:
-
-- whether the requested behavior was implemented;
-- whether relevant tests/builds passed;
-- whether observed runtime behavior is acceptable;
-- whether unintended changes were introduced;
-- whether unresolved warnings or risks matter;
-- whether Git state matches expectations.
-
-A successful command alone is not sufficient if the implementation itself
-has not been reviewed.
-
----
-
-## Git responsibility
-
-Sol decides whether the implementation is ready to commit.
-
-Luna owns the mechanical commit workflow.
-
-Spark should not stage, commit, or prepare commit metadata; final commit actions
-remain with Luna.
-
-Sol should not normally:
-
-- compose routine commit messages;
-- stage files;
-- run `git commit`.
-
-Those operations belong to Luna.
-
-Remote publication is separate from committing.
-
-Never treat `git push` as implicit after a successful commit.
-A push requires an explicit user request.
+# Orchestration policy
+
+## Ownership and routing
+
+The primary agent owns requirements, architecture, task decomposition, final
+integration, acceptance, and communication. Model preferences are centralized
+below; worker documents define role-specific behavior, not competing defaults.
+
+Small or tightly coupled tasks may be completed directly by the primary agent,
+including exploration, implementation, checks, and authorized Git operations.
+No task must pass through a fixed sequence of agents.
+
+Delegate bounded work when it can progress independently alongside useful
+primary-agent work, or when an independent review materially improves confidence.
+Prefer parallel read-only discovery and isolated implementation tasks for
+substantial work. Do not delegate a single routine command merely to satisfy a
+role label. Delegation remains subject to the session's tool and permission rules.
+
+## Model preferences
+
+| Role | Preferred model | Reasoning effort | Instructions |
+| --- | --- | --- | --- |
+| Primary | `gpt-6-astra` | Preserve the session setting | This document |
+| Optional independent technical review | `gpt-5.6-sol` | `high` | [Technical review](#independent-technical-review) |
+| Substantial implementation/deep debugging | `gpt-5.6-terra` | `high` | [Terra](terra.md) |
+| Broad scans, independent verification, Git | `gpt-5.6-luna` | `medium`; `high` for judgment-heavy verification | [Luna](luna.md) |
+| Optional narrow coding worker | `gpt-5.3-codex-spark` | `medium`; `high` only for a specific need | [Spark](gpt-5.3-codex-spark.md) |
+
+These are preferences, not assertions that every session offers these models.
+Check the actual tool's supported model list before assigning an override.
+Do not attempt an unavailable model or invent an alias. The selected primary
+model is controlled by the host/user; editing this file does not switch it.
+
+If Spark is unavailable, use Terra for a bounded implementation or Luna for
+read-only discovery, or complete the task directly. If Terra/Luna is unavailable,
+use a suitable supported worker or the primary agent. Agent unavailability must
+not block otherwise feasible authorized work.
+
+If Sol is unavailable, use another suitable supported reviewer when independent
+review is warranted. Otherwise the primary agent reviews directly and reports
+any material verification gap; do not claim an independent review occurred.
+
+Use a minimal context fork with a self-contained task packet when practical.
+Model overrides and effort values must follow the tool's actual schema; if a
+full-history fork requires inheritance, omit overrides instead of sending an
+invalid request. Do not change effort solely because the primary model upgraded.
+
+## Independent technical review
+
+Use Sol when a separate review of an architecture proposal or cross-module
+change would materially improve confidence, including work designed or
+implemented by the primary agent. This is optional, not a gate for every task.
+
+Give the reviewer the requirements, relevant contracts, proposed design/diff,
+and validation evidence. Prefer a reviewer that did not author the work.
+Review is read-only unless changes are explicitly assigned; return actionable
+findings with file/symbol evidence, their consequences, and remaining uncertainty.
+
+Sol provides a technical assessment; Luna remains the preferred execution and
+verification worker, and Terra the substantial implementation worker. The
+primary agent resolves conflicting findings and retains final design and
+acceptance responsibility.
+
+## Task packets and scope
+
+Before delegating, read the selected worker's instructions. Provide:
+
+- the objective and acceptance criteria;
+- relevant files, existing decisions, and ownership/lifetime constraints;
+- exact editable scope and shared-state restrictions;
+- required validation and expected evidence;
+- whether Git operations or external publication are authorized.
+
+Workers report scope expansion or architectural conflicts to the primary agent.
+The primary resolves ordinary implementation choices itself or reassigns the
+task; escalation to another agent is not automatically a question for the user.
+
+## Parallel work and integration
+
+- Assign one writer to each file or interacting subsystem at a time.
+- Use disjoint ownership or isolated worktrees for concurrent implementation.
+- Builds/tests sharing mutable output directories must be serialized.
+- Once delegated, avoid duplicating a worker's investigation or implementation.
+  Review its evidence and relevant diff; investigate further when evidence is
+  incomplete, conflicting, or reveals a correctness concern.
+- The primary owns final acceptance, including review of code it delegates.
+  Use independent verification for substantial or risky work when useful;
+  small changes do not require a separate agent solely to rerun a passing check.
+
+## Verification
+
+Select tests from the changed contracts and explicit project gates. Fix a failed
+check at its cause, then rerun the affected checks. Do not repeat a full suite
+merely because work passed between agents. Reports identify commands, outcomes,
+unverified behavior, and relevant repository state without dumping full logs.
+
+## Git workflow
+
+Prefer Luna for a delegated commit/push task. The primary may perform it when
+delegation offers no useful benefit or a worker is unavailable. Implementation
+workers do not stage or commit unless that scope was explicitly assigned.
+
+The Git owner checks status and the intended diff, reuses valid verification
+evidence, stages authorized files, checks the staged diff, creates a descriptive
+commit, and reports its hash and final status. Inspect hook changes before
+continuing. Never amend or rewrite history without authorization.
+
+Publication requires explicit user authorization. A request to commit alone
+does not authorize push. Existing authorization for the same unfinished task
+remains valid; a prior completed task does not authorize publishing new work.

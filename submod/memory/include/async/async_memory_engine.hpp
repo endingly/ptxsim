@@ -70,7 +70,7 @@ class AsyncMemoryEngine final {
 
   std::uint64_t token_;
   std::size_t next_pending_ = 0;
-  // ponytail: completed records remain; add retirement if history grows.
+  /** @brief Retains completed records for the engine lifetime; history can grow. */
   std::vector<Record> records_;
 };
 

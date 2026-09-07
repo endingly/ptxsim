@@ -2,20 +2,22 @@
 
 > **Status:** WP0-WP5 and the minimal WP6 warp synchronization slice are implemented
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
-> **Next integration:** deterministic program fetch and issue orchestration in
+> **Current integration:** deterministic program fetch and issue orchestration in
 > the [simulator module plan](simulator_module_execution_plan.md)
 > **Language/build:** C++23 / CMake / GoogleTest
-> **Primary objective:** establish how one warp issue is prepared and committed before fixing the shape of `exec_ir`
+> **Primary objective:** preserve validated warp-issue prepare/commit behavior
+> while extending the supported execution semantics
 
 ---
 
 ## 1. Decision summary
 
-The executor is designed before the C++ `exec_ir` representation.
+The executor was designed before the C++ `exec_ir` representation; the
+completed probe work packages below are retained as historical evidence.
 
 The stable execution unit is a scheduler-selected
 `execution_model::WarpIssueGroup`, not an isolated Thread and not a complete
-program. The future Simulator owns the immutable `ExecutableProgram` and
+program. `Simulator` owns the immutable `ExecutableProgram` and
 performs fetch; executor consumes the fetched instruction:
 
 ```text
@@ -38,16 +40,16 @@ scheduler selects Warp + WarpIssueGroup
      PC/status    resources   sync state
 ```
 
-`Thread::step()` and `Warp::step()` remain as constrained thin facades. Both
-reach the same step-provider contract, which the future Simulator implements:
+`Thread::step()` and `Warp::step()` remain as constrained thin facades. The
+historical probe contract they share is:
 
 ```cpp
-simulator.step(Warp&, const WarpIssueGroup&)
+stepper.step(Warp&, const WarpIssueGroup&)
 ```
 
 `Thread::step()` forms a single-lane issue from its authoritative current PC
-and lane ID, then forwards to that same contract. Simulator fetches the
-instruction and invokes the lower executor entry:
+and lane ID, then forwards to that same contract. The current `Simulator`
+fetches the instruction and invokes the lower executor entry directly:
 
 ```cpp
 executor.execute(warp, issue, instruction, fallthrough);
@@ -56,17 +58,17 @@ executor.execute(warp, issue, instruction, fallthrough);
 The facade is a convenience for lane-local execution and tests, not a second
 instruction engine. Collective instructions may reject a single-lane issue.
 
-Thread owns the sole authoritative current PC value. In the planned production
-path, its function/activation state plus that local PC form
-`common::CodeLocation`;
+Thread owns the sole authoritative current PC value. In the current no-call
+path, `Simulator` combines its configured entry `FunctionId` with that local
+PC to form `common::CodeLocation`; call/activation state is deferred.
 Simulator stores no duplicate authoritative PC. `ExecutableProgram` derives
 the flat storage offset and same-function fallthrough; executor selects
 target/fallthrough and commits the local PC through Thread.
 
 The current executor implementation consumes an already-fetched `exec_ir`
-instruction through its existing handwritten static dispatch table. It does not
-add a production Simulator, a dynamic handler registry, or a general
-transaction system.
+instruction through its existing handwritten static dispatch table. `Simulator`
+is the separate production composition root; neither module adds a dynamic
+handler registry or general transaction system.
 
 ---
 
@@ -115,10 +117,10 @@ execution-model, memory, or runtime work.
 It does not own instructions, register storage, memory, fetching, arithmetic,
 or instruction semantics.
 
-Current gaps relevant to later integration:
+Current execution facts and gaps relevant to later extensions:
 
-- no production scheduler constructs `WarpIssueGroup` values;
-- no Simulator owns/fetches an `ExecutableProgram` by `common::CodeLocation`;
+- `Simulator` constructs `WarpIssueGroup` values by a deterministic
+  topology-order scan and fetches `ExecutableProgram` by `common::CodeLocation`;
 - `Thread` owns the authoritative wait state: `Waiting` iff `WaitReason` is
   non-`None`. Entering, releasing, exiting, and trapping clear/set that reason
   through the Thread API without changing the authoritative PC;
@@ -140,11 +142,10 @@ the first mutation and initially limit each lane to one storage write.
 Grid and memory managers and binds memory-owned handles to topology IDs.
 
 Register and local-frame lookup currently requires `(ThreadId, FunctionId)`.
-The explicit probe `FunctionId` and this binding are MVP assumptions: they are
-sufficient only while a Thread has one live activation for a function. Until
-call state exists, the probe executor receives that ID from its test/launch
-context. It must not invent a current-function field, activation, or call
-stack.
+The explicit entry `FunctionId` passed by `Simulator` and this binding are
+MVP assumptions: they are sufficient only while a Thread has one live
+activation for a function. Until call state exists, executor must not invent a
+current-function field, activation, or call stack.
 
 ### 3.4 Arithmetic
 
@@ -164,9 +165,9 @@ common ───────────────> memory
 execution_model + memory ──> runtime
 runtime + arith ───────> executor
 
-future exec_ir lowering ──> fully-bound ExecutableProgram
-future scheduler ─────────> executor caller
-future simulator ─────────> scheduler + program/fetch + executor + runtime
+exec_ir_lowering ─────────> fully-bound ExecutableProgram
+Simulator ────────────────> program/fetch + executor + runtime
+future scheduler policy ──> Simulator issue selection
 ```
 
 Forbidden direction:
@@ -207,9 +208,10 @@ concept WarpIssueStepper =
 
 The exact concept location and namespace may be chosen during WP0. There must
 not be an unconstrained public `template <typename Engine>` facade after WP0.
-The future production Stepper is Simulator; `InstExecuteEngine` instead exposes
+`Simulator` is the current production fetch owner; `InstExecuteEngine` exposes
 the lower `execute(..., instruction, fallthrough)` operation and does not
-perform fetch.
+perform fetch. A Simulator step-provider adapter is not required by the
+current public API.
 
 ### 5.2 Warp facade
 
@@ -249,8 +251,9 @@ thin constrained forwarder.
 PC ownership and transition policy are distinct:
 
 - Thread stores and exposes the authoritative current PC;
-- Simulator derives `common::CodeLocation` from the issued Thread/activation
-  state and local issue PC, but stores no duplicate authoritative PC;
+- Simulator derives `common::CodeLocation` from its entry `FunctionId` and the
+  local issue PC, but stores no duplicate authoritative PC; call activation is
+  deferred;
 - `ExecutableProgram` derives flat storage offsets and local fallthrough;
   the branch record carries an explicit function-local target;
 - executor receives both the fetched instruction and fallthrough;
@@ -363,7 +366,7 @@ require atomic commit across those resources.
 | CTA sync / async wait | deferred | deferred |
 
 No executor path may assume `ProgramCounter` is a byte address or increment it
-implicitly. In the planned production path it is a checked function-local index;
+implicitly. In the current production path it is a checked function-local index;
 `ExecutableProgram` supplies the same-function successor and executor receives
 that fallthrough value.
 
@@ -441,16 +444,19 @@ The CMake target and installed alias are `ptxsim_inst_execute_engine` and
 `ptxsim::inst_execute_engine`; public C++ declarations use
 `ptxsim::inst_execute_engine`.
 
-The probe target remains build-tree-only until the post-control-flow gate has
-reviewed its public types. Do not add it to root package installation merely
-because the library compiles.
+The target is installed/exported after the post-control-flow gate and generated
+`exec_ir` integration. The historical private probe operations were replaced by
+fully-bound `exec_ir` records.
 
-Keep the initial test operations handwritten and private to the executor
-probe. Do not add YAML/code generation or claim ABI stability for them.
+The historical private probe operations impose no separate executor ABI or
+generator contract.
 
 ---
 
 ## 11. Work packages
+
+WP0-WP3 and Gate A below are completed historical probe records; WP4 and later
+describe the resulting implemented executor contract and its remaining scope.
 
 ### WP0 — Canonical step facade
 
@@ -595,18 +601,18 @@ The audit must answer only facts proven by the executor:
 - whether executor owns fetch or receives an already-fetched instruction;
 - how FunctionId/current frame is supplied.
 
-Only then may `exec_ir` WP1 be rewritten and resumed. The probe operation
-types may be replaced rather than preserved for compatibility.
+This historical gate authorized the later `exec_ir` WP1 rewrite. The probe
+operation types were replaced rather than preserved for compatibility.
 
 Gate A and the follow-up dispatch audit decided:
 
 - `Thread` is the only authoritative PC owner;
 - the current explicit `FunctionId` and `(ThreadId, FunctionId)` runtime
   bindings are MVP probe assumptions, not a call-capable execution context;
-- the future Simulator owns an immutable `ExecutableProgram`, derives a
-  `common::CodeLocation` from Thread/activation state and `WarpIssueGroup::pc`,
+- `Simulator` owns an immutable `ExecutableProgram`, derives a
+  `common::CodeLocation` from its entry `FunctionId` and `WarpIssueGroup::pc`,
   fetches by that semantic location, derives function-local fallthrough, and
-  calls executor;
+  calls executor; activation state remains deferred;
 - executor stores no instruction and exposes
   `execute(warp, issue, instruction, fallthrough)`;
 - top-level `Op` contains only `mov`, `add`, `bra`, and `exit` opcode identity;
@@ -790,7 +796,7 @@ executor unit tests
 runtime integration tests
   topology-to-register/address bindings
 
-later simulator tests
+simulator integration tests
   scheduling/fetch/progress loop
 ```
 
@@ -798,7 +804,7 @@ For every mutating instruction test, capture the pre-step values and assert
 both intended changes and required non-changes. A failing lane must prove that
 its destination and PC were not partially committed.
 
-Final verification for an implemented work package should include:
+Final verification for an implemented executor work package should include:
 
 ```text
 cmake configure with BUILD_TESTING=ON
@@ -806,8 +812,12 @@ build the changed module and dependents
 run execution_model/runtime/executor focused tests
 run full CTest before commit
 run ASan + UBSan for ownership/lifetime changes
-inspect installed-package consumers once executor is exported
+inspect installed-package consumers for public API/build/export changes
 ```
+
+These are implementation acceptance gates, not a requirement to rebuild for
+documentation edits or repeat unchanged checks at each agent handoff. Reuse
+passing evidence for unchanged inputs; rerun affected checks after corrections.
 
 ---
 
@@ -825,8 +835,7 @@ The executor milestone does not authorize:
 - execution_model knowledge of register/memory handles;
 - memory knowledge of Thread/Warp/CTA;
 - arithmetic knowledge of PTX instruction forms;
-- asynchronous host execution or timing simulation;
-- an installed executor API before generated `exec_ir` replaces probe types.
+- asynchronous host execution or timing simulation.
 
 ---
 
@@ -868,7 +877,6 @@ Gate A are complete:
   make the probe compile;
 - the revised `exec_ir` shape is justified field-by-field by executor usage.
 
-The complete executor module is ready for simulator integration when the
-applicable later work packages are complete, its target is installable, and
-all supported instruction families preserve the same validated prepare/commit
-contract.
+The complete executor module is composed by `Simulator`, is installable, and
+preserves the same validated prepare/commit contract for every supported
+instruction family.

@@ -45,9 +45,9 @@ Frontend checker success proves PTX legality; lowering additionally rejects
 resolved leaves that ptxsim cannot bind to an executable identity. The executor
 rejects bound instructions whose behavior it does not implement.
 
-The current executor probe remains authoritative evidence for issue,
-predication, prepare/commit, lane-fault, branch, and exit behavior. WP1 now
-provides the executable program and WP2 binds checked frontend IR into it.
+The completed executor probes established issue, predication, prepare/commit,
+lane-fault, branch, and exit behavior. WP1 provides the executable program and
+WP2 binds checked frontend IR into it for the current simulator path.
 
 ## 2. Static program model
 
@@ -224,6 +224,10 @@ artifacts from upstream sources. It contains no generated snapshot.
 
 ## 7. Work packages
 
+The completed work packages below are historical implementation records.
+Their stage-time deferrals do not describe the current simulator composition;
+call/activation support remains deferred until it has an executable path.
+
 ### WP0 — Generator contract probe (implemented)
 
 The local `ptxsim-exec-ir-codegen` package proves that the pinned Python
@@ -347,7 +351,8 @@ entry, and activation identity for dynamic register/local/parameter frames.
 
 This plan does not authorize a direct-execution frontend ABI, a global
 `InstructionStream`, a `ProgramImage`, source/debug sidecars, a scheduler, or
-a simulator plan.
+simulator behavior outside the
+[simulator module plan](simulator_module_execution_plan.md).
 
 Before each package, confirm:
 

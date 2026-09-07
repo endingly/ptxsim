@@ -7,10 +7,13 @@ artifact.
 
 - The canonical archive is `docs/reviews/`, indexed by its maintained
   `README.md`.
-- Name canonical records for the current project-plan milestone, never a
-  branch or legacy sequence: `v<plan>-m<milestone>-<stage>-review[.rN].md`.
-  Current examples are `v2-m1-main-review.md`, `v2-m1-fix-review.md`, and
-  `v2-m1-fix-rereview.r1.md`.
+- Name canonical records for the milestone identified by the relevant active
+  plan in `.agents/milestone_plan/`, never a branch or legacy sequence.
+  Where that plan defines a version/milestone mapping, use
+  `v<plan>-m<milestone>-<stage>-review[.rN].md`; existing examples are
+  `v2-m1-main-review.md`, `v2-m1-fix-review.md`, and
+  `v2-m1-fix-rereview.r1.md`. Do not infer a new mapping from the historical
+  `project_plan.md`; establish it for a new review before naming the artifact.
 - Record legacy `m4`/`m5` source names and unchanged branch names in archival
   metadata. Branch renames are not required; `fix/m5-main-review` is not
   V2-M5.
