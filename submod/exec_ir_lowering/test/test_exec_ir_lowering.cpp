@@ -182,6 +182,26 @@ TEST(ExecIrLowering, BindsB64MoveImmediate) {
             common::RawValue::b64(std::uint64_t{0}));
 }
 
+TEST(ExecIrLowering, RejectsScalarImmediateBitsOutsideResolvedWidth) {
+  auto module = resolve(R"ptx(
+.entry kernel() {
+  .reg .u16 %r;
+  add.u16 %r, %r, 1;
+  exit;
+}
+)ptx");
+  auto& add =
+      std::get<ptx_frontend::resolved_ir::Add>(module.functions[0].body[0]);
+  auto& form =
+      std::get<ptx_frontend::resolved_ir::Add::IntegerNoSat>(add.variant);
+  auto& immediate =
+      std::get<ptx_frontend::resolved_ir::ResolvedImmediate>(form.src2.value);
+  immediate.bits = 0x10000U;
+  const auto program = lower(module);
+  ASSERT_FALSE(program);
+  EXPECT_EQ(program.error().code, LoweringErrorCode::malformed_resolved_ir);
+}
+
 TEST(ExecIrLowering, LowersTheSingleEntryParameterAsOffsetZero) {
   const auto program = lower(resolve(R"ptx(
 .entry kernel(.param .u32 input) {

@@ -10,6 +10,146 @@
 
 ---
 
+## Current follow-up — Generated Add execution family
+
+The adopted [execution-family architecture](../arch/instruction_execution_families.md)
+supersedes the historical handwritten-handler approach for the current Add
+work. Scope is all nine Add variants and their declared types/controls in the
+pinned frontend specification, not extended-precision `add.cc` / `addc`.
+Other opcode implementations keep their existing behavior.
+
+- [x] Generate ValueALU preparation and exhaustive Add form/type dispatch into
+  private engine build artifacts from the existing projection.
+- [x] Implement typed codecs, pure Add semantics and control mapping; reuse
+  existing effect/commit and instruction-independent arithmetic primitives.
+- [x] Remove the historical u32-only Add path and fix scalar lowering width
+  preservation so real frontend input reaches all Add paths.
+- [x] Verify structure failures, missing semantic definitions, installed-wheel
+  execution, all declared type paths and independent numerical/control cases.
+- [x] Pass engine/simulator/full CTest and package-consumer regressions.
+
+Acceptance evidence (2026-09-07): GCC Debug build passed; 342 runtime and
+build-tree/installed-consumer CTest cases passed, followed by the corrected
+missing-semantics link-negative test (343 total). Python suites passed 18 tests.
+Real PTX tests exercise all 23 type paths plus signed 16/64-bit and floating
+32/64-bit immediates. Numerical tests cover wrapping, saturation, rounding,
+FTZ, exceptional floating encodings and packed lane independence.
+
+An sdist-built wheel installed outside the repository runs all three generators.
+Its final engine artifacts match editable-build output byte for byte. CMake
+regenerates after a generator-source timestamp change without rewriting
+identical artifacts; the following codegen-target build performs no generation.
+The previous 53 engine tests passed before this work. This acceptance covers
+the pinned Add specification only, not extended-precision arithmetic or a
+new target-SM compatibility claim. Sanitizer configurations were not rerun.
+
+Template-maintenance follow-up: execution preparation now renders packaged
+Jinja2 file/family templates; Python retains model validation and derives typed
+render data. The ValueALU template accepts operation/semantic names rather than
+embedding Add. No other execution families or generators were migrated.
+Verification: generated C++ is unchanged apart from whitespace; GCC Debug build
+and all 343 CTest cases passed, as did 22 Python tests. The sdist-built wheel
+includes all three templates, runs the engine's 12 Python tests outside the
+repository, and emits the same artifacts as the editable build.
+
+## Sub execution follow-up
+
+Extend the existing ValueALU generation to all eight Sub forms and 17 type paths
+in the pinned frontend model, retaining Add behavior and the shared preparation/
+commit boundary. No `sub.cc` / `subc`, frontend revision change, or new family
+template is included.
+
+- [x] Generate Sub dispatch and preparation from the same projected model and
+  ValueALU template, with independent opcode-level bindings.
+- [x] Implement pure Sub semantic adapters and share existing codecs/control
+  mapping where applicable.
+- [x] Validate all declared types through real PTX, including subtraction order,
+  wrapping, saturation, packed lane isolation, rounding, FTZ and immediates.
+- [x] Pass generated-structure, missing-semantics, installed-wheel and C++
+  regression checks.
+
+Acceptance evidence (2026-09-07): GCC Debug build and all 386 CTest cases passed,
+including Add/Sub missing-semantics link checks and package-consumer tests.
+The shared pipeline retains 27 Add cases and adds 34 Sub cases covering all
+17 type paths and representative controls/immediates. Five Sub semantic tests
+and three engine boundary tests cover numerical behavior, invalid IR rejection,
+predicate suppression and lane fault isolation. The unsupported-op regression
+now uses Mul because Sub is supported. Mixed saturation samples follow the
+then-pinned YAML spelling `sub.f32.f16.sat`; the modifier-order dependency
+upgrade below supersedes that spelling as the canonical test input.
+
+All 24 Python tests passed. An sdist-built wheel installed outside the repository
+passes the engine's 14 Python tests and generates byte-identical Add/Sub artifacts;
+repeated generation preserves output timestamps. No frontend/package revision
+or dependency changed. Sanitizer configurations were not rerun.
+
+## Mul execution follow-up
+
+Scope is the five Mul forms in the pinned frontend: `mul.rn.f32`, `mul.lo.u32`,
+`mul.hi.u32`, `mul.wide.u32`, and `mul.wide.s32`. No frontend revision or
+specification expansion is included.
+
+- [x] Derive fixed-scalar and modifier-selected operand types for shared ValueALU
+  preparation, preserving independent destination/source widths.
+- [x] Add pure Mul semantic adapters under `src/semantics/`, using existing
+  arithmetic multiplication and product-selection controls.
+- [x] Exercise all five forms through real PTX, including high/low halves,
+  signed/unsigned wide products, immediates and floating-point edge cases.
+- [x] Pass generator, semantic, engine/simulator and missing-semantics checks.
+
+Acceptance evidence (2026-09-07): GCC Debug build and all 404 CTest cases passed,
+including 14 real-PTX Mul cases, two pure semantic tests, the wide-destination
+width-error regression, Add/Sub/Mul missing-semantics link checks and package
+consumers. The unsupported-op regression now uses Div because Mul is supported.
+All 26 Python tests passed. The sdist-built wheel passes the engine's 16 tests
+outside the repository, generates byte-identical artifacts and preserves output
+timestamps on repeated generation. No frontend revision or dependency changed;
+sanitizer configurations were not rerun.
+
+## Test-target consolidation
+
+The main engine build retains only `test_ptxsim_inst_execute_engine` as its test
+executable. Per-op link-negative targets are replaced by one CTest-driven isolated
+build checking the generated-preparation/semantic-definition link contract.
+The representative omission is Add; existing generator and runtime tests retain
+per-op coverage. Earlier per-op link-test counts above are historical evidence.
+
+- [x] Verify that complete semantics link and omitted Add semantics fail at link.
+- [x] Verify the main build exposes no per-op missing-semantics targets and
+  rerun the engine tests.
+
+Acceptance evidence (2026-09-07): GCC Debug engine build passed, followed by all
+71 selected CTest cases (70 engine/semantic tests and the isolated link contract).
+Ninja target inspection confirms the main build exposes only the normal engine
+test executable. CTest now lists 402 total cases after replacing three link
+checks with one; the full suite and sanitizer configurations were not rerun.
+
+## Frontend modifier-order compatibility update
+
+The C++ overlay port and Python dependency are pinned together to
+`fdb5ef575087b530c2cd6db6cb3631cf430a8ce0`, the fix for frontend issue #48
+([PR #49](https://github.com/endingly/ptx_frontend/pull/49)). Mixed Add/Sub now use
+`{.rnd}{.sat}.f32.{f16|bf16}` as the canonical modifier order. Explicit frontend
+aliases preserve the historical trailing `.sat` spelling; accepting that alias
+does not imply arbitrary modifier permutations are valid.
+
+- [x] Regenerate against the new Python package and rebuild against the same
+  frontend C++ revision, adapting aggregate initializers where member order changed.
+- [x] Use canonical mixed saturation in primary tests and retain focused legacy
+  alias compatibility checks for Add/Sub.
+- [x] Pass Python and C++ regressions and verify both installed dependency pins.
+
+Acceptance evidence (2026-09-07): the overlay rebuilt and installed frontend
+Debug/Release libraries from the SHA512-verified fix archive; GCC Debug ptxsim
+build and all 405 CTest cases passed. All 26 Python tests passed. Four mixed
+Add/Sub f16/bf16 saturation cases assert canonical diagnostics, legacy/canonical
+lowered-instruction equality, and numerical execution. Aggregate initializers
+for mixed arithmetic and scalar ld/st were updated; arithmetic semantics were
+unchanged. The port REF, setup.cfg, installed Python VCS metadata and built
+wheel dependency metadata all identify the same fix hash. Because the frontend
+package version remains 0.0.1b0, the existing Python environment required a
+forced reinstall of the pinned Git dependency. Sanitizers were not rerun.
+
 ## 1. Decision summary
 
 The executor was designed before the C++ `exec_ir` representation; the

@@ -8,14 +8,22 @@ import tempfile
 
 
 def atomic_write(path: Path, content: str) -> None:
-    """Atomically replace one generated text artifact after creating its parent."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", dir=path.parent, delete=False
-    ) as temporary:
-        temporary.write(content)
-        replacement = Path(temporary.name)
+    """Publish UTF-8 bytes atomically, preserving unchanged artifacts' timestamps."""
+    encoded = content.encode("utf-8")
     try:
+        if path.read_bytes() == encoded:
+            return
+    except FileNotFoundError:
+        pass
+    path.parent.mkdir(parents=True, exist_ok=True)
+    replacement = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "wb", dir=path.parent, delete=False
+        ) as temporary:
+            replacement = Path(temporary.name)
+            temporary.write(encoded)
         os.replace(replacement, path)
     finally:
-        replacement.unlink(missing_ok=True)
+        if replacement is not None:
+            replacement.unlink(missing_ok=True)

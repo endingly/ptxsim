@@ -49,6 +49,14 @@ auto add(std::optional<exec_ir::Predicate> predicate, exec_ir::DataType type,
                                   std::move(rhs)};
   return exec_ir::Add{std::move(predicate), exec_ir::Add::Variant{form}};
 }
+/** @brief Build a generated integer subtraction instruction with bound operands. */
+auto sub(std::optional<exec_ir::Predicate> predicate, exec_ir::DataType type,
+         RegisterSlot destination, exec_ir::B32Operand lhs,
+         exec_ir::B32Operand rhs) -> exec_ir::Instruction {
+  exec_ir::Sub::IntegerNoSat form{type, destination, std::move(lhs),
+                                  std::move(rhs)};
+  return exec_ir::Sub{std::move(predicate), exec_ir::Sub::Variant{form}};
+}
 /** @brief Build the implemented scalar unsigned less-than predicate comparison. */
 auto setp_lt_u32(exec_ir::Predicate destination, exec_ir::ScalarOperand lhs,
                  exec_ir::ScalarOperand rhs) -> exec_ir::Instruction {
@@ -63,20 +71,20 @@ auto make_load(std::optional<exec_ir::Predicate> predicate,
                RegisterSlot destination, exec_ir::Address address)
     -> exec_ir::Instruction {
   if (space == exec_ir::AddressSpace::generic) {
-    exec_ir::Ld::GenericScalar form{exec_ir::MemoryConsistency::omitted,
+    exec_ir::Ld::GenericScalar form{false,
+                                    exec_ir::MemoryConsistency::omitted,
                                     exec_ir::MemoryScope::none,
-                                    false,
                                     exec_ir::CacheOperator::unspecified,
                                     type,
                                     destination,
                                     address};
     return exec_ir::Ld{std::move(predicate), exec_ir::Ld::Variant{form}};
   }
-  exec_ir::Ld::ExplicitScalar form{space,
-                                   exec_ir::CacheOperator::unspecified,
+  exec_ir::Ld::ExplicitScalar form{false,
                                    exec_ir::MemoryConsistency::omitted,
                                    exec_ir::MemoryScope::none,
-                                   false,
+                                   space,
+                                   exec_ir::CacheOperator::unspecified,
                                    type,
                                    destination,
                                    address};
@@ -88,20 +96,20 @@ auto make_store(std::optional<exec_ir::Predicate> predicate,
                 RegisterSlot address, RegisterSlot source)
     -> exec_ir::Instruction {
   if (space == exec_ir::AddressSpace::generic) {
-    exec_ir::St::GenericScalar form{exec_ir::MemoryConsistency::omitted,
+    exec_ir::St::GenericScalar form{false,
+                                    exec_ir::MemoryConsistency::omitted,
                                     exec_ir::MemoryScope::none,
-                                    false,
                                     exec_ir::CacheOperator::unspecified,
                                     type,
                                     address,
                                     source};
     return exec_ir::St{std::move(predicate), exec_ir::St::Variant{form}};
   }
-  exec_ir::St::ExplicitScalar form{space,
-                                   exec_ir::CacheOperator::unspecified,
+  exec_ir::St::ExplicitScalar form{false,
                                    exec_ir::MemoryConsistency::omitted,
                                    exec_ir::MemoryScope::none,
-                                   false,
+                                   space,
+                                   exec_ir::CacheOperator::unspecified,
                                    type,
                                    address,
                                    source};
@@ -351,10 +359,10 @@ TEST_F(InstExecuteEngineTest,
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(7U)));
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
-  const exec_ir::Sub::IntegerNoSat form{exec_ir::DataType::u32, RegisterSlot{0},
-                                        RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::Div::U32 form{RegisterSlot{0}, RegisterSlot{1},
+                               RegisterSlot{2}};
   const exec_ir::Instruction instruction{
-      exec_ir::Sub{std::nullopt, exec_ir::Sub::Variant{form}}};
+      exec_ir::Div{std::nullopt, exec_ir::Div::Variant{form}}};
 
   const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
                                       instruction, std::nullopt);
@@ -364,6 +372,34 @@ TEST_F(InstExecuteEngineTest,
   EXPECT_EQ(thread.pc(), initial_pc);
   EXPECT_EQ(thread.status(), ThreadStatus::Ready);
   EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
+}
+
+TEST_F(InstExecuteEngineTest, WideMulRejectsB32DestinationWithoutWrite) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(0xfeedfaceU)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(3U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(7U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Mul::WideU32 form{RegisterSlot{0}, RegisterSlot{1},
+                                   RegisterSlot{2}};
+  const exec_ir::Instruction instruction{
+      exec_ir::Mul{std::nullopt, exec_ir::Mul::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, ProgramCounter{56});
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(std::get<common::RawValueError>(result->faults.front().cause),
+            (common::RawValueError{RawWidth::b64, RawWidth::b32}));
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(0xfeedfaceU));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(3U));
+  EXPECT_EQ(*registers.read(RegisterSlot{2}), RawValue::b32(7U));
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Trapped);
 }
 
 TEST_F(InstExecuteEngineTest, MovesTwoLanesThroughIsolatedFrames) {
@@ -756,8 +792,7 @@ TEST(InstExecuteEngineOperationTest, OpIdentityIgnoresDataType) {
   EXPECT_EQ(exec_ir::op(add_b32), exec_ir::Op::add);
 }
 
-TEST_F(InstExecuteEngineTest,
-       UnsupportedAddTypeRejectsBeforeAnyLaneStateMutation) {
+TEST_F(InstExecuteEngineTest, InvalidAddTypeRejectsBeforeAnyLaneStateMutation) {
   const auto frame =
       bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
   auto registers = view(frame);
@@ -774,12 +809,90 @@ TEST_F(InstExecuteEngineTest,
                                       instruction, ProgramCounter{56});
 
   ASSERT_FALSE(result);
-  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_EQ(result.error().code, StepErrorCode::invalid_instruction);
   EXPECT_EQ(thread.pc(), initial_pc);
   EXPECT_EQ(thread.status(), ThreadStatus::Ready);
   EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(9U));
   EXPECT_EQ(*registers.read(RegisterSlot{2}), RawValue::b32(11U));
+}
+
+TEST_F(InstExecuteEngineTest, InvalidSubTypeRejectsBeforeAnyLaneStateMutation) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(7U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(9U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(11U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+
+  const exec_ir::Instruction instruction =
+      sub(std::nullopt, exec_ir::DataType::b32, RegisterSlot{2},
+          RegisterSlot{0}, RegisterSlot{1});
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, ProgramCounter{57});
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::invalid_instruction);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(7U));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(9U));
+  EXPECT_EQ(*registers.read(RegisterSlot{2}), RawValue::b32(11U));
+}
+
+TEST_F(InstExecuteEngineTest, FalsePredicateSuppressesInvalidSubOperands) {
+  const auto frame = bind(
+      LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32, RawWidth::pred});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(9U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{3}, RawValue::pred(false)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Instruction instruction =
+      sub(exec_ir::Predicate{.source = RegisterSlot{3}}, exec_ir::DataType::u32,
+          RegisterSlot{2}, RegisterSlot{0}, RegisterSlot{1});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, ProgramCounter{58});
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{2}), RawValue::b32(9U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{58});
+  EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest, SubLaneFaultDoesNotBlockOtherLane) {
+  const auto initialized =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  const auto uninitialized =
+      bind(LaneId{1}, {RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto initialized_registers = view(initialized);
+  auto uninitialized_registers = view(uninitialized);
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{0}, RawValue::b32(5U)));
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{1}, RawValue::b32(2U)));
+  ASSERT_TRUE(
+      uninitialized_registers.write(RegisterSlot{0}, RawValue::b32(5U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const exec_ir::Instruction instruction =
+      sub(std::nullopt, exec_ir::DataType::u32, RegisterSlot{2},
+          RegisterSlot{0}, RegisterSlot{1});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                      instruction, ProgramCounter{59});
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1u);
+  EXPECT_EQ(result->faults.front().lane, LaneId{1});
+  EXPECT_EQ(std::get<memory::RegisterError>(result->faults.front().cause).code,
+            memory::RegisterErrorCode::uninitialized_read);
+  EXPECT_EQ(*initialized_registers.read(RegisterSlot{2}), RawValue::b32(3U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{59});
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{1}).status(), ThreadStatus::Trapped);
+  EXPECT_FALSE(*uninitialized_registers.initialized(RegisterSlot{2}));
 }
 
 TEST_F(InstExecuteEngineTest, WidthMismatchFaultsBeforeWrite) {

@@ -1,4 +1,5 @@
 #include "instruction_preparation.hpp"
+#include "instruction_preparation.gen.hpp"
 
 #include <array>
 #include <concepts>
@@ -153,37 +154,6 @@ auto prepare_move_b64_operation(const memory::RegisterView& registers,
                                                common::RawValue::b64(*value)},
                         .memory_write = std::nullopt,
                         .control = successor};
-}
-
-/** @brief Stage one wrapping u32 addition without mutation. */
-auto prepare_operation(const memory::RegisterView& registers,
-                       const arith::context& arithmetic,
-                       const exec_ir::Add& operation,
-                       common::ProgramCounter successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto& form = std::get<exec_ir::Add::IntegerNoSat>(operation.variant);
-  const auto lhs = b32_operand(registers, form.src1);
-  if (!lhs) {
-    return std::unexpected(lhs.error());
-  }
-  const auto rhs = b32_operand(registers, form.src2);
-  if (!rhs) {
-    return std::unexpected(rhs.error());
-  }
-  if (const auto destination = b32_destination(registers, form.dst);
-      !destination) {
-    return std::unexpected(destination.error());
-  }
-  const auto sum = arith::add(arithmetic, *lhs, *rhs,
-                              {.overflow = arith::integer_overflow_mode::wrap});
-  if (!sum) {
-    return std::unexpected(LaneFaultCause{sum.error()});
-  }
-  return PreparedEffect{
-      .write =
-          PreparedWrite{registers, form.dst, common::RawValue::b32(sum->value)},
-      .memory_write = std::nullopt,
-      .control = successor};
 }
 
 /** @brief Stage one unsigned less-than predicate comparison without mutation. */
@@ -384,20 +354,6 @@ auto prepare_move_b64(LaneResourceResolver& resolver, const arith::context&,
       view->get(), std::get<exec_ir::Mov>(operation), *successor);
 }
 
-/** @brief Adapt wrapping u32 addition to the common opcode dispatch signature. */
-auto prepare_add_u32(LaneResourceResolver& resolver,
-                     const arith::context& arithmetic,
-                     const exec_ir::Instruction& operation,
-                     std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto view = resolver.resolve();
-  if (!view) {
-    return std::unexpected(view.error());
-  }
-  return prepare_operation(view->get(), arithmetic,
-                           std::get<exec_ir::Add>(operation), *successor);
-}
-
 /** @brief Adapt u32 less-than comparison to the common opcode dispatch signature. */
 auto prepare_setp_lt_u32(LaneResourceResolver& resolver, const arith::context&,
                          const exec_ir::Instruction& operation,
@@ -521,22 +477,31 @@ auto select_move(const exec_ir::Instruction& operation)
   return unsupported_instruction();
 }
 
-/** @brief Select the implemented u32 add form, if present. */
+/** @brief Select every generated and structurally valid projected Add form. */
 auto select_add(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  if (!std::holds_alternative<exec_ir::Add::IntegerNoSat>(
-          std::get<exec_ir::Add>(operation).variant)) {
-    return unsupported_instruction();
+  if (!generated::validate_add(operation)) {
+    return std::unexpected(StepErrorCode::invalid_instruction);
   }
-  switch (std::get<exec_ir::Add::IntegerNoSat>(
-              std::get<exec_ir::Add>(operation).variant)
-              .type) {
-    case exec_ir::DataType::u32:
-      return SelectedPreparer{prepare_add_u32, PrepareKind::scalar};
-    case exec_ir::DataType::b32:
-      return unsupported_instruction();
+  return SelectedPreparer{generated::prepare_add, PrepareKind::scalar};
+}
+
+/** @brief Select every generated and structurally valid projected Sub form. */
+auto select_sub(const exec_ir::Instruction& operation)
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::validate_sub(operation)) {
+    return std::unexpected(StepErrorCode::invalid_instruction);
   }
-  return unsupported_instruction();
+  return SelectedPreparer{generated::prepare_sub, PrepareKind::scalar};
+}
+
+/** @brief Select every generated and structurally valid projected Mul form. */
+auto select_mul(const exec_ir::Instruction& operation)
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::validate_mul(operation)) {
+    return std::unexpected(StepErrorCode::invalid_instruction);
+  }
+  return SelectedPreparer{generated::prepare_mul, PrepareKind::scalar};
 }
 
 /** @brief Select only the scalar unsigned less-than predicate comparison. */
@@ -647,6 +612,10 @@ auto select_preparer(const exec_ir::Instruction& operation)
       return select_move(operation);
     case exec_ir::Op::add:
       return select_add(operation);
+    case exec_ir::Op::sub:
+      return select_sub(operation);
+    case exec_ir::Op::mul:
+      return select_mul(operation);
     case exec_ir::Op::setp:
       return select_setp(operation);
     case exec_ir::Op::ld:

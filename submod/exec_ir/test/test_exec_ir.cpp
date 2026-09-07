@@ -43,20 +43,20 @@ auto add(std::optional<Predicate> predicate, DataType type, RegisterSlot dst,
 auto load(std::optional<Predicate> predicate, DataType type, AddressSpace space,
           RegisterSlot dst, RegisterSlot address) -> Instruction {
   if (space == AddressSpace::generic) {
-    Ld::GenericScalar form{MemoryConsistency::omitted,
+    Ld::GenericScalar form{false,
+                           MemoryConsistency::omitted,
                            MemoryScope::none,
-                           false,
                            CacheOperator::unspecified,
                            type,
                            dst,
                            address};
     return Ld{std::move(predicate), Ld::Variant{form}};
   }
-  Ld::ExplicitScalar form{space,
-                          CacheOperator::unspecified,
+  Ld::ExplicitScalar form{false,
                           MemoryConsistency::omitted,
                           MemoryScope::none,
-                          false,
+                          space,
+                          CacheOperator::unspecified,
                           type,
                           dst,
                           address};
@@ -68,20 +68,20 @@ auto store(std::optional<Predicate> predicate, DataType type,
            AddressSpace space, RegisterSlot address, RegisterSlot src)
     -> Instruction {
   if (space == AddressSpace::generic) {
-    St::GenericScalar form{MemoryConsistency::omitted,
+    St::GenericScalar form{false,
+                           MemoryConsistency::omitted,
                            MemoryScope::none,
-                           false,
                            CacheOperator::unspecified,
                            type,
                            address,
                            src};
     return St{std::move(predicate), St::Variant{form}};
   }
-  St::ExplicitScalar form{space,
-                          CacheOperator::unspecified,
+  St::ExplicitScalar form{false,
                           MemoryConsistency::omitted,
                           MemoryScope::none,
-                          false,
+                          space,
+                          CacheOperator::unspecified,
                           type,
                           address,
                           src};

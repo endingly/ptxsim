@@ -76,11 +76,11 @@ struct BindingContext {
     const BindingContext& context)
     -> std::expected<std::optional<exec_ir::Predicate>, LoweringError>;
 
-/** @brief Bind a resolved b32 register-or-immediate operand. */
-[[nodiscard]] auto bind_b32_operand(
+/** @brief Preserve the declared width and resolved bits of a scalar operand. */
+[[nodiscard]] auto bind_scalar_operand(
     const ptx_frontend::resolved_ir::RegOrImm& operand,
     const BindingContext& context)
-    -> std::expected<exec_ir::B32Operand, LoweringError>;
+    -> std::expected<exec_ir::ScalarOperand, LoweringError>;
 
 /** @brief Bind an offset-free b64 register or supported entry-parameter address. */
 [[nodiscard]] auto bind_b64_address(
@@ -126,7 +126,7 @@ template <typename Target, typename Source>
   } else if constexpr (std::same_as<Target, exec_ir::ScalarOperand> &&
                        std::same_as<SourceValue,
                                     ptx_frontend::resolved_ir::RegOrImm>) {
-    return bind_b32_operand(source, context);
+    return bind_scalar_operand(source, context);
   } else if constexpr (std::same_as<Target, exec_ir::Predicate> &&
                        std::same_as<
                            SourceValue,

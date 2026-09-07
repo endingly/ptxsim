@@ -24,6 +24,8 @@ enum class StepErrorCode {
   pc_mismatch,
   missing_fallthrough,
   unsupported_instruction,
+  /** The supplied execution IR has an invalid enum or control combination. */
+  invalid_instruction,
   /** A membermask is empty, out of range, or excludes an issued lane. */
   collective_invalid_mask,
   /** Issued lanes read different membermask values. */
