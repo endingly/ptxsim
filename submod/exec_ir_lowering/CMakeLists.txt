@@ -5,17 +5,21 @@ set(PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER
 set(PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE
     "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}/exec_ir_lowering.gen.cpp")
 file(GLOB_RECURSE PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/python/ptxsim_codegen/*.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/python/codegen/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/../exec_ir/python/codegen/*.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../exec_ir/python/instructions/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/../exec_ir/python/instructions/*.yaml")
 add_custom_command(
     OUTPUT "${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER}"
            "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}"
-    COMMAND "${Python3_EXECUTABLE}" -m ptxsim_exec_ir_codegen
-            --lowering-header-output
+    COMMAND "${Python3_EXECUTABLE}" -m ptxsim_codegen.exec_ir_lowering
+            --output
             "${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER}"
-            --lowering-source-output
+            --source-output
             "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}"
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../exec_ir/python/setup.cfg"
+    DEPENDS "${PROJECT_SOURCE_DIR}/setup.cfg"
+            "${PROJECT_SOURCE_DIR}/pyproject.toml"
             ${PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES}
     COMMENT "Generating PTXSim execution IR lowering"
     VERBATIM)

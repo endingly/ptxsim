@@ -154,9 +154,15 @@ jobs:
         shell: bash
         run: |
           python3 -m venv .venv
-          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install -e .
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+
+      - name: Test Python generators
+        shell: bash
+        run: |
+          .venv/bin/python -m unittest discover -s submod/exec_ir/python/tests -v
+          .venv/bin/python -m unittest discover -s submod/exec_ir_lowering/python/tests -v
 
       - name: Restore vcpkg downloads cache
         id: vcpkg-downloads-cache

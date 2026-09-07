@@ -7,16 +7,19 @@ set(PTXSIM_EXEC_IR_GENERATED_HEADER
 set(PTXSIM_EXEC_IR_GENERATED_SOURCE
     "${PTXSIM_EXEC_IR_GENERATED_DIR}/exec_ir.gen.cpp")
 file(GLOB_RECURSE PTXSIM_EXEC_IR_CODEGEN_FILES CONFIGURE_DEPENDS
+    "${PROJECT_SOURCE_DIR}/python/ptxsim_codegen/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/python/codegen/*.py"
+    "${CMAKE_CURRENT_SOURCE_DIR}/python/instructions/*.py"
     "${CMAKE_CURRENT_SOURCE_DIR}/python/instructions/*.yaml")
 
 add_custom_command(
     OUTPUT "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
            "${PTXSIM_EXEC_IR_GENERATED_SOURCE}"
-    COMMAND "${Python3_EXECUTABLE}" -m ptxsim_exec_ir_codegen
+    COMMAND "${Python3_EXECUTABLE}" -m ptxsim_codegen.exec_ir
             --output "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
             --source-output "${PTXSIM_EXEC_IR_GENERATED_SOURCE}"
-    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/python/setup.cfg"
+    DEPENDS "${PROJECT_SOURCE_DIR}/setup.cfg"
+            "${PROJECT_SOURCE_DIR}/pyproject.toml"
             ${PTXSIM_EXEC_IR_CODEGEN_FILES}
     COMMENT "Generating PTXSim execution IR"
     VERBATIM)
