@@ -1,0 +1,129 @@
+# Execution policy only. Opcode/form/layout facts come from the frontend spec.
+schema: ptxsim-engine/v1
+default: unsupported
+
+bindings:
+  - id: mov_b32
+    opcode: mov
+    form: mov_scalar
+    layout: scalar
+    modifiers: {type: [b32, u32]}
+    prepare:
+      function: prepare_operation
+      arguments: [registers, thread, arithmetic, operation, successor]
+    commit: scalar
+
+  - id: mov_b64
+    opcode: mov
+    form: mov_scalar
+    layout: scalar
+    modifiers: {type: [b64]}
+    prepare:
+      function: prepare_move_b64_operation
+      arguments: [registers, operation, successor]
+    commit: scalar
+
+  - id: add_u32
+    opcode: add
+    form: add_integer_no_sat
+    modifiers: {type: [u32]}
+    prepare:
+      function: prepare_operation
+      arguments: [registers, arithmetic, operation, successor]
+    commit: scalar
+
+  - id: setp_lt_u32
+    opcode: setp
+    form: setp_lt_u32
+    modifiers: {comparison: [lt], type: [u32]}
+    prepare:
+      function: prepare_operation
+      arguments: [registers, operation, successor]
+    commit: scalar
+
+  - id: ld_generic_u32
+    opcode: ld
+    form: ld_generic_scalar
+    modifiers:
+      type: [u32]
+      semantics: [omitted]
+      scope: [none]
+      mmio: [false]
+      cache: [unspecified]
+    prepare:
+      function: prepare_load
+      arguments: [resolver, form, {kind: state_space, value: generic}, successor]
+    commit: scalar
+
+  - id: ld_explicit_u32
+    opcode: ld
+    form: ld_explicit_scalar
+    modifiers:
+      type: [u32]
+      state_space: [global, param]
+      semantics: [omitted, weak]
+      scope: [none]
+      mmio: [false]
+      cache: [unspecified]
+    prepare:
+      function: prepare_load
+      arguments: [resolver, form, {modifier: state_space}, successor]
+    commit: scalar
+
+  - id: st_generic_u32
+    opcode: st
+    form: st_generic_scalar
+    modifiers:
+      type: [u32]
+      semantics: [omitted]
+      scope: [none]
+      mmio: [false]
+      cache: [unspecified]
+    prepare:
+      function: prepare_store
+      arguments: [resolver, form, {kind: state_space, value: generic}, successor]
+    commit: scalar
+
+  - id: st_explicit_u32
+    opcode: st
+    form: st_explicit_scalar
+    modifiers:
+      type: [u32]
+      state_space: [global]
+      semantics: [omitted, weak]
+      scope: [none]
+      mmio: [false]
+      cache: [unspecified]
+    prepare:
+      function: prepare_store
+      arguments: [resolver, form, {modifier: state_space}, successor]
+    commit: scalar
+
+  - id: bar_warp_sync
+    opcode: bar
+    form: bar_warp_sync
+    modifiers: {}
+    prepare:
+      function: prepare_operation
+      arguments: [resolver, operation, successor]
+    commit: warp_sync
+
+  - id: bra_direct
+    opcode: bra
+    form: bra_direct
+    modifiers: {}
+    ignored:
+      uni: Uniformity does not change the existing functional branch operation.
+    prepare:
+      function: prepare_operation
+      arguments: [operation]
+    commit: scalar
+
+  - id: exit_bare
+    opcode: exit
+    form: exit_bare
+    modifiers: {}
+    prepare:
+      function: prepare_operation
+      arguments: [operation]
+    commit: scalar
