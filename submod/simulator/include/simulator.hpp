@@ -159,6 +159,14 @@ class Simulator final {
   common::FunctionId entry_function_;
   /** @brief Borrowed arithmetic semantics used by the instruction engine. */
   const arith::context& arithmetic_;
+  /**
+   * @brief Persistent engine retaining deferred collective arrivals between steps.
+   *
+   * The engine borrows the launch runtime and arithmetic context referenced by
+   * @ref runtime_ and @ref arithmetic_; both must outlive this simulator. The
+   * entry function identity is copied into the engine.
+   */
+  inst_execute_engine::InstExecuteEngine engine_;
   /** @brief Packed bytes copied into the entry-parameter region during initialization. */
   std::vector<std::byte> entry_parameters_;
   /** @brief Whether entry-frame provisioning has completed successfully. */

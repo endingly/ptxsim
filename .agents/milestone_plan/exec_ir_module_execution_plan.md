@@ -324,7 +324,11 @@ The complete generated topology does not imply execution support. Do not add
 leaf binders or executor behavior for an instruction family before it has an
 executable consumer.
 
-The implemented first family is `ld.u32`/`st.u32` generic and
+The following records the historical first memory slice; the ordinary
+load/store follow-up in the [executor plan](executor_module_execution_plan.md)
+supersedes its width, vector and numeric-address limitations.
+
+The implemented first family was `ld.u32`/`st.u32` generic and
 `ld.global.u32`/`st.global.u32`. The executable records own an address space
 when explicit, a b64 address register slot, b32 data register slots, and
 copied semantics/scope/MMIO/cache controls. The transfer is four bytes,

@@ -1,0 +1,45 @@
+{% macro scalar(operand, object) %}{% if operand.wrap_scalar %}exec_ir::ScalarOperand{{ '{' }}{{ object }}.{{ operand.name }}{{ '}' }}{% else %}{{ object }}.{{ operand.name }}{% endif %}{% endmacro %}
+
+{% macro cta_call(form, layout, object) %}return prepare_cta_barrier(
+      resolver, execution_model::CtaBarrierProtocol::{{ form.protocol }}, {{ "true" if form.waits else "false" }},
+      {{ scalar(layout.barrier, object) }},{% if layout.count %}
+      {{ scalar(layout.count, object) }},{% else %}
+      std::nullopt,{% endif %}{% if layout.input %}
+      {{ object }}.{{ layout.input }},{% else %}
+      std::nullopt,{% endif %}{% if layout.destination %}
+      {% if layout.destination.predicate %}{{ object }}.{{ layout.destination.name }}.source{% else %}{{ object }}.{{ layout.destination.name }}{% endif %},{% else %}
+      std::nullopt,{% endif %}
+      *successor);{% endmacro %}
+
+{% macro adapter(form) %}/** @brief Prepare the projected Bar::{{ form.cpp_name }} collective form. */
+auto {{ form.function_name }}(LaneResourceResolver& resolver,
+                const exec_ir::Bar::{{ form.cpp_name }}& form,
+                std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+{% if form.warp_sync %}  return prepare_bar_warp_sync(resolver, {{ scalar(form.layouts[0].barrier, 'form') }}, *successor);
+{% elif form.aggregate %}  return std::visit(
+      [&](const auto& operands) -> std::expected<PreparedEffect, LaneFaultCause> {
+        using Operands = std::remove_cvref_t<decltype(operands)>;
+{% for layout in form.layouts %}        {% if loop.first %}if constexpr{% else %}else if constexpr{% endif %} (std::same_as<Operands, exec_ir::Bar::{{ form.cpp_name }}::{{ layout.cpp_name }}>) {
+{{ cta_call(form, layout, 'operands') | indent(10, first=True) }}
+        }
+{% endfor %}        else {
+          static_assert(!std::same_as<Operands, Operands>, "unrouted projected Bar operand layout");
+        }
+      },
+      form.operands);
+{% else %}{{ cta_call(form, form.layouts[0], 'form') | indent(2, first=True) }}
+{% endif %}}
+{% endmacro %}
+
+{% macro valid(form) %}{% if form.validates_predicate_destination %}{% if form.aggregate %}std::visit(
+      [](const auto& operands) noexcept {
+        using Operands = std::remove_cvref_t<decltype(operands)>;
+{% for layout in form.layouts %}        {% if loop.first %}if constexpr{% else %}else if constexpr{% endif %} (std::same_as<Operands, exec_ir::Bar::{{ form.cpp_name }}::{{ layout.cpp_name }}>) {
+          return !operands.{{ layout.destination.name }}.negated;
+        }
+{% endfor %}        else {
+          static_assert(!std::same_as<Operands, Operands>, "unrouted projected Bar operand layout");
+        }
+      },
+      form.operands){% else %}!form.{{ form.layouts[0].destination.name }}.negated{% endif %}{% else %}true{% endif %}{% endmacro %}

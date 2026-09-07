@@ -10,7 +10,9 @@ from jinja2 import UndefinedError
 
 from ptxsim_codegen.exec_ir.inputs import load_backend, load_projected
 from ptxsim_codegen.inst_execute_engine.gen_engine import _TEMPLATES, _value_alu_forms, artifacts
+from ptxsim_codegen.inst_execute_engine.memory_family import memory_operation
 from ptxsim_codegen.inst_execute_engine.setp_family import setp_operation
+from ptxsim_codegen.inst_execute_engine.bar_family import bar_operation, bra_operation, exit_operation
 from ptxsim_codegen.exec_ir.model import GenerationError
 
 
@@ -53,9 +55,34 @@ class GenerateTests(unittest.TestCase):
             if instruction.opcode == "setp"
         )
 
+    def ld(self):
+        """Return the complete projected Load instruction from pinned frontend input."""
+        return next(instruction for instruction in self.projected() if instruction.opcode == "ld")
+
+    def st(self):
+        """Return the complete projected Store instruction from pinned frontend input."""
+        return next(instruction for instruction in self.projected() if instruction.opcode == "st")
+
+    def bar(self):
+        """Return the complete projected Bar instruction from pinned frontend input."""
+        return next(instruction for instruction in self.projected() if instruction.opcode == "bar")
+
+    def bra(self):
+        """Return the complete projected Bra instruction from pinned frontend input."""
+        return next(instruction for instruction in self.projected() if instruction.opcode == "bra")
+
+    def exit(self):
+        """Return the complete projected Exit instruction from pinned frontend input."""
+        return next(instruction for instruction in self.projected() if instruction.opcode == "exit")
+
+    def all_operations(self):
+        """Return every execution family currently emitted by this generator."""
+        return (self.add(), self.sub(), self.mul(), self.setp(), self.ld(), self.st(),
+                self.bar(), self.bra(), self.exit())
+
     def render_instruction(self, instruction):
         """Render one modified enabled instruction with every other enabled binding."""
-        enabled = (self.add(), self.sub(), self.mul(), self.setp())
+        enabled = self.all_operations()
         return artifacts(
             tuple(
                 instruction if candidate.opcode == instruction.opcode else candidate
@@ -67,7 +94,7 @@ class GenerateTests(unittest.TestCase):
     def test_emits_every_projected_form_and_dynamic_type(self) -> None:
         """Generated dispatch has one adapter per form and every declared dynamic type."""
         instructions = (self.add(), self.sub(), self.mul(), self.setp())
-        _, source = artifacts(instructions, Path("value_alu.gen.hpp"))
+        _, source = artifacts(self.all_operations(), Path("value_alu.gen.hpp"))
         for instruction in instructions:
             self.assertIn(f'#include "semantics/{instruction.opcode}_semantics.hpp"', source)
         expected_cases = sum(
@@ -220,7 +247,7 @@ class GenerateTests(unittest.TestCase):
     def test_requires_every_enabled_operation(self) -> None:
         """Omitting an enabled operation fails rather than silently skipping it."""
         with self.assertRaisesRegex(GenerationError, "no mul instruction"):
-            artifacts((self.add(), self.sub(), self.setp()), Path("add.gen.hpp"))
+            artifacts((self.add(), self.sub(), self.setp(), self.ld(), self.st()), Path("add.gen.hpp"))
 
     def test_setp_derives_every_projected_form_and_predicate_topology(self) -> None:
         """The predicate family derives pair and combine handling from operand projection."""
@@ -234,7 +261,7 @@ class GenerateTests(unittest.TestCase):
         self.assertTrue(unsigned_combine.combine.allows_negation)
         self.assertFalse(signed_pair.combine.allows_negation)
         _, source = artifacts(
-            (self.add(), self.sub(), self.mul(), self.setp()), Path("setp.gen.hpp")
+            self.all_operations(), Path("setp.gen.hpp")
         )
         self.assertIn("exec_ir::BooleanOperator::and_", source)
 
@@ -295,6 +322,163 @@ class GenerateTests(unittest.TestCase):
         )
         with self.assertRaises(GenerationError):
             self.render_instruction(replace(mul, forms=(changed, *mul.forms[1:])))
+
+    def test_memory_derives_ordinary_forms_and_rejects_hint_forms(self) -> None:
+        """Only ordinary frontend forms enter memory preparation; hint forms stay unrouted."""
+        load = memory_operation(self.ld())
+        store = memory_operation(self.st())
+        self.assertEqual(tuple(form.cpp_name for form in load.forms),
+                         ("GenericScalar", "ExplicitScalar", "GenericVector", "ExplicitVector"))
+        self.assertEqual(tuple(form.cpp_name for form in store.forms),
+                         ("GenericScalar", "ExplicitScalar", "GenericVector", "ExplicitVector"))
+        _, source = artifacts(self.all_operations(), Path("memory.gen.hpp"))
+        self.assertIn("auto prepare_ld_generic_vector", source)
+        self.assertIn("auto prepare_st_explicit_vector", source)
+        self.assertIn("return prepare_memory_load(", source)
+        self.assertIn("return prepare_memory_store(", source)
+        self.assertNotIn("prepare_ld_global_u32_l1_evict", source)
+
+    def test_memory_derives_renamed_operand_fields(self) -> None:
+        """Memory adapters follow projected operand identities rather than dst/src spellings."""
+        load = self.ld()
+        form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
+        layout = form.source.operand_layouts[0]
+        renamed = {layout.fields[0].name: "result", layout.fields[1].name: "location"}
+        changed_layout = replace(
+            layout,
+            fields=tuple(replace(field, name=renamed[field.name]) for field in layout.fields),
+            bindings=tuple(replace(binding, target_field_id=renamed[binding.target_field_id])
+                           for binding in layout.bindings),
+        )
+        changed = replace(
+            form,
+            source=replace(
+                form.source,
+                operand_layouts=(changed_layout,),
+                memory_consistency=replace(
+                    form.source.memory_consistency, address_field_id="location"
+                ),
+                address_alignments=tuple(
+                    replace(alignment, address_field_ids=("location",))
+                    for alignment in form.source.address_alignments
+                ),
+            ),
+        )
+        _, source = self.render_instruction(replace(load, forms=(changed, *load.forms[1:])))
+        self.assertIn("form.result", source)
+        self.assertIn("form.location", source)
+
+    def test_memory_rejects_type_allowlist_drift(self) -> None:
+        """A frontend type addition cannot silently acquire byte-width semantics."""
+        load = self.ld()
+        form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
+        changed_variant = replace(
+            form.variant,
+            modifiers=tuple(
+                replace(modifier, values=(*modifier.values, replace(modifier.values[0], value="b128")))
+                if modifier.name == "type" else modifier
+                for modifier in form.variant.modifiers
+            ),
+        )
+        with self.assertRaises(GenerationError):
+            self.render_instruction(replace(load, forms=(replace(form, variant=changed_variant), *load.forms[1:])))
+
+    def test_bar_derives_every_projected_form_and_reduction_token(self) -> None:
+        """Every projected Bar form reaches the helper using modifier-token protocols."""
+        family = bar_operation(self.bar())
+        self.assertEqual(len(family.forms), 11)
+        self.assertEqual(sum(form.warp_sync for form in family.forms), 1)
+        protocols = {form.protocol for form in family.forms if not form.warp_sync}
+        self.assertEqual(protocols, {"SyncArrive", "ReducePopc", "ReduceAnd", "ReduceOr"})
+        _, source = artifacts(self.all_operations(), Path("bar.gen.hpp"))
+        self.assertEqual(source.count("return prepare_bar_") - 1, 11)
+        self.assertIn("CtaBarrierProtocol::ReducePopc", source)
+        self.assertIn("CtaBarrierProtocol::ReduceAnd", source)
+        self.assertIn("CtaBarrierProtocol::ReduceOr", source)
+        self.assertIn("prepare_bar_warp_sync(resolver, form.membermask", source)
+        self.assertIn("operands.dst.source", source)
+
+    def test_bar_derives_renamed_operand_fields(self) -> None:
+        """Collective adapters follow layout identities rather than Bar field spellings."""
+        instruction = self.bar()
+        form = next(form for form in instruction.forms if form.source.cpp_name == "RedPopcU32")
+        source_layout = form.source.operand_layouts[0]
+        renamed = {"dst": "result", "barrier": "slot", "predicate": "input"}
+        changed_layout = replace(
+            source_layout,
+            fields=tuple(replace(field, name=renamed[field.name], source_name=renamed[field.source_name])
+                         for field in source_layout.fields),
+            bindings=tuple(replace(binding, target_field_id=renamed[binding.target_field_id])
+                           for binding in source_layout.bindings),
+        )
+        changed_source_layout = replace(
+            form.layouts[0],
+            operands=tuple(replace(operand, name=renamed[operand.name])
+                           for operand in form.layouts[0].operands),
+        )
+        changed = replace(
+            form,
+            layouts=(changed_source_layout, *form.layouts[1:]),
+            source=replace(form.source, operand_layouts=(changed_layout, *form.source.operand_layouts[1:])),
+        )
+        _, source = self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
+        self.assertIn("operands.slot", source)
+        self.assertIn("operands.input", source)
+        self.assertIn("operands.result", source)
+
+    def test_bar_rejects_reduction_token_drift(self) -> None:
+        """An unrecognized fixed reduction modifier cannot silently acquire a protocol."""
+        instruction = self.bar()
+        form = next(form for form in instruction.forms if form.source.cpp_name == "RedPopcU32")
+        changed_variant = replace(
+            form.variant,
+            modifiers=tuple(
+                replace(modifier, token=".xor") if modifier.name == "reduction" else modifier
+                for modifier in form.variant.modifiers
+            ),
+        )
+        with self.assertRaises(GenerationError):
+            self.render_instruction(replace(instruction, forms=(replace(form, variant=changed_variant), *instruction.forms[1:])))
+
+    def test_bar_rejects_predicate_destination_shape_drift(self) -> None:
+        """Predicate reductions cannot treat an ordinary register as a predicate result."""
+        instruction = self.bar()
+        form = next(form for form in instruction.forms if form.source.cpp_name == "RedAndPred")
+        layout = form.source.operand_layouts[0]
+        changed_fields = (
+            replace(layout.fields[0], allowed_operand_shapes=(type(layout.fields[0].allowed_operand_shapes[0]).REGISTER,)),
+            *layout.fields[1:],
+        )
+        changed = replace(form, source=replace(form.source, operand_layouts=(replace(layout, fields=changed_fields), *form.source.operand_layouts[1:])))
+        with self.assertRaises(GenerationError):
+            self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
+
+    def test_control_families_derive_direct_target_and_bare_exit(self) -> None:
+        """Branch and exit control effects come from their projected operand topology."""
+        branch = bra_operation(self.bra())
+        exit_form = exit_operation(self.exit())
+        self.assertEqual(branch.target, "target")
+        self.assertIsNone(exit_form.target)
+        _, source = artifacts(self.all_operations(), Path("control.gen.hpp"))
+        self.assertIn("auto validate_bra", source)
+        self.assertIn(".control = form.target", source)
+        self.assertIn("auto validate_exit", source)
+        self.assertIn(".control = ExitControl{}", source)
+
+    def test_control_family_rejects_operand_drift(self) -> None:
+        """A direct branch cannot silently accept a non-control target operand."""
+        instruction = self.bra()
+        form = instruction.forms[0]
+        layout = form.source.operand_layouts[0]
+        changed = replace(
+            form,
+            source=replace(
+                form.source,
+                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ),)),),
+            ),
+        )
+        with self.assertRaises(GenerationError):
+            self.render_instruction(replace(instruction, forms=(changed,)))
 
 
 if __name__ == "__main__":

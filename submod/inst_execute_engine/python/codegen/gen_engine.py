@@ -21,6 +21,8 @@ from ptxsim_codegen.exec_ir.cpp_names import instruction_cpp_name
 
 from .setp_family import _CODECS as _SETP_CODECS
 from .setp_family import SetpOperation, setp_operation
+from .memory_family import MemoryOperation, memory_operation
+from .bar_family import BarOperation, _ControlOperation, bar_operation, bra_operation, exit_operation
 
 
 _CODECS = {
@@ -273,7 +275,7 @@ def _operand_codec(operand: _Operand, selected: dict[str, str]) -> str:
 
 
 def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) -> tuple[str, str]:
-    """Return generated artifacts for enabled ValueALU and Setp operations."""
+    """Return generated artifacts for enabled arithmetic, memory, collective, and control operations."""
     bindings = {"add": _value_alu_forms, "sub": _value_alu_forms, "mul": _value_alu_forms}
     projected_by_opcode = {instruction.opcode: instruction for instruction in projected}
     operations = []
@@ -288,13 +290,39 @@ def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) ->
     if setp is None:
         raise GenerationError("projected frontend has no setp instruction")
     setp_family: SetpOperation = setp_operation(setp)
+    memory_operations: list[MemoryOperation] = []
+    for opcode in ("ld", "st"):
+        instruction = projected_by_opcode.get(opcode)
+        if instruction is None:
+            raise GenerationError(f"projected frontend has no {opcode} instruction")
+        memory_operations.append(memory_operation(instruction))
+    bar = projected_by_opcode.get("bar")
+    bra = projected_by_opcode.get("bra")
+    exit_instruction = projected_by_opcode.get("exit")
+    if bar is None:
+        raise GenerationError("projected frontend has no bar instruction")
+    if bra is None:
+        raise GenerationError("projected frontend has no bra instruction")
+    if exit_instruction is None:
+        raise GenerationError("projected frontend has no exit instruction")
+    bar_family: BarOperation = bar_operation(bar)
+    bra_family: _ControlOperation = bra_operation(bra)
+    exit_family: _ControlOperation = exit_operation(exit_instruction)
     return (
         _TEMPLATES.get_template("instruction_preparation.hpp.j2").render(
-            operations=operations, setp_operation=setp_family
+            operations=operations, setp_operation=setp_family,
+            memory_operations=memory_operations,
+            bar_operation=bar_family,
+            bra_operation=bra_family,
+            exit_operation=exit_family,
         ),
         _TEMPLATES.get_template("instruction_preparation.cpp.j2").render(
             operations=operations,
             setp_operation=setp_family,
+            memory_operations=memory_operations,
+            bar_operation=bar_family,
+            bra_operation=bra_family,
+            exit_operation=exit_family,
             header_name=header_path.name,
         ),
     )

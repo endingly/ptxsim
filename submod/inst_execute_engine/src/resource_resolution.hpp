@@ -34,13 +34,9 @@ class LaneResourceResolver final {
   /** @brief Return the thread whose topology supplies special-register values. */
   [[nodiscard]] auto thread() const noexcept -> const execution_model::Thread&;
 
-  /** @brief Bind a b64 address register to a region-relative memory view. */
-  auto resolve_memory(exec_ir::AddressSpace space, common::RegisterSlot address)
-      -> std::expected<std::pair<memory::AddressSpaceView, memory::Address>,
-                       LaneFaultCause>;
-
-  /** @brief Bind an entry-parameter byte offset to its memory view. */
-  auto resolve_entry_parameter(std::uint64_t address)
+  /** @brief Resolve a numeric PTX address in one bound memory state space. */
+  auto resolve_memory(exec_ir::AddressSpace space,
+                      const exec_ir::Address& address, std::size_t size)
       -> std::expected<std::pair<memory::AddressSpaceView, memory::Address>,
                        LaneFaultCause>;
 
@@ -59,19 +55,5 @@ class LaneResourceResolver final {
 auto b32_operand(const memory::RegisterView& registers,
                  const exec_ir::B32Operand& operand)
     -> std::expected<std::uint32_t, LaneFaultCause>;
-
-/** @brief Read the register-backed address supported by scalar memory forms. */
-auto register_address(const exec_ir::Address& address)
-    -> std::optional<common::RegisterSlot>;
-
-/** @brief Read the b64 immediate accepted as an entry-parameter byte offset. */
-auto entry_parameter_address(const exec_ir::Address& address)
-    -> std::expected<std::uint64_t, LaneFaultCause>;
-
-/** @brief Serialize one u32 into four PTX little-endian bytes. */
-auto b32_bytes(std::uint32_t value) -> std::array<std::byte, 4>;
-
-/** @brief Reconstruct one u32 from four PTX little-endian bytes. */
-auto bytes_b32(const std::array<std::byte, 4>& value) -> std::uint32_t;
 
 }  // namespace ptxsim::inst_execute_engine::detail

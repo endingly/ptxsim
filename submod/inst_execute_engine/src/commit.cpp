@@ -1,10 +1,11 @@
 #include "commit.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
 #include <optional>
-#include <utility>
+#include <span>
 
 #include "issue_validation.hpp"
 
@@ -70,16 +71,35 @@ auto commit_warp_sync(execution_model::Warp& warp,
                       const execution_model::WarpIssueGroup& issue,
                       const std::vector<PreparedLane>& prepared)
     -> std::expected<void, StepError> {
-  const auto& first = prepared.front().effect.warp_sync;
+  const auto first_lane = std::find_if(
+      prepared.begin(), prepared.end(), [](const PreparedLane& lane) {
+        return lane.effect.warp_sync.has_value();
+      });
+  if (first_lane == prepared.end()) {
+    for (const auto& lane : prepared) {
+      apply_control(*lane.thread, lane.effect.control);
+    }
+    return {};
+  }
+  const auto& first = first_lane->effect.warp_sync;
   assert(first.has_value());
-  const auto participants = participant_mask(warp, first->membermask);
+  execution_model::LaneMask arrivals{warp.architectural_warp_size()};
+  for (const auto& lane : prepared) {
+    if (lane.effect.warp_sync) {
+      arrivals.set(lane.thread->lane_id());
+    }
+  }
+  auto participants = participant_mask(warp, first->membermask);
   if (!participants || participants->none() ||
-      !participants->contains(issue.lanes) ||
-      !warp.valid_mask().contains(*participants)) {
+      !participants->contains(arrivals)) {
+    return step_error(StepErrorCode::collective_invalid_mask);
+  }
+  participants->intersect(warp.valid_mask());
+  if (participants->none()) {
     return step_error(StepErrorCode::collective_invalid_mask);
   }
   for (const auto& lane : prepared) {
-    if (!lane.effect.warp_sync ||
+    if (lane.effect.warp_sync &&
         lane.effect.warp_sync->membermask != first->membermask) {
       return step_error(StepErrorCode::collective_mask_mismatch,
                         lane.thread->lane_id());
@@ -89,10 +109,12 @@ auto commit_warp_sync(execution_model::Warp& warp,
   auto& sync = warp.execution_state().sync;
   if (sync.active()) {
     const auto& pending = sync.pending();
-    if (pending.pc() != issue.pc || pending.participants() != *participants) {
+    if (pending.pc() != issue.pc || pending.participants() != *participants ||
+        pending.successor() !=
+            std::get<common::ProgramCounter>(first_lane->effect.control)) {
       return step_error(StepErrorCode::collective_pending_mismatch);
     }
-    if ((pending.arrivals() & issue.lanes).any()) {
+    if ((pending.arrivals() & arrivals).any()) {
       return step_error(StepErrorCode::collective_duplicate_arrival);
     }
   } else {
@@ -103,50 +125,77 @@ auto commit_warp_sync(execution_model::Warp& warp,
         continue;
       }
       const auto& thread = warp.thread(lane);
-      if (!thread.ready()) {
+      if (!thread.ready() && !thread.exited()) {
         return step_error(StepErrorCode::collective_unreachable_participant,
                           lane);
       }
     }
-    sync.begin(issue.pc, *participants);
+    sync.begin(issue.pc, *participants,
+               std::get<common::ProgramCounter>(first_lane->effect.control));
   }
 
   auto& pending = sync.pending();
-  pending.arrive(issue.lanes);
-  if (!pending.complete()) {
+  pending.arrive(arrivals);
+  bool complete = pending.complete();
+  if (!complete) {
+    complete = true;
+    for (std::uint32_t index = 0; index < warp.architectural_warp_size();
+         ++index) {
+      const execution_model::LaneId lane{index};
+      if (pending.participants().test(lane) && !pending.arrivals().test(lane) &&
+          !warp.thread(lane).exited()) {
+        complete = false;
+        break;
+      }
+    }
+  }
+  if (!complete) {
     for (const auto& lane : prepared) {
-      lane.thread->mark_waiting(execution_model::WaitReason::WarpSync);
+      if (lane.effect.warp_sync) {
+        lane.thread->mark_waiting(execution_model::WaitReason::WarpSync);
+      } else {
+        apply_control(*lane.thread, lane.effect.control);
+      }
     }
     return {};
   }
-  const auto successor =
-      std::get<common::ProgramCounter>(prepared.front().effect.control);
+  const auto successor = pending.successor();
+  const bool naturally_complete = pending.complete();
   for (std::uint32_t index = 0; index < warp.architectural_warp_size();
        ++index) {
     const execution_model::LaneId lane{index};
-    if (!pending.participants().test(lane)) {
+    if (!pending.participants().test(lane) || warp.thread(lane).exited()) {
       continue;
     }
     auto& thread = warp.thread(lane);
     thread.set_pc(successor);
     thread.mark_ready();
   }
-  sync.clear_completed();
+  if (naturally_complete) {
+    sync.clear_completed();
+  } else {
+    sync.clear_exited();
+  }
   return {};
 }
 
 void trap_faulted_lanes(execution_model::Warp& warp, const StepReport& report) {
   for (const auto& fault : report.faults) {
-    warp.thread(fault.lane).mark_trapped();
+    if (!fault.warp || *fault.warp == warp.id()) {
+      warp.thread(fault.lane).mark_trapped();
+    }
   }
 }
 
 void commit_scalar(execution_model::Warp& warp,
                    std::vector<PreparedLane>& prepared, StepReport& report) {
   for (auto& lane : prepared) {
-    const std::array<PreparedWrite*, 2> writes{
-        lane.effect.write ? &*lane.effect.write : nullptr,
-        lane.effect.second_write ? &*lane.effect.second_write : nullptr};
+    std::array<PreparedWrite*, 8> writes{};
+    for (std::size_t index = 0; index < lane.effect.writes.size(); ++index) {
+      if (lane.effect.writes[index]) {
+        writes[index] = &*lane.effect.writes[index];
+      }
+    }
     bool register_fault = false;
     for (const auto* write : writes) {
       if (write == nullptr) {
@@ -178,7 +227,9 @@ void commit_scalar(execution_model::Warp& warp,
     }
     if (lane.effect.memory_write) {
       auto& write = *lane.effect.memory_write;
-      if (const auto result = write.space.write(write.address, write.value, 4);
+      if (const auto result = write.space.write(
+              write.address, std::span{write.value}.first(write.size),
+              write.alignment);
           !result) {
         report.faults.push_back({lane.thread->lane_id(), result.error()});
         continue;

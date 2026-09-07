@@ -34,11 +34,6 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
   if (exec_ir::may_fallthrough(instruction) && !successor) {
     return detail::step_error(StepErrorCode::missing_fallthrough);
   }
-  if (preparer->kind == detail::PrepareKind::warp_sync &&
-      exec_ir::execution_predicate(instruction)) {
-    return detail::step_error(StepErrorCode::unsupported_instruction);
-  }
-
   StepReport report;
   std::vector<detail::PreparedLane> prepared;
   prepared.reserve(issue.size());
@@ -59,19 +54,23 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
     prepared.push_back({&thread, *effect});
   }
 
-  if (preparer->kind == detail::PrepareKind::warp_sync) {
+  if (preparer->kind == detail::PrepareKind::warp_sync ||
+      preparer->kind == detail::PrepareKind::cta_barrier) {
     if (!report.faults.empty()) {
       detail::trap_faulted_lanes(warp, report);
       return report;
     }
-    if (const auto committed = detail::commit_warp_sync(warp, issue, prepared);
-        !committed) {
+    const auto committed = preparer->kind == detail::PrepareKind::warp_sync
+                               ? detail::commit_warp_sync(warp, issue, prepared)
+                               : commit_cta_barrier(warp, issue, prepared, report);
+    if (!committed) {
       return std::unexpected(committed.error());
     }
     return report;
   }
 
   detail::commit_scalar(warp, prepared, report);
+  reconcile_exited_barriers(warp, report);
   return report;
 }
 

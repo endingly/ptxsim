@@ -61,6 +61,8 @@ struct LaneFault {
   execution_model::LaneId lane;
   /** Structured cause retained after other lanes in the issue commit. */
   LaneFaultCause cause;
+  /** Owning warp when a deferred collective releases outside the issuing warp. */
+  std::optional<execution_model::WarpId> warp;
 
   /** @brief Compare both the faulting lane and its typed execution cause. */
   constexpr bool operator==(const LaneFault&) const = default;

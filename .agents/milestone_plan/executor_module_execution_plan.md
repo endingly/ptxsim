@@ -177,6 +177,71 @@ and family template, installs against the exact frontend pin outside the source
 tree, and generates byte-identical artifacts while preserving unchanged output
 timestamps. No frontend dependency changed. Sanitizer configurations were not rerun.
 
+## Ordinary load/store execution follow-up
+
+Replace the historical u32-only load/store path with the memory execution
+family described in the [architecture](../arch/instruction_execution_families.md).
+This supersedes the scalar memory limitations in the historical implementation
+sections below, without changing dependency pins or introducing memory ordering.
+
+- [x] Generate ordinary scalar/vector form adapters and fail-closed validation.
+- [x] Implement width-aware transfers, checked numeric addresses and existing
+  explicit address-space bindings; retain prepare/commit fault isolation.
+- [x] Bind register vectors and numeric address offsets in shared lowering.
+- [x] Verify real PTX type/vector paths, signed extension, truncation, alignment,
+  permissions, predication and failure-before-mutation behavior.
+- [x] Pass C++/Python/package and existing link-contract regressions.
+
+Acceptance evidence (2026-09-07): GCC Debug build and all 463 CTest cases passed.
+The 28 real PTX memory pipeline cases cover all 14 scalar types, representative
+v2/v4/v8 forms, narrow signed/unsigned extension, store truncation, floating bit
+preservation, numeric offsets/immediate addresses and explicit shared/local
+bindings. Five new engine regressions cover vector failure-before-mutation,
+invalid vectors, constant s64-to-b128 loads and effective-address overflow.
+Existing predication, permission, initialization, alignment, stale-resource and
+lane-isolation regressions remain passing. Shared lowering tests cover sinks,
+offsets and signed-spelling immediate address bit preservation.
+
+All 31 Python tests passed. A fresh sdist-built wheel includes the memory model
+and template, runs all three generators outside the source tree, and emits
+byte-identical artifacts while preserving unchanged output timestamps. The
+frontend pin is unchanged. Sanitizer configurations were not rerun.
+
+## Branch, exit and named-barrier execution follow-up
+
+Complete the pinned `bar`, `bra` and `exit` forms under the
+[execution-family architecture](../arch/instruction_execution_families.md#branch-exit-and-named-barriers).
+Keep the existing compact arithmetic/predicate/memory pipeline fixtures.
+
+- [x] Generate control-flow and barrier preparation from projected frontend records.
+- [x] Support CTA sync/arrive and popc/AND/OR reduction, preserving local
+  convergence, generation reuse and failure-before-arrival validation.
+- [x] Keep deferred continuations/writebacks in a persistent engine owned by
+  Simulator; retain the execution_model/memory dependency boundary.
+- [x] Reconcile thread exit with CTA and warp barrier release without reviving
+  exited threads or treating trapped threads as exited.
+- [x] Verify real PTX control-flow/collective paths, invalid collective contracts,
+  and existing C++/Python/package/link regressions.
+
+Acceptance evidence (2026-09-07): GCC Debug build and all 476 CTest cases passed,
+including link-contract and installed/build-tree consumer checks. The new
+pipeline fixtures exercise 23 barrier scenarios and nine branch/exit scenarios
+from real PTX, including reduction readback, generation reuse, shared-memory
+visibility, divergent branches and conditional exits. Engine regressions cover
+partial-warp convergence, conflicting resources/protocols/counts/successors,
+exit-aware release and deferred cross-warp writeback fault ownership. Shared
+lowering now binds standalone resolved immediates through its existing scalar
+binder; the former rejection test checks the resulting barrier operand instead.
+
+All 37 Python tests passed. A fresh sdist-built wheel runs all three generators
+outside the checkout with byte-identical output and stable unchanged timestamps.
+Independent barrier-semantics review findings were fixed and the final review
+reported no actionable findings. GCC ASan+UBSan builds and all 305 tests in
+execution_model, runtime, inst_execute_engine and simulator passed with leak
+detection and halt-on-error enabled. This sanitizer run covers the new persistent
+collective ownership and deferred writeback paths; other sanitizer test binaries
+and release/Clang configurations were not rerun.
+
 ## 1. Decision summary
 
 The executor was designed before the C++ `exec_ir` representation; the
@@ -501,10 +566,10 @@ architectural transaction. Scalar lanes are independent: a fault in one lane
 does not roll back another lane's successful result. This prevents behavior
 from depending on whether the scheduler issued lanes separately or together.
 
-`bar.warp.sync` is the implemented collective instruction. It prepares every
-issued lane as a group and records no arrival until all group validation
-succeeds. Other collective forms remain deferred until their participant and
-fault semantics are specified.
+The original collective implementation covered `bar.warp.sync`. The named-barrier
+follow-up above extends that contract to CTA collectives: prepare issued lanes
+as a group and record no arrival until all group validation succeeds. Deferred
+writeback and exit reconciliation follow the execution-family architecture.
 
 ### 7.3 Initial storage restriction
 

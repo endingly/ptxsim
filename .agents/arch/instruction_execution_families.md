@@ -207,6 +207,82 @@ the final value when both destinations name the same slot.
 Floating comparisons, other comparison/Boolean combinations and predicate sinks
 are not exposed by the pinned Setp projection and are outside this integration.
 
+## Ordinary load/store scope
+
+`ld` and `st` use a separate memory-transfer execution family, not numeric
+ValueALU semantics. Projection supplies form identity, operand roles, types,
+vector arity and modifier domains. Generated adapters call common handwritten
+address/byte-transfer helpers. No frontend/package revision change is needed.
+
+The integration covers ordinary scalar and supported v2/v4/v8 transfers with
+the pinned 8/16/32/64-bit integer/bit types and f32/f64. Register storage width
+is separate from memory width: loads extend signed integers with the sign bit
+and other encodings with zero bits; stores retain low bits. Floating encodings
+are copied without host floating-point conversion. Natural alignment is the
+complete vector byte size, with at most 32 bytes per supported instruction.
+
+Reuse launch bindings for global, constant, shared, local and entry-parameter
+resources, including existing generic-address windows. Explicit stores cannot
+target read-only spaces. Generic stores retain the memory subsystem's permission
+checks. Numeric b32/b64 address registers, immediate addresses and checked byte
+offsets are supported; this does not allocate symbolic global/shared/local
+declarations or expand the existing single-u32 entry-parameter ABI.
+
+Preparation captures every source and validates all destinations and the full
+memory span before architectural mutation. Vector load writes commit in operand
+order; vector stores stage one contiguous byte span. This is the existing
+synchronous per-lane prepare/commit guarantee, not a new cross-lane atomicity
+or concurrent register-frame mutation contract. Predicated-off lanes must not
+read inputs or resolve memory resources.
+
+Only omitted/weak consistency without scope, MMIO or cache controls is included.
+Acquire/release/relaxed/volatile, MMIO, cache-policy/eviction/non-coherent forms
+and function-parameter resources remain explicitly unsupported. Do not silently
+execute these as plain accesses. Fences, atomics, asynchronous copies and `ldu`
+are separate integrations.
+
+## Branch, exit and named barriers
+
+The control-flow family covers the pinned `bra` and `exit` forms. A branch
+updates the authoritative thread PC; `.uni` is the producer's uniformity
+guarantee, not a separate opcode or a different branch algorithm. Common
+predicate gating handles untaken branches and conditional exits. Calls,
+returns and indirect branches are separate integrations.
+
+The barrier family covers the pinned `bar` forms: warp synchronization,
+CTA sync/arrive, and population-count/AND/OR reductions, including the `.cta`
+spellings. Projection supplies operand layouts and fixed modifier tokens;
+generated adapters normalize operands into handwritten collective preparation.
+The separate `barrier` opcode and asynchronous barriers are not included.
+
+`Simulator` owns a persistent instruction engine. The engine retains deferred
+CTA collective continuations and reduction destinations across issue calls; it must
+outlive those waits. `CtaBarrierState` owns protocol, generation, arrival counts
+and warp masks only. Neither execution-model nodes nor the memory subsystem
+acquire dependencies on engine effects or on each other.
+
+CTA arrival is counted once per converged non-exited warp. Local arrivals must
+agree on the dynamic instruction and barrier controls. Different warps may
+combine sync and arrive on the same barrier generation; incompatible counts or
+reduction protocols are rejected before recording an arrival. Sync and
+reduction wait for completion; arrive continues after local convergence.
+Explicit counts must be positive warp-size multiples; an explicit zero is
+rejected, not interpreted as the omitted CTA-wide count. The PTX text does not
+establish that zero is an alias for omission.
+Reduction inputs are captured before waiting and results are written before
+waiters resume. Resources retained for deferred writes must remain valid until
+completion, and write failures must identify the actual affected warp/lane.
+
+Exit processing also reconciles active barriers: a barrier cannot remain blocked
+solely on threads that have exited. Release must never revive exited threads
+or count a trapped thread as an exit. Explicit-count barriers must not count
+unrelated exits as ordinary arrivals. These rules follow the
+[PTX barrier and exit semantics](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#parallel-synchronization-and-communication-instructions-bar-barrier).
+
+Memory transfers currently complete synchronously before PC advancement. Barrier
+ordering uses that existing execution contract; this is not a host-parallel
+memory model or an implementation of asynchronous memory completion.
+
 ## Verification and build contracts
 
 - Exercise every declared Add/Sub/Mul/Setp form/type through generated code, and cover its

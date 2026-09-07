@@ -121,6 +121,37 @@ auto make_bar(std::optional<exec_ir::Predicate> predicate,
   exec_ir::Bar::WarpSync form{std::move(mask)};
   return exec_ir::Bar{std::move(predicate), exec_ir::Bar::Variant{form}};
 }
+/** @brief Build a CTA sync form with immediate barrier and count operands. */
+auto make_cta_sync(std::uint32_t barrier, std::uint32_t count)
+    -> exec_ir::Instruction {
+  exec_ir::Bar::Sync::BarrierAndThreadCountOperands operands{
+      RawValue::b32(barrier), RawValue::b32(count)};
+  exec_ir::Bar::Sync form{exec_ir::Bar::Sync::Operands{operands}};
+  return exec_ir::Bar{std::nullopt, exec_ir::Bar::Variant{form}};
+}
+
+/** @brief Build the omitted-count CTA sync form, which covers its full CTA. */
+auto make_cta_sync(std::uint32_t barrier) -> exec_ir::Instruction {
+  exec_ir::Bar::Sync::ImmediateBarrierOperands operands{RawValue::b32(barrier)};
+  exec_ir::Bar::Sync form{exec_ir::Bar::Sync::Operands{operands}};
+  return exec_ir::Bar{std::nullopt, exec_ir::Bar::Variant{form}};
+}
+
+/** @brief Build a CTA arrive form with immediate barrier and count operands. */
+auto make_cta_arrive(std::uint32_t barrier, std::uint32_t count)
+    -> exec_ir::Instruction {
+  exec_ir::Bar::Arrive form{RawValue::b32(barrier), RawValue::b32(count)};
+  return exec_ir::Bar{std::nullopt, exec_ir::Bar::Variant{form}};
+}
+
+/** @brief Build a CTA population-count reduction with an immediate barrier ID. */
+auto make_cta_red_popc(RegisterSlot destination, std::uint32_t barrier,
+                       exec_ir::Predicate input) -> exec_ir::Instruction {
+  exec_ir::Bar::RedPopcU32::WithoutThreadCountOperands operands{
+      destination, RawValue::b32(barrier), input};
+  exec_ir::Bar::RedPopcU32 form{exec_ir::Bar::RedPopcU32::Operands{operands}};
+  return exec_ir::Bar{std::nullopt, exec_ir::Bar::Variant{form}};
+}
 /** @brief Build a generated direct branch instruction. */
 auto bra(std::optional<exec_ir::Predicate> predicate, ProgramCounter target)
     -> exec_ir::Instruction {
@@ -1218,6 +1249,160 @@ TEST_F(InstExecuteEngineTest, PredicatedOffExitFallsThroughAndStaysReady) {
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
 }
 
+/** @brief Construct an ordinary vector transfer for focused boundary checks. */
+auto vector_memory(bool load, exec_ir::DataType type,
+                   exec_ir::VectorArity arity,
+                   exec_ir::RegisterVector registers, exec_ir::Address address,
+                   exec_ir::AddressSpace space = exec_ir::AddressSpace::global)
+    -> exec_ir::Instruction {
+  if (load) {
+    return exec_ir::Ld{std::nullopt,
+                       exec_ir::Ld::ExplicitVector{
+                           .semantics = exec_ir::MemoryConsistency::omitted,
+                           .scope = exec_ir::MemoryScope::none,
+                           .state_space = space,
+                           .cache = exec_ir::CacheOperator::unspecified,
+                           .vector = arity,
+                           .type = type,
+                           .dst = std::move(registers),
+                           .address = std::move(address)}};
+  }
+  return exec_ir::St{std::nullopt,
+                     exec_ir::St::ExplicitVector{
+                         .semantics = exec_ir::MemoryConsistency::omitted,
+                         .scope = exec_ir::MemoryScope::none,
+                         .state_space = space,
+                         .cache = exec_ir::CacheOperator::unspecified,
+                         .vector = arity,
+                         .type = type,
+                         .address = std::move(address),
+                         .src = std::move(registers)}};
+}
+
+TEST_F(InstExecuteEngineTest, VectorLoadPreflightsEveryDestination) {
+  const auto global = runtime_.address_spaces().create_global({8});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  auto memory = runtime_.address_spaces().view(global);
+  ASSERT_TRUE(memory);
+  ASSERT_TRUE(
+      memory->initialize(memory::Address{0}, std::array<std::byte, 8>{}));
+  auto registers = view(bind(LaneId{0}, {RawWidth::b32, RawWidth::b16}));
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(77U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const auto load =
+      vector_memory(true, exec_ir::DataType::u32, exec_ir::VectorArity::v2,
+                    {{RegisterSlot{0}, RegisterSlot{1}}},
+                    exec_ir::Address{RawValue::b64(std::uint64_t{0})});
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, move_fallthrough);
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(77U));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+}
+
+TEST_F(InstExecuteEngineTest, VectorStoreChecksWholeSpanBeforeMutation) {
+  const auto global = runtime_.address_spaces().create_global({4});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  auto memory = runtime_.address_spaces().view(global);
+  ASSERT_TRUE(memory);
+  const std::array original{std::byte{77}, std::byte{0}, std::byte{0},
+                            std::byte{0}};
+  ASSERT_TRUE(memory->initialize(memory::Address{0}, original));
+  auto registers = view(bind(LaneId{0}, {RawWidth::b32, RawWidth::b32}));
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(1U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(2U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const auto store =
+      vector_memory(false, exec_ir::DataType::u32, exec_ir::VectorArity::v2,
+                    {{RegisterSlot{0}, RegisterSlot{1}}},
+                    exec_ir::Address{RawValue::b64(std::uint64_t{0})});
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), store, move_fallthrough);
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(*memory->snapshot(memory::Address{0}, 4),
+            (std::vector<std::byte>{original.begin(), original.end()}));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+}
+
+TEST_F(InstExecuteEngineTest,
+       RejectsInvalidMemoryVectorsBeforeResolvingResources) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Address address{RawValue::b64(std::uint64_t{0})};
+  const exec_ir::RegisterVector pair{{RegisterSlot{0}, RegisterSlot{1}}};
+  for (const auto& operation :
+       {vector_memory(true, exec_ir::DataType::u8, exec_ir::VectorArity::v8,
+                      {{RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2},
+                        RegisterSlot{3}, RegisterSlot{4}, RegisterSlot{5},
+                        RegisterSlot{6}, RegisterSlot{7}}},
+                      address),
+        vector_memory(true, exec_ir::DataType::u32, exec_ir::VectorArity::v2,
+                      {{RegisterSlot{0}}}, address),
+        vector_memory(true, exec_ir::DataType::u32, exec_ir::VectorArity::v2,
+                      {{RegisterSlot{0}, std::nullopt}}, address),
+        vector_memory(true, exec_ir::DataType::u64, exec_ir::VectorArity::v4,
+                      {{RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2},
+                        RegisterSlot{3}}},
+                      address, exec_ir::AddressSpace::shared),
+        vector_memory(false, exec_ir::DataType::u32, exec_ir::VectorArity::v2,
+                      pair, address, exec_ir::AddressSpace::param)}) {
+    const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                        operation, move_fallthrough);
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+    EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+    EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+  }
+}
+
+TEST_F(InstExecuteEngineTest, LoadsConstantSigned64Into128BitRegister) {
+  const auto constant = runtime_.address_spaces().create_constant({8});
+  ASSERT_TRUE(runtime_.bind_constant(constant));
+  auto memory = runtime_.address_spaces().view(constant);
+  ASSERT_TRUE(memory);
+  std::array<std::byte, 8> negative_one;
+  negative_one.fill(std::byte{255});
+  ASSERT_TRUE(memory->initialize(memory::Address{0}, negative_one));
+  auto registers = view(bind(LaneId{0}, {RawWidth::b128}));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const auto load = make_load(
+      std::nullopt, exec_ir::DataType::s64, exec_ir::AddressSpace::const_,
+      RegisterSlot{0}, exec_ir::Address{RawValue::b64(std::uint64_t{0})});
+  const auto result =
+      engine_.execute(warp(), issue(initial_pc, {0}), load, move_fallthrough);
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}),
+            RawValue::b128(common::Bits128{UINT64_MAX, UINT64_MAX}));
+}
+
+TEST_F(InstExecuteEngineTest, AddressOffsetCannotWrapIntoValidMemory) {
+  const auto global = runtime_.address_spaces().create_global({4});
+  ASSERT_TRUE(runtime_.bind_global(global));
+  auto registers = view(bind(LaneId{0}, {RawWidth::b32}));
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(77U)));
+  for (const bool subtract : {false, true}) {
+    auto& thread = warp().thread(LaneId{0});
+    thread.mark_ready();
+    thread.set_pc(initial_pc);
+    const exec_ir::Address address{
+        RawValue::b64(subtract ? std::uint64_t{0} : UINT64_MAX),
+        exec_ir::AddressOffset{subtract, RawValue::b64(std::uint64_t{1})}};
+    const auto load =
+        make_load(std::nullopt, exec_ir::DataType::u32,
+                  exec_ir::AddressSpace::global, RegisterSlot{0}, address);
+    const auto result =
+        engine_.execute(warp(), issue(initial_pc, {0}), load, move_fallthrough);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(result->faults.size(), 1U);
+    EXPECT_TRUE(std::holds_alternative<memory::AddressResolutionError>(
+        result->faults[0].cause));
+    EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(77U));
+    EXPECT_EQ(thread.pc(), initial_pc);
+  }
+}
+
 TEST_F(InstExecuteEngineTest, LoadsAndStoresLittleEndianGlobalU32) {
   const auto global = runtime_.address_spaces().create_global({8});
   ASSERT_TRUE(runtime_.bind_global(global));
@@ -1554,34 +1739,31 @@ TEST_F(InstExecuteEngineTest, RejectsDisagreeingWarpSyncMembermasks) {
   EXPECT_TRUE(warp().thread(LaneId{1}).ready());
 }
 
-TEST_F(InstExecuteEngineTest,
-       RejectsUnreachableWarpSyncParticipantWithoutBeginning) {
+TEST_F(InstExecuteEngineTest, ReleasesWarpSyncWhenMissingMemberExited) {
   warp().thread(LaneId{0}).set_pc(initial_pc);
   warp().thread(LaneId{1}).set_pc(initial_pc);
   warp().thread(LaneId{1}).mark_exited();
   const exec_ir::Instruction bar = make_bar(std::nullopt, RawValue::b32(3U));
   const auto result =
       engine_.execute(warp(), issue(initial_pc, {0}), bar, ProgramCounter{11});
-  ASSERT_FALSE(result);
-  EXPECT_EQ(result.error().code,
-            StepErrorCode::collective_unreachable_participant);
-  EXPECT_EQ(result.error().lane, LaneId{1});
+  ASSERT_TRUE(result);
   EXPECT_FALSE(warp().execution_state().sync.active());
   EXPECT_TRUE(warp().thread(LaneId{0}).ready());
-  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{11});
 }
 
-TEST_F(InstExecuteEngineTest, RejectsDirectlyPredicatedWarpSyncBeforePrepare) {
+TEST_F(InstExecuteEngineTest, PredicatedOffWarpSyncFallsThrough) {
+  const auto frame = bind(LaneId{0}, {RawWidth::pred});
+  ASSERT_TRUE(view(frame).write(RegisterSlot{0}, RawValue::pred(false)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
   const exec_ir::Instruction bar =
       make_bar(exec_ir::Predicate{RegisterSlot{0}, false}, RawValue::b32(1U));
   const auto result =
       engine_.execute(warp(), issue(initial_pc, {0}), bar, ProgramCounter{11});
-  ASSERT_FALSE(result);
-  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  ASSERT_TRUE(result);
   EXPECT_FALSE(warp().execution_state().sync.active());
   EXPECT_TRUE(warp().thread(LaneId{0}).ready());
-  EXPECT_EQ(warp().thread(LaneId{0}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{11});
 }
 
 TEST_F(InstExecuteEngineTest,
@@ -1618,8 +1800,10 @@ TEST_F(InstExecuteEngineTest,
   EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
 }
 
-TEST(InstExecuteEngineWarpSyncTest, SupportsTheFinalPartialWarp) {
-  runtime::LaunchRuntime runtime{grid_id, three_lane_shape()};
+TEST(InstExecuteEngineWarpSyncTest, FullMaskIgnoresAbsentFinalWarpLanes) {
+  runtime::LaunchRuntime runtime{
+      grid_id,
+      {.cta_dim = {1, 1, 1}, .thread_dim = {3, 1, 1}, .warp_size = 32}};
   arith::context arithmetic;
   InstExecuteEngine engine{runtime, function, arithmetic};
   auto& warp = runtime.grid().cta(CtaId{grid_id, 0}).warp(0);
@@ -1631,12 +1815,340 @@ TEST(InstExecuteEngineWarpSyncTest, SupportsTheFinalPartialWarp) {
         runtime.bind_register_frame(warp.thread(lane).id(), function, *frame));
     warp.thread(lane).set_pc(initial_pc);
   }
-  const exec_ir::Instruction bar = make_bar(std::nullopt, RawValue::b32(7U));
-  const auto result = engine.execute(warp, issue(initial_pc, {0, 1, 2}), bar,
-                                     ProgramCounter{11});
+  const exec_ir::Instruction bar =
+      make_bar(std::nullopt, RawValue::b32(0xffffffffU));
+  LaneMask lanes{32};
+  for (const auto lane : {LaneId{0}, LaneId{1}, LaneId{2}}) {
+    lanes.set(lane);
+  }
+  const auto result =
+      engine.execute(warp, WarpIssueGroup{.pc = initial_pc, .lanes = lanes},
+                     bar, ProgramCounter{11});
   ASSERT_TRUE(result);
   EXPECT_FALSE(warp.execution_state().sync.active());
   EXPECT_EQ(warp.thread(LaneId{2}).pc(), ProgramCounter{11});
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     SynchronizesTwoWarpsAndMixesArriveWithSync) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {4, 1, 1}, .warp_size = 2}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& cta = runtime.grid().cta(CtaId{grid_id, 0});
+  auto& first_warp = cta.warp(0);
+  auto& second_warp = cta.warp(1);
+  const auto all_lanes = [](ProgramCounter pc) {
+    LaneMask lanes{2};
+    lanes.set(LaneId{0});
+    lanes.set(LaneId{1});
+    return WarpIssueGroup{.pc = pc, .lanes = std::move(lanes)};
+  };
+  for (auto* warp : {&first_warp, &second_warp}) {
+    for (auto& thread : *warp) {
+      thread.set_pc(initial_pc);
+    }
+  }
+
+  const auto arrive = engine.execute(first_warp, all_lanes(initial_pc),
+                                     make_cta_arrive(0, 4), ProgramCounter{11});
+  ASSERT_TRUE(arrive);
+  for (const auto& thread : first_warp) {
+    EXPECT_TRUE(thread.ready());
+    EXPECT_EQ(thread.pc(), ProgramCounter{11});
+  }
+  const auto sync = engine.execute(second_warp, all_lanes(initial_pc),
+                                   make_cta_sync(0, 4), ProgramCounter{11});
+  ASSERT_TRUE(sync);
+  EXPECT_FALSE(cta.execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{0})
+                   .active());
+  for (auto* warp : {&first_warp, &second_warp}) {
+    for (const auto& thread : *warp) {
+      EXPECT_TRUE(thread.ready());
+      EXPECT_EQ(thread.pc(), ProgramCounter{11});
+    }
+  }
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     RejectsInvalidIdAndZeroCountBeforeArrival) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {2, 1, 1}, .warp_size = 2}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& warp = runtime.grid().cta(CtaId{grid_id, 0}).warp(0);
+  LaneMask lanes{2};
+  lanes.set(LaneId{0});
+  lanes.set(LaneId{1});
+  const WarpIssueGroup group{.pc = initial_pc, .lanes = lanes};
+  for (auto& thread : warp) {
+    thread.set_pc(initial_pc);
+  }
+  for (const auto instruction : {make_cta_sync(16, 2), make_cta_sync(0, 0)}) {
+    const auto rejected =
+        engine.execute(warp, group, instruction, ProgramCounter{11});
+    ASSERT_FALSE(rejected);
+    EXPECT_EQ(rejected.error().code, StepErrorCode::collective_invalid_mask);
+    EXPECT_FALSE(warp.cta()
+                     .execution_state()
+                     .barriers.barrier(execution_model::CtaBarrierId{0})
+                     .active());
+    for (const auto& thread : warp) {
+      EXPECT_TRUE(thread.ready());
+      EXPECT_EQ(thread.pc(), initial_pc);
+    }
+  }
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     CompletionDoesNotReleaseAnotherWarpBeforeLocalConvergence) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {4, 1, 1}, .warp_size = 2}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& cta = runtime.grid().cta(CtaId{grid_id, 0});
+  auto& completing_warp = cta.warp(0);
+  auto& partial_warp = cta.warp(1);
+  const auto group = [](ProgramCounter pc,
+                        std::initializer_list<unsigned> ids) {
+    LaneMask lanes{2};
+    for (const auto id : ids) {
+      lanes.set(LaneId{id});
+    }
+    return WarpIssueGroup{.pc = pc, .lanes = std::move(lanes)};
+  };
+  for (auto& thread : completing_warp) {
+    thread.set_pc(initial_pc);
+  }
+  partial_warp.thread(LaneId{0}).set_pc(initial_pc);
+  partial_warp.thread(LaneId{1}).set_pc(ProgramCounter{20});
+
+  ASSERT_TRUE(engine.execute(partial_warp, group(initial_pc, {0}),
+                             make_cta_sync(0, 2), ProgramCounter{11}));
+  ASSERT_TRUE(engine.execute(completing_warp, group(initial_pc, {0, 1}),
+                             make_cta_sync(0, 2), ProgramCounter{11}));
+  EXPECT_TRUE(partial_warp.thread(LaneId{0}).waiting());
+  EXPECT_EQ(partial_warp.thread(LaneId{0}).pc(), initial_pc);
+  EXPECT_TRUE(cta.execution_state()
+                  .barriers.barrier(execution_model::CtaBarrierId{0})
+                  .active());
+
+  partial_warp.thread(LaneId{1}).set_pc(initial_pc);
+  ASSERT_TRUE(engine.execute(partial_warp, group(initial_pc, {1}),
+                             make_cta_sync(0, 2), ProgramCounter{11}));
+  EXPECT_FALSE(cta.execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{0})
+                   .active());
+  for (const auto& thread : partial_warp) {
+    EXPECT_TRUE(thread.ready());
+    EXPECT_EQ(thread.pc(), ProgramCounter{11});
+  }
+}
+
+TEST_F(InstExecuteEngineTest, RejectsSiblingWarpBarrierAtAnotherResource) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(ProgramCounter{20});
+  ASSERT_TRUE(engine_.execute(warp(), issue(initial_pc, {0}), make_cta_sync(0),
+                              ProgramCounter{11}));
+  const auto rejected = engine_.execute(warp(), issue(ProgramCounter{20}, {1}),
+                                        make_cta_sync(1), ProgramCounter{21});
+  ASSERT_FALSE(rejected);
+  EXPECT_EQ(rejected.error().code, StepErrorCode::collective_pending_mismatch);
+  EXPECT_TRUE(warp().thread(LaneId{0}).waiting());
+  EXPECT_TRUE(warp().thread(LaneId{1}).ready());
+  EXPECT_FALSE(warp()
+                   .cta()
+                   .execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{1})
+                   .active());
+}
+
+TEST_F(InstExecuteEngineTest, ExitReleasesAWaitingCtaBarrierWarp) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(ProgramCounter{20});
+  const auto first = engine_.execute(warp(), issue(initial_pc, {0}),
+                                     make_cta_sync(0), ProgramCounter{11});
+  ASSERT_TRUE(first);
+  EXPECT_TRUE(warp().thread(LaneId{0}).waiting());
+  const auto exit_result = engine_.execute(
+      warp(), issue(ProgramCounter{20}, {1}), exit(), std::nullopt);
+  ASSERT_TRUE(exit_result);
+  EXPECT_TRUE(warp().thread(LaneId{1}).exited());
+  EXPECT_TRUE(warp().thread(LaneId{0}).ready());
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{11});
+  EXPECT_FALSE(warp()
+                   .cta()
+                   .execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{0})
+                   .active());
+}
+
+TEST_F(InstExecuteEngineTest,
+       RejectsSamePcCtaBarrierArrivalWithDifferentSuccessorWithoutMutation) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  ASSERT_TRUE(engine_.execute(warp(), issue(initial_pc, {0}), make_cta_sync(0),
+                              ProgramCounter{11}));
+  const auto rejected = engine_.execute(warp(), issue(initial_pc, {1}),
+                                        make_cta_sync(0), ProgramCounter{12});
+  ASSERT_FALSE(rejected);
+  EXPECT_EQ(rejected.error().code, StepErrorCode::collective_pending_mismatch);
+  EXPECT_TRUE(warp().thread(LaneId{0}).waiting());
+  EXPECT_TRUE(warp().thread(LaneId{1}).ready());
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+}
+
+TEST_F(InstExecuteEngineTest, RejectsCtaBarrierWhileWarpSyncIsPending) {
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  ASSERT_TRUE(engine_.execute(warp(), issue(initial_pc, {0}),
+                              make_bar(std::nullopt, RawValue::b32(3U)),
+                              ProgramCounter{11}));
+  const auto rejected = engine_.execute(warp(), issue(initial_pc, {1}),
+                                        make_cta_sync(0), ProgramCounter{12});
+  ASSERT_FALSE(rejected);
+  EXPECT_EQ(rejected.error().code, StepErrorCode::collective_pending_mismatch);
+  EXPECT_TRUE(warp().thread(LaneId{0}).waiting());
+  EXPECT_TRUE(warp().thread(LaneId{1}).ready());
+  EXPECT_FALSE(warp()
+                   .cta()
+                   .execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{0})
+                   .active());
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     RejectsMixedProtocolCountMismatchAndDuplicateArrival) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {2, 1, 1}, .warp_size = 1}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& cta = runtime.grid().cta(CtaId{grid_id, 0});
+  auto& first_warp = cta.warp(0);
+  auto& second_warp = cta.warp(1);
+  const auto group = [](ProgramCounter pc) {
+    LaneMask lanes{1};
+    lanes.set(LaneId{0});
+    return WarpIssueGroup{.pc = pc, .lanes = std::move(lanes)};
+  };
+  for (auto* warp : {&first_warp, &second_warp}) {
+    warp->thread(LaneId{0}).set_pc(initial_pc);
+  }
+  const auto first = engine.execute(first_warp, group(initial_pc),
+                                    make_cta_sync(0, 2), ProgramCounter{11});
+  ASSERT_TRUE(first);
+
+  const auto second_frame = runtime.registers().create_frame(
+      {.slot_widths = {RawWidth::b32, RawWidth::pred}});
+  ASSERT_TRUE(second_frame);
+  ASSERT_TRUE(runtime.bind_register_frame(second_warp.thread(LaneId{0}).id(),
+                                          function, *second_frame));
+  auto registers = runtime.registers().view(*second_frame);
+  ASSERT_TRUE(registers);
+  ASSERT_TRUE(registers->write(RegisterSlot{1}, RawValue::pred(true)));
+  const auto mixed = engine.execute(
+      second_warp, group(initial_pc),
+      make_cta_red_popc(RegisterSlot{0}, 0,
+                        exec_ir::Predicate{RegisterSlot{1}, false}),
+      ProgramCounter{11});
+  ASSERT_FALSE(mixed);
+  EXPECT_EQ(mixed.error().code, StepErrorCode::collective_pending_mismatch);
+  EXPECT_TRUE(first_warp.thread(LaneId{0}).waiting());
+  EXPECT_TRUE(second_warp.thread(LaneId{0}).ready());
+
+  const auto mismatched = engine.execute(
+      second_warp, group(initial_pc), make_cta_sync(0, 1), ProgramCounter{11});
+  ASSERT_FALSE(mismatched);
+  EXPECT_EQ(mismatched.error().code,
+            StepErrorCode::collective_pending_mismatch);
+  first_warp.thread(LaneId{0}).mark_ready();
+  const auto duplicate = engine.execute(
+      first_warp, group(initial_pc), make_cta_sync(0, 2), ProgramCounter{11});
+  ASSERT_FALSE(duplicate);
+  EXPECT_EQ(duplicate.error().code,
+            StepErrorCode::collective_duplicate_arrival);
+  EXPECT_TRUE(cta.execution_state()
+                  .barriers.barrier(execution_model::CtaBarrierId{0})
+                  .active());
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     DeferredRemoteReductionFaultUsesOwningWarpAndTrapsOwningLane) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {2, 1, 1}, .warp_size = 1}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& cta = runtime.grid().cta(CtaId{grid_id, 0});
+  auto& first_warp = cta.warp(0);
+  auto& second_warp = cta.warp(1);
+  const auto group = [](ProgramCounter pc) {
+    LaneMask lanes{1};
+    lanes.set(LaneId{0});
+    return WarpIssueGroup{.pc = pc, .lanes = std::move(lanes)};
+  };
+  const auto bind = [&](Warp& warp) {
+    const auto frame = runtime.registers().create_frame(
+        {.slot_widths = {RawWidth::b32, RawWidth::pred}});
+    EXPECT_TRUE(frame);
+    EXPECT_TRUE(runtime.bind_register_frame(warp.thread(LaneId{0}).id(),
+                                            function, *frame));
+    auto registers = runtime.registers().view(*frame);
+    EXPECT_TRUE(registers);
+    EXPECT_TRUE(registers->write(RegisterSlot{1}, RawValue::pred(true)));
+    return *frame;
+  };
+  const auto first_frame = bind(first_warp);
+  bind(second_warp);
+  first_warp.thread(LaneId{0}).set_pc(initial_pc);
+  second_warp.thread(LaneId{0}).set_pc(initial_pc);
+  const auto reduction = make_cta_red_popc(
+      RegisterSlot{0}, 0, exec_ir::Predicate{RegisterSlot{1}, false});
+  ASSERT_TRUE(engine.execute(first_warp, group(initial_pc), reduction,
+                             ProgramCounter{11}));
+  ASSERT_TRUE(runtime.registers().destroy_frame(first_frame));
+  const auto released = engine.execute(second_warp, group(initial_pc),
+                                       reduction, ProgramCounter{11});
+  ASSERT_TRUE(released);
+  ASSERT_EQ(released->faults.size(), 1U);
+  EXPECT_EQ(released->faults.front().lane, LaneId{0});
+  EXPECT_EQ(released->faults.front().warp, first_warp.id());
+  EXPECT_TRUE(first_warp.thread(LaneId{0}).trapped());
+  EXPECT_FALSE(second_warp.thread(LaneId{0}).trapped());
+}
+
+TEST(InstExecuteEngineCtaBarrierTest,
+     ExitCompletesExplicitSubsetWithoutWaitingForAnUnrelatedLiveWarp) {
+  runtime::LaunchRuntime runtime{
+      grid_id, {.cta_dim = {1, 1, 1}, .thread_dim = {4, 1, 1}, .warp_size = 2}};
+  arith::context arithmetic;
+  InstExecuteEngine engine{runtime, function, arithmetic};
+  auto& cta = runtime.grid().cta(CtaId{grid_id, 0});
+  auto& unrelated = cta.warp(0);
+  auto& participating = cta.warp(1);
+  const auto group = [](ProgramCounter pc,
+                        std::initializer_list<unsigned> ids) {
+    LaneMask lanes{2};
+    for (const auto id : ids) {
+      lanes.set(LaneId{id});
+    }
+    return WarpIssueGroup{.pc = pc, .lanes = std::move(lanes)};
+  };
+  for (auto& thread : unrelated) {
+    thread.set_pc(ProgramCounter{30});
+  }
+  participating.thread(LaneId{0}).set_pc(initial_pc);
+  participating.thread(LaneId{1}).set_pc(ProgramCounter{20});
+  ASSERT_TRUE(engine.execute(participating, group(initial_pc, {0}),
+                             make_cta_sync(0, 2), ProgramCounter{11}));
+  ASSERT_TRUE(engine.execute(participating, group(ProgramCounter{20}, {1}),
+                             exit(), std::nullopt));
+  EXPECT_TRUE(unrelated.thread(LaneId{0}).ready());
+  EXPECT_TRUE(participating.thread(LaneId{0}).ready());
+  EXPECT_EQ(participating.thread(LaneId{0}).pc(), ProgramCounter{11});
+  EXPECT_FALSE(cta.execution_state()
+                   .barriers.barrier(execution_model::CtaBarrierId{0})
+                   .active());
 }
 
 }  // namespace

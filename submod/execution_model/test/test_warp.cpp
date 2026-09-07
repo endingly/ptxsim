@@ -22,10 +22,10 @@ struct WarpWithoutIssueEngine {
 };
 
 template <typename Engine>
-concept WarpStepCallable = requires(Warp& warp, Engine& engine,
-                                    const WarpIssueGroup& issue) {
-  warp.step(engine, issue);
-};
+concept WarpStepCallable =
+    requires(Warp& warp, Engine& engine, const WarpIssueGroup& issue) {
+      warp.step(engine, issue);
+    };
 
 static_assert(WarpStepCallable<WarpOnlyEngine>);
 static_assert(!WarpStepCallable<WarpWithoutIssueEngine>);
@@ -380,11 +380,13 @@ TEST(WarpRendezvousTest, StartsWithNoArrivals) {
 
   WarpRendezvous rendezvous{
       ProgramCounter{100},
+      ProgramCounter{101},
       7,
       participants,
   };
 
   EXPECT_EQ(rendezvous.pc(), ProgramCounter{100});
+  EXPECT_EQ(rendezvous.successor(), ProgramCounter{101});
   EXPECT_EQ(rendezvous.generation(), 7u);
 
   EXPECT_EQ(rendezvous.participants().count(), 3u);
@@ -401,6 +403,7 @@ TEST(WarpRendezvousTest, SingleLaneArrivalIsRecorded) {
 
   WarpRendezvous rendezvous{
       ProgramCounter{17},
+      ProgramCounter{18},
       0,
       participants,
   };
@@ -422,6 +425,7 @@ TEST(WarpRendezvousTest, CompletesWhenAllParticipantsArrive) {
 
   WarpRendezvous rendezvous{
       ProgramCounter{17},
+      ProgramCounter{18},
       0,
       participants,
   };
@@ -446,6 +450,7 @@ TEST(WarpRendezvousTest, MultipleLanesMayArriveAsMask) {
 
   WarpRendezvous rendezvous{
       ProgramCounter{77},
+      ProgramCounter{78},
       2,
       participants,
   };
@@ -487,7 +492,8 @@ TEST(WarpSyncStateTest, BeginCreatesPendingRendezvous) {
   participants.set(LaneId{0});
   participants.set(LaneId{1});
 
-  auto& rendezvous = state.begin(ProgramCounter{10}, participants);
+  auto& rendezvous =
+      state.begin(ProgramCounter{10}, participants, ProgramCounter{11});
 
   EXPECT_TRUE(state.active());
 
@@ -506,7 +512,8 @@ TEST(WarpSyncStateTest, CompletedRendezvousCanBeCleared) {
   participants.set(LaneId{0});
   participants.set(LaneId{1});
 
-  auto& rendezvous = state.begin(ProgramCounter{10}, participants);
+  auto& rendezvous =
+      state.begin(ProgramCounter{10}, participants, ProgramCounter{11});
 
   rendezvous.arrive(LaneId{0});
   rendezvous.arrive(LaneId{1});
@@ -525,7 +532,8 @@ TEST(WarpSyncStateTest, GenerationIncreasesAcrossRendezvous) {
     LaneMask participants{32};
     participants.set(LaneId{0});
 
-    auto& rendezvous = state.begin(ProgramCounter{20}, participants);
+    auto& rendezvous =
+        state.begin(ProgramCounter{20}, participants, ProgramCounter{21});
 
     EXPECT_EQ(rendezvous.generation(), 0u);
 
@@ -537,7 +545,8 @@ TEST(WarpSyncStateTest, GenerationIncreasesAcrossRendezvous) {
     LaneMask participants{32};
     participants.set(LaneId{0});
 
-    auto& rendezvous = state.begin(ProgramCounter{20}, participants);
+    auto& rendezvous =
+        state.begin(ProgramCounter{20}, participants, ProgramCounter{21});
 
     EXPECT_EQ(rendezvous.generation(), 1u);
 
@@ -555,7 +564,7 @@ TEST(WarpSyncStateTest, ResetDiscardsPendingRendezvous) {
   participants.set(LaneId{0});
   participants.set(LaneId{1});
 
-  state.begin(ProgramCounter{10}, participants);
+  state.begin(ProgramCounter{10}, participants, ProgramCounter{11});
 
   ASSERT_TRUE(state.active());
 
@@ -591,7 +600,8 @@ TEST(WarpTest, WarpOwnsPersistentExecutionState) {
   participants.set(LaneId{0});
   participants.set(LaneId{1});
 
-  auto& rendezvous = state.sync.begin(ProgramCounter{25}, participants);
+  auto& rendezvous =
+      state.sync.begin(ProgramCounter{25}, participants, ProgramCounter{26});
 
   rendezvous.arrive(LaneId{0});
 
@@ -633,8 +643,8 @@ TEST(WarpTest, WarpAndThreadAddressesRemainStableDuringRuntimeMutation) {
   LaneMask participants{32};
   participants.set(LaneId{7});
 
-  auto& rendezvous =
-      warp->execution_state().sync.begin(ProgramCounter{100}, participants);
+  auto& rendezvous = warp->execution_state().sync.begin(
+      ProgramCounter{100}, participants, ProgramCounter{101});
 
   rendezvous.arrive(LaneId{7});
 

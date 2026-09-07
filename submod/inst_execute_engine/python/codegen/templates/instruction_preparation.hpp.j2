@@ -25,6 +25,16 @@ auto prepare_{{ operation.opcode }}(LaneResourceResolver& resolver, const arith:
     -> std::expected<PreparedEffect, LaneFaultCause>;
 
 {% endfor %}
+{% for operation in memory_operations %}/** @brief Validate the projected {{ operation.cpp_name }} form before any lane resources are read. */
+auto validate_{{ operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Prepare every supported ordinary {{ operation.cpp_name }} form without mutation. */
+auto prepare_{{ operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                 const exec_ir::Instruction& instruction,
+                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause>;
+
+{% endfor %}
 /** @brief Validate the projected {{ setp_operation.cpp_name }} form before any lane resources are read. */
 auto validate_{{ setp_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
 
@@ -33,6 +43,33 @@ auto validate_{{ setp_operation.opcode }}(const exec_ir::Instruction& instructio
  * @pre @ref validate_{{ setp_operation.opcode }} has accepted @p instruction and @p successor is set.
  */
 auto prepare_{{ setp_operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                 const exec_ir::Instruction& instruction,
+                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause>;
+
+/** @brief Validate every projected collective {{ bar_operation.cpp_name }} form before lane resources are read. */
+auto validate_{{ bar_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Prepare every projected {{ bar_operation.cpp_name }} collective form without mutation. */
+auto prepare_{{ bar_operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                 const exec_ir::Instruction& instruction,
+                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause>;
+
+/** @brief Validate the projected direct {{ bra_operation.cpp_name }} form before control selection. */
+auto validate_{{ bra_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Prepare the projected direct {{ bra_operation.cpp_name }} form without resolving lane resources. */
+auto prepare_{{ bra_operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                 const exec_ir::Instruction& instruction,
+                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause>;
+
+/** @brief Validate the projected bare {{ exit_operation.cpp_name }} form before control selection. */
+auto validate_{{ exit_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Prepare the projected bare {{ exit_operation.cpp_name }} form without resolving lane resources. */
+auto prepare_{{ exit_operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
                  const exec_ir::Instruction& instruction,
                  std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause>;

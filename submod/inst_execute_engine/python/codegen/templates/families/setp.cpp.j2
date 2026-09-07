@@ -43,11 +43,11 @@ auto {{ form.function_name }}(LaneResourceResolver& resolver, const arith::conte
 {% endif %}{% else %}  const bool primary = *comparison;
 {% if form.pair_destination %}  const bool secondary = !*comparison;
 {% endif %}{% endif %}  return PreparedEffect{
-      .write = PreparedWrite{registers->get(), form.{{ form.destination.name }}{% if form.pair_destination %}.first{% endif %}.source,
-                             value_codec<bool>::encode({% if form.combine %}*{% endif %}primary)},
-{% if form.pair_destination %}      .second_write = PreparedWrite{registers->get(), form.{{ form.destination.name }}.second.source,
-                                            value_codec<bool>::encode({% if form.combine %}*{% endif %}secondary)},
-{% endif %}      .memory_write = std::nullopt,
+      .writes = {PreparedWrite{registers->get(), form.{{ form.destination.name }}{% if form.pair_destination %}.first{% endif %}.source,
+                                      value_codec<bool>::encode({% if form.combine %}*{% endif %}primary)}{% if form.pair_destination %},
+                 PreparedWrite{registers->get(), form.{{ form.destination.name }}.second.source,
+                                      value_codec<bool>::encode({% if form.combine %}*{% endif %}secondary)}{% endif %}},
+      .memory_write = std::nullopt,
       .control = *successor};
 }
 {% endmacro %}

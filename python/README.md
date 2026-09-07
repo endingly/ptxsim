@@ -9,7 +9,7 @@ maps import packages to their owning C++ modules:
 | `ptxsim_codegen.exec_ir` | `submod/exec_ir/python/codegen` | Target model, backend mappings, IR declarations and diagnostics |
 | `ptxsim_codegen.exec_ir.instructions` | `submod/exec_ir/python/instructions` | Packaged backend YAML |
 | `ptxsim_codegen.exec_ir_lowering` | `submod/exec_ir_lowering/python/codegen` | Frontend-to-execution-IR lowering |
-| `ptxsim_codegen.inst_execute_engine` | `submod/inst_execute_engine/python/codegen` | Private numeric and predicate execution preparation |
+| `ptxsim_codegen.inst_execute_engine` | `submod/inst_execute_engine/python/codegen` | Private numeric, predicate, memory, control-flow and barrier execution preparation |
 
 Lowering imports the execution-IR model and mappings; execution-IR generation
 does not import lowering. The pinned `ptx_frontend` dependency lives only in
@@ -37,8 +37,9 @@ through the editable installation.
 Execution preparation uses Jinja2 templates in
 `submod/inst_execute_engine/python/codegen/templates/`. Python validates the
 projected instruction model and derives operand paths/types; templates render
-the C++ file layout, dispatch and execution-family preparation flow. Only the
-implemented ValueALU family has a template. Arithmetic semantics and commit
+the C++ file layout, dispatch and execution-family preparation flow. Numeric,
+predicate-comparison and memory-transfer families have separate templates.
+Arithmetic semantics, memory-transfer helpers and commit
 remain handwritten C++. The other two generators retain their existing emitters.
 
 Templates are loaded from the installed Python package with strict undefined

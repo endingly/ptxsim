@@ -313,7 +313,7 @@ auto read_value(const memory::RegisterView& registers, const Operand& operand)
 
 /** @brief Read one predicate source and apply its declared logical inversion. */
 inline auto read_predicate(const memory::RegisterView& registers,
-                    exec_ir::Predicate predicate)
+                           exec_ir::Predicate predicate)
     -> std::expected<bool, LaneFaultCause> {
   const auto value = read_value<bool>(registers, predicate.source);
   if (!value)
@@ -340,10 +340,11 @@ template <ValueCodec T>
 auto stage_register_write(const memory::RegisterView& registers,
                           common::RegisterSlot destination, T value,
                           common::ProgramCounter successor) -> PreparedEffect {
-  return PreparedEffect{.write = PreparedWrite{registers, destination,
-                                               value_codec<T>::encode(value)},
-                        .memory_write = std::nullopt,
-                        .control = successor};
+  return PreparedEffect{
+      .writes = {PreparedWrite{registers, destination,
+                               value_codec<T>::encode(value)}},
+      .memory_write = std::nullopt,
+      .control = successor};
 }
 
 }  // namespace ptxsim::inst_execute_engine::detail

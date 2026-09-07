@@ -22,7 +22,7 @@ add_custom_command(
     DEPENDS "${PROJECT_SOURCE_DIR}/setup.cfg"
             "${PROJECT_SOURCE_DIR}/pyproject.toml"
             ${PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES}
-    COMMENT "Generating PTXSim ValueALU execution preparation"
+    COMMENT "Generating PTXSim instruction-family execution preparation"
     VERBATIM)
 add_custom_target(ptxsim_inst_execute_engine_codegen DEPENDS
     "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER}"

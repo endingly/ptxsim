@@ -13,7 +13,7 @@
 namespace ptxsim::inst_execute_engine::detail {
 
 /** @brief Selects whether a prepared instruction commits lane-wise or together. */
-enum class PrepareKind { scalar, warp_sync };
+enum class PrepareKind { scalar, warp_sync, cta_barrier };
 
 /** @brief Result of selecting an implemented instruction form. */
 struct SelectedPreparer {
