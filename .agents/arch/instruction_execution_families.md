@@ -175,9 +175,41 @@ and same-width register policies must retain their declared width checks;
 unsupported type expressions or policies must fail generation rather than
 silently falling back to a same-width operation.
 
+## Setp scope
+
+The pinned frontend exposes five predicate-comparison forms: `LtU32`, `GeS32`,
+`LtAndU32`, `EqU32Pair`, and `LtAndS32Pair`. A predicate-comparison family derives
+operand access, source types, predicate destination shape, combine-input shape
+and modifier constraints from that projection. It must not force predicate
+destinations into the numeric ValueALU family. Handwritten comparison semantics
+live under `src/semantics/` and use exact native signed/unsigned integer
+comparisons; the current `arith::compare` API supports floating types only.
+The shared lowering leaf binder also supports predicate pairs by binding both
+members through the existing predicate binder; generated Setp lowering requires
+no opcode-specific implementation.
+
+For comparison result `t`, a bare pair yields `(t, !t)`. Boolean combination
+yields `(t && c, !t && c)`, so the second result is not generally the negation of
+the first final result. Only the single-destination unsigned AND form exposes
+a negatable combine predicate in this specification. Destination negation and
+out-of-form comparison/Boolean selectors are invalid IR, not ignored flags.
+
+Both predicate destinations are validated before either write. All comparison
+and combine inputs are captured before commit, including when an input aliases
+a destination. A bounded second staged register write extends the existing
+synchronous prepare/commit contract; this does not introduce general transactions
+or concurrent register-frame mutation. Existing execution-predicate suppression,
+lane fault isolation and authoritative thread PC behavior remain unchanged.
+The pinned frontend does not require pair destinations to be distinct. The
+engine retains aliases and commits in destination order (p then q), so q is
+the final value when both destinations name the same slot.
+
+Floating comparisons, other comparison/Boolean combinations and predicate sinks
+are not exposed by the pinned Setp projection and are outside this integration.
+
 ## Verification and build contracts
 
-- Exercise every declared Add/Sub/Mul form/type through generated code, and cover its
+- Exercise every declared Add/Sub/Mul/Setp form/type through generated code, and cover its
   controls, boundary encodings, signed zero, NaNs, subnormals, saturation and
   packed lanes with independently specified expected values.
 - Parse/resolve/lower/execute real PTX samples to catch unreachable engine paths.

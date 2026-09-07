@@ -141,6 +141,24 @@ PTXSIM_VALUE_ALU_INTEGER_CODEC(std::int64_t, b64);
 
 #undef PTXSIM_VALUE_ALU_INTEGER_CODEC
 
+/** @brief Exact predicate codec used by predicate-producing execution forms. */
+template <>
+struct value_codec<bool> {
+  /** Predicate results occupy one architectural predicate register. */
+  static constexpr common::RawWidth width = common::RawWidth::pred;
+
+  /** @brief Decode one architectural predicate value. */
+  static auto decode(const common::RawValue& value)
+      -> std::expected<bool, common::RawValueError> {
+    return value.as_pred();
+  }
+
+  /** @brief Encode one architectural predicate value. */
+  static auto encode(bool value) -> common::RawValue {
+    return common::RawValue::pred(value);
+  }
+};
+
 /** @brief Codec specialization for scalar floating formats stored as raw bits. */
 template <typename T, common::RawWidth Width>
   requires((std::same_as<T, arith::float16_t> ||
@@ -291,6 +309,16 @@ auto read_value(const memory::RegisterView& registers, const Operand& operand)
   if (!value)
     return std::unexpected(LaneFaultCause{value.error()});
   return *value;
+}
+
+/** @brief Read one predicate source and apply its declared logical inversion. */
+inline auto read_predicate(const memory::RegisterView& registers,
+                    exec_ir::Predicate predicate)
+    -> std::expected<bool, LaneFaultCause> {
+  const auto value = read_value<bool>(registers, predicate.source);
+  if (!value)
+    return std::unexpected(value.error());
+  return predicate.negated ? !*value : *value;
 }
 
 /** @brief Confirm that a destination register has the exact result width. */

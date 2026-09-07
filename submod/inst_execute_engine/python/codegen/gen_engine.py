@@ -1,4 +1,4 @@
-"""Emit the private ValueALU preparation path from projected frontend records."""
+"""Emit private execution-preparation paths from projected frontend records."""
 
 from __future__ import annotations
 
@@ -19,6 +19,9 @@ from ptx_frontend.ir.resolved_ir import (
 from ptxsim_codegen.exec_ir.model import GenerationError, ProjectedForm, ProjectedInstruction
 from ptxsim_codegen.exec_ir.cpp_names import instruction_cpp_name
 
+from .setp_family import _CODECS as _SETP_CODECS
+from .setp_family import SetpOperation, setp_operation
+
 
 _CODECS = {
     "u16": "std::uint16_t", "u32": "std::uint32_t", "u64": "std::uint64_t",
@@ -38,6 +41,7 @@ _TEMPLATES = Environment(
     keep_trailing_newline=True,
     newline_sequence="\n",
 )
+_TEMPLATES.filters["setp_codec"] = _SETP_CODECS.__getitem__
 
 
 @dataclass(frozen=True)
@@ -269,7 +273,7 @@ def _operand_codec(operand: _Operand, selected: dict[str, str]) -> str:
 
 
 def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) -> tuple[str, str]:
-    """Return generated artifacts for every enabled ValueALU operation."""
+    """Return generated artifacts for enabled ValueALU and Setp operations."""
     bindings = {"add": _value_alu_forms, "sub": _value_alu_forms, "mul": _value_alu_forms}
     projected_by_opcode = {instruction.opcode: instruction for instruction in projected}
     operations = []
@@ -280,12 +284,17 @@ def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) ->
         operations.append(
             _ValueAluOperation(opcode, instruction_cpp_name(opcode), bind(instruction))
         )
+    setp = projected_by_opcode.get("setp")
+    if setp is None:
+        raise GenerationError("projected frontend has no setp instruction")
+    setp_family: SetpOperation = setp_operation(setp)
     return (
         _TEMPLATES.get_template("instruction_preparation.hpp.j2").render(
-            operations=operations
+            operations=operations, setp_operation=setp_family
         ),
         _TEMPLATES.get_template("instruction_preparation.cpp.j2").render(
             operations=operations,
+            setp_operation=setp_family,
             header_name=header_path.name,
         ),
     )

@@ -50,6 +50,11 @@ using PreparedControl = std::variant<common::ProgramCounter, ExitControl>;
 struct PreparedEffect {
   /** Optional register write applied before a pending memory write. */
   std::optional<PreparedWrite> write;
+  /**
+   * Optional second register write preflighted with @ref write before either
+   * mutation; when both destinations alias, this write deterministically wins.
+   */
+  std::optional<PreparedWrite> second_write;
   /** Optional memory write validated during preparation. */
   std::optional<PreparedMemoryWrite> memory_write;
   /** Control state to apply after data effects commit. */

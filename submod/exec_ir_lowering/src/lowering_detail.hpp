@@ -136,6 +136,18 @@ template <typename Target, typename Source>
     if (!slot)
       return std::unexpected(slot.error());
     return exec_ir::Predicate{*slot, source.negated};
+  } else if constexpr (std::same_as<Target, exec_ir::PredicatePair> &&
+                       std::same_as<
+                           SourceValue,
+                           ptx_frontend::resolved_ir::ResolvedPredicatePair>) {
+    const auto first = bind_operand<exec_ir::Predicate>(source.first, context);
+    if (!first)
+      return std::unexpected(first.error());
+    const auto second =
+        bind_operand<exec_ir::Predicate>(source.second, context);
+    if (!second)
+      return std::unexpected(second.error());
+    return exec_ir::PredicatePair{*first, *second};
   } else if constexpr (std::same_as<Target, exec_ir::MovSource> &&
                        std::same_as<
                            SourceValue,

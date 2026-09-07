@@ -96,21 +96,6 @@ auto b64_destination(const memory::RegisterView& registers,
   return {};
 }
 
-/** @brief Verify that a scalar destination is a predicate register. */
-auto predicate_destination(const memory::RegisterView& registers,
-                           common::RegisterSlot destination)
-    -> std::expected<void, LaneFaultCause> {
-  const auto width = registers.declared_width(destination);
-  if (!width) {
-    return std::unexpected(LaneFaultCause{width.error()});
-  }
-  if (*width != common::RawWidth::pred) {
-    return std::unexpected(
-        LaneFaultCause{common::RawValueError{common::RawWidth::pred, *width}});
-  }
-  return {};
-}
-
 /** @brief Stage one b32 scalar move without changing its destination frame. */
 auto prepare_operation(const memory::RegisterView& registers,
                        const execution_model::Thread& thread,
@@ -154,32 +139,6 @@ auto prepare_move_b64_operation(const memory::RegisterView& registers,
                                                common::RawValue::b64(*value)},
                         .memory_write = std::nullopt,
                         .control = successor};
-}
-
-/** @brief Stage one unsigned less-than predicate comparison without mutation. */
-auto prepare_operation(const memory::RegisterView& registers,
-                       const exec_ir::Setp& operation,
-                       common::ProgramCounter successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto& form = std::get<exec_ir::Setp::LtU32>(operation.variant);
-  const auto lhs = b32_operand(registers, form.src1);
-  if (!lhs) {
-    return std::unexpected(lhs.error());
-  }
-  const auto rhs = b32_operand(registers, form.src2);
-  if (!rhs) {
-    return std::unexpected(rhs.error());
-  }
-  if (const auto destination =
-          predicate_destination(registers, form.dst.source);
-      !destination) {
-    return std::unexpected(destination.error());
-  }
-  return PreparedEffect{
-      .write = PreparedWrite{registers, form.dst.source,
-                             common::RawValue::pred(*lhs < *rhs)},
-      .memory_write = std::nullopt,
-      .control = successor};
 }
 
 /**
@@ -354,19 +313,6 @@ auto prepare_move_b64(LaneResourceResolver& resolver, const arith::context&,
       view->get(), std::get<exec_ir::Mov>(operation), *successor);
 }
 
-/** @brief Adapt u32 less-than comparison to the common opcode dispatch signature. */
-auto prepare_setp_lt_u32(LaneResourceResolver& resolver, const arith::context&,
-                         const exec_ir::Instruction& operation,
-                         std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto view = resolver.resolve();
-  if (!view) {
-    return std::unexpected(view.error());
-  }
-  return prepare_operation(view->get(), std::get<exec_ir::Setp>(operation),
-                           *successor);
-}
-
 /** @brief Adapt the u32 load record to the common opcode dispatch signature. */
 auto prepare_load_u32(LaneResourceResolver& resolver, const arith::context&,
                       const exec_ir::Instruction& operation,
@@ -504,16 +450,13 @@ auto select_mul(const exec_ir::Instruction& operation)
   return SelectedPreparer{generated::prepare_mul, PrepareKind::scalar};
 }
 
-/** @brief Select only the scalar unsigned less-than predicate comparison. */
+/** @brief Select every generated and structurally valid projected Setp form. */
 auto select_setp(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  const auto& setp = std::get<exec_ir::Setp>(operation);
-  if (!std::holds_alternative<exec_ir::Setp::LtU32>(setp.variant) ||
-      std::get<exec_ir::Setp::LtU32>(setp.variant).comparison !=
-          exec_ir::ComparisonOperator::lt) {
-    return unsupported_instruction();
+  if (!generated::validate_setp(operation)) {
+    return std::unexpected(StepErrorCode::invalid_instruction);
   }
-  return SelectedPreparer{prepare_setp_lt_u32, PrepareKind::scalar};
+  return SelectedPreparer{generated::prepare_setp, PrepareKind::scalar};
 }
 
 /** @brief Select only validated scalar-load address spaces and u32 handling. */

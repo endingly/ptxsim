@@ -9,7 +9,7 @@ maps import packages to their owning C++ modules:
 | `ptxsim_codegen.exec_ir` | `submod/exec_ir/python/codegen` | Target model, backend mappings, IR declarations and diagnostics |
 | `ptxsim_codegen.exec_ir.instructions` | `submod/exec_ir/python/instructions` | Packaged backend YAML |
 | `ptxsim_codegen.exec_ir_lowering` | `submod/exec_ir_lowering/python/codegen` | Frontend-to-execution-IR lowering |
-| `ptxsim_codegen.inst_execute_engine` | `submod/inst_execute_engine/python/codegen` | Private Add/Sub/Mul execution preparation |
+| `ptxsim_codegen.inst_execute_engine` | `submod/inst_execute_engine/python/codegen` | Private numeric and predicate execution preparation |
 
 Lowering imports the execution-IR model and mappings; execution-IR generation
 does not import lowering. The pinned `ptx_frontend` dependency lives only in

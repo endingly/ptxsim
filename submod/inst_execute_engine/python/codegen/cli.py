@@ -15,7 +15,7 @@ from .gen_engine import artifacts
 
 
 def main() -> None:
-    """Validate projected frontend input and emit private ValueALU preparation."""
+    """Validate projected frontend input and emit private execution preparation."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", type=Path)
     parser.add_argument("--spec-dir", type=Path)

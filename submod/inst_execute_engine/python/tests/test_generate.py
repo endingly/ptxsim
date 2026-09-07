@@ -1,4 +1,4 @@
-"""Checks for the projected Add, Sub, and Mul ValueALU emitter."""
+"""Checks for projected ValueALU and predicate-comparison emitters."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from jinja2 import UndefinedError
 
 from ptxsim_codegen.exec_ir.inputs import load_backend, load_projected
 from ptxsim_codegen.inst_execute_engine.gen_engine import _TEMPLATES, _value_alu_forms, artifacts
+from ptxsim_codegen.inst_execute_engine.setp_family import setp_operation
 from ptxsim_codegen.exec_ir.model import GenerationError
 
 
@@ -44,9 +45,17 @@ class GenerateTests(unittest.TestCase):
             if instruction.opcode == "mul"
         )
 
+    def setp(self):
+        """Return the complete projected Setp instruction from pinned frontend input."""
+        return next(
+            instruction
+            for instruction in self.projected()
+            if instruction.opcode == "setp"
+        )
+
     def render_instruction(self, instruction):
         """Render one modified enabled instruction with every other enabled binding."""
-        enabled = (self.add(), self.sub(), self.mul())
+        enabled = (self.add(), self.sub(), self.mul(), self.setp())
         return artifacts(
             tuple(
                 instruction if candidate.opcode == instruction.opcode else candidate
@@ -57,7 +66,7 @@ class GenerateTests(unittest.TestCase):
 
     def test_emits_every_projected_form_and_dynamic_type(self) -> None:
         """Generated dispatch has one adapter per form and every declared dynamic type."""
-        instructions = (self.add(), self.sub(), self.mul())
+        instructions = (self.add(), self.sub(), self.mul(), self.setp())
         _, source = artifacts(instructions, Path("value_alu.gen.hpp"))
         for instruction in instructions:
             self.assertIn(f'#include "semantics/{instruction.opcode}_semantics.hpp"', source)
@@ -72,7 +81,7 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(source.count("case exec_ir::DataType::"), expected_cases)
         self.assertEqual(
             source.count("return prepare_add_") + source.count("return prepare_sub_")
-            + source.count("return prepare_mul_"),
+            + source.count("return prepare_mul_") + source.count("return prepare_setp_"),
             sum(len(instruction.forms) for instruction in instructions),
         )
         for path in ("rn_f32", "lo_u32", "hi_u32", "wide_u32", "wide_s32"):
@@ -211,7 +220,39 @@ class GenerateTests(unittest.TestCase):
     def test_requires_every_enabled_operation(self) -> None:
         """Omitting an enabled operation fails rather than silently skipping it."""
         with self.assertRaisesRegex(GenerationError, "no mul instruction"):
-            artifacts((self.add(), self.sub()), Path("add.gen.hpp"))
+            artifacts((self.add(), self.sub(), self.setp()), Path("add.gen.hpp"))
+
+    def test_setp_derives_every_projected_form_and_predicate_topology(self) -> None:
+        """The predicate family derives pair and combine handling from operand projection."""
+        family = setp_operation(self.setp())
+        self.assertEqual(len(family.forms), 5)
+        pair = next(form for form in family.forms if form.pair_destination)
+        self.assertEqual(pair.destination.name, "dst")
+        self.assertFalse(pair.destination.allows_negation)
+        unsigned_combine = next(form for form in family.forms if form.cpp_name == "LtAndU32")
+        signed_pair = next(form for form in family.forms if form.cpp_name == "LtAndS32Pair")
+        self.assertTrue(unsigned_combine.combine.allows_negation)
+        self.assertFalse(signed_pair.combine.allows_negation)
+        _, source = artifacts(
+            (self.add(), self.sub(), self.mul(), self.setp()), Path("setp.gen.hpp")
+        )
+        self.assertIn("exec_ir::BooleanOperator::and_", source)
+
+    def test_setp_rejects_predicate_shape_drift(self) -> None:
+        """A predicate-pair field cannot be silently treated as one destination."""
+        instruction = self.setp()
+        form = next(form for form in instruction.forms if form.source.cpp_name == "EqU32Pair")
+        layout = form.source.operand_layouts[0]
+        changed_field = replace(
+            layout.fields[0],
+            allowed_operand_shapes=(type(layout.fields[0].allowed_operand_shapes[0]).PREDICATE,),
+        )
+        changed_form = replace(
+            form,
+            source=replace(form.source, operand_layouts=(replace(layout, fields=(changed_field, *layout.fields[1:])),)),
+        )
+        with self.assertRaises(GenerationError):
+            setp_operation(replace(instruction, forms=(changed_form, *instruction.forms[1:])))
 
     def test_derives_sub_mixed_operand_names_from_its_layout(self) -> None:
         """Sub mixed forms retain their distinct source and subtrahend field names."""

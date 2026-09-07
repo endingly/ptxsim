@@ -150,6 +150,33 @@ wheel dependency metadata all identify the same fix hash. Because the frontend
 package version remains 0.0.1b0, the existing Python environment required a
 forced reinstall of the pinned Git dependency. Sanitizers were not rerun.
 
+## Setp execution follow-up
+
+Complete the five Setp forms in the pinned frontend, replacing the historical
+handwritten `setp.lt.u32` path with generated predicate-comparison preparation.
+No frontend revision or specification expansion is included.
+
+- [x] Generate all five form adapters with model-derived operand shapes/types and
+  validation of supported comparison/Boolean selectors and predicate negation.
+- [x] Add pure predicate semantics and safely stage/commit up to two register
+  writes, preserving the existing execution-predicate and lane fault contracts.
+- [x] Exercise signed/unsigned comparisons, predicate combination/negation, dual
+  destinations, input/output aliases and invalid second destinations.
+- [x] Pass generator, engine, simulator, package and link-contract regressions.
+
+Acceptance evidence (2026-09-07): GCC Debug build and all 429 CTest cases passed,
+including 17 real PTX Setp pipeline cases and the existing semantic link contract.
+The shared lowering leaf binder now binds both members of predicate pairs;
+generated lowering requires no opcode-specific implementation. Integer semantics
+use exact native comparisons because the current arithmetic comparison API
+supports floating types only. Engine regressions cover invalid controls and
+negation, predicate suppression, second-destination failure and pair aliases.
+
+All 28 Python tests passed. A fresh sdist-built wheel contains the Setp model
+and family template, installs against the exact frontend pin outside the source
+tree, and generates byte-identical artifacts while preserving unchanged output
+timestamps. No frontend dependency changed. Sanitizer configurations were not rerun.
+
 ## 1. Decision summary
 
 The executor was designed before the C++ `exec_ir` representation; the

@@ -1,5 +1,6 @@
 #include "commit.hpp"
 
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <optional>
@@ -42,6 +43,25 @@ struct ControlCommitter final {
 void apply_control(execution_model::Thread& thread,
                    const PreparedControl& control) {
   std::visit(ControlCommitter{thread}, control);
+}
+
+/** @brief Verify a deferred register write without changing architectural state. */
+auto validate_write(const PreparedWrite& write)
+    -> std::expected<void, memory::RegisterError> {
+  const auto width = write.registers.declared_width(write.destination);
+  if (!width) {
+    return std::unexpected(width.error());
+  }
+  if (*width != write.value.width()) {
+    return std::unexpected(memory::RegisterError{
+        memory::RegisterErrorCode::width_mismatch,
+        {},
+        write.destination,
+        *width,
+        write.value.width(),
+        static_cast<std::size_t>(write.destination.value())});
+  }
+  return {};
 }
 
 }  // namespace
@@ -124,13 +144,37 @@ void trap_faulted_lanes(execution_model::Warp& warp, const StepReport& report) {
 void commit_scalar(execution_model::Warp& warp,
                    std::vector<PreparedLane>& prepared, StepReport& report) {
   for (auto& lane : prepared) {
-    if (lane.effect.write) {
-      if (const auto write = lane.effect.write->registers.write(
-              lane.effect.write->destination, lane.effect.write->value);
-          !write) {
-        report.faults.push_back({lane.thread->lane_id(), write.error()});
+    const std::array<PreparedWrite*, 2> writes{
+        lane.effect.write ? &*lane.effect.write : nullptr,
+        lane.effect.second_write ? &*lane.effect.second_write : nullptr};
+    bool register_fault = false;
+    for (const auto* write : writes) {
+      if (write == nullptr) {
         continue;
       }
+      if (const auto valid = validate_write(*write); !valid) {
+        report.faults.push_back({lane.thread->lane_id(), valid.error()});
+        register_fault = true;
+        break;
+      }
+    }
+    if (register_fault) {
+      continue;
+    }
+    for (auto* write : writes) {
+      if (write == nullptr) {
+        continue;
+      }
+      if (const auto result =
+              write->registers.write(write->destination, write->value);
+          !result) {
+        report.faults.push_back({lane.thread->lane_id(), result.error()});
+        register_fault = true;
+        break;
+      }
+    }
+    if (register_fault) {
+      continue;
     }
     if (lane.effect.memory_write) {
       auto& write = *lane.effect.memory_write;

@@ -447,7 +447,7 @@ TEST_F(InstExecuteEngineTest, ComparesUnsignedU32ForEachIssuedLane) {
 }
 
 TEST_F(InstExecuteEngineTest,
-       RejectsUnsupportedPredicateComparisonBeforeMutation) {
+       RejectsMalformedPredicateComparisonBeforeMutation) {
   const auto frame = bind(LaneId{0}, {RawWidth::pred, RawWidth::b32});
   auto registers = view(frame);
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
@@ -455,7 +455,7 @@ TEST_F(InstExecuteEngineTest,
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
   const exec_ir::Setp::GeS32 form{
-      exec_ir::ComparisonOperator::ge,
+      exec_ir::ComparisonOperator::lt,
       exec_ir::Predicate{RegisterSlot{0}},
       RegisterSlot{1},
       RawValue::b32(0U),
@@ -467,11 +467,140 @@ TEST_F(InstExecuteEngineTest,
                                       instruction, move_fallthrough);
 
   ASSERT_FALSE(result);
-  EXPECT_EQ(result.error().code, StepErrorCode::unsupported_instruction);
+  EXPECT_EQ(result.error().code, StepErrorCode::invalid_instruction);
   EXPECT_EQ(thread.pc(), initial_pc);
   EXPECT_EQ(thread.status(), ThreadStatus::Ready);
   EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(7U));
+}
+
+TEST_F(InstExecuteEngineTest,
+       SetpRejectsNegatedDestinationsAndForbiddenCombine) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::pred, RawWidth::pred, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::pred(true)));
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(1U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Setp::LtU32 negated_destination{
+      exec_ir::ComparisonOperator::lt,
+      exec_ir::Predicate{RegisterSlot{0}, true}, RegisterSlot{2},
+      RawValue::b32(2U)};
+  const exec_ir::Instruction negated_instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{negated_destination}}};
+  const auto negated_result = engine_.execute(
+      warp(), issue(initial_pc, {0}), negated_instruction, move_fallthrough);
+  ASSERT_FALSE(negated_result);
+  EXPECT_EQ(negated_result.error().code, StepErrorCode::invalid_instruction);
+
+  const exec_ir::Setp::LtAndU32 invalid_boolean{
+      exec_ir::ComparisonOperator::lt,
+      exec_ir::BooleanOperator::or_,
+      exec_ir::Predicate{RegisterSlot{0}},
+      RegisterSlot{2},
+      RawValue::b32(2U),
+      exec_ir::Predicate{RegisterSlot{1}}};
+  const exec_ir::Instruction boolean_instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{invalid_boolean}}};
+  const auto boolean_result = engine_.execute(
+      warp(), issue(initial_pc, {0}), boolean_instruction, move_fallthrough);
+  ASSERT_FALSE(boolean_result);
+  EXPECT_EQ(boolean_result.error().code, StepErrorCode::invalid_instruction);
+
+  const exec_ir::Setp::LtAndS32Pair negated_combine{
+      exec_ir::ComparisonOperator::lt,
+      exec_ir::BooleanOperator::and_,
+      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
+                             exec_ir::Predicate{RegisterSlot{1}}},
+      RegisterSlot{2},
+      RawValue::b32(2U),
+      exec_ir::Predicate{RegisterSlot{1}, true}};
+  const exec_ir::Instruction combine_instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{negated_combine}}};
+  const auto combine_result = engine_.execute(
+      warp(), issue(initial_pc, {0}), combine_instruction, move_fallthrough);
+  ASSERT_FALSE(combine_result);
+  EXPECT_EQ(combine_result.error().code, StepErrorCode::invalid_instruction);
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::pred(true));
+}
+
+TEST_F(InstExecuteEngineTest, PairSetpStagesBothDestinationsBeforeCommit) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::pred, RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(4U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(4U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Setp::EqU32Pair form{
+      exec_ir::ComparisonOperator::eq,
+      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
+                             exec_ir::Predicate{RegisterSlot{2}}},
+      RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::Instruction instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Trapped);
+}
+
+TEST_F(InstExecuteEngineTest, PredicatedOffSetpSkipsItsSources) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::pred, RawWidth::pred, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(false)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::pred(false)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Setp::LtU32 form{exec_ir::ComparisonOperator::lt,
+                                  exec_ir::Predicate{RegisterSlot{0}},
+                                  RegisterSlot{2}, RawValue::b32(1U)};
+  const exec_ir::Instruction instruction{exec_ir::Setp{
+      exec_ir::Predicate{RegisterSlot{1}}, exec_ir::Setp::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
+  EXPECT_EQ(thread.pc(), move_fallthrough);
+}
+
+TEST_F(InstExecuteEngineTest, SetpCapturesPredicateSourceBeforeAliasedWrite) {
+  const auto frame = bind(LaneId{0}, {RawWidth::pred, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(true)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(1U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  const exec_ir::Setp::LtAndS32Pair form{
+      exec_ir::ComparisonOperator::lt,
+      exec_ir::BooleanOperator::and_,
+      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
+                             exec_ir::Predicate{RegisterSlot{0}}},
+      RegisterSlot{1},
+      RawValue::b32(2U),
+      exec_ir::Predicate{RegisterSlot{0}}};
+  const exec_ir::Instruction instruction{
+      exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, move_fallthrough);
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
 }
 
 TEST_F(InstExecuteEngineTest, MovesThreadIdXForEachIssuedLane) {
