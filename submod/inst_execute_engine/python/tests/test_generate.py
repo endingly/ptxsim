@@ -14,6 +14,7 @@ from ptxsim_codegen.inst_execute_engine.gen_engine import _TEMPLATES, _value_alu
 from ptxsim_codegen.inst_execute_engine.memory_family import memory_operation
 from ptxsim_codegen.inst_execute_engine.setp_family import setp_operation
 from ptxsim_codegen.inst_execute_engine.bar_family import bar_operation, bra_operation, exit_operation
+from ptxsim_codegen.inst_execute_engine.mov_family import mov_operation
 from ptxsim_codegen.exec_ir.model import GenerationError
 
 
@@ -73,6 +74,14 @@ class GenerateTests(unittest.TestCase):
             if instruction.opcode == "setp"
         )
 
+    def mov(self):
+        """Return the complete projected MOV instruction from pinned frontend input."""
+        return next(
+            instruction
+            for instruction in self.projected()
+            if instruction.opcode == "mov"
+        )
+
     def ld(self):
         """Return the complete projected Load instruction from pinned frontend input."""
         return next(instruction for instruction in self.projected() if instruction.opcode == "ld")
@@ -95,7 +104,7 @@ class GenerateTests(unittest.TestCase):
 
     def all_operations(self):
         """Return every execution family currently emitted by this generator."""
-        return (self.add(), self.sub(), self.mul(), self.fma(), self.setp(), self.ld(), self.st(),
+        return (self.mov(), self.add(), self.sub(), self.mul(), self.fma(), self.setp(), self.ld(), self.st(),
                 self.bar(), self.bra(), self.exit())
 
     def render_instruction(self, instruction):
@@ -133,6 +142,142 @@ class GenerateTests(unittest.TestCase):
         for path in ("rn_f32", "lo_u32", "hi_u32", "wide_u32", "wide_s32"):
             self.assertIn(f"auto prepare_mul_{path}", source)
         self.assertNotIn("unsupported_instruction", source)
+
+    def test_mov_derives_scalar_pack_unpack_vector_and_predicate_paths(self) -> None:
+        """MOV topology is derived from layouts, including b128-only aggregate paths."""
+        family = mov_operation(self.mov())
+        self.assertEqual(tuple(form.kind for form in family.forms),
+                         ("scalar", "vector", "predicate"))
+        scalar = family.forms[0]
+        self.assertEqual(tuple(layout.kind for layout in scalar.layouts),
+                         ("scalar", "pack", "unpack"))
+        self.assertIn("b128", scalar.type_values)
+        _, source = self.render_instruction(self.mov())
+        self.assertIn("prepare_scalar_move(resolver, form.type", source)
+        self.assertIn("prepare_pack_move(resolver, form.type", source)
+        self.assertIn("prepare_unpack_move(resolver, form.type", source)
+        self.assertIn("prepare_vector_special_move", source)
+        self.assertIn("prepare_predicate_move", source)
+        self.assertIn("form.type != exec_ir::DataType::b128", source)
+
+    def test_mov_rejects_unrecognized_vector_sink_contract(self) -> None:
+        """A source vector sink cannot silently acquire pack semantics."""
+        instruction = self.mov()
+        scalar = instruction.forms[0]
+        pack = scalar.source.operand_layouts[1]
+        changed_binding = replace(pack.bindings[1], allow_vector_sink=True)
+        changed_pack = replace(pack, bindings=(pack.bindings[0], changed_binding))
+        changed_scalar = replace(
+            scalar, source=replace(
+                scalar.source,
+                operand_layouts=(scalar.source.operand_layouts[0], changed_pack,
+                                 scalar.source.operand_layouts[2]),
+            ),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(instruction, forms=(changed_scalar, *instruction.forms[1:])))
+
+    def test_mov_rejects_unconsumed_modifier_and_width_policy_drift(self) -> None:
+        """New MOV controls and non-exact register contracts cannot be ignored."""
+        instruction = self.mov()
+        scalar = instruction.forms[0]
+        changed_variant = replace(
+            scalar.variant,
+            modifiers=(replace(scalar.variant.modifiers[0], name="unadapted"),),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(
+                instruction,
+                forms=(replace(scalar, variant=changed_variant), *instruction.forms[1:]),
+            ))
+        layout = scalar.source.operand_layouts[0]
+        changed_binding = replace(
+            layout.bindings[0],
+            register_width_policy=type(layout.bindings[0].register_width_policy).EXACT,
+        )
+        changed_layout = replace(
+            layout, bindings=(changed_binding, layout.bindings[1:][0]),
+        )
+        changed_scalar = replace(
+            scalar,
+            source=replace(scalar.source, operand_layouts=(
+                changed_layout, *scalar.source.operand_layouts[1:],
+            )),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(instruction, forms=(changed_scalar, *instruction.forms[1:])))
+
+    def test_mov_rejects_predicate_fixed_type_drift(self) -> None:
+        """Predicate MOV requires pred bindings instead of any fixed scalar type."""
+        instruction = self.mov()
+        predicate = instruction.forms[2]
+        layout = predicate.source.operand_layouts[0]
+        changed_binding = replace(
+            layout.bindings[0],
+            type_expression=replace(layout.bindings[0].type_expression,
+                                    scalar_type="u32"),
+        )
+        changed_layout = replace(
+            layout, bindings=(changed_binding, layout.bindings[1]),
+        )
+        changed_predicate = replace(
+            predicate,
+            source=replace(predicate.source, operand_layouts=(changed_layout,)),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(
+                instruction,
+                forms=(*instruction.forms[:2], changed_predicate),
+            ))
+        duplicate_bindings = replace(
+            layout, bindings=(*layout.bindings, layout.bindings[0]),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(
+                instruction,
+                forms=(*instruction.forms[:2], replace(
+                    predicate,
+                    source=replace(predicate.source,
+                                   operand_layouts=(duplicate_bindings,)),
+                )),
+            ))
+
+    def test_mov_rejects_missing_or_duplicate_projected_inventory(self) -> None:
+        """MOV inventory drift cannot silently omit or duplicate an execution path."""
+        instruction = self.mov()
+        scalar = instruction.forms[0]
+        type_modifier = next(
+            modifier for modifier in scalar.variant.modifiers
+            if modifier.name == "type"
+        )
+        reduced_variant = replace(
+            scalar.variant,
+            modifiers=tuple(
+                replace(modifier, values=modifier.values[:-1])
+                if modifier is type_modifier else modifier
+                for modifier in scalar.variant.modifiers
+            ),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(
+                instruction,
+                forms=(replace(scalar, variant=reduced_variant), *instruction.forms[1:]),
+            ))
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(instruction, forms=instruction.forms[:2]))
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(instruction, forms=(*instruction.forms, scalar)))
+        duplicated_layout = replace(
+            scalar.source,
+            operand_layouts=(scalar.source.operand_layouts[0],
+                             scalar.source.operand_layouts[0],
+                             scalar.source.operand_layouts[2]),
+        )
+        with self.assertRaises(GenerationError):
+            mov_operation(replace(
+                instruction,
+                forms=(replace(scalar, source=duplicated_layout), *instruction.forms[1:]),
+            ))
 
     def test_fma_inventory_controls_and_three_read_preparation_are_complete(self) -> None:
         """FMA emits every pinned form, selector, and source read without an implicit fallback."""
@@ -318,7 +463,7 @@ class GenerateTests(unittest.TestCase):
     def test_requires_every_enabled_operation(self) -> None:
         """Omitting an enabled operation fails rather than silently skipping it."""
         with self.assertRaisesRegex(GenerationError, "no mul instruction"):
-            artifacts((self.add(), self.sub(), self.setp(), self.ld(), self.st()), Path("add.gen.hpp"))
+            artifacts((self.mov(), self.add(), self.sub(), self.setp(), self.ld(), self.st()), Path("add.gen.hpp"))
 
     def test_setp_derives_every_projected_form_and_predicate_topology(self) -> None:
         """The predicate family derives pair and combine handling from operand projection."""

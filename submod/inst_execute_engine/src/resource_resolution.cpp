@@ -90,6 +90,15 @@ auto apply_offset(std::uint64_t base,
 
 }  // namespace
 
+auto numeric_address(const memory::RegisterView& registers,
+                     const exec_ir::Address& address)
+    -> std::expected<std::uint64_t, LaneFaultCause> {
+  const auto base = address_base(registers, address);
+  if (!base)
+    return std::unexpected(base.error());
+  return apply_offset(*base, address.offset);
+}
+
 auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
                                           const exec_ir::Address& address,
                                           std::size_t size)
@@ -99,10 +108,7 @@ auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
   if (!registers) {
     return std::unexpected(registers.error());
   }
-  const auto base = address_base(registers->get(), address);
-  if (!base)
-    return std::unexpected(base.error());
-  const auto value = apply_offset(*base, address.offset);
+  const auto value = numeric_address(registers->get(), address);
   if (!value)
     return std::unexpected(value.error());
   switch (space) {

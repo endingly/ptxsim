@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdint>
+#include <string>
 #include <limits>
 #include <string_view>
 #include <utility>
@@ -155,27 +157,23 @@ TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
                 .component = 0U,
             }));
 
-  const auto unsupported_component = lower(resolve(R"ptx(
+  const auto lowered_component = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r;
   mov.u32 %r, %tid.y;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_component);
-  EXPECT_EQ(unsupported_component.error().code,
-            LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(lowered_component);
 
-  const auto unsupported_identity = lower(resolve(R"ptx(
+  const auto lowered_identity = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u32 %r;
   mov.u32 %r, %ntid.x;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_identity);
-  EXPECT_EQ(unsupported_identity.error().code,
-            LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(lowered_identity);
 }
 
 TEST(ExecIrLowering, BindsB64MoveImmediate) {
@@ -536,26 +534,22 @@ TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
 )ptx"));
   ASSERT_TRUE(lowered_sub);
 
-  const auto unsupported_predicate = lower(resolve(R"ptx(
+  const auto lowered_predicate = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .pred %p<2>;
   mov.pred %p0, %p1;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_predicate);
-  EXPECT_EQ(unsupported_predicate.error().code,
-            LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(lowered_predicate);
 
-  const auto unsupported_vector_layout = lower(resolve(R"ptx(
+  const auto lowered_vector_layout = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .v2 .u32 %vector;
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(unsupported_vector_layout);
-  EXPECT_EQ(unsupported_vector_layout.error().code,
-            LoweringErrorCode::unsupported_type);
+  ASSERT_TRUE(lowered_vector_layout);
 
   auto malformed_module = resolve(R"ptx(
 .entry kernel() {
@@ -784,6 +778,136 @@ TEST(ExecIrLowering, LowersScalarMemoryFormsAndPreservesOffsets) {
       exec_ir::to_string(*offset).find(
           "+" + common::to_string(common::RawValue::b64(std::uint64_t{4}))),
       std::string::npos);
+}
+
+TEST(ExecIrLowering, PreservesAllTopologyIdentitiesAndComponents) {
+  const std::array names{"tid", "ntid", "ctaid", "nctaid"};
+  const std::array ids{exec_ir::kThreadIdSpecialRegister,
+                       exec_ir::kThreadCountSpecialRegister,
+                       exec_ir::kCtaIdSpecialRegister,
+                       exec_ir::kCtaCountSpecialRegister};
+  for (std::size_t index = 0; index < names.size(); ++index) {
+    for (std::uint8_t component = 0; component < 3; ++component) {
+      const std::string source = ".entry kernel() { .reg .u32 %r; mov.u32 %r, %" +
+          std::string(names[index]) + "." + "xyz"[component] + "; exit; }";
+      SCOPED_TRACE(source);
+      const auto program = lower(resolve(source));
+      ASSERT_TRUE(program);
+      const auto instruction =
+          program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+      ASSERT_TRUE(instruction);
+      const auto& form = std::get<exec_ir::Mov::Scalar>(
+          std::get<exec_ir::Mov>(instruction->get()).variant);
+      const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+      EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
+                (exec_ir::SpecialRegisterRef{ids[index], component}));
+    }
+  }
+  const auto program = lower(resolve(
+      ".entry kernel() { .reg .u32 %r; mov.u32 %r, %laneid; exit; }"));
+  ASSERT_TRUE(program);
+  const auto instruction =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& form = std::get<exec_ir::Mov::Scalar>(
+      std::get<exec_ir::Mov>(instruction->get()).variant);
+  const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
+            (exec_ir::SpecialRegisterRef{exec_ir::kLaneIdSpecialRegister, std::nullopt}));
+}
+
+TEST(ExecIrLowering, AllocatesDistinctContiguousVectorRegisterMembers) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .v4 .u32 %v<2>;
+  mov.v4.u32 %v0, %tid;
+  mov.v4.u32 %v1, %ntid;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  for (std::uint32_t pc = 0; pc < 2; ++pc) {
+    const auto instruction =
+        program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
+    ASSERT_TRUE(instruction);
+    const auto& form = std::get<exec_ir::Mov::V4U32>(
+        std::get<exec_ir::Mov>(instruction->get()).variant);
+    EXPECT_EQ(form.dst.register_slot, common::RegisterSlot{4U * pc});
+    EXPECT_EQ(form.src.id, pc == 0 ? exec_ir::kThreadIdSpecialRegister
+                                  : exec_ir::kThreadCountSpecialRegister);
+  }
+}
+
+TEST(ExecIrLowering, RejectsMalformedTopologyAndVectorReferences) {
+  auto module = resolve(
+      ".entry kernel() { .reg .u32 %r; mov.u32 %r, %tid.x; exit; }");
+  auto& scalar = std::get<Mov::Scalar>(std::get<Mov>(module.functions[0].body[0]).variant);
+  auto& source = std::get<Mov::Scalar::ScalarOperands>(scalar.operands).src.value;
+  auto& special = std::get<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(source);
+  special.component = static_cast<ptx_frontend::base::VectorComponent>(3U);
+  const auto invalid_component = lower(module);
+  ASSERT_FALSE(invalid_component);
+  EXPECT_EQ(invalid_component.error().code, LoweringErrorCode::malformed_resolved_ir);
+  special.component = ptx_frontend::base::VectorComponent::X;
+  special.id.index = 1U;
+  const auto invalid_identity = lower(module);
+  ASSERT_FALSE(invalid_identity);
+  EXPECT_EQ(invalid_identity.error().code, LoweringErrorCode::malformed_resolved_ir);
+
+  auto vector_module = resolve(
+      ".entry kernel() { .reg .v4 .u32 %v; mov.v4.u32 %v, %tid; exit; }");
+  auto& vector = std::get<Mov::V4U32>(
+      std::get<Mov>(vector_module.functions[0].body[0]).variant);
+  vector.dst.value.register_ref.vector_width = 2U;
+  const auto invalid_vector = lower(vector_module);
+  ASSERT_FALSE(invalid_vector);
+  EXPECT_EQ(invalid_vector.error().code, LoweringErrorCode::malformed_resolved_ir);
+}
+
+TEST(ExecIrLowering, KeepsArchitecturalSpecialRegistersAsExplicitPrerequisites) {
+  for (const auto source : {"%clock", "%smid", "%pm1"}) {
+    SCOPED_TRACE(source);
+    const auto program = lower(resolve(
+        ".version 9.3\n.target sm_100\n.entry kernel() { .reg .u32 %r; mov.u32 %r, " +
+        std::string(source) + "; exit; }"));
+    ASSERT_FALSE(program);
+    EXPECT_EQ(program.error().code, LoweringErrorCode::unsupported_operand);
+  }
+}
+
+TEST(ExecIrLowering, BindsEntryParameterMoveAddressesToAbiOffsets) {
+  const auto program = lower(resolve(R"ptx(
+.version 9.3
+.target sm_100
+.address_size 64
+.entry kernel(.param .u64 first, .param .u32 second) {
+  .reg .u64 %wide;
+  .reg .u32 %narrow;
+  mov.u64 %wide, first;
+  mov.u32 %narrow, second;
+  mov.u64 %wide, second+4;
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  for (std::uint32_t pc = 0; pc < 3; ++pc) {
+    const auto instruction =
+        program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
+    ASSERT_TRUE(instruction);
+    const auto& form = std::get<exec_ir::Mov::Scalar>(
+        std::get<exec_ir::Mov>(instruction->get()).variant);
+    const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+    const auto& address = std::get<exec_ir::Address>(operands.src);
+    EXPECT_EQ(std::get<common::RawValue>(address.base),
+              common::RawValue::b64(std::uint64_t{pc == 0 ? 0U : 8U}));
+    if (pc == 2) {
+      ASSERT_TRUE(address.offset);
+      EXPECT_FALSE(address.offset->subtract);
+      EXPECT_EQ(address.offset->value, common::RawValue::b64(std::uint64_t{4}));
+    } else {
+      EXPECT_FALSE(address.offset);
+    }
+  }
 }
 
 }  // namespace ptxsim::exec_ir_lowering::test

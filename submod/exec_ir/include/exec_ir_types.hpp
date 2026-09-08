@@ -157,10 +157,31 @@ using B32Operand = ScalarOperand;
 /**
  * @brief Canonical executable special-register identity for PTX `%tid`.
  *
- * Component zero denotes `%tid.x`; other `%tid` components are not yet
- * lowered or executed.
+ * Components zero, one and two denote x, y and z respectively.
  */
 inline constexpr common::SpecialRegisterId kThreadIdSpecialRegister{0};
+/** @brief Executable identity for the CTA thread dimensions, PTX `%ntid`. */
+inline constexpr common::SpecialRegisterId kThreadCountSpecialRegister{1};
+/** @brief Executable identity for the CTA coordinates, PTX `%ctaid`. */
+inline constexpr common::SpecialRegisterId kCtaIdSpecialRegister{2};
+/** @brief Executable identity for the grid CTA dimensions, PTX `%nctaid`. */
+inline constexpr common::SpecialRegisterId kCtaCountSpecialRegister{3};
+/** @brief Executable identity for the scalar warp lane index, PTX `%laneid`. */
+inline constexpr common::SpecialRegisterId kLaneIdSpecialRegister{4};
+/** @brief Executable identity for the caller-assigned launch number, PTX `%gridid`. */
+inline constexpr common::SpecialRegisterId kGridIdSpecialRegister{5};
+/** @brief Executable identity for the 32-bit mask selecting this lane. */
+inline constexpr common::SpecialRegisterId kLaneMaskEqSpecialRegister{6};
+/** @brief Executable identity for the mask selecting this and lower lane IDs. */
+inline constexpr common::SpecialRegisterId kLaneMaskLeSpecialRegister{7};
+/** @brief Executable identity for the mask selecting strictly lower lane IDs. */
+inline constexpr common::SpecialRegisterId kLaneMaskLtSpecialRegister{8};
+/** @brief Executable identity for the mask selecting this and higher lane IDs. */
+inline constexpr common::SpecialRegisterId kLaneMaskGeSpecialRegister{9};
+/** @brief Executable identity for the mask selecting strictly higher lane IDs. */
+inline constexpr common::SpecialRegisterId kLaneMaskGtSpecialRegister{10};
+/** @brief Executable identity for the warp identifier within its CTA. */
+inline constexpr common::SpecialRegisterId kWarpIdSpecialRegister{11};
 
 /** @brief A scalar destination that may be the PTX underscore sink. */
 struct RegisterOrSink {
@@ -183,7 +204,7 @@ struct SpecialRegisterRef {
 using PredicateSource = std::variant<Predicate, SpecialRegisterRef>;
 /** @brief A declared vector-register base. */
 struct VectorRegisterRef {
-  /** @brief Slot identifying the declared vector-register base. */
+  /** @brief First of the contiguous component slots of a declared vector. */
   common::RegisterSlot register_slot;
   /** @brief Compare vector-register base slots. */
   constexpr bool operator==(const VectorRegisterRef&) const noexcept = default;

@@ -23,6 +23,7 @@ from .setp_family import _CODECS as _SETP_CODECS
 from .setp_family import SetpOperation, setp_operation
 from .memory_family import MemoryOperation, memory_operation
 from .bar_family import BarOperation, _ControlOperation, bar_operation, bra_operation, exit_operation
+from .mov_family import MovOperation, mov_operation
 
 
 _CODECS = {
@@ -376,6 +377,10 @@ def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) ->
         operations.append(
             _ValueAluOperation(opcode, instruction_cpp_name(opcode), bind(instruction))
         )
+    mov = projected_by_opcode.get("mov")
+    if mov is None:
+        raise GenerationError("projected frontend has no mov instruction")
+    mov_family: MovOperation = mov_operation(mov)
     setp = projected_by_opcode.get("setp")
     if setp is None:
         raise GenerationError("projected frontend has no setp instruction")
@@ -400,14 +405,14 @@ def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) ->
     exit_family: _ControlOperation = exit_operation(exit_instruction)
     return (
         _TEMPLATES.get_template("instruction_preparation.hpp.j2").render(
-            operations=operations, setp_operation=setp_family,
+            operations=operations, mov_operation=mov_family, setp_operation=setp_family,
             memory_operations=memory_operations,
             bar_operation=bar_family,
             bra_operation=bra_family,
             exit_operation=exit_family,
         ),
         _TEMPLATES.get_template("instruction_preparation.cpp.j2").render(
-            operations=operations,
+            operations=operations, mov_operation=mov_family,
             setp_operation=setp_family,
             memory_operations=memory_operations,
             bar_operation=bar_family,

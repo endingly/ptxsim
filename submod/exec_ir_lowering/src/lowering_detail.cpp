@@ -161,11 +161,88 @@ auto bind_register(const ResolvedRegisterRef& reference,
   const auto found = context.registers.slots.find(
       std::pair{reference.symbol_id->value, reference.parameterized_index});
   if (found == context.registers.slots.end() ||
-      context.registers.widths[found->second.value()] != expected) {
+      found->second.components != 1U ||
+      context.registers.widths[found->second.first.value()] != expected) {
     return binding_error(LoweringErrorCode::malformed_resolved_ir, context,
                          reference.symbol_id->value);
   }
-  return found->second;
+  return found->second.first;
+}
+
+auto bind_vector_register(
+    const ptx_frontend::resolved_ir::ResolvedVectorRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::VectorRegisterRef, LoweringError> {
+  const auto& base = reference.register_ref;
+  if (!base.symbol_id || base.vector_width != 4U || !base.declared_type ||
+      raw_width_for(*base.declared_type) != common::RawWidth::b32 ||
+      base.register_class != ResolvedRegisterClass::General) {
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+  }
+  const auto found = context.registers.slots.find(
+      std::pair{base.symbol_id->value, base.parameterized_index});
+  if (found == context.registers.slots.end() || found->second.components != 4U)
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context,
+                         base.symbol_id->value);
+  const auto first = found->second.first.value();
+  if (first > context.registers.widths.size() ||
+      context.registers.widths.size() - first < 4U)
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+  for (std::uint32_t component = 0; component < 4U; ++component) {
+    if (context.registers.widths[first + component] != common::RawWidth::b32)
+      return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+  }
+  return exec_ir::VectorRegisterRef{found->second.first};
+}
+
+auto bind_special_register(
+    const ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::SpecialRegisterRef, LoweringError> {
+  using Kind = ptx_frontend::base::SpecialRegisterKind;
+  std::optional<common::SpecialRegisterId> id;
+  switch (reference.id.kind) {
+    case Kind::Tid: id = exec_ir::kThreadIdSpecialRegister; break;
+    case Kind::NTid: id = exec_ir::kThreadCountSpecialRegister; break;
+    case Kind::CtaId: id = exec_ir::kCtaIdSpecialRegister; break;
+    case Kind::NCtaId: id = exec_ir::kCtaCountSpecialRegister; break;
+    case Kind::LaneId: id = exec_ir::kLaneIdSpecialRegister; break;
+    case Kind::WarpId: id = exec_ir::kWarpIdSpecialRegister; break;
+    case Kind::GridId: id = exec_ir::kGridIdSpecialRegister; break;
+    case Kind::LaneMaskEq: id = exec_ir::kLaneMaskEqSpecialRegister; break;
+    case Kind::LaneMaskLe: id = exec_ir::kLaneMaskLeSpecialRegister; break;
+    case Kind::LaneMaskLt: id = exec_ir::kLaneMaskLtSpecialRegister; break;
+    case Kind::LaneMaskGe: id = exec_ir::kLaneMaskGeSpecialRegister; break;
+    case Kind::LaneMaskGt: id = exec_ir::kLaneMaskGtSpecialRegister; break;
+    default: return unsupported_operand(context);
+  }
+  const bool vector = reference.id.kind == Kind::Tid ||
+                      reference.id.kind == Kind::NTid ||
+                      reference.id.kind == Kind::CtaId ||
+                      reference.id.kind == Kind::NCtaId;
+  if (!vector) {
+    if (reference.component || reference.id.index != 0U)
+      return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+    return exec_ir::SpecialRegisterRef{*id, std::nullopt};
+  }
+  if (reference.id.index != 0U || !reference.component ||
+      static_cast<std::uint8_t>(*reference.component) > 2U)
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+  return exec_ir::SpecialRegisterRef{
+      *id, static_cast<std::uint8_t>(*reference.component)};
+}
+
+auto bind_vector_special_register(
+    const ptx_frontend::resolved_ir::ResolvedVectorSpecialRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::VectorSpecialRegisterRef, LoweringError> {
+  const auto scalar = bind_special_register(
+      {.spelling = reference.spelling,
+       .id = reference.id,
+       .component = ptx_frontend::base::VectorComponent::X}, context);
+  if (!scalar)
+    return std::unexpected(scalar.error());
+  return exec_ir::VectorSpecialRegisterRef{scalar->id};
 }
 
 auto bind_predicate(
