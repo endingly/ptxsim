@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
 project(ptxsim_arith_external_consumer LANGUAGES CXX)
 
+# Match the parent project: these translation units do not use C++ modules.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 find_package(ptxsim CONFIG REQUIRED COMPONENTS
     common arith execution_model memory runtime exec_ir exec_ir_lowering
     inst_execute_engine simulator)

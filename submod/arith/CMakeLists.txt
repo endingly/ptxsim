@@ -95,6 +95,7 @@ if(BUILD_TESTING)
                     "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
                     "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                     "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                    "-DPTXSIM_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}"
                     "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
                     "-DPTXSIM_DYNAMIC_BITSET_DIR=${sul-dynamic_bitset_DIR}"
                     "-DPTXSIM_FMT_DIR=${fmt_DIR}"

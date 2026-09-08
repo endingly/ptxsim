@@ -40,6 +40,7 @@ if(PTXSIM_TOOLCHAIN_FILE)
 endif()
 execute_process(
     COMMAND "${CMAKE_COMMAND}" ${ptxsim_link_contract_args}
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=${PTXSIM_CXX_COMPILER_LAUNCHER}"
     RESULT_VARIABLE ptxsim_configure_result
     OUTPUT_VARIABLE ptxsim_configure_output
     ERROR_VARIABLE ptxsim_configure_error)
