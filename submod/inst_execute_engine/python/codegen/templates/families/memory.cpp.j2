@@ -1,0 +1,30 @@
+{% macro controls(form) %}(form.{{ form.semantics }} == exec_ir::MemoryConsistency::omitted || form.{{ form.semantics }} == exec_ir::MemoryConsistency::weak)
+              && form.{{ form.scope }} == exec_ir::MemoryScope::none
+              && form.{{ form.cache }} == exec_ir::CacheOperator::unspecified{% if form.mmio %}
+              && !form.{{ form.mmio }}{% endif %}{% endmacro %}
+
+{% macro type_values(form) %}({% for value in ('b8', 'b16', 'b32', 'b64', 'u8', 'u16', 'u32', 'u64', 's8', 's16', 's32', 's64', 'f32', 'f64') %}form.{{ form.type_field }} == exec_ir::DataType::{{ value }}{% if not loop.last %} || {% endif %}{% endfor %}){% endmacro %}
+
+{% macro space_values(form) %}{% if form.state_space %}({% if form.load %}form.{{ form.state_space }} == exec_ir::AddressSpace::const_ || {% endif %}form.{{ form.state_space }} == exec_ir::AddressSpace::global || form.{{ form.state_space }} == exec_ir::AddressSpace::local || {% if form.load %}form.{{ form.state_space }} == exec_ir::AddressSpace::param || form.{{ form.state_space }} == exec_ir::AddressSpace::param_entry || {% endif %}form.{{ form.state_space }} == exec_ir::AddressSpace::shared){% endif %}{% endmacro %}
+
+{% macro valid(form) %}{{ controls(form) }}
+              && {{ type_values(form) }}
+              && valid_memory_shape(form.{{ form.type_field }}, {% if form.vector %}form.{{ form.vector }}{% else %}std::nullopt{% endif %}, {% if form.state_space %}form.{{ form.state_space }}{% else %}exec_ir::AddressSpace::generic{% endif %}){% if form.vector %}
+              && (form.{{ form.vector }} == exec_ir::VectorArity::v2 || form.{{ form.vector }} == exec_ir::VectorArity::v4 || form.{{ form.vector }} == exec_ir::VectorArity::v8){% endif %}{% if form.state_space %}
+              && {{ space_values(form) }}{% endif %}{% if form.vector %}
+              && valid_memory_vector_shape(form.{{ form.type_field }}, form.{{ form.vector }}, {% if form.state_space %}form.{{ form.state_space }}{% else %}exec_ir::AddressSpace::generic{% endif %}, form.{{ form.data }}, {{ "true" if form.load else "false" }}){% endif %}{% endmacro %}
+
+{% macro adapter(form) %}/** @brief Prepare projected ordinary {{ form.operation }}::{{ form.cpp_name }} memory access. */
+auto {{ form.function_name }}(LaneResourceResolver& resolver,
+                const exec_ir::{{ form.operation | capitalize }}::{{ form.cpp_name }}& form,
+                std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  return {% if form.load %}prepare_memory_load{% else %}prepare_memory_store{% endif %}(
+      resolver, form.{{ form.address }}, form.{{ form.data }}, form.{{ form.type_field }},{% if form.state_space %}
+      form.{{ form.state_space }},{% else %}
+      exec_ir::AddressSpace::generic,{% endif %}{% if form.vector %}
+      form.{{ form.vector }},{% else %}
+      std::nullopt,{% endif %}
+      *successor);
+}
+{% endmacro %}

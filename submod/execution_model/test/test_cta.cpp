@@ -605,6 +605,25 @@ TEST(CtaBarrierReductionTest, ReductionWarpsAreWaitingWarps) {
   EXPECT_TRUE(generation.complete());
 }
 
+TEST(CtaBarrierReductionTest, ArrivalCapacityIsIndependentOfLivePredicates) {
+  for (const auto protocol :
+       {CtaBarrierProtocol::ReduceAnd, CtaBarrierProtocol::ReduceOr,
+        CtaBarrierProtocol::ReducePopc}) {
+    CtaBarrierState state{2};
+    auto& generation = state.barrier(CtaBarrierId{0}).begin(64, protocol);
+    generation.arrive_reduction_warp(0, 32, 1, 1);
+    EXPECT_FALSE(generation.complete());
+    EXPECT_EQ(generation.arrived_threads(), 32U);
+    generation.arrive_reduction_warp(1, 32, 2, 2);
+    ASSERT_TRUE(generation.complete());
+    if (protocol == CtaBarrierProtocol::ReducePopc) {
+      EXPECT_EQ(generation.popc_result(), 3U);
+    } else {
+      EXPECT_TRUE(generation.predicate_result());
+    }
+  }
+}
+
 // -----------------------------------------------------------------------------
 // CTA execution-state integration
 // -----------------------------------------------------------------------------

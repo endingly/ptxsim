@@ -1,0 +1,53 @@
+{% macro predicate_read(predicate) %}const auto {{ predicate.name }} = read_predicate(registers->get(), form.{{ predicate.name }});
+if (!{{ predicate.name }}) {
+  return std::unexpected({{ predicate.name }}.error());
+}
+{% endmacro %}
+
+{% macro adapter(form, operation_name) %}/** @brief Prepare the projected {{ operation_name }}::{{ form.cpp_name }} predicate comparison. */
+auto {{ form.function_name }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                const exec_ir::{{ operation_name }}::{{ form.cpp_name }}& form,
+                std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto registers = resolver.resolve();
+  if (!registers) {
+    return std::unexpected(registers.error());
+  }
+  const auto {{ form.sources[0].name }} = read_value<{{ form.sources[0].scalar_type | setp_codec }}>(registers->get(), form.{{ form.sources[0].name }});
+  if (!{{ form.sources[0].name }}) {
+    return std::unexpected({{ form.sources[0].name }}.error());
+  }
+  const auto {{ form.sources[1].name }} = read_value<{{ form.sources[1].scalar_type | setp_codec }}>(registers->get(), form.{{ form.sources[1].name }});
+  if (!{{ form.sources[1].name }}) {
+    return std::unexpected({{ form.sources[1].name }}.error());
+  }
+{% if form.combine %}{{ predicate_read(form.combine) | indent(2, first=True) }}{% endif %}  if (const auto destination = resolve_destination<bool>(registers->get(), form.{{ form.destination.name }}{% if form.pair_destination %}.first{% endif %}.source); !destination) {
+    return std::unexpected(destination.error());
+  }
+{% if form.pair_destination %}  if (const auto destination = resolve_destination<bool>(registers->get(), form.{{ form.destination.name }}.second.source); !destination) {
+    return std::unexpected(destination.error());
+  }
+{% endif %}  const auto comparison = semantics::compare(
+      arithmetic, form.{{ form.comparison.field }}, *{{ form.sources[0].name }}, *{{ form.sources[1].name }});
+  if (!comparison) {
+    return std::unexpected(LaneFaultCause{comparison.error()});
+  }
+{% if form.combine %}  const auto primary = semantics::combine(form.{{ form.boolean.field }}, *comparison, *{{ form.combine.name }});
+  if (!primary) {
+    return std::unexpected(LaneFaultCause{primary.error()});
+  }
+{% if form.pair_destination %}  const auto secondary = semantics::combine(form.{{ form.boolean.field }}, !*comparison, *{{ form.combine.name }});
+  if (!secondary) {
+    return std::unexpected(LaneFaultCause{secondary.error()});
+  }
+{% endif %}{% else %}  const bool primary = *comparison;
+{% if form.pair_destination %}  const bool secondary = !*comparison;
+{% endif %}{% endif %}  return PreparedEffect{
+      .writes = {PreparedWrite{registers->get(), form.{{ form.destination.name }}{% if form.pair_destination %}.first{% endif %}.source,
+                                      value_codec<bool>::encode({% if form.combine %}*{% endif %}primary)}{% if form.pair_destination %},
+                 PreparedWrite{registers->get(), form.{{ form.destination.name }}.second.source,
+                                      value_codec<bool>::encode({% if form.combine %}*{% endif %}secondary)}{% endif %}},
+      .memory_write = std::nullopt,
+      .control = *successor};
+}
+{% endmacro %}

@@ -57,6 +57,24 @@ done:
 }
 )ptx"));
 }
+TEST(ExecIrLowering, PreservesMemoryVectorSinksAndSubtractedOffsets) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %r;
+  .reg .b64 %a;
+  ld.global.v8.b32 {%r, _, _, _, _, _, _, _}, [%a-32];
+  ld.global.u32 %r, [-4];
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto text = exec_ir::to_string(*program);
+  EXPECT_NE(text.find("-" + common::to_string(
+                                common::RawValue::b64(std::uint64_t{32}))),
+            std::string::npos);
+  EXPECT_NE(text.find("_"), std::string::npos);
+}
+
 }  // namespace
 
 TEST(ExecIrLowering, LowersBoundProgramsWithoutFrontendLifetime) {
@@ -182,6 +200,26 @@ TEST(ExecIrLowering, BindsB64MoveImmediate) {
             common::RawValue::b64(std::uint64_t{0}));
 }
 
+TEST(ExecIrLowering, RejectsScalarImmediateBitsOutsideResolvedWidth) {
+  auto module = resolve(R"ptx(
+.entry kernel() {
+  .reg .u16 %r;
+  add.u16 %r, %r, 1;
+  exit;
+}
+)ptx");
+  auto& add =
+      std::get<ptx_frontend::resolved_ir::Add>(module.functions[0].body[0]);
+  auto& form =
+      std::get<ptx_frontend::resolved_ir::Add::IntegerNoSat>(add.variant);
+  auto& immediate =
+      std::get<ptx_frontend::resolved_ir::ResolvedImmediate>(form.src2.value);
+  immediate.bits = 0x10000U;
+  const auto program = lower(module);
+  ASSERT_FALSE(program);
+  EXPECT_EQ(program.error().code, LoweringErrorCode::malformed_resolved_ir);
+}
+
 TEST(ExecIrLowering, LowersTheSingleEntryParameterAsOffsetZero) {
   const auto program = lower(resolve(R"ptx(
 .entry kernel(.param .u32 input) {
@@ -268,8 +306,15 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(other_form);
-  EXPECT_EQ(other_form.error().code, LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(other_form);
+  const auto instruction =
+      other_form->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& barrier = std::get<exec_ir::Bar>(instruction->get());
+  const auto& sync = std::get<exec_ir::Bar::Sync>(barrier.variant);
+  const auto& operands =
+      std::get<exec_ir::Bar::Sync::ImmediateBarrierOperands>(sync.operands);
+  EXPECT_EQ(operands.barrier, common::RawValue::b32(0U));
 }
 
 TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
@@ -506,7 +551,7 @@ TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
             "exit");
 }
 
-TEST(ExecIrLowering, LowersScalarMemoryFormsAndRejectsOffsets) {
+TEST(ExecIrLowering, LowersScalarMemoryFormsAndPreservesOffsets) {
   const auto type = lower(resolve(R"ptx(
 .entry kernel() {
   .reg .u64 %r, %a;
@@ -534,8 +579,11 @@ TEST(ExecIrLowering, LowersScalarMemoryFormsAndRejectsOffsets) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(offset);
-  EXPECT_EQ(offset.error().code, LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(offset);
+  EXPECT_NE(
+      exec_ir::to_string(*offset).find(
+          "+" + common::to_string(common::RawValue::b64(std::uint64_t{4}))),
+      std::string::npos);
 }
 
 }  // namespace ptxsim::exec_ir_lowering::test

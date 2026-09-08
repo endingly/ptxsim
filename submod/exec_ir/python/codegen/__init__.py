@@ -1,1 +1,1 @@
-"""PTXSim exec-IR code generation package."""
+"""Generate PTXSim execution-IR declarations and diagnostics."""

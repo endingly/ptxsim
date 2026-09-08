@@ -298,21 +298,38 @@ class CtaBarrierGeneration final {
   void arrive_reduction_warp(std::size_t warp_index,
                              std::uint32_t participating_threads,
                              std::uint32_t true_predicates) noexcept {
+    arrive_reduction_warp(warp_index, participating_threads,
+                          participating_threads, true_predicates);
+  }
+
+  /**
+   * @brief Record a reduction warp arrival with distinct count and input sizes.
+   *
+   * An explicit CTA-barrier count is measured in whole warp arrival capacity,
+   * while reductions exclude lanes that exited before their warp converged.
+   * @p arrival_threads therefore advances the barrier count and
+   * @p reduction_threads supplies the AND/OR/POPC input domain.
+   */
+  void arrive_reduction_warp(std::size_t warp_index,
+                             std::uint32_t arrival_threads,
+                             std::uint32_t reduction_threads,
+                             std::uint32_t true_predicates) noexcept {
     assert(protocol_ != CtaBarrierProtocol::SyncArrive);
-    assert(participating_threads != 0);
-    assert(true_predicates <= participating_threads);
+    assert(arrival_threads != 0);
+    assert(reduction_threads != 0);
+    assert(true_predicates <= reduction_threads);
     assert(!arrived_warps_.test(warp_index));
-    assert(arrived_threads_ + participating_threads <= expected_threads_);
+    assert(arrived_threads_ + arrival_threads <= expected_threads_);
 
     arrived_warps_.set(warp_index);
     waiting_warps_.set(warp_index);
 
-    arrived_threads_ += participating_threads;
+    arrived_threads_ += arrival_threads;
 
     switch (protocol_) {
       case CtaBarrierProtocol::ReduceAnd:
         reduction_predicate_ =
-            reduction_predicate_ && (true_predicates == participating_threads);
+            reduction_predicate_ && (true_predicates == reduction_threads);
         break;
 
       case CtaBarrierProtocol::ReduceOr:
@@ -451,6 +468,17 @@ class CtaBarrierSlot final {
     assert(active_.has_value());
     assert(active_->complete());
 
+    active_.reset();
+  }
+
+  /**
+   * @brief Clear a generation released because every missing arrival exited.
+   *
+   * The execution layer establishes the exit condition and performs any
+   * reduction writeback before calling this operation.
+   */
+  void clear_exited() noexcept {
+    assert(active_.has_value());
     active_.reset();
   }
 

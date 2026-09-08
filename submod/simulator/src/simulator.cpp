@@ -156,6 +156,7 @@ Simulator::Simulator(exec_ir::ExecutableProgram program,
       runtime_(runtime),
       entry_function_(entry_function),
       arithmetic_(arithmetic),
+      engine_(runtime_, entry_function_, arithmetic_),
       entry_parameters_(std::move(entry_parameters)) {}
 
 auto Simulator::initialize() -> std::expected<void, RunError> {
@@ -240,10 +241,8 @@ auto Simulator::step() -> std::expected<StepReport, RunError> {
     successor = fallthrough->pc;
   }
 
-  inst_execute_engine::InstExecuteEngine engine{runtime_, entry_function_,
-                                                arithmetic_};
-  const auto result = engine.execute(*selected->warp, selected->group,
-                                     instruction->get(), successor);
+  const auto result = engine_.execute(*selected->warp, selected->group,
+                                      instruction->get(), successor);
   if (!result) {
     return std::unexpected(execution_error(result.error()));
   }

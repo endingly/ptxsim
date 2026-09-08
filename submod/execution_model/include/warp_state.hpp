@@ -3,9 +3,9 @@
 #include <cassert>
 #include <cstdint>
 #include <optional>
-#include <utility>
-#include <ptxsim/execution_model/lane_mask.hpp>
 #include <ptxsim/execution_model/execution_state.hpp>
+#include <ptxsim/execution_model/lane_mask.hpp>
+#include <utility>
 
 namespace ptxsim::execution_model {
 
@@ -72,9 +72,11 @@ struct WarpIssueGroup {
  */
 class WarpRendezvous final {
  public:
-  WarpRendezvous(ProgramCounter pc, std::uint64_t generation,
-                 LaneMask participants)
+  /** @brief Build one rendezvous with its eventual continuation PC. */
+  WarpRendezvous(ProgramCounter pc, ProgramCounter successor,
+                 std::uint64_t generation, LaneMask participants)
       : pc_(pc),
+        successor_(successor),
         generation_(generation),
         participants_(std::move(participants)),
         arrivals_(participants_.size()) {}
@@ -85,6 +87,12 @@ class WarpRendezvous final {
   [[nodiscard]]
   ProgramCounter pc() const noexcept {
     return pc_;
+  }
+
+  /** @brief Return the continuation installed when this rendezvous releases. */
+  [[nodiscard]]
+  ProgramCounter successor() const noexcept {
+    return successor_;
   }
 
   /**
@@ -150,6 +158,9 @@ class WarpRendezvous final {
  private:
   ProgramCounter pc_{0};
 
+  /** PC installed for arriving non-exited lanes when the rendezvous releases. */
+  ProgramCounter successor_{0};
+
   std::uint64_t generation_ = 0;
 
   LaneMask participants_;
@@ -211,10 +222,12 @@ class WarpSyncState final {
    * model. Starting another rendezvous before the previous one is cleared is
    * considered an execution-model error.
    */
-  WarpRendezvous& begin(ProgramCounter pc, LaneMask participants) {
+  WarpRendezvous& begin(ProgramCounter pc, LaneMask participants,
+                        ProgramCounter successor) {
     assert(!pending_.has_value());
 
-    pending_.emplace(pc, next_generation_++, std::move(participants));
+    pending_.emplace(pc, successor, next_generation_++,
+                     std::move(participants));
 
     return *pending_;
   }
@@ -228,6 +241,12 @@ class WarpSyncState final {
     assert(pending_.has_value());
     assert(pending_->complete());
 
+    pending_.reset();
+  }
+
+  /** @brief Clear a rendezvous released because all missing lanes exited. */
+  void clear_exited() noexcept {
+    assert(pending_.has_value());
     pending_.reset();
   }
 

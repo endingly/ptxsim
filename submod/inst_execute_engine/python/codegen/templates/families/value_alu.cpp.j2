@@ -1,0 +1,35 @@
+{% macro typed_body(form, type_path, semantic_name) %}const auto {{ form.sources[0].name }} = read_value<{{ type_path.sources[0] }}>(registers->get(), form.{{ form.sources[0].name }});
+if (!{{ form.sources[0].name }}) {
+  return std::unexpected({{ form.sources[0].name }}.error());
+}
+const auto {{ form.sources[1].name }} = read_value<{{ type_path.sources[1] }}>(registers->get(), form.{{ form.sources[1].name }});
+if (!{{ form.sources[1].name }}) {
+  return std::unexpected({{ form.sources[1].name }}.error());
+}
+if (const auto destination = resolve_destination<{{ type_path.destination }}>(registers->get(), form.{{ form.destination.name }}); !destination) {
+  return std::unexpected(destination.error());
+}
+const auto value = semantics::{{ semantic_name }}(arithmetic, form, *{{ form.sources[0].name }}, *{{ form.sources[1].name }});
+if (!value) {
+  return std::unexpected(LaneFaultCause{value.error()});
+}
+return stage_register_write<{{ type_path.destination }}>(registers->get(), form.{{ form.destination.name }}, *value, *successor);
+{% endmacro %}
+
+{% macro adapter(form, operation_name, semantic_name) %}/** @brief Prepare the projected {{ operation_name }}::{{ form.cpp_name }} ValueALU form. */
+auto {{ form.function_name }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                const exec_ir::{{ operation_name }}::{{ form.cpp_name }}& form,
+                std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause> {
+  const auto registers = resolver.resolve();
+  if (!registers) {
+    return std::unexpected(registers.error());
+  }
+{% if form.dynamic_type_selector %}  switch (form.{{ form.dynamic_type_selector.field }}) {
+{% for case in form.dynamic_type_selector.cases %}    case exec_ir::DataType::{{ case.value }}: {
+{{ typed_body(form, case.type_path, semantic_name) | indent(6, first=True) }}    }
+{% endfor %}    default:
+      std::unreachable();
+  }
+{% else %}{{ typed_body(form, form.type_path, semantic_name) | indent(2, first=True) }}{% endif %}}
+{% endmacro %}

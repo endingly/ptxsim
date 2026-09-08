@@ -134,35 +134,83 @@ auto bind_predicate(
   return exec_ir::Predicate{*slot, predicate->value.negated};
 }
 
-auto bind_b32_operand(const ptx_frontend::resolved_ir::RegOrImm& operand,
-                      const BindingContext& context)
-    -> std::expected<exec_ir::B32Operand, LoweringError> {
+auto bind_scalar_operand(const ptx_frontend::resolved_ir::RegOrImm& operand,
+                         const BindingContext& context)
+    -> std::expected<exec_ir::ScalarOperand, LoweringError> {
   if (const auto* reference = std::get_if<ResolvedRegisterRef>(&operand)) {
-    const auto slot = bind_register(*reference, common::RawWidth::b32, context);
+    if (!reference->declared_type)
+      return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+    const auto width = raw_width_for(*reference->declared_type);
+    if (!width || *width == common::RawWidth::pred)
+      return unsupported_operand(context);
+    const auto slot = bind_register(*reference, *width, context);
     if (!slot)
       return std::unexpected(slot.error());
     return *slot;
   }
   const auto& immediate = std::get<ResolvedImmediate>(operand);
-  if (immediate.type != ScalarType::U32 ||
-      immediate.bits > std::numeric_limits<std::uint32_t>::max()) {
-    return binding_error(LoweringErrorCode::unsupported_operand, context);
+  const auto width = raw_width_for(immediate.type);
+  if (!width)
+    return unsupported_operand(context);
+  // Frontend resolution already encodes signed literals as two's-complement
+  // bits and floating literals as their binary representation. Do not negate
+  // again using the source-spelling flag or convert through host floating point.
+  switch (*width) {
+    case common::RawWidth::b8:
+      if (immediate.bits <= std::numeric_limits<std::uint8_t>::max())
+        return common::RawValue::b8(static_cast<std::uint8_t>(immediate.bits));
+      break;
+    case common::RawWidth::b16:
+      if (immediate.bits <= std::numeric_limits<std::uint16_t>::max())
+        return common::RawValue::b16(
+            static_cast<std::uint16_t>(immediate.bits));
+      break;
+    case common::RawWidth::b32:
+      if (immediate.bits <= std::numeric_limits<std::uint32_t>::max())
+        return common::RawValue::b32(
+            static_cast<std::uint32_t>(immediate.bits));
+      break;
+    case common::RawWidth::b64:
+      return common::RawValue::b64(immediate.bits);
+    default:
+      return unsupported_operand(context);
   }
-  return common::RawValue::b32(static_cast<std::uint32_t>(immediate.bits));
+  return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
 }
 
-auto bind_b64_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
-                      const BindingContext& context)
+auto bind_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
+                  const BindingContext& context)
     -> std::expected<exec_ir::Address, LoweringError> {
+  std::optional<exec_ir::AddressOffset> offset;
   if (address.offset) {
-    return binding_error(LoweringErrorCode::unsupported_operand, context);
+    using Operator = ptx_frontend::resolved_ir::ResolvedAddressOffsetOperator;
+    if ((address.offset->operation != Operator::Add &&
+         address.offset->operation != Operator::Subtract) ||
+        address.offset->value.type != ScalarType::S64 ||
+        address.offset->value.is_negative)
+      return unsupported_operand(context);
+    offset = exec_ir::AddressOffset{
+        address.offset->operation == Operator::Subtract,
+        common::RawValue::b64(address.offset->value.bits)};
   }
   if (const auto* base = std::get_if<ResolvedRegisterRef>(&address.base)) {
-    const auto slot = bind_register(*base, common::RawWidth::b64, context);
+    const auto width = base->declared_type ? raw_width_for(*base->declared_type)
+                                           : std::nullopt;
+    if (width != common::RawWidth::b32 && width != common::RawWidth::b64)
+      return unsupported_operand(context);
+    const auto slot = bind_register(*base, *width, context);
     if (!slot) {
       return std::unexpected(slot.error());
     }
-    return exec_ir::Address{*slot};
+    return exec_ir::Address{*slot, offset};
+  }
+  if (const auto* base = std::get_if<ResolvedImmediate>(&address.base)) {
+    const auto width = raw_width_for(base->type);
+    if ((width != common::RawWidth::b32 && width != common::RawWidth::b64) ||
+        (width == common::RawWidth::b32 &&
+         base->bits > std::numeric_limits<std::uint32_t>::max()))
+      return unsupported_operand(context);
+    return exec_ir::Address{common::RawValue::b64(base->bits), offset};
   }
   const auto* parameter =
       std::get_if<ptx_frontend::resolved_ir::ResolvedSymbolRef>(&address.base);
@@ -179,7 +227,7 @@ auto bind_b64_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
       parameter->declared_type != ScalarType::U32) {
     return binding_error(LoweringErrorCode::unsupported_operand, context);
   }
-  return exec_ir::Address{common::RawValue::b64(std::uint64_t{0})};
+  return exec_ir::Address{common::RawValue::b64(std::uint64_t{0}), offset};
 }
 
 auto bind_label(const ptx_frontend::resolved_ir::ResolvedBranchTarget& target,

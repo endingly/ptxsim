@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Checks for the packaged-frontend execution topology generator."""
+"""Checks for the packaged execution-IR generator."""
 
 from __future__ import annotations
 
@@ -13,8 +13,7 @@ from pathlib import Path
 from ptx_frontend.spec.resources import packaged_spec_dir
 
 
-MODULE = "ptxsim_exec_ir_codegen"
-BACKEND = Path(__file__).parents[1] / "instructions" / "backend.yaml"
+MODULE = "ptxsim_codegen.exec_ir"
 
 
 class GenerateTests(unittest.TestCase):
@@ -26,8 +25,6 @@ class GenerateTests(unittest.TestCase):
         source_output: Path | None = None,
         backend: Path | None = None,
         spec_dir: Path | None = None,
-        lowering_header_output: Path | None = None,
-        lowering_source_output: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
         """Run the installed editable generator against one backend file."""
         command = [sys.executable, "-m", MODULE]
@@ -39,15 +36,14 @@ class GenerateTests(unittest.TestCase):
             command.extend(["--backend", str(backend)])
         if spec_dir:
             command.extend(["--spec-dir", str(spec_dir)])
-        if lowering_header_output:
-            command.extend(
-                ["--lowering-header-output", str(lowering_header_output)]
-            )
-        if lowering_source_output:
-            command.extend(
-                ["--lowering-source-output", str(lowering_source_output)]
-            )
         return subprocess.run(command, check=False, text=True, capture_output=True)
+
+    def backend_text(self) -> str:
+        """Return the backend bundled with the installed generator package."""
+        resource = importlib.resources.files(
+            "ptxsim_codegen.exec_ir.instructions"
+        ).joinpath("backend.yaml")
+        return resource.read_text(encoding="utf-8")
 
     def invalid(self, replacement: str) -> subprocess.CompletedProcess[str]:
         """Run a one-token invalid backend mutation."""
@@ -55,7 +51,7 @@ class GenerateTests(unittest.TestCase):
             root = Path(directory)
             backend = root / "invalid.yaml"
             backend.write_text(
-                BACKEND.read_text().replace(*replacement.split("\n", 1)),
+                self.backend_text().replace(*replacement.split("\n", 1)),
                 encoding="utf-8",
             )
             return self.generate(root / "unused.hpp", backend=backend)
@@ -67,10 +63,10 @@ class GenerateTests(unittest.TestCase):
             first, second = root / "first.hpp", root / "second.hpp"
             first_source, second_source = root / "first.cpp", root / "second.cpp"
             self.assertEqual(
-                self.generate(first, first_source, BACKEND).returncode, 0
+                self.generate(first, first_source).returncode, 0
             )
             self.assertEqual(
-                self.generate(second, second_source, BACKEND).returncode, 0
+                self.generate(second, second_source).returncode, 0
             )
             self.assertEqual(first.read_bytes(), second.read_bytes())
             self.assertEqual(first_source.read_bytes(), second_source.read_bytes())
@@ -185,8 +181,7 @@ class GenerateTests(unittest.TestCase):
                 result = self.generate(
                     Path(directory) / "header.hpp",
                     Path(directory) / "source.cpp",
-                    BACKEND,
-                    spec_dir,
+                    spec_dir=spec_dir,
                 )
             self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -211,7 +206,7 @@ class GenerateTests(unittest.TestCase):
             root = Path(directory)
             backend, output = root / "backend.yaml", root / "header.hpp"
             backend.write_text(
-                BACKEND.read_text().replace(
+                self.backend_text().replace(
                     "cpp_type: DataType", "cpp_type: BackendDataType", 1
                 ),
                 encoding="utf-8",
@@ -222,51 +217,14 @@ class GenerateTests(unittest.TestCase):
             )
             self.assertIn("BackendDataType type", output.read_text())
 
-    def test_generates_deterministic_complete_lowering_topology(self) -> None:
-        """Every frontend opcode, form, and layout owns generated lowering."""
+    def test_rejects_missing_output(self) -> None:
+        """The declaration output remains required while source stays optional."""
+        self.assertIn("--output is required", self.generate().stderr)
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            first_header = root / "first_lowering.hpp"
-            first_source = root / "first_lowering.cpp"
-            second_header = root / "second_lowering.hpp"
-            second_source = root / "second_lowering.cpp"
-            self.assertEqual(
-                self.generate(
-                    lowering_header_output=first_header,
-                    lowering_source_output=first_source,
-                ).returncode,
-                0,
-            )
-            self.assertEqual(
-                self.generate(
-                    lowering_header_output=second_header,
-                    lowering_source_output=second_source,
-                ).returncode,
-                0,
-            )
-            self.assertEqual(first_header.read_bytes(), second_header.read_bytes())
-            self.assertEqual(first_source.read_bytes(), second_source.read_bytes())
-            header = first_header.read_text()
-            source = first_source.read_text()
-            self.assertEqual(header.count("[[nodiscard]] auto lower_"), 70)
-            for opcode in ("mov", "add", "sub", "bra", "ld", "st", "bar", "exit"):
-                self.assertIn(f"auto lower_{opcode}(", header)
-                self.assertIn(f"return lower_{opcode}(", source)
-            self.assertEqual(source.count("auto lower_"), 70)
-            self.assertIn(
-                ".operands = ptxsim::exec_ir::Mov::Scalar::Operands{",
-                source,
-            )
-            self.assertIn(
-                ".execution_predicate = std::move(*predicate),",
-                source,
-            )
-            self.assertIn("LoweringErrorCode::unsupported_instruction", source)
-            self.assertIn("lower_sub", header)
-            self.assertNotIn("_SUPPORTED_IDENTITIES", source)
-            partial = self.generate(lowering_header_output=root / "partial.hpp")
-            self.assertNotEqual(partial.returncode, 0)
-            self.assertIn("requires both header and source", partial.stderr)
+            result = self.generate(source_output=root / "source.cpp")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--source-output requires --output", result.stderr)
 
 
 if __name__ == "__main__":
