@@ -84,7 +84,7 @@ class GenerateTests(unittest.TestCase):
             database = load_packaged_spec_database()
             self.assertEqual(len(database.instructions), 69)
             self.assertEqual(
-                sum(len(item.variants) for item in database.instructions), 257
+                sum(len(item.variants) for item in database.instructions), 270
             )
             self.assertEqual(
                 sum(
@@ -92,7 +92,7 @@ class GenerateTests(unittest.TestCase):
                     for item in database.instructions
                     for form in item.variants
                 ),
-                320,
+                333,
             )
             for instruction in database.instructions:
                 self.assertIn(

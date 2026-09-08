@@ -116,7 +116,7 @@ struct operation_capability : std::false_type {};
 // floating-point operations.  Dispatch and the numerical backends both use
 // it, so a control cannot be accepted by one layer and rejected by another.
 template <bool Available, bool DirectedRounding = false, bool Ftz = false,
-          bool Saturation = false, bool Relu = false>
+          bool Saturation = false, bool Relu = false, bool OobNan = false>
 struct floating_control_capability {
   static constexpr bool supported = Available;
 
@@ -139,11 +139,19 @@ struct floating_control_capability {
     return mode == activation_mode::none ||
            (Relu && mode == activation_mode::relu);
   }
+  /** Returns whether this operation accepts the requested OOB-NaN behavior. */
+  static constexpr bool supports(oob_nan_mode mode) {
+    return mode == oob_nan_mode::none ||
+           (OobNan && mode == oob_nan_mode::zero_result);
+  }
   static constexpr bool supports(floating_control control) {
     return Available && supports(control.rounding) && supports(control.subnormal) &&
            supports(control.saturation) && supports(control.activation) &&
+           supports(control.oob_nan) &&
            !(control.saturation != saturation_mode::none &&
-             control.activation != activation_mode::none);
+             control.activation != activation_mode::none) &&
+           !(control.oob_nan != oob_nan_mode::none &&
+             control.subnormal != subnormal_mode::preserve);
   }
 };
 
@@ -259,6 +267,7 @@ template <scalar_operation Op>
            Op == scalar_operation::mul || Op == scalar_operation::fma)
 struct floating_operation_control_capability<Op, float16_t>
     : floating_control_capability<true, false, true, true,
+                                  Op == scalar_operation::fma,
                                   Op == scalar_operation::fma> {};
 
 template <scalar_operation Op>
@@ -266,6 +275,7 @@ template <scalar_operation Op>
            Op == scalar_operation::mul || Op == scalar_operation::fma)
 struct floating_operation_control_capability<Op, bfloat16_t>
     : floating_control_capability<true, false, false, false,
+                                  Op == scalar_operation::fma,
                                   Op == scalar_operation::fma> {};
 
 template <scalar_operation Op>

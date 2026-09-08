@@ -36,6 +36,38 @@ _CODECS = {
 }
 
 
+_CONTAINER_WIDTHS = {
+    "b16": 16,
+    "b32": 32,
+    "b64": 64,
+}
+
+
+_CODEC_WIDTHS = {
+    "u16": 16, "s16": 16, "f16": 16, "bf16": 16,
+    "u32": 32, "s32": 32, "f16x2": 32, "bf16x2": 32,
+    "u8x4": 32, "s8x4": 32, "u16x2": 32, "s16x2": 32,
+    "u64": 64, "s64": 64, "f32x2": 64, "f64": 64,
+    "f32": 32,
+}
+
+
+_VALUE_ALU_SOURCE_ARITY = {
+    "add": 2,
+    "sub": 2,
+    "mul": 2,
+    "fma": 3,
+}
+
+
+_VALUE_ALU_CONTROLS = {
+    "add": {"rounding", "ftz", "sat"},
+    "sub": {"rounding", "ftz", "sat"},
+    "mul": {"rounding", "ftz", "sat"},
+    "fma": {"rounding", "ftz", "sat", "relu", "oob"},
+}
+
+
 _TEMPLATES = Environment(
     loader=PackageLoader("ptxsim_codegen.inst_execute_engine"),
     undefined=StrictUndefined,
@@ -60,7 +92,7 @@ class _TypePath:
     """C++ value types for one fully resolved destination-and-source path."""
 
     destination: str
-    sources: tuple[str, str]
+    sources: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -81,12 +113,12 @@ class _DynamicTypeSelector:
 
 @dataclass(frozen=True)
 class _ValueAluForm:
-    """A projected one-destination, two-source ValueALU form."""
+    """A projected one-destination ValueALU form with opcode-defined source arity."""
 
     cpp_name: str
     operation: str
     destination: _Operand
-    sources: tuple[_Operand, _Operand]
+    sources: tuple[_Operand, ...]
     type_path: _TypePath | None
     dynamic_type_selector: _DynamicTypeSelector | None
 
@@ -115,6 +147,10 @@ def _value_alu_forms(instruction: ProjectedInstruction) -> tuple[_ValueAluForm, 
 
 def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _ValueAluForm:
     """Reject a projected form that cannot meet the small ValueALU contract."""
+    try:
+        expected_source_arity = _VALUE_ALU_SOURCE_ARITY[instruction.opcode]
+    except KeyError as error:
+        raise GenerationError(f"{instruction.opcode}: has no ValueALU arity contract") from error
     if len(form.source.operand_layouts) != 1:
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}: ValueALU requires one layout")
     if (form.source.memory_consistency is not None or form.source.address_alignments
@@ -122,8 +158,12 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
             or form.source.immediate_ranges or form.source.immediate_multiple_of is not None):
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}: ValueALU cannot stage non-value effects")
     layout = form.source.operand_layouts[0]
-    if len(layout.fields) != 3:
-        raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{layout.layout_id}: ValueALU requires exactly three operands")
+    expected_operand_count = expected_source_arity + 1
+    if len(layout.fields) != expected_operand_count:
+        raise GenerationError(
+            f"{instruction.opcode}/{form.variant.name}/{layout.layout_id}: "
+            f"ValueALU requires exactly {expected_operand_count} operands"
+        )
     if len(layout.fields) != len(layout.bindings):
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{layout.layout_id}: field/binding count drift")
     bindings = {binding.target_field_id: binding for binding in layout.bindings}
@@ -150,7 +190,7 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
                 raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{field.name}: missing operand type field")
             operand = _Operand(field.name, expression.modifier_field_id, None)
         elif expression.kind is ResolvedOperandTypeExpressionKind.FIXED_SCALAR:
-            if expression.scalar_type not in _CODECS:
+            if expression.scalar_type not in (_CODECS | _CONTAINER_WIDTHS):
                 raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{field.name}: unsupported fixed ValueALU type")
             operand = _Operand(field.name, None, expression.scalar_type)
         else:
@@ -158,8 +198,11 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
         typed_fields.append((field.operand_access, operand))
     reads = tuple(item for access, item in typed_fields if access is ResolvedOperandAccess.READ)
     writes = tuple(item for access, item in typed_fields if access is ResolvedOperandAccess.WRITE)
-    if len(reads) != 2 or len(writes) != 1:
-        raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{layout.layout_id}: ValueALU requires exactly two reads and one write")
+    if len(reads) != expected_source_arity or len(writes) != 1:
+        raise GenerationError(
+            f"{instruction.opcode}/{form.variant.name}/{layout.layout_id}: "
+            f"ValueALU requires exactly {expected_source_arity} reads and one write"
+        )
     fields = {field.name: field for field in layout.fields}
     if fields[writes[0].name].allowed_operand_shapes != (ResolvedOperandShape.REGISTER,):
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{writes[0].name}: ValueALU destination must be one register")
@@ -170,6 +213,22 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
     if any(fields[source.name].allowed_operand_shapes not in supported_source_shapes for source in reads):
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}: ValueALU source shape is unsupported")
     source_fields = {field.name: field for field in form.source.modifier_fields}
+    semantic_types = tuple(
+        field.constant_value
+        for field in source_fields.values()
+        if field.storage is ResolvedFieldStorage.STATIC_CONSTANT
+        and isinstance(field.constant_value, str)
+        and field.constant_value in _CODECS
+    )
+    semantic_type_modifier_names = {
+        field.source_name
+        for field in source_fields.values()
+        if field.storage is ResolvedFieldStorage.STATIC_CONSTANT
+        and isinstance(field.constant_value, str)
+        and field.constant_value in _CODECS
+    }
+    reads = _resolve_container_codecs(instruction, form, reads, semantic_types)
+    writes = _resolve_container_codecs(instruction, form, writes, semantic_types)
     type_fields = {
         operand.type_field for operand in (*reads, writes[0])
         if operand.type_field is not None
@@ -183,7 +242,10 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
         modifier.name
         for modifier in form.variant.modifiers
         if modifier.presence != "absent"
-        and modifier.name not in (type_modifier_names | {"rounding", "ftz", "sat"})
+        and modifier.name not in (
+            type_modifier_names | semantic_type_modifier_names |
+            _VALUE_ALU_CONTROLS[instruction.opcode]
+        )
         and not (modifier.presence == "fixed" and (
             modifier.name in {"lo", "hi", "wide"}
             or (modifier.name == "type" and fixed_operand_types)
@@ -220,8 +282,8 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
             form.source.cpp_name,
             instruction.opcode,
             writes[0],
-            (reads[0], reads[1]),
-            _type_path(writes[0], (reads[0], reads[1]), static_types),
+            reads,
+            _type_path(writes[0], reads, static_types),
             None,
         )
     field, values = dynamic_types[0]
@@ -229,14 +291,14 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
         form.source.cpp_name,
         instruction.opcode,
         writes[0],
-        (reads[0], reads[1]),
+        reads,
         None,
         _DynamicTypeSelector(
             field,
             tuple(
                 _DynamicTypeCase(
                     value,
-                    _type_path(writes[0], (reads[0], reads[1]), {**static_types, field: value}),
+                    _type_path(writes[0], reads, {**static_types, field: value}),
                 )
                 for value in values
             ),
@@ -251,15 +313,38 @@ def _function_name(operation: str, form: _ValueAluForm) -> str:
     ).lower()
 
 
-def _type_path(destination: _Operand, sources: tuple[_Operand, _Operand], selected: dict[str, str]) -> _TypePath:
+def _resolve_container_codecs(
+    instruction: ProjectedInstruction,
+    form: ProjectedForm,
+    operands: tuple[_Operand, ...],
+    semantic_types: tuple[str, ...],
+) -> tuple[_Operand, ...]:
+    """Replace physical bit-container bindings with their unambiguous semantic codecs."""
+    resolved: list[_Operand] = []
+    for operand in operands:
+        if operand.fixed_type not in _CONTAINER_WIDTHS:
+            resolved.append(operand)
+            continue
+        container_width = _CONTAINER_WIDTHS[operand.fixed_type]
+        candidates = tuple(
+            semantic_type for semantic_type in semantic_types
+            if _CODEC_WIDTHS[semantic_type] == container_width
+        )
+        if len(candidates) != 1:
+            raise GenerationError(
+                f"{instruction.opcode}/{form.variant.name}/{operand.name}: "
+                f"physical {operand.fixed_type} binding has ambiguous semantic codecs {candidates}"
+            )
+        resolved.append(_Operand(operand.name, operand.type_field, candidates[0]))
+    return tuple(resolved)
+
+
+def _type_path(destination: _Operand, sources: tuple[_Operand, ...], selected: dict[str, str]) -> _TypePath:
     """Resolve projected selector values into one C++ ValueALU type path."""
     try:
         return _TypePath(
             _operand_codec(destination, selected),
-            (
-                _operand_codec(sources[0], selected),
-                _operand_codec(sources[1], selected),
-            ),
+            tuple(_operand_codec(source, selected) for source in sources),
         )
     except KeyError as error:
         raise GenerationError(f"ValueALU: cannot derive type field {error.args[0]!r}") from error
@@ -276,7 +361,12 @@ def _operand_codec(operand: _Operand, selected: dict[str, str]) -> str:
 
 def artifacts(projected: tuple[ProjectedInstruction, ...], header_path: Path) -> tuple[str, str]:
     """Return generated artifacts for enabled arithmetic, memory, collective, and control operations."""
-    bindings = {"add": _value_alu_forms, "sub": _value_alu_forms, "mul": _value_alu_forms}
+    bindings = {
+        "add": _value_alu_forms,
+        "sub": _value_alu_forms,
+        "mul": _value_alu_forms,
+        "fma": _value_alu_forms,
+    }
     projected_by_opcode = {instruction.opcode: instruction for instruction in projected}
     operations = []
     for opcode, bind in bindings.items():

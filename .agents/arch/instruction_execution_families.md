@@ -18,15 +18,14 @@ generators or introduce another YAML specification.
 
 The first real opcode is **Add**, not a synthetic opcode or a u32-only capability.
 The agreed scope is every Add variant currently described by
-`ptx_frontend@0db25e8872277a6bb8957c5d17475f6d2e068c0c` and projected into
+`ptx_frontend@cf1f32161890b04e1060095a96ad5d8ab996db27` and projected into
 `exec_ir::Add`. All its declared types and controls are obligations. This is a
 functional execution model across the forms in that fixed specification, not
 a newly selected SM target. Target-SM/family availability validation is not
 introduced by this change.
 
-This pin adds owned entry-parameter metadata to the frontend; it preserves the
-instruction specification from the preceding pin. The C++ port and Python
-generator dependency use the same commit.
+This pin retains owned entry-parameter metadata and completes the frontend FMA
+contract. The C++ port and Python generator dependency use the same commit.
 
 Extended-precision `add.cc` / `addc` and implicit condition-code state are
 explicitly outside this task, as agreed by the maintainer. They require frontend
@@ -60,9 +59,11 @@ result, and no implicit state changes:
 4. Retain the resulting `RawValue` and register view in `PreparedEffect`.
 5. Let the shared commit stage write the register and then update the thread PC.
 
-Input and output types are derived independently; mixed-precision Add is not
-treated as three operands of one type. The present Add operands require matching
-container widths. Signed values use bit-preserving interpretation, floating
+Input and output types are derived independently. Add/Sub/Mul have two sources;
+FMA has three, captured before any destination write. Mixed-precision operands
+retain independent types and widths. Physical bit-container bindings require an
+unambiguous semantic type of matching width from the projected modifiers.
+Signed values use bit-preserving interpretation, floating
 values preserve their encodings, and packed lanes do not share carry or status.
 Other width policies or effects require explicit family support, not silent
 truncation or dropped writes.
@@ -179,6 +180,51 @@ and same-width register policies must retain their declared width checks;
 unsupported type expressions or policies must fail generation rather than
 silently falling back to a same-width operation.
 
+## FMA scope
+
+The frontend pin declares 16 FMA variants and 70 canonical type/control
+combinations. All reuse ValueALU preparation and the pure
+`src/semantics/fma_semantics.hpp` adapter:
+
+| Types | Controls |
+| --- | --- |
+| f32 | Four rounding modes, FTZ, saturation |
+| f64 | Four rounding modes |
+| f32x2 | Four rounding modes, FTZ |
+| f16/f16x2 | Round-nearest-even; FTZ or OOB handling; optional saturation or ReLU |
+| bf16/bf16x2 | Round-nearest-even, optional OOB handling and ReLU |
+| f32 result, f16/bf16 multiplicands, f32 accumulator | Four rounding modes, saturation |
+
+Every path calls fused `arith::fma`; an independently rounded multiplication
+followed by addition is not equivalent. Mixed forms widen their multiplicands
+exactly and round the fused result once to f32. Packed forms operate per lane
+without sharing result bits. PTX controls are translated at the semantic adapter;
+the arithmetic library retains no PTX, register or runtime dependency.
+
+OOB handling recognizes exactly the positive raw marker `0x7ff7` for f16 and
+bf16, as disclosed in NVIDIA
+[US20240168765A1, paragraph 0343 and Table 89](https://patents.google.com/patent/US20240168765A1/en).
+A matching multiplicand forces positive zero independently per lane. Other NaNs,
+including negative `0xfff7`, retain ordinary FMA handling. Recognition occurs
+before arithmetic or NaN canonicalization can alter the marker's bits.
+
+The accumulator alone does not trigger the rule. This operand-position choice
+follows NVIDIA CUTLASS's
+[`guarded_multiply_add`](https://github.com/NVIDIA/cutlass/blob/f74fea9ce35868d3ae9f8d1dce1969d7250d3f90/include/cutlass/functional.h);
+its broader all-NaN software guard is not used. The patent discloses an embodiment,
+not an exhaustive hardware predicate. Exact sign-sensitive matching and the
+accumulator exclusion remain explicit model choices pending hardware validation
+or an authoritative ISA clarification. Strict whole-op hardware acceptance
+therefore remains open. ReLU canonicalizes half/bfloat NaN results to CUDA's
+`0x7fff`, distinct from the OOB marker.
+
+The generated form validator rejects malformed rounding/type controls before
+ordinary lane resources are accessed. Source initialization and destination
+width errors retain the shared lane-local failure-before-commit contract.
+PTX pipeline tests supply operands through entry parameters and read global
+output bytes through the public runtime APIs, including aliases, legal
+immediates and all canonical modifier combinations.
+
 ## Setp scope
 
 The pinned frontend exposes five predicate-comparison forms: `LtU32`, `GeS32`,
@@ -290,7 +336,7 @@ memory model or an implementation of asynchronous memory completion.
 
 ## Verification and build contracts
 
-- Exercise every declared Add/Sub/Mul/Setp form/type through generated code, and cover its
+- Exercise every declared Add/Sub/Mul/FMA/Setp form/type through generated code, and cover its
   controls, boundary encodings, signed zero, NaNs, subnormals, saturation and
   packed lanes with independently specified expected values.
 - Parse/resolve/lower/execute real PTX samples to catch unreachable engine paths.

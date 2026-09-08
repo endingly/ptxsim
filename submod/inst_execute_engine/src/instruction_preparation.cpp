@@ -221,6 +221,15 @@ auto select_mul(const exec_ir::Instruction& operation)
   return SelectedPreparer{generated::prepare_mul, PrepareKind::scalar};
 }
 
+/** @brief Select every generated and structurally valid projected FMA form. */
+auto select_fma(const exec_ir::Instruction& operation)
+    -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::validate_fma(operation)) {
+    return std::unexpected(StepErrorCode::invalid_instruction);
+  }
+  return SelectedPreparer{generated::prepare_fma, PrepareKind::scalar};
+}
+
 /** @brief Select every generated and structurally valid projected Setp form. */
 auto select_setp(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
@@ -290,6 +299,8 @@ auto select_preparer(const exec_ir::Instruction& operation)
       return select_sub(operation);
     case exec_ir::Op::mul:
       return select_mul(operation);
+    case exec_ir::Op::fma:
+      return select_fma(operation);
     case exec_ir::Op::setp:
       return select_setp(operation);
     case exec_ir::Op::ld:

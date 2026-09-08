@@ -42,4 +42,27 @@ inline auto controls(exec_ir::RoundingMode value, bool ftz = false,
   };
 }
 
+/**
+ * @brief Build controls for the FMA-only ReLU and OOB-NaN modifiers.
+ *
+ * The caller is responsible for admitting these flags only from projected FMA
+ * forms; the shared arithmetic layer deliberately has no dependency on PTX IR.
+ */
+inline auto fma_controls(exec_ir::RoundingMode value, bool ftz = false,
+                         bool sat = false, bool relu = false, bool oob = false)
+    -> std::expected<arith::floating_control, arith::arithmetic_error> {
+  const auto control = controls(value, ftz, sat);
+  if (!control)
+    return std::unexpected(control.error());
+  return arith::floating_control{
+      .rounding = control->rounding,
+      .subnormal = control->subnormal,
+      .saturation = control->saturation,
+      .activation = relu ? arith::activation_mode::relu
+                         : arith::activation_mode::none,
+      .oob_nan = oob ? arith::oob_nan_mode::zero_result
+                     : arith::oob_nan_mode::none,
+  };
+}
+
 }  // namespace ptxsim::inst_execute_engine::detail::semantics::floating_detail

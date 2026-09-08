@@ -57,6 +57,15 @@ auto sub(std::optional<exec_ir::Predicate> predicate, exec_ir::DataType type,
                                   std::move(rhs)};
   return exec_ir::Sub{std::move(predicate), exec_ir::Sub::Variant{form}};
 }
+/** @brief Build a generated round-to-nearest scalar FMA instruction. */
+auto fma_rn_f32(std::optional<exec_ir::Predicate> predicate,
+                RegisterSlot destination, exec_ir::ScalarOperand lhs,
+                exec_ir::ScalarOperand rhs, exec_ir::ScalarOperand addend)
+    -> exec_ir::Instruction {
+  exec_ir::Fma::RnF32 form{false, false, destination, std::move(lhs),
+                            std::move(rhs), std::move(addend)};
+  return exec_ir::Fma{std::move(predicate), exec_ir::Fma::Variant{form}};
+}
 /** @brief Build the implemented scalar unsigned less-than predicate comparison. */
 auto setp_lt_u32(exec_ir::Predicate destination, exec_ir::ScalarOperand lhs,
                  exec_ir::ScalarOperand rhs) -> exec_ir::Instruction {
@@ -1021,6 +1030,91 @@ TEST_F(InstExecuteEngineTest, FalsePredicateSuppressesInvalidSubOperands) {
   EXPECT_EQ(*registers.read(RegisterSlot{2}), RawValue::b32(9U));
   EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{58});
   EXPECT_EQ(warp().thread(LaneId{0}).status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest, FalsePredicateSuppressesAllThreeFmaSources) {
+  const auto frame = bind(
+      LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32, RawWidth::b32,
+                  RawWidth::pred});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(0x1234'5678U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{4}, RawValue::pred(false)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const auto instruction = fma_rn_f32(
+      exec_ir::Predicate{RegisterSlot{4}}, RegisterSlot{0}, RegisterSlot{1},
+      RegisterSlot{2}, RegisterSlot{3});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, ProgramCounter{59});
+
+  ASSERT_TRUE(result);
+  EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(0x1234'5678U));
+  EXPECT_EQ(thread.pc(), ProgramCounter{59});
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest,
+       DirectedFmaRejectsRoundNearestBeforeLaneMutation) {
+  const auto frame =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto registers = view(frame);
+  ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::b32(0xdecafbadU)));
+  ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(0x3f80'0000U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(0x3f80'0000U)));
+  ASSERT_TRUE(registers.write(RegisterSlot{3}, RawValue::b32(0U)));
+  auto& thread = warp().thread(LaneId{0});
+  thread.set_pc(initial_pc);
+  const exec_ir::Fma::DirectedF32 form{
+      exec_ir::RoundingMode::rn, false, false, RegisterSlot{0},
+      RegisterSlot{1}, RegisterSlot{2}, RegisterSlot{3}};
+  const exec_ir::Instruction instruction{
+      exec_ir::Fma{std::nullopt, exec_ir::Fma::Variant{form}}};
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0}),
+                                      instruction, ProgramCounter{60});
+
+  ASSERT_FALSE(result);
+  EXPECT_EQ(result.error().code, StepErrorCode::invalid_instruction);
+  EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::b32(0xdecafbadU));
+  EXPECT_EQ(thread.pc(), initial_pc);
+  EXPECT_EQ(thread.status(), ThreadStatus::Ready);
+}
+
+TEST_F(InstExecuteEngineTest, ThirdFmaSourceFaultDoesNotStageItsDestination) {
+  const auto initialized =
+      bind(LaneId{0}, {RawWidth::b32, RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  const auto uninitialized =
+      bind(LaneId{1}, {RawWidth::b32, RawWidth::b32, RawWidth::b32, RawWidth::b32});
+  auto initialized_registers = view(initialized);
+  auto uninitialized_registers = view(uninitialized);
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{0}, RawValue::b32(0U)));
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{1}, RawValue::b32(0x3f80'0000U)));
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{2}, RawValue::b32(0x4000'0000U)));
+  ASSERT_TRUE(initialized_registers.write(RegisterSlot{3}, RawValue::b32(0x4040'0000U)));
+  ASSERT_TRUE(uninitialized_registers.write(RegisterSlot{0}, RawValue::b32(0xa5a5'5a5aU)));
+  ASSERT_TRUE(uninitialized_registers.write(RegisterSlot{1}, RawValue::b32(0x3f80'0000U)));
+  ASSERT_TRUE(uninitialized_registers.write(RegisterSlot{2}, RawValue::b32(0x4000'0000U)));
+  warp().thread(LaneId{0}).set_pc(initial_pc);
+  warp().thread(LaneId{1}).set_pc(initial_pc);
+  const auto instruction = fma_rn_f32(std::nullopt, RegisterSlot{0},
+                                      RegisterSlot{1}, RegisterSlot{2},
+                                      RegisterSlot{3});
+
+  const auto result = engine_.execute(warp(), issue(initial_pc, {0, 1}),
+                                      instruction, ProgramCounter{61});
+
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->faults.size(), 1U);
+  EXPECT_EQ(result->faults.front().lane, LaneId{1});
+  EXPECT_EQ(std::get<memory::RegisterError>(result->faults.front().cause).code,
+            memory::RegisterErrorCode::uninitialized_read);
+  EXPECT_EQ(*initialized_registers.read(RegisterSlot{0}), RawValue::b32(0x40a0'0000U));
+  EXPECT_EQ(*uninitialized_registers.read(RegisterSlot{0}), RawValue::b32(0xa5a5'5a5aU));
+  EXPECT_EQ(warp().thread(LaneId{0}).pc(), ProgramCounter{61});
+  EXPECT_EQ(warp().thread(LaneId{1}).pc(), initial_pc);
+  EXPECT_EQ(warp().thread(LaneId{1}).status(), ThreadStatus::Trapped);
 }
 
 TEST_F(InstExecuteEngineTest, SubLaneFaultDoesNotBlockOtherLane) {

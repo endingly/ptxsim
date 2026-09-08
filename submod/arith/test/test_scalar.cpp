@@ -124,6 +124,82 @@ TEST(ScalarArithmetic, BfloatFmaIsSingleRounding) {
   EXPECT_EQ(r->value.bits(), 0x3fa3u);
 }
 
+TEST(ScalarArithmetic, FmaRemainsFusedAcrossLowPrecisionAndMixedForms) {
+  context c;
+  const auto a = float16_t::from_bits(0x3c01u);
+  const auto b = float16_t::from_bits(0x3bffu);
+  const auto negative_one_f16 = float16_t::from_bits(0xbc00u);
+  const auto f16 = fma(c, a, b, negative_one_f16);
+  ASSERT_TRUE(f16);
+  EXPECT_EQ(f16->value.bits(), 0x0ffeu);
+
+  const auto mixed =
+      fma<float32_t>(c, a, b, float32_t::from_bits(0xbf800000u));
+  ASSERT_TRUE(mixed);
+  EXPECT_EQ(mixed->value.bits(), 0x39ffc000u);
+}
+
+/**
+ * @brief Distinguish the disclosed OOB marker from ordinary NaNs in each source.
+ *
+ * The sign-sensitive, multiplicand-only rule is the adopted model; these
+ * assertions do not establish hardware behavior for negative markers or c.
+ */
+template <typename T>
+  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
+void expect_fma_oob_marker(T one, T quiet_nan, T signaling_nan) {
+  context c;
+  const auto marker = T::from_bits(0x7ff7u);
+  for (const auto activation : {activation_mode::none, activation_mode::relu}) {
+    for (const auto value : {marker, quiet_nan, signaling_nan,
+                             T::from_bits(0xfff7u), T::from_bits(0x7fffu)}) {
+      for (std::size_t source = 0; source < 3; ++source) {
+        SCOPED_TRACE(value.bits());
+        SCOPED_TRACE(source);
+        std::array inputs{one, one, one};
+        inputs[source] = value;
+        const auto result = fma(c, inputs[0], inputs[1], inputs[2],
+                                {.activation = activation,
+                                 .oob_nan = oob_nan_mode::zero_result});
+        ASSERT_TRUE(result);
+        if (value.bits() == 0x7ff7u && source < 2) {
+          EXPECT_EQ(result->value.bits(), 0u);
+          EXPECT_FALSE(result->status.invalid);
+        } else {
+          EXPECT_TRUE(is_nan(result->value));
+          EXPECT_EQ(result->status.invalid, value.bits() == signaling_nan.bits());
+          if (activation == activation_mode::relu)
+            EXPECT_EQ(result->value.bits(), 0x7fffu);
+        }
+      }
+    }
+  }
+  // Without the control even the marker retains ordinary NaN semantics.
+  const auto ordinary = fma(c, marker, one, one);
+  ASSERT_TRUE(ordinary);
+  EXPECT_TRUE(is_nan(ordinary->value));
+}
+
+TEST(ScalarArithmetic, FmaOobRecognizesOnlyExactPositiveMarker) {
+  const auto h_one = float16_t::from_bits(0x3c00u);
+  expect_fma_oob_marker(h_one, float16_t::from_bits(0x7e01u),
+                        float16_t::from_bits(0x7c01u));
+  expect_fma_oob_marker(bfloat16_t::from_bits(0x3f80u),
+                        bfloat16_t::from_bits(0x7fc1u),
+                        bfloat16_t::from_bits(0x7f81u));
+  context c;
+  EXPECT_EQ(fma(c, float32_t::from_bits(0x3f800000u),
+                float32_t::from_bits(0x3f800000u), float32_t{},
+                {.oob_nan = oob_nan_mode::zero_result})
+                .error(),
+            arithmetic_error::unsupported_oob_nan_mode);
+  EXPECT_EQ(fma(c, h_one, h_one, h_one,
+                {.subnormal = subnormal_mode::flush_input_and_output,
+                 .oob_nan = oob_nan_mode::zero_result})
+                .error(),
+            arithmetic_error::unsupported_oob_nan_mode);
+}
+
 TEST(ScalarArithmetic, ThreadLocalState) {
   context c;
   auto worker = [&](rounding_mode m, uint32_t expected) {
@@ -481,11 +557,11 @@ TEST(ScalarArithmetic, FloatingControlCapabilityMatrix) {
   EXPECT_EQ(fma(c, float16_t::from_bits(0x7e01), h_one, h_one,
                 {.activation = activation_mode::relu})
                 ->value.bits(),
-            0x7e00u);
+            0x7fffu);
   EXPECT_EQ(fma(c, bfloat16_t::from_bits(0x7fc1), bf_one, bf_one,
                 {.activation = activation_mode::relu})
                 ->value.bits(),
-            0x7fc0u);
+            0x7fffu);
   EXPECT_EQ(fma(c, h_one, h_one, h_one,
                 {.saturation = saturation_mode::zero_to_one,
                  .activation = activation_mode::relu})
