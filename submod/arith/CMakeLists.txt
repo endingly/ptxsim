@@ -103,6 +103,10 @@ if(BUILD_TESTING)
                     "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
                     "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
                     -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
+            # Keep nested configure/build/install work isolated from other tests.
+            set_tests_properties(
+                ptxsim_arith_${ptxsim_arith_consumer_mode}_consumer
+                PROPERTIES RUN_SERIAL TRUE)
         endforeach()
     endif()
 endif()
