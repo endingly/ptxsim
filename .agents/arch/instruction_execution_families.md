@@ -18,11 +18,15 @@ generators or introduce another YAML specification.
 
 The first real opcode is **Add**, not a synthetic opcode or a u32-only capability.
 The agreed scope is every Add variant currently described by
-`ptx_frontend@fdb5ef575087b530c2cd6db6cb3631cf430a8ce0` and projected into
+`ptx_frontend@0db25e8872277a6bb8957c5d17475f6d2e068c0c` and projected into
 `exec_ir::Add`. All its declared types and controls are obligations. This is a
 functional execution model across the forms in that fixed specification, not
 a newly selected SM target. Target-SM/family availability validation is not
 introduced by this change.
+
+This pin adds owned entry-parameter metadata to the frontend; it preserves the
+instruction specification from the preceding pin. The C++ port and Python
+generator dependency use the same commit.
 
 Extended-precision `add.cc` / `addc` and implicit condition-code state are
 explicitly outside this task, as agreed by the maintainer. They require frontend
@@ -225,8 +229,9 @@ Reuse launch bindings for global, constant, shared, local and entry-parameter
 resources, including existing generic-address windows. Explicit stores cannot
 target read-only spaces. Generic stores retain the memory subsystem's permission
 checks. Numeric b32/b64 address registers, immediate addresses and checked byte
-offsets are supported; this does not allocate symbolic global/shared/local
-declarations or expand the existing single-u32 entry-parameter ABI.
+offsets are supported. Entry-parameter symbols use the source-ordered layouts
+owned by `exec_ir`; the simulator packs arguments and automatically binds their
+region. This does not allocate symbolic global/shared/local declarations.
 
 Preparation captures every source and validates all destinations and the full
 memory span before architectural mutation. Vector load writes commit in operand

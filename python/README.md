@@ -28,11 +28,20 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s python/tests -v
 ```
 
+Linux CI runs these suites serially in the dedicated `Python generators` job.
+The C++ compiler matrix keeps its Python environment for code generation but
+does not repeat the Python tests. The engine suite loads its projected fixture
+once and deep-copies it for each test to isolate nested mutable frontend fields.
+
 For an environment created before the package split, first remove the obsolete
 editable distribution with `python -m pip uninstall ptxsim-exec-ir-codegen`
 using that environment's interpreter. Reinstall after changing root package
 mappings or dependencies; ordinary source/YAML edits are visible immediately
-through the editable installation.
+through the editable installation. When changing the frontend commit while its
+package version stays the same, use
+`.venv/bin/python -m pip install --upgrade --force-reinstall -e .` so pip does not
+retain a wheel from the previous commit. Check the installed frontend's
+`direct_url.json` provenance against the pin before regenerating C++ artifacts.
 
 Execution preparation uses Jinja2 templates in
 `submod/inst_execute_engine/python/codegen/templates/`. Python validates the

@@ -1,8 +1,7 @@
 # PTXSim `simulator` Module Execution Plan
 
-> **Status:** active; WP0--WP4, package export, and one scalar entry parameter
-> are implemented through `Simulator::step()`/`run()`; broader entry ABI and
-> launch arguments need a separate focused slice
+> **Status:** active; WP0--WP4, package export, ordered entry-parameter layouts,
+> and launch argument packing are implemented through `Simulator::step()`/`run()`
 > **Prerequisites:** `execution_model`, `memory`, `runtime`, `exec_ir`,
 > `exec_ir_lowering`, and `inst_execute_engine` are implemented
 > **Primary objective:** compose the existing modules into the first
@@ -33,8 +32,9 @@ all Threads exited, or a structured stop/error result
 
 The current accepted program is one function across topology-ordered warps
 executing existing `mov`, `add`, `setp.lt.u32`, predicated `bra`, scalar
-global `ld`/`st`, `ld.param.u32` from one entry parameter, and `exit`
-semantics.
+global `ld`/`st`, scalar `ld.param` from packed entry arguments, and `exit`
+semantics. Multiple scalar parameters and fixed-size array parameter layouts
+are normalized independently for each entry function.
 
 ## 2. Architectural boundary
 
@@ -217,17 +217,52 @@ Acceptance:
 
 ### Entry parameter input (implemented)
 
-One entry function may declare exactly one direct scalar `.param .u32` input.
-Lowering records its four-byte packed size and materializes its address as b64
-offset zero. `Simulator` owns supplied packed bytes, validates their exact
-size, and creates, initializes, and binds the existing entry-parameter region
-before the first issue. The executor supports the resulting `ld.param.u32`
-form without adding parameter stores or a general ABI object.
+The C++ port and Python generator dependency are both pinned to
+`ptx_frontend@0db25e8872277a6bb8957c5d17475f6d2e068c0c`. Its owned
+`ResolvedFunction::entry_parameters` retains declaration order, type, effective
+parameter alignment, pointer properties and array extent after the AST/source
+has been destroyed.
 
-The pinned resolved frontend representation does not retain entry parameter
-array or pointer shape. Multiple parameters, arrays, and broader parameter
-types therefore require frontend ABI-shape retention before a later focused
-extension. Launch arguments beyond the one packed slot remain separate work.
+Lowering constructs a source-ordered `FunctionLayout::entry_parameters` vector
+of byte offsets, sizes and alignments. Each slot starts at the next offset
+satisfying its declaration alignment. Sized arrays occupy element size times
+constant extent, with checked arithmetic. Pointer target alignment does not
+change the alignment or width of the parameter slot. The packed size is the end
+of the final parameter, including internal padding but no implicit tail padding.
+For example, `.u32` followed by `.u64` uses offsets 0 and 8 with size 16;
+`.u64` followed by `.u32` uses offsets 0 and 8 with size 12.
+
+The executable program owns and validates these layouts without retaining a
+frontend dependency. Symbolic parameter references lower to their parameter
+offset plus any explicit instruction byte offset; identical names in different
+entries remain separate identities. Missing or inconsistent metadata, unknown
+physical types, predicate parameters, unsized/zero-sized arrays, invalid
+alignment and layout overflow fail with structured errors.
+
+`simulator::pack_entry_arguments(program, function, arguments)` accepts one
+byte span per parameter in declaration order. It validates the argument count
+and each byte size, copies the argument bytes, and zero-fills alignment padding.
+Inputs are already encoded in PTX little-endian order: simulated addresses are
+explicit bytes, never native host pointers or host struct representations. This
+helper does not validate pointed-to address spaces or pointee alignment.
+
+The existing `Simulator` packed-byte constructor remains available. It owns
+the supplied vector, validates its exact total size, and creates, initializes
+and binds the entry-parameter region before the first issue. Existing ordinary
+memory semantics execute the resulting `ld.param.u32` and `ld.param.u64`
+loads and preserve structured alignment, range and missing-resource faults.
+Parameter layouts do not add device-call ABI, declaration-driven allocation,
+or complete all frontend `.param` syntax and instruction semantics.
+
+Acceptance evidence (2026-09-08): GCC Debug passed all 490 CTest cases;
+after restoring an additional malformed-symbol guard during independent
+review, all 36 affected program/lowering/argument tests passed again. GCC
+Release and GCC ASan+UBSan each passed all 490 cases on the final code,
+including build-tree/installed consumers and the semantics-link contract.
+Sanitizer runs enabled leak detection and halt-on-error. All 37 Python tests
+passed; installed Python provenance and built-wheel dependency metadata both
+match the C++ frontend commit. Independent review found no remaining actionable
+issues. Clang was unavailable in this environment and was not tested.
 
 ## 7. Deferred work
 

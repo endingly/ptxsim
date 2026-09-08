@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <expected>
 #include <optional>
+#include <span>
 #include <vector>
 
 #include <ptxsim/arith/context.hpp>
@@ -13,6 +14,48 @@
 #include <ptxsim/runtime/runtime.hpp>
 
 namespace ptxsim::simulator {
+
+/** @brief Reasons source-ordered launch arguments cannot be packed. */
+enum class EntryArgumentErrorCode {
+  program_error,
+  argument_count_mismatch,
+  argument_size_mismatch,
+};
+
+/** @brief A rejected launch argument list, before runtime state is touched. */
+struct EntryArgumentError {
+  /** @brief Whether the function, argument count, or argument size was invalid. */
+  EntryArgumentErrorCode code;
+  /** @brief Failed function lookup, present only for program_error. */
+  std::optional<exec_ir::ProgramError> program_error;
+  /** @brief Zero-based declaration index, present only for a size mismatch. */
+  std::optional<std::size_t> argument_index;
+  /** @brief Required argument count or byte count, according to @ref code. */
+  std::size_t expected = 0;
+  /** @brief Supplied argument count or byte count, according to @ref code. */
+  std::size_t actual = 0;
+
+  /** @brief Compare the complete diagnostic, including its argument location. */
+  constexpr bool operator==(const EntryArgumentError&) const noexcept = default;
+};
+
+/**
+ * @brief Copy source-ordered argument bytes into the selected function's ABI.
+ *
+ * Each span is one complete parameter value in PTX little-endian byte order,
+ * including the full extent of an array parameter. The spans are borrowed only
+ * for this call; the returned vector owns its bytes and zero-initialized
+ * alignment padding. Host buffer alignment and native struct padding are not
+ * used. Pointer arguments must encode simulator addresses, not host pointers;
+ * this byte-copy operation does not validate pointee spaces or alignment.
+ *
+ * Count and size checks complete before copying. The immutable program has
+ * already validated parameter offsets, extents and declaration alignments.
+ */
+[[nodiscard]] auto pack_entry_arguments(
+    const exec_ir::ExecutableProgram& program, common::FunctionId function,
+    std::span<const std::span<const std::byte>> arguments)
+    -> std::expected<std::vector<std::byte>, EntryArgumentError>;
 
 /** @brief Categories of failure before the runner reaches a terminal state. */
 enum class RunErrorCode {
@@ -126,6 +169,10 @@ class Simulator final {
  public:
   /**
    * @brief Take ownership of a program and packed entry bytes, and borrow execution state.
+   *
+   * The bytes must match FunctionLayout::entry_parameter_size exactly, with
+   * values at the layout's parameter offsets. Use @ref pack_entry_arguments to
+   * pack separate argument spans without reproducing layout or padding rules.
    */
   Simulator(exec_ir::ExecutableProgram program, runtime::LaunchRuntime& runtime,
             common::FunctionId entry_function, const arith::context& arithmetic,

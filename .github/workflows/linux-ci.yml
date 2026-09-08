@@ -20,6 +20,37 @@ env:
   CCACHE_MAXSIZE: 1G
 
 jobs:
+  python:
+    name: Python generators
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    concurrency:
+      group: linux-ci-${{ github.ref }}-python
+      cancel-in-progress: true
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3 python3-pip python3-venv
+
+      - name: Set up Python environment
+        shell: bash
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -e .
+
+      - name: Test Python generators
+        shell: bash
+        run: |
+          .venv/bin/python -m unittest discover -s python/tests -v
+          .venv/bin/python -m unittest discover -s submod/exec_ir/python/tests -v
+          .venv/bin/python -m unittest discover -s submod/exec_ir_lowering/python/tests -v
+          .venv/bin/python -m unittest discover -s submod/inst_execute_engine/python/tests -v
+
   test:
     name: ${{ matrix.name }}
     runs-on: ubuntu-26.04
@@ -158,14 +189,6 @@ jobs:
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
 
-      - name: Test Python generators
-        shell: bash
-        run: |
-          .venv/bin/python -m unittest discover -s python/tests -v
-          .venv/bin/python -m unittest discover -s submod/exec_ir/python/tests -v
-          .venv/bin/python -m unittest discover -s submod/exec_ir_lowering/python/tests -v
-          .venv/bin/python -m unittest discover -s submod/inst_execute_engine/python/tests -v
-
       - name: Restore vcpkg downloads cache
         id: vcpkg-downloads-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -198,8 +221,10 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v4-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}
+          key: ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-
+            ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
             ccache-v4-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
 
       - name: Show compiler cache configuration

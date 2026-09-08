@@ -13,6 +13,27 @@
 
 namespace ptxsim::exec_ir {
 
+/**
+ * @brief One source-ordered entry-parameter slot in a kernel argument blob.
+ *
+ * All fields are measured in bytes. @ref alignment constrains this slot in
+ * the blob; it deliberately does not describe the alignment of a pointer's
+ * target. A valid sequence starts each slot at the aligned end of its
+ * predecessor and has no implicit trailing padding.
+ */
+struct EntryParameterLayout {
+  /** @brief Byte position from the first byte of the raw argument blob. */
+  std::size_t offset;
+  /** @brief Number of payload bytes occupied by this slot. */
+  std::size_t size;
+  /** @brief Nonzero power-of-two byte alignment required for this slot. */
+  std::size_t alignment;
+
+  /** @brief Compare every byte-layout property. */
+  constexpr bool operator==(const EntryParameterLayout&) const noexcept =
+      default;
+};
+
 /** @brief Function-local instruction range and register layout. */
 struct FunctionLayout {
   /** @brief Dense function identity used by code locations. */
@@ -23,8 +44,14 @@ struct FunctionLayout {
   std::uint32_t instruction_count;
   /** @brief Declared width for each function-local register slot. */
   std::vector<common::RawWidth> register_widths;
-  /** @brief Packed entry-parameter byte count required before execution. */
+  /**
+   * @brief Exact byte count of the entry argument blob required before execution.
+   *
+   * This is the end of the final slot, without trailing alignment padding.
+   */
   std::size_t entry_parameter_size = 0;
+  /** @brief Source-ordered layout of each entry argument slot. */
+  std::vector<EntryParameterLayout> entry_parameters;
 };
 
 /**
@@ -47,6 +74,7 @@ enum class ProgramErrorCode : std::uint8_t {
   invalid_layout,
   invalid_layout_range,
   invalid_register_width,
+  invalid_entry_parameter_layout,
   function_not_found,
   pc_out_of_range,
   no_fallthrough,

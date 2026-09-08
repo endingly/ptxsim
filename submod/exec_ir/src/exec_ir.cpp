@@ -23,6 +23,44 @@ namespace {
   return false;
 }
 
+/** @brief Return whether @p value is a nonzero power-of-two byte alignment. */
+[[nodiscard]] constexpr auto valid_alignment(std::size_t value) noexcept
+    -> bool {
+  return value != 0U && (value & (value - 1U)) == 0U;
+}
+
+/**
+ * @brief Validate a source-ordered entry-parameter layout and its exact size.
+ *
+ * The function checks every addition before performing it, so accepted layouts
+ * can always be consumed without a wrapping byte offset.
+ */
+[[nodiscard]] auto valid_entry_parameter_layout(
+    const FunctionLayout& layout) noexcept -> bool {
+  if (layout.entry_parameters.empty()) {
+    return layout.entry_parameter_size == 0U;
+  }
+
+  std::size_t end = 0U;
+  for (const auto& parameter : layout.entry_parameters) {
+    if (!valid_alignment(parameter.alignment) || parameter.size == 0U) {
+      return false;
+    }
+    const auto remainder = end % parameter.alignment;
+    const auto padding = remainder == 0U ? 0U : parameter.alignment - remainder;
+    if (padding > std::numeric_limits<std::size_t>::max() - end) {
+      return false;
+    }
+    const auto offset = end + padding;
+    if (parameter.offset != offset ||
+        parameter.size > std::numeric_limits<std::size_t>::max() - offset) {
+      return false;
+    }
+    end = offset + parameter.size;
+  }
+  return end == layout.entry_parameter_size;
+}
+
 [[nodiscard]] auto error(
     ProgramErrorCode code,
     std::optional<common::FunctionId> function = std::nullopt,
@@ -89,6 +127,9 @@ auto ExecutableProgram::create(ProgramDefinition definition)
         return error(ProgramErrorCode::invalid_register_width, layout.id,
                      std::nullopt, width);
       }
+    }
+    if (!valid_entry_parameter_layout(layout)) {
+      return error(ProgramErrorCode::invalid_entry_parameter_layout, layout.id);
     }
     expected_begin = layout.begin + layout.instruction_count;
   }

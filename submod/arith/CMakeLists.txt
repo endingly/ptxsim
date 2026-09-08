@@ -95,6 +95,7 @@ if(BUILD_TESTING)
                     "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
                     "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                     "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                    "-DPTXSIM_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}"
                     "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
                     "-DPTXSIM_DYNAMIC_BITSET_DIR=${sul-dynamic_bitset_DIR}"
                     "-DPTXSIM_FMT_DIR=${fmt_DIR}"
@@ -102,6 +103,10 @@ if(BUILD_TESTING)
                     "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
                     "-DPTXSIM_CONSUMER_ENABLE_SANITIZERS=${PTXSIM_SANITIZER_FLAGS}"
                     -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_consumer.cmake")
+            # Keep nested configure/build/install work isolated from other tests.
+            set_tests_properties(
+                ptxsim_arith_${ptxsim_arith_consumer_mode}_consumer
+                PROPERTIES RUN_SERIAL TRUE)
         endforeach()
     endif()
 endif()

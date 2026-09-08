@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
 import unittest
@@ -19,9 +20,18 @@ from ptxsim_codegen.exec_ir.model import GenerationError
 class GenerateTests(unittest.TestCase):
     """Exercise model-derived ValueALU preparation generation."""
 
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Load the pinned specification once for this suite's fixture."""
+        cls._projected_template = load_projected(load_backend(None), None)
+
+    def setUp(self) -> None:
+        """Isolate nested mutable frontend fields from other test cases."""
+        self._projected = deepcopy(self._projected_template)
+
     def projected(self):
-        """Return the pinned frontend records that enable ValueALU generation."""
-        return load_projected(load_backend(None), None)
+        """Return this test's owned copy of the pinned frontend records."""
+        return self._projected
 
     def add(self):
         """Return the complete projected Add instruction from pinned frontend input."""

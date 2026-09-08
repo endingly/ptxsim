@@ -4,6 +4,7 @@
 #include <limits>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
@@ -53,6 +54,17 @@ done:
 .entry second() {
   .reg .b32 %x<2>;
   mov.b32 %x1, %x0;
+  exit;
+}
+)ptx"));
+}
+
+/** @brief Lower entry ABI metadata after parser, AST, and module temporaries die. */
+auto lowered_entry_parameters_after_frontend_dies()
+    -> std::expected<exec_ir::ExecutableProgram, LoweringError> {
+  return lower(resolve(R"ptx(
+.entry kernel(.param .align 16 .b8 bytes[16], .param .u64 address,
+              .param .u32 count) {
   exit;
 }
 )ptx"));
@@ -220,36 +232,224 @@ TEST(ExecIrLowering, RejectsScalarImmediateBitsOutsideResolvedWidth) {
   EXPECT_EQ(program.error().code, LoweringErrorCode::malformed_resolved_ir);
 }
 
-TEST(ExecIrLowering, LowersTheSingleEntryParameterAsOffsetZero) {
+TEST(ExecIrLowering, LowersEntryParametersWithCanonicalOffsets) {
   const auto program = lower(resolve(R"ptx(
-.entry kernel(.param .u32 input) {
+.entry kernel(.param .u32 first, .param .u64 second, .param .u32 third) {
   .reg .u32 %r;
-  ld.param.u32 %r, [input];
+  .reg .u64 %address;
+  ld.param.u32 %r, [first];
+  ld.param.u64 %address, [second];
+  ld.param.u32 %r, [third-4];
   exit;
 }
 )ptx"));
   ASSERT_TRUE(program);
   const auto layout = program->function_layout(common::FunctionId{0});
   ASSERT_TRUE(layout);
-  EXPECT_EQ(layout->get().entry_parameter_size, 4U);
-  const auto instruction =
-      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
-  ASSERT_TRUE(instruction);
-  const auto& load = std::get<exec_ir::Ld>(instruction->get());
-  const auto& form = std::get<exec_ir::Ld::ExplicitScalar>(load.variant);
-  EXPECT_EQ(form.state_space, exec_ir::AddressSpace::param);
-  EXPECT_EQ(form.dst, common::RegisterSlot{0});
-  EXPECT_EQ(form.address,
-            (exec_ir::Address{common::RawValue::b64(std::uint64_t{0})}));
+  EXPECT_EQ(layout->get().entry_parameter_size, 20U);
+  EXPECT_EQ(layout->get().entry_parameters,
+            (std::vector<exec_ir::EntryParameterLayout>{
+                {.offset = 0U, .size = 4U, .alignment = 4U},
+                {.offset = 8U, .size = 8U, .alignment = 8U},
+                {.offset = 16U, .size = 4U, .alignment = 4U},
+            }));
 
-  const auto multiple_parameters = lower(resolve(R"ptx(
-.entry kernel(.param .u32 first, .param .u32 second) {
+  const auto first =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
+  const auto second =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{1}});
+  const auto third =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{2}});
+  ASSERT_TRUE(first);
+  ASSERT_TRUE(second);
+  ASSERT_TRUE(third);
+  const auto& first_form = std::get<exec_ir::Ld::ExplicitScalar>(
+      std::get<exec_ir::Ld>(first->get()).variant);
+  const auto& second_form = std::get<exec_ir::Ld::ExplicitScalar>(
+      std::get<exec_ir::Ld>(second->get()).variant);
+  const auto& third_form = std::get<exec_ir::Ld::ExplicitScalar>(
+      std::get<exec_ir::Ld>(third->get()).variant);
+  EXPECT_EQ(first_form.address,
+            (exec_ir::Address{common::RawValue::b64(std::uint64_t{0})}));
+  EXPECT_EQ(second_form.address,
+            (exec_ir::Address{common::RawValue::b64(std::uint64_t{8})}));
+  EXPECT_EQ(std::get<common::RawValue>(third_form.address.base),
+            common::RawValue::b64(std::uint64_t{16}));
+  EXPECT_EQ(
+      third_form.address.offset,
+      (exec_ir::AddressOffset{true, common::RawValue::b64(std::uint64_t{4})}));
+}
+
+TEST(ExecIrLowering, UsesDeclarationAlignmentNotPointerTargetAlignment) {
+  const auto program = lower(resolve(R"ptx(
+.entry gemm(
+    .param .align 16 .u64 .ptr .global .align 32 A,
+    .param .u64 .ptr .global .align 16 B,
+    .param .u64 .ptr .global .align 16 C,
+    .param .u32 M,
+    .param .u32 N,
+    .param .u32 K,
+    .param .u32 lda,
+    .param .u32 ldb,
+    .param .u32 ldc) {
+  .reg .u32 %r;
+  .reg .u64 %address;
+  ld.param.u64 %address, [A];
+  ld.param.u32 %r, [M];
+  ld.param.u32 %r, [ldc-4];
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(multiple_parameters);
-  EXPECT_EQ(multiple_parameters.error().code,
-            LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(program);
+  const auto layout = program->function_layout(common::FunctionId{0});
+  ASSERT_TRUE(layout);
+  EXPECT_EQ(layout->get().entry_parameter_size, 48U);
+  EXPECT_EQ(layout->get().entry_parameters[0],
+            (exec_ir::EntryParameterLayout{
+                .offset = 0U, .size = 8U, .alignment = 16U}));
+  EXPECT_EQ(layout->get().entry_parameters[1],
+            (exec_ir::EntryParameterLayout{
+                .offset = 8U, .size = 8U, .alignment = 8U}));
+  EXPECT_EQ(layout->get().entry_parameters[3].offset, 24U);
+  EXPECT_EQ(layout->get().entry_parameters[8].offset, 44U);
+
+  const auto address =
+      program->fetch({common::FunctionId{0}, common::ProgramCounter{2}});
+  ASSERT_TRUE(address);
+  const auto& form = std::get<exec_ir::Ld::ExplicitScalar>(
+      std::get<exec_ir::Ld>(address->get()).variant);
+  EXPECT_EQ(std::get<common::RawValue>(form.address.base),
+            common::RawValue::b64(std::uint64_t{44}));
+  EXPECT_EQ(
+      form.address.offset,
+      (exec_ir::AddressOffset{true, common::RawValue::b64(std::uint64_t{4})}));
+}
+
+TEST(ExecIrLowering, LowersOverAlignedByteArraysWithoutTrailingPadding) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel(.param .align 16 .b8 bytes[16], .param .u32 count) {
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto layout = program->function_layout(common::FunctionId{0});
+  ASSERT_TRUE(layout);
+  EXPECT_EQ(layout->get().entry_parameter_size, 20U);
+  EXPECT_EQ(layout->get().entry_parameters,
+            (std::vector<exec_ir::EntryParameterLayout>{
+                {.offset = 0U, .size = 16U, .alignment = 16U},
+                {.offset = 16U, .size = 4U, .alignment = 4U},
+            }));
+}
+
+TEST(ExecIrLowering, UsesPhysicalByteWidthsForPackedFp8Pairs) {
+  const auto program = lower(resolve(R"ptx(
+.entry kernel(.param .align 2 .e4m3x2 first,
+              .param .align 2 .e5m2x2 second,
+              .param .u32 count) {
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto layout = program->function_layout(common::FunctionId{0});
+  ASSERT_TRUE(layout);
+  EXPECT_EQ(layout->get().entry_parameter_size, 8U);
+  EXPECT_EQ(layout->get().entry_parameters,
+            (std::vector<exec_ir::EntryParameterLayout>{
+                {.offset = 0U, .size = 2U, .alignment = 2U},
+                {.offset = 2U, .size = 2U, .alignment = 2U},
+                {.offset = 4U, .size = 4U, .alignment = 4U},
+            }));
+}
+
+TEST(ExecIrLowering, RetainsEntryLayoutsWithoutFrontendLifetime) {
+  const auto program = lowered_entry_parameters_after_frontend_dies();
+  ASSERT_TRUE(program);
+  const auto layout = program->function_layout(common::FunctionId{0});
+  ASSERT_TRUE(layout);
+  EXPECT_EQ(layout->get().entry_parameter_size, 28U);
+  EXPECT_EQ(layout->get().entry_parameters,
+            (std::vector<exec_ir::EntryParameterLayout>{
+                {.offset = 0U, .size = 16U, .alignment = 16U},
+                {.offset = 16U, .size = 8U, .alignment = 8U},
+                {.offset = 24U, .size = 4U, .alignment = 4U},
+            }));
+}
+
+TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
+  const auto source = R"ptx(
+.entry first(.param .u32 input, .param .align 16 .b8 bytes[16]) { exit; }
+.entry second(.param .u32 input) { exit; }
+)ptx";
+  const auto expect_invalid = [](ResolvedModule module) {
+    const auto result = lower(module);
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code,
+              LoweringErrorCode::invalid_entry_parameter_layout);
+  };
+
+  auto duplicate = resolve(source);
+  duplicate.functions[0].entry_parameters.push_back(
+      duplicate.functions[0].entry_parameters.front());
+  expect_invalid(std::move(duplicate));
+
+  auto foreign = resolve(source);
+  foreign.functions[0].entry_parameters.front().symbol_id =
+      foreign.functions[1].entry_parameters.front().symbol_id;
+  expect_invalid(std::move(foreign));
+
+  auto missing = resolve(source);
+  missing.functions[0].entry_parameters.erase(
+      missing.functions[0].entry_parameters.begin());
+  expect_invalid(std::move(missing));
+
+  auto invalid_alignment = resolve(source);
+  invalid_alignment.functions[0].entry_parameters.front().alignment = 0U;
+  expect_invalid(std::move(invalid_alignment));
+
+  // Deliberately corrupt non-const module storage through the frontend's
+  // read-only symbol view to exercise unsupported declaration shapes.
+  auto vector_parameter = resolve(source);
+  auto& vector_symbol = const_cast<ptx_frontend::binding::Symbol&>(
+      vector_parameter.symbols.symbol(
+          vector_parameter.functions[0].entry_parameters.front().symbol_id));
+  vector_symbol.vector_width = 2U;
+  expect_invalid(std::move(vector_parameter));
+
+  auto parameter_group = resolve(source);
+  auto& group_symbol =
+      const_cast<ptx_frontend::binding::Symbol&>(parameter_group.symbols.symbol(
+          parameter_group.functions[0].entry_parameters.front().symbol_id));
+  group_symbol.parameterized_count = 2U;
+  expect_invalid(std::move(parameter_group));
+
+  auto zero_extent = resolve(source);
+  zero_extent.functions[0].entry_parameters[1].array_extent = 0U;
+  expect_invalid(std::move(zero_extent));
+
+  auto overflow = resolve(source);
+  overflow.functions[0].entry_parameters[1].array_extent =
+      std::numeric_limits<std::uint64_t>::max();
+  expect_invalid(std::move(overflow));
+
+  const auto unsized = lower(resolve(R"ptx(
+.entry kernel(.param .align 8 .b8 bytes[]) { exit; }
+)ptx"));
+  ASSERT_FALSE(unsized);
+  EXPECT_EQ(unsized.error().code,
+            LoweringErrorCode::invalid_entry_parameter_layout);
+}
+
+TEST(ExecIrLowering, KeepsDeviceFunctionParametersUnsupported) {
+  const auto program = lower(resolve(R"ptx(
+.func helper(.param .u32 input) {
+  .reg .u32 %result;
+  ld.param.u32 %result, [input];
+  exit;
+}
+)ptx"));
+  ASSERT_FALSE(program);
+  EXPECT_EQ(program.error().code, LoweringErrorCode::unsupported_operand);
 }
 
 TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {

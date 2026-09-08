@@ -110,27 +110,32 @@
         {
             "name": "ci-linux-gcc-debug",
             "configurePreset": "ci-linux-gcc-debug",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "execution": { "jobs": 4 }
         },
         {
             "name": "ci-linux-gcc-release",
             "configurePreset": "ci-linux-gcc-release",
-            "configuration": "Release"
+            "configuration": "Release",
+            "execution": { "jobs": 4 }
         },
         {
             "name": "ci-linux-clang-debug",
             "configurePreset": "ci-linux-clang-debug",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "execution": { "jobs": 4 }
         },
         {
             "name": "ci-linux-clang-release",
             "configurePreset": "ci-linux-clang-release",
-            "configuration": "Release"
+            "configuration": "Release",
+            "execution": { "jobs": 4 }
         },
         {
             "name": "ci-linux-gcc-asan-ubsan",
             "configurePreset": "ci-linux-gcc-asan-ubsan",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "execution": { "jobs": 4 }
         }
     ],
     "workflowPresets": [
