@@ -1,0 +1,112 @@
+name: Main smoke and dependency cache
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+  VCPKG_DOWNLOADS: ${{ github.workspace }}/.cache/vcpkg/downloads
+  VCPKG_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg/archives
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.cache/vcpkg/archives,readwrite"
+  CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
+  CCACHE_MAXSIZE: 1G
+
+jobs:
+  smoke:
+    name: GCC Debug public API smoke
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    env:
+      CC: /usr/bin/gcc
+      CXX: /usr/bin/g++
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Linux dependencies
+        id: setup
+        uses: ./.github/actions/setup-linux
+        with:
+          compiler: gcc
+          writes-downloads: 'true'
+
+      - name: Restore compiler cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/ccache
+          key: ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-
+
+      - name: Configure GCC Debug
+        run: cmake --preset ci-linux-gcc-debug
+
+      - name: Save vcpkg downloads cache
+        if: steps.setup.outputs.downloads-cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/downloads
+          key: ${{ steps.setup.outputs.downloads-cache-key }}
+
+      - name: Save vcpkg binary cache
+        if: steps.setup.outputs.binary-cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/archives
+          key: ${{ steps.setup.outputs.binary-cache-key }}
+
+      # Configure registers the consumer checks, but this target list builds no
+      # unit-test executables. Include the diagnostic library required by install.
+      - name: Build libraries used by public consumers
+        run: >-
+          cmake --build --preset ci-linux-gcc-debug --target
+          ptxsim_simulator ptxsim_exec_ir_lowering ptxsim_arith_validation
+
+      - name: Run build-tree and installed-package smoke tests
+        run: >-
+          ctest --preset ci-linux-gcc-debug --output-on-failure --no-tests=error
+          -R '^ptxsim_arith_(build-tree|installed)_consumer$'
+
+      - name: Show compiler cache statistics
+        if: always()
+        run: ccache --show-stats || true
+
+  clang-dependencies:
+    name: Populate Clang dependencies on cache miss
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    env:
+      CC: /usr/bin/clang
+      CXX: /usr/bin/clang++
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Inspect dependency cache and prepare on miss
+        id: setup
+        uses: ./.github/actions/setup-linux
+        with:
+          compiler: clang
+          dependencies-only: 'true'
+
+      # Configuration installs the same vcpkg feature set as the full PR matrix.
+      # No ptxsim build, CTest run or compiler-cache snapshot is needed here.
+      - name: Populate missing Clang dependency cache
+        if: steps.setup.outputs.binary-cache-hit != 'true'
+        run: cmake --preset ci-linux-clang-debug
+
+      - name: Save vcpkg binary cache
+        if: steps.setup.outputs.binary-cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/archives
+          key: ${{ steps.setup.outputs.binary-cache-key }}

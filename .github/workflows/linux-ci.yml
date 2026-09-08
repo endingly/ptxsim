@@ -3,8 +3,7 @@ name: Linux CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches: [main]
+  workflow_dispatch:
   schedule:
     - cron: "0 0 1 * *"
 
@@ -105,127 +104,21 @@ jobs:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - name: Reject floating third-party action references
-        shell: bash
-        run: |
-          refs="$({
-            while IFS= read -r workflow; do
-              sed -nE 's/^[[:space:]]*uses:[[:space:]]*([^[:space:]#]+).*/\1/p' "$workflow"
-            done < <(find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \))
-          } | grep -Ev '^(\./|docker://)' || true)"
-          invalid="$(printf '%s\n' "$refs" | grep -Ev '@[0-9a-f]{40}$' || true)"
-          if [[ -n "$invalid" ]]; then
-            printf 'Floating third-party action reference(s):\n%s\n' "$invalid" >&2
-            exit 1
-          fi
-
-      - name: Compute cache epoch
-        id: cache-epoch
-        shell: bash
-        run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore APT package cache
-        id: apt-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      - name: Set up Linux dependencies
+        id: setup
+        uses: ./.github/actions/setup-linux
         with:
-          path: .cache/apt/archives
-          key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-${{ hashFiles('.github/workflows/linux-ci.yml') }}
-          restore-keys: |
-            apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-epoch.outputs.month }}-
-
-      - name: Install system dependencies
-        shell: bash
-        env:
-          APT_CACHE_DIR: ${{ github.workspace }}/.cache/apt/archives
-        run: |
-          mkdir -p "$APT_CACHE_DIR/partial"
-          chmod 0777 "$APT_CACHE_DIR" "$APT_CACHE_DIR/partial"
-          sudo apt-get update
-          sudo apt-get \
-            -o Dir::Cache::archives="$APT_CACHE_DIR" \
-            -o Binary::apt::APT::Keep-Downloaded-Packages=true \
-            install -y --no-install-recommends \
-            build-essential \
-            ccache \
-            clang \
-            clang-format \
-            cmake \
-            curl \
-            flex \
-            gcc \
-            g++ \
-            git \
-            ninja-build \
-            pkg-config \
-            python3 \
-            python3-pip \
-            python3-venv \
-            tar \
-            unzip \
-            zip
-          sudo chmod -R a+rX "$APT_CACHE_DIR"
-
-      - name: Save APT package cache
-        if: success() && matrix.preset == 'ci-linux-gcc-debug' && steps.apt-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .cache/apt/archives
-          key: ${{ steps.apt-cache.outputs.cache-primary-key }}
-
-      - name: Show compiler identity
-        shell: bash
-        run: |
-          printf 'CC=%s\nCXX=%s\n' "$CC" "$CXX"
-          readlink -f "$(command -v "$CC")"
-          readlink -f "$(command -v "$CXX")"
-          "$CC" --version
-          "$CXX" --version
-
-      - name: Set up Python environment
-        shell: bash
-        run: |
-          python3 -m venv .venv
-          .venv/bin/python -m pip install -e .
-          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
-          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
-
-      - name: Restore vcpkg downloads cache
-        id: vcpkg-downloads-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .cache/vcpkg/downloads
-          key: vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
-          restore-keys: |
-            vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-
-
-      - name: Restore vcpkg binary cache
-        id: vcpkg-binaries-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .cache/vcpkg/archives
-          key: vcpkg-binaries-${{ runner.os }}-${{ runner.arch }}-${{ matrix.vcpkg_cache }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
-
-      - name: Prepare vcpkg cache directories
-        shell: bash
-        run: mkdir -p "$VCPKG_BINARY_CACHE" "$VCPKG_DOWNLOADS"
-
-      - name: Set up vcpkg
-        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11.6
-        with:
-          vcpkgDirectory: ${{ env.VCPKG_ROOT }}
-          vcpkgJsonGlob: '**/vcpkg.json'
-          runVcpkgInstall: false
-          doNotCache: true
+          compiler: ${{ matrix.vcpkg_cache }}
+          writes-downloads: ${{ matrix.writes_vcpkg_downloads }}
 
       - name: Restore compiler cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.cache-epoch.outputs.month }}-
-            ccache-v5-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
-            ccache-v4-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-
 
       - name: Show compiler cache configuration
         shell: bash
@@ -242,18 +135,18 @@ jobs:
         run: cmake --workflow --preset "${{ matrix.preset }}"
 
       - name: Save vcpkg downloads cache
-        if: success() && matrix.writes_vcpkg_downloads && steps.vcpkg-downloads-cache.outputs.cache-hit != 'true'
+        if: success() && matrix.writes_vcpkg_downloads && steps.setup.outputs.downloads-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/downloads
-          key: ${{ steps.vcpkg-downloads-cache.outputs.cache-primary-key }}
+          key: ${{ steps.setup.outputs.downloads-cache-key }}
 
       - name: Save vcpkg binary cache
-        if: success() && matrix.writes_vcpkg_binaries && steps.vcpkg-binaries-cache.outputs.cache-hit != 'true'
+        if: success() && matrix.writes_vcpkg_binaries && steps.setup.outputs.binary-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/archives
-          key: ${{ steps.vcpkg-binaries-cache.outputs.cache-primary-key }}
+          key: ${{ steps.setup.outputs.binary-cache-key }}
 
       - name: Show compiler cache statistics
         if: always()

@@ -6,6 +6,21 @@ Perform bounded scans, builds, tests, artifact inspection, or authorized Git
 operations. Report evidence; do not expand a diagnostic task into a source
 rewrite. Trivial mechanical edits are allowed only when assigned.
 
+## Bounded evidence tasks
+
+- Work within the assigned files/search area and answer the named questions.
+  Return file/symbol references, relevant assertions or command outcomes, and
+  remaining uncertainty rather than a raw search dump.
+- Distinguish evidence from decisions: matching test inputs do not establish
+  redundant coverage, and modeled instruction forms do not establish ISA
+  completeness. Flag candidates for the primary to judge.
+- Stop at the requested evidence limit or completion condition. If a missing
+  contract, scope expansion, or architectural decision prevents a conclusion,
+  report the specific gap instead of broadening the audit independently.
+- Reuse supplied verification results when their inputs still match. Do not
+  repeat the primary's investigation or add a full-suite run merely to make the
+  delegated task larger.
+
 ## Verification
 
 - Establish the relevant working-tree/build state before checking it.
