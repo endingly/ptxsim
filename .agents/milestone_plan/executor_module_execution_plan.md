@@ -298,6 +298,83 @@ and halt-on-error. Independent review found no actionable defect. Release
 configurations and Python/wheel checks were not rerun for this arithmetic-only
 refinement; their preceding evidence is retained above.
 
+## Mov and topology execution follow-up
+
+Implements the movement and topology work tracked in
+[ptxsim #21](https://github.com/endingly/ptxsim/issues/21), from main `2ef3f8f`.
+The frontend C++/Python pin remains `cf1f32161890b04e1060095a96ad5d8ab996db27`;
+the later storage-declaration frontend PR does not itself supply a simulator
+resource allocator or change the movement projection.
+
+- [x] Lower scalar immediates, predicates, all topology components and declared
+  vector destinations to owned executable values and contiguous component slots.
+- [x] Generate the movement family from all three variants/five operand layouts,
+  retaining bit-copy, pack/unpack, predicate and vector semantics.
+- [x] Read topology special registers from execution-model state, including grid
+  identity and fixed-width lane masks; preserve malformed-IR and lane-fault details.
+- [x] Verify real PTX through public launch and global readback over multiple CTAs
+  and multidimensional thread blocks, plus aliases, sinks and predicate suppression.
+- [x] Complete compiler, sanitizer, generator, wheel and installed-consumer checks.
+- [ ] Reconcile remaining frontend and runtime prerequisites before whole-ISA Mov
+  certification; handler presence alone does not satisfy that boundary.
+
+Validation (2026-09-08): all five GCC/Clang Debug/Release and GCC ASan+UBSan
+presets cover 597 passing tests each. Four full runs initially rejected the
+negated-predicate public fixture at the frontend boundary; after correcting that
+fixture, all seven affected Mov pipeline tests passed in each preset. The final
+Clang Release full run passed 597/597 directly. All 43 Python tests pass both
+from source and from a freshly installed wheel outside the checkout. All three
+installed generators match build output and preserve timestamps on repeated
+generation; the exact frontend pin remains consistent. Diff and documentation
+link checks pass. Assembly acceptance is not GPU execution validation.
+
+Source categories requiring future architectural resources remain explicit:
+symbolic storage needs address-space bindings and the allocation work in #22;
+device-function formal addresses need activation-local materialization, while
+entry-input parameter addresses reuse the existing launch ABI offsets. Function
+addresses need an executable code-address contract. Physical SM IDs and device
+capacities, cluster topology, timers, performance/environment state, graph
+execution and shared-resource
+statistics must not be synthesized from unrelated thread indices. The whole-op
+frontend audit in endingly/ptx_frontend#51 remains the cross-op baseline.
+
+Frontend audit boundary (PTX ISA 9.3, current pin and frontend `5c6e42c`):
+ordinary `.v2/.v4` register-vector copies and brace destinations, ordinary vector
+component references, and the documented bracketed address spelling `A[5]` are
+not represented or accepted by the current frontend path. Predicate literal
+sources such as `mov.pred %p, 0/1` are also absent from the projected source
+union, despite the ISA's predicate-constant rule and acceptance by `ptxas`.
+Negated predicate sources are represented by the resolved operand type but
+rejected by the current frontend's `Pred` layout matcher. Their executor
+semantics are covered through bound IR; public PTX tests use plain predicates.
+The minimal reproduction and matcher diagnosis were
+[reported upstream](https://github.com/endingly/ptx_frontend/issues/51#issuecomment-5581859774).
+These are frontend-owned completion items under the scope of
+endingly/ptx_frontend#51. No simulator-side parser or parallel instruction
+specification is introduced to bypass them.
+
+Unbacked source categories still produce `unsupported_operand` during lowering,
+including inside predicated-off instructions; there is no claim that such PTX
+modules execute. Supporting them requires their owned binding/state contracts.
+For structurally valid already-bound execution IR, unavailable source evaluation
+occurs only after predicate gating and returns a structured lane fault.
+
+The projected `mov.v4.u32` destination can still be allocated and written by the
+production pipeline. Until ordinary component references are available upstream,
+its result is observed using the public post-run register view; scalar topology
+acceptance independently uses PTX global stores and full buffer readback. This
+observation boundary must not be reported as general vector-kernel support.
+
+Bound-IR negated predicate sources retain logical inversion, including aliases. Offline
+`ptxas 13.3.33 -arch=sm_90` accepts a PTX 9.3 kernel with `mov.pred %p1, !%p0`
+and observable global output. This assembly check establishes toolchain
+acceptance; it does not provide GPU execution evidence.
+
+The PTX manual's `mov.u32` example using `%pm0_64` also conflicts with that
+register's declared u64 type and the general type rule. Performance-monitor
+state is not implemented here; the cross-op audit should reconcile that example
+before choosing a width exception.
+
 ## 1. Decision summary
 
 The executor was designed before the C++ `exec_ir` representation; the

@@ -1,197 +1,23 @@
 #include "instruction_preparation.hpp"
 #include "instruction_preparation.gen.hpp"
+#include "mov_preparation.hpp"
 
-#include <array>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
 #include <type_traits>
-#include <utility>
-
-#include <ptxsim/arith/controls.hpp>
-#include <ptxsim/arith/scalar.hpp>
 
 namespace ptxsim::inst_execute_engine::detail {
 namespace {
-
-/** @brief Resolve an implemented scalar move source to b32 raw bits. */
-auto b32_move_source(const memory::RegisterView& registers,
-                     const execution_model::Thread& thread,
-                     const exec_ir::MovSource& source)
-    -> std::expected<std::uint32_t, LaneFaultCause> {
-  if (const auto* register_slot = std::get_if<common::RegisterSlot>(&source)) {
-    return b32_operand(registers, exec_ir::B32Operand{*register_slot});
-  }
-  if (const auto* immediate = std::get_if<common::RawValue>(&source)) {
-    const auto value = immediate->as_b32();
-    if (!value) {
-      return std::unexpected(LaneFaultCause{value.error()});
-    }
-    return *value;
-  }
-  if (const auto* special_register =
-          std::get_if<exec_ir::SpecialRegisterRef>(&source);
-      special_register != nullptr &&
-      special_register->id == exec_ir::kThreadIdSpecialRegister &&
-      special_register->component == std::optional<std::uint8_t>{0U}) {
-    return thread.position().x;
-  }
-  return std::unexpected(LaneFaultCause{
-      common::RawValueError{common::RawWidth::b32, common::RawWidth::b64}});
-}
-
-/** @brief Verify that a scalar destination accepts b32 raw bits. */
-auto b32_destination(const memory::RegisterView& registers,
-                     common::RegisterSlot destination)
-    -> std::expected<void, LaneFaultCause> {
-  const auto width = registers.declared_width(destination);
-  if (!width) {
-    return std::unexpected(LaneFaultCause{width.error()});
-  }
-  if (*width != common::RawWidth::b32) {
-    return std::unexpected(
-        LaneFaultCause{common::RawValueError{common::RawWidth::b32, *width}});
-  }
-  return {};
-}
-
-/** @brief Resolve an implemented scalar move source to b64 raw bits. */
-auto b64_move_source(const memory::RegisterView& registers,
-                     const exec_ir::MovSource& source)
-    -> std::expected<std::uint64_t, LaneFaultCause> {
-  if (const auto* register_slot = std::get_if<common::RegisterSlot>(&source)) {
-    const auto value = registers.read(*register_slot);
-    if (!value) {
-      return std::unexpected(LaneFaultCause{value.error()});
-    }
-    if (const auto b64 = value->as_b64(); b64) {
-      return *b64;
-    } else {
-      return std::unexpected(LaneFaultCause{b64.error()});
-    }
-  }
-  if (const auto* immediate = std::get_if<common::RawValue>(&source)) {
-    if (const auto b64 = immediate->as_b64(); b64) {
-      return *b64;
-    } else {
-      return std::unexpected(LaneFaultCause{b64.error()});
-    }
-  }
-  return std::unexpected(LaneFaultCause{
-      common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
-}
-
-/** @brief Verify that a scalar destination accepts b64 raw bits. */
-auto b64_destination(const memory::RegisterView& registers,
-                     common::RegisterSlot destination)
-    -> std::expected<void, LaneFaultCause> {
-  const auto width = registers.declared_width(destination);
-  if (!width) {
-    return std::unexpected(LaneFaultCause{width.error()});
-  }
-  if (*width != common::RawWidth::b64) {
-    return std::unexpected(
-        LaneFaultCause{common::RawValueError{common::RawWidth::b64, *width}});
-  }
-  return {};
-}
-
-/** @brief Stage one b32 scalar move without changing its destination frame. */
-auto prepare_operation(const memory::RegisterView& registers,
-                       const execution_model::Thread& thread,
-                       const arith::context&, const exec_ir::Mov& operation,
-                       common::ProgramCounter successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto& form = std::get<exec_ir::Mov::Scalar>(operation.variant);
-  const auto& operands =
-      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
-  const auto value = b32_move_source(registers, thread, operands.src);
-  if (!value) {
-    return std::unexpected(value.error());
-  }
-  if (const auto destination = b32_destination(registers, operands.dst);
-      !destination) {
-    return std::unexpected(destination.error());
-  }
-  return PreparedEffect{
-      .writes = {PreparedWrite{registers, operands.dst,
-                               common::RawValue::b32(*value)}},
-      .memory_write = std::nullopt,
-      .control = successor};
-}
-
-/** @brief Stage one b64 scalar move without changing its destination frame. */
-auto prepare_move_b64_operation(const memory::RegisterView& registers,
-                                const exec_ir::Mov& operation,
-                                common::ProgramCounter successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto& form = std::get<exec_ir::Mov::Scalar>(operation.variant);
-  const auto& operands =
-      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
-  const auto value = b64_move_source(registers, operands.src);
-  if (!value) {
-    return std::unexpected(value.error());
-  }
-  if (const auto destination = b64_destination(registers, operands.dst);
-      !destination) {
-    return std::unexpected(destination.error());
-  }
-  return PreparedEffect{
-      .writes = {PreparedWrite{registers, operands.dst,
-                               common::RawValue::b64(*value)}},
-      .memory_write = std::nullopt,
-      .control = successor};
-}
-
-/** @brief Adapt scalar b32 moves to the common opcode dispatch signature. */
-auto prepare_move_b32(LaneResourceResolver& resolver,
-                      const arith::context& arithmetic,
-                      const exec_ir::Instruction& operation,
-                      std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto view = resolver.resolve();
-  if (!view) {
-    return std::unexpected(view.error());
-  }
-  return prepare_operation(view->get(), resolver.thread(), arithmetic,
-                           std::get<exec_ir::Mov>(operation), *successor);
-}
-
-/** @brief Adapt scalar b64 moves to the common opcode dispatch signature. */
-auto prepare_move_b64(LaneResourceResolver& resolver, const arith::context&,
-                      const exec_ir::Instruction& operation,
-                      std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedEffect, LaneFaultCause> {
-  const auto view = resolver.resolve();
-  if (!view) {
-    return std::unexpected(view.error());
-  }
-  return prepare_move_b64_operation(
-      view->get(), std::get<exec_ir::Mov>(operation), *successor);
-}
 
 /** @brief Return the standard unsupported result for declaration-only forms. */
 auto unsupported_instruction() -> std::unexpected<StepErrorCode> {
   return std::unexpected(StepErrorCode::unsupported_instruction);
 }
 
-/** @brief Select the implemented scalar move form, if present. */
+/** @brief Select every generated and structurally valid movement form. */
 auto select_move(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
-  if (!std::holds_alternative<exec_ir::Mov::Scalar>(
-          std::get<exec_ir::Mov>(operation).variant)) {
-    return unsupported_instruction();
-  }
-  switch (
-      std::get<exec_ir::Mov::Scalar>(std::get<exec_ir::Mov>(operation).variant)
-          .type) {
-    case exec_ir::DataType::b32:
-    case exec_ir::DataType::u32:
-      return SelectedPreparer{prepare_move_b32, PrepareKind::scalar};
-    case exec_ir::DataType::b64:
-      return SelectedPreparer{prepare_move_b64, PrepareKind::scalar};
-  }
-  return unsupported_instruction();
+  if (!generated::validate_mov(operation))
+    return std::unexpected(StepErrorCode::invalid_instruction);
+  return SelectedPreparer{generated::prepare_mov, PrepareKind::scalar};
 }
 
 /** @brief Select every generated and structurally valid projected Add form. */

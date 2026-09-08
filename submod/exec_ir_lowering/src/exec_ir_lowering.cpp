@@ -88,7 +88,8 @@ struct EntryParameterLayoutResult {
             ptx_frontend::syntax_ast::AstStateSpace::Register) {
       continue;
     }
-    if (symbol.vector_width && *symbol.vector_width != 1U) {
+    const auto components = symbol.vector_width.value_or(1U);
+    if (components != 1U && components != 2U && components != 4U) {
       return error(LoweringErrorCode::unsupported_type, function, std::nullopt,
                    symbol.id.value);
     }
@@ -102,8 +103,10 @@ struct EntryParameterLayoutResult {
         static_cast<std::uint64_t>(std::numeric_limits<std::uint32_t>::max()) +
         1U;
     const auto slot_count = static_cast<std::uint64_t>(result.widths.size());
-    if (!width || count == 0U || slot_count > max_slots ||
-        static_cast<std::uint64_t>(count) > max_slots - slot_count) {
+    const auto required_slots = static_cast<std::uint64_t>(count) * components;
+    if (!width || (*width == common::RawWidth::pred && components != 1U) ||
+        count == 0U || slot_count > max_slots ||
+        required_slots > max_slots - slot_count) {
       return error(LoweringErrorCode::malformed_resolved_ir, function,
                    std::nullopt, symbol.id.value);
     }
@@ -113,12 +116,13 @@ struct EntryParameterLayoutResult {
                              : std::nullopt;
       const auto slot = common::RegisterSlot{
           static_cast<std::uint32_t>(result.widths.size())};
-      if (!result.slots.emplace(std::pair{symbol.id.value, index}, slot)
+      if (!result.slots.emplace(std::pair{symbol.id.value, index},
+                                detail::RegisterBinding{slot, components})
                .second) {
         return error(LoweringErrorCode::malformed_resolved_ir, function,
                      std::nullopt, symbol.id.value);
       }
-      result.widths.push_back(*width);
+      result.widths.insert(result.widths.end(), components, *width);
     }
   }
   return result;

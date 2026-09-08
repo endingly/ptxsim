@@ -51,6 +51,11 @@ class LaneResourceResolver final {
   std::optional<memory::RegisterView> registers_;
 };
 
+/** @brief Decode and offset an address without resolving an address-space resource. */
+auto numeric_address(const memory::RegisterView& registers,
+                     const exec_ir::Address& address)
+    -> std::expected<std::uint64_t, LaneFaultCause>;
+
 /** @brief Read a b32 operand from an immediate or one register slot. */
 auto b32_operand(const memory::RegisterView& registers,
                  const exec_ir::B32Operand& operand)

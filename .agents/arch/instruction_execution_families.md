@@ -101,6 +101,65 @@ Other historical handlers (`mov`, `setp`, `ld`, `st`, `bar`, `bra`, `exit`) reta
 their existing behavior. They are not automatically certified by the Add work;
 their full-op audits and eventual family migration remain separate tasks.
 
+## Mov and topology reads
+
+Mov uses a separate movement family. The generator derives its three projected
+variants and five operand layouts from the frontend model: scalar copy, pack,
+unpack, vector topology read, and predicate copy. Movement preserves raw bits
+and does not invoke arithmetic conversion or floating-point evaluation.
+
+Scalar copies cover b16/u16/s16, b32/u32/s32/f32 and b64/u64/s64/f64 with exact
+register widths. The wider-register relaxation for load/store and conversion
+instructions does not apply to Mov. Predicate copies apply the source negation
+flag before staging the result, including when source and destination alias.
+This negation is supported in bound IR; the pinned frontend layout matcher
+currently rejects negated Mov predicate sources in PTX text.
+Bit-size pack/unpack forms concatenate or split two/four components from low
+to high significance, including b128 containers. A source cannot be a sink;
+unpack destinations can contain sinks but require at least one actual register.
+All sources are captured and all destinations checked before any write, including
+aliases. Common predicate gating suppresses ordinary reads and resource access.
+
+Executable special-register identities are owned by `exec_ir`; lowering maps
+frontend identities explicitly. The reusable engine reader obtains the following
+values from the existing execution topology:
+
+| PTX source | Authoritative value |
+| --- | --- |
+| `%tid.{x,y,z}` | Thread coordinates within the CTA |
+| `%ntid.{x,y,z}` | CTA thread dimensions |
+| `%ctaid.{x,y,z}` | CTA coordinates within the grid |
+| `%nctaid.{x,y,z}` | Grid CTA dimensions |
+| `%laneid` | Lane position within the warp |
+| `%warpid` | Warp index within the CTA under the fixed functional scheduler |
+| `%gridid` | Caller-assigned 64-bit launch identity |
+| `%lanemask_{eq,le,lt,ge,gt}` | 32-bit positional masks relative to the lane ID |
+
+The launch owner supplies distinct grid identities when distinct launches must
+be distinguishable. Legacy 16-bit topology-component reads and 16/32-bit grid-ID
+reads retain the low bits. Lane masks describe positions, independent of active
+lanes or the configured number of lanes; lane IDs above 31 cannot be represented
+and produce a structured fault. Vector topology moves write x, y, z and zero
+into four contiguous b32 component slots. Register storage remains memory-owned;
+execution-model nodes do not acquire memory handles or instruction semantics.
+
+These rules follow the [PTX ISA Mov and special-register sections](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#data-movement-and-conversion-instructions-mov).
+Structural coverage is not whole-ISA certification. Entry-input parameter
+addresses reuse the existing ABI byte offsets and are consumed by indirect
+`ld.param`; address materialization does not load the parameter value. Other
+symbolic storage address materialization still needs
+executable resource bindings and allocation. Device-function formal addresses
+need activation-owned local storage, and function addresses need a defined
+executable code-address model. Physical SM placement and device capacities,
+clustering, timers, performance/environment registers, graph execution and shared
+resource statistics need their corresponding runtime contracts. They are not
+replaced by thread/CTA indices or arbitrary constants. Unbacked frontend source
+categories currently fail lowering, even in a predicated instruction; predicate
+suppression does not make such a module lowerable. Already-bound execution IR
+applies predicate gating before attempting
+an unavailable source. Remaining frontend and runtime acceptance prerequisites
+are recorded in the active executor plan.
+
 ## Add coverage obligations
 
 The pinned projection has nine forms and 23 type paths (control combinations

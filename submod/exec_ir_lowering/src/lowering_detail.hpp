@@ -17,13 +17,21 @@
 
 namespace ptxsim::exec_ir_lowering::detail {
 
+/** @brief Contiguous scalar slots allocated for one declared register member. */
+struct RegisterBinding {
+  /** @brief First component slot, owned by the function's register frame. */
+  common::RegisterSlot first;
+  /** @brief Number of component slots: one for a scalar, two or four for a vector. */
+  std::uint8_t components;
+};
+
 /** @brief Maps bound frontend register identities to function-local slots. */
 struct RegisterLayout {
   /** @brief Width of each allocated slot, indexed by its slot value. */
   std::vector<common::RawWidth> widths;
   /** @brief Slot allocated for each symbol and optional array member identity. */
   std::map<std::pair<std::uint32_t, std::optional<std::uint32_t>>,
-           common::RegisterSlot>
+           RegisterBinding>
       slots;
 };
 
@@ -92,6 +100,24 @@ struct BindingContext {
     const ptx_frontend::resolved_ir::ResolvedRegisterRef& reference,
     common::RawWidth expected, const BindingContext& context)
     -> std::expected<common::RegisterSlot, LoweringError>;
+
+/** @brief Bind a declared four-component register to contiguous executable slots. */
+[[nodiscard]] auto bind_vector_register(
+    const ptx_frontend::resolved_ir::ResolvedVectorRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::VectorRegisterRef, LoweringError>;
+
+/** @brief Translate a supported topology identity without retaining frontend IDs. */
+[[nodiscard]] auto bind_special_register(
+    const ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::SpecialRegisterRef, LoweringError>;
+
+/** @brief Bind one vector topology register, retaining its executable identity. */
+[[nodiscard]] auto bind_vector_special_register(
+    const ptx_frontend::resolved_ir::ResolvedVectorSpecialRegisterRef& reference,
+    const BindingContext& context)
+    -> std::expected<exec_ir::VectorSpecialRegisterRef, LoweringError>;
 
 /** @brief Bind an optional resolved predicate without retaining frontend state. */
 [[nodiscard]] auto bind_predicate(
@@ -198,6 +224,30 @@ template <typename Target, typename Source>
       result.elements.push_back(*slot);
     }
     return result;
+  } else if constexpr (std::same_as<Target, exec_ir::VectorRegisterRef> &&
+                       std::same_as<SourceValue,
+                           ptx_frontend::resolved_ir::ResolvedVectorRegisterRef>) {
+    return bind_vector_register(source, context);
+  } else if constexpr (std::same_as<Target, exec_ir::VectorSpecialRegisterRef> &&
+                       std::same_as<SourceValue,
+                           ptx_frontend::resolved_ir::ResolvedVectorSpecialRegisterRef>) {
+    return bind_vector_special_register(source, context);
+  } else if constexpr (std::same_as<Target, exec_ir::PredicateSource> &&
+                       std::same_as<SourceValue,
+                           ptx_frontend::resolved_ir::ResolvedPredicateSource>) {
+    if (const auto* predicate =
+            std::get_if<ptx_frontend::resolved_ir::ResolvedPredicate>(&source)) {
+      const auto value = bind_operand<exec_ir::Predicate>(*predicate, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::PredicateSource{*value};
+    }
+    const auto value = bind_special_register(
+        std::get<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(source),
+        context);
+    if (!value)
+      return std::unexpected(value.error());
+    return exec_ir::PredicateSource{*value};
   } else if constexpr (std::same_as<Target, exec_ir::MovSource> &&
                        std::same_as<
                            SourceValue,
@@ -217,24 +267,33 @@ template <typename Target, typename Source>
     }
     if (const auto* special_register =
             std::get_if<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(
-                &source);
-        special_register != nullptr &&
-        special_register->id.kind ==
-            ptx_frontend::base::SpecialRegisterKind::Tid &&
-        special_register->id.index == 0U && special_register->component &&
-        *special_register->component ==
-            ptx_frontend::base::VectorComponent::X) {
-      return exec_ir::MovSource{exec_ir::SpecialRegisterRef{
-          .id = exec_ir::kThreadIdSpecialRegister,
-          .component = 0U,
-      }};
+                &source)) {
+      const auto value = bind_special_register(*special_register, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::MovSource{*value};
     }
     if (const auto* immediate =
-            std::get_if<ptx_frontend::resolved_ir::ResolvedImmediate>(&source);
-        immediate != nullptr &&
-        immediate->type == ptx_frontend::base::ScalarType::B64 &&
-        !immediate->is_negative) {
-      return exec_ir::MovSource{common::RawValue::b64(immediate->bits)};
+            std::get_if<ptx_frontend::resolved_ir::ResolvedImmediate>(&source)) {
+      const auto value = bind_operand<common::RawValue>(*immediate, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::MovSource{*value};
+    }
+    if (const auto* address =
+            std::get_if<ptx_frontend::resolved_ir::ResolvedAddress>(&source)) {
+      const auto value = bind_address(*address, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::MovSource{*value};
+    }
+    if (const auto* symbol =
+            std::get_if<ptx_frontend::resolved_ir::ResolvedSymbolRef>(&source)) {
+      const auto value = bind_address(
+          ptx_frontend::resolved_ir::ResolvedAddress{.base = *symbol}, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::MovSource{*value};
     }
     return unsupported_operand(context);
   } else if constexpr (std::same_as<Target, common::ProgramCounter> &&

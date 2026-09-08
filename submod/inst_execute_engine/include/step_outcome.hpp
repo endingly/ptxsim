@@ -6,6 +6,7 @@
 
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/common/raw_value.hpp>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 #include <ptxsim/execution_model/ids.hpp>
 #include <ptxsim/memory/address_space/address_space_error.hpp>
 #include <ptxsim/memory/address_space/generic_address.hpp>
@@ -13,6 +14,47 @@
 #include <ptxsim/runtime/runtime.hpp>
 
 namespace ptxsim::inst_execute_engine {
+
+/** @brief A special register whose architectural backing is not modeled. */
+struct UnsupportedSpecialRegister {
+  /** Program-stable special-register identity requested by the instruction. */
+  common::SpecialRegisterId id;
+  /** Optional component requested from a vector-capable special register. */
+  std::optional<std::uint8_t> component;
+
+  /** @brief Compare the unavailable special-register identity and component. */
+  constexpr bool operator==(const UnsupportedSpecialRegister&) const noexcept =
+      default;
+};
+
+/** @brief A MOV source category that needs storage or address-state support. */
+struct UnsupportedMovSource {
+  /** @brief Compare source-category prerequisite failures. */
+  constexpr bool operator==(const UnsupportedMovSource&) const noexcept =
+      default;
+};
+
+/** @brief A MOV type whose raw movement representation is unavailable. */
+struct UnsupportedMovType {
+  /** Execution-IR type selector that has no supported raw movement path. */
+  exec_ir::DataType type;
+
+  /** @brief Compare the movement type selectors reported by these failures. */
+  constexpr bool operator==(const UnsupportedMovType&) const noexcept = default;
+};
+
+/** @brief A malformed direct MOV register-vector record. */
+struct InvalidMovVector {
+  /** @brief Compare malformed movement-vector failures. */
+  constexpr bool operator==(const InvalidMovVector&) const noexcept = default;
+};
+
+/** @brief A malformed direct predicate MOV destination record. */
+struct InvalidMovPredicate {
+  /** @brief Compare malformed predicate-movement failures. */
+  constexpr bool operator==(const InvalidMovPredicate&) const noexcept =
+      default;
+};
 
 /** @brief Reason an issue group cannot commit execution. */
 enum class StepErrorCode {
@@ -53,7 +95,9 @@ struct StepError {
 using LaneFaultCause =
     std::variant<runtime::RuntimeBindingError, memory::RegisterError,
                  common::RawValueError, arith::arithmetic_error,
-                 memory::AddressResolutionError, memory::AddressSpaceError>;
+                 memory::AddressResolutionError, memory::AddressSpaceError,
+                 UnsupportedSpecialRegister, UnsupportedMovSource,
+                 UnsupportedMovType, InvalidMovVector, InvalidMovPredicate>;
 
 /** @brief A fault retained after the issue's other eligible lanes execute. */
 struct LaneFault {

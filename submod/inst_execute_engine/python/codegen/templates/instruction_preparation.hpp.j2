@@ -12,6 +12,15 @@
 
 namespace ptxsim::inst_execute_engine::detail::generated {
 
+/** @brief Validate every projected {{ mov_operation.cpp_name }} form before lane resources are read. */
+auto validate_{{ mov_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Prepare every projected {{ mov_operation.cpp_name }} form without architectural mutation. */
+auto prepare_{{ mov_operation.opcode }}(LaneResourceResolver& resolver, const arith::context& arithmetic,
+                 const exec_ir::Instruction& instruction,
+                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedEffect, LaneFaultCause>;
+
 {% for operation in operations %}/** @brief Validate the projected {{ operation.cpp_name }} form before any lane resources are read. */
 auto validate_{{ operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
 
