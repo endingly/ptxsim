@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -205,6 +206,69 @@ TEST(ExecutableProgram, RejectsInvalidLocationsAndDefinitions) {
   EXPECT_EQ(width_result.error().code,
             ProgramErrorCode::invalid_register_width);
   EXPECT_EQ(width_result.error().actual, static_cast<RawWidth>(99));
+}
+
+TEST(ExecutableProgram, ValidatesExactSourceOrderedEntryParameterLayouts) {
+  auto definition = valid_definition();
+  auto& layout = definition.functions.front();
+  layout.entry_parameter_size = 20U;
+  layout.entry_parameters = {
+      EntryParameterLayout{.offset = 0U, .size = 4U, .alignment = 4U},
+      EntryParameterLayout{.offset = 8U, .size = 8U, .alignment = 8U},
+      EntryParameterLayout{.offset = 16U, .size = 4U, .alignment = 4U},
+  };
+  const auto expected_parameters = layout.entry_parameters;
+
+  const auto program = ExecutableProgram::create(std::move(definition));
+  ASSERT_TRUE(program);
+  const auto validated = program->function_layout(FunctionId{0});
+  ASSERT_TRUE(validated);
+  EXPECT_EQ(validated->get().entry_parameter_size, 20U);
+  EXPECT_EQ(validated->get().entry_parameters, expected_parameters);
+}
+
+TEST(ExecutableProgram, RejectsMalformedEntryParameterLayouts) {
+  const auto expect_invalid = [](ProgramDefinition definition) {
+    const auto result = ExecutableProgram::create(std::move(definition));
+    ASSERT_FALSE(result);
+    EXPECT_EQ(result.error().code,
+              ProgramErrorCode::invalid_entry_parameter_layout);
+  };
+
+  auto missing_slots = valid_definition();
+  missing_slots.functions.front().entry_parameter_size = 4U;
+  expect_invalid(std::move(missing_slots));
+
+  auto bad_alignment = valid_definition();
+  bad_alignment.functions.front().entry_parameter_size = 4U;
+  bad_alignment.functions.front().entry_parameters = {
+      {.offset = 0U, .size = 4U, .alignment = 3U}};
+  expect_invalid(std::move(bad_alignment));
+
+  auto noncanonical_offset = valid_definition();
+  noncanonical_offset.functions.front().entry_parameter_size = 12U;
+  noncanonical_offset.functions.front().entry_parameters = {
+      {.offset = 0U, .size = 4U, .alignment = 4U},
+      {.offset = 4U, .size = 8U, .alignment = 8U}};
+  expect_invalid(std::move(noncanonical_offset));
+
+  auto wrong_total = valid_definition();
+  wrong_total.functions.front().entry_parameter_size = 8U;
+  wrong_total.functions.front().entry_parameters = {
+      {.offset = 0U, .size = 4U, .alignment = 4U}};
+  expect_invalid(std::move(wrong_total));
+
+  auto overflow = valid_definition();
+  overflow.functions.front().entry_parameter_size =
+      std::numeric_limits<std::size_t>::max();
+  overflow.functions.front().entry_parameters = {
+      {.offset = 0U,
+       .size = std::numeric_limits<std::size_t>::max(),
+       .alignment = 1U},
+      {.offset = std::numeric_limits<std::size_t>::max(),
+       .size = 1U,
+       .alignment = 1U}};
+  expect_invalid(std::move(overflow));
 }
 
 TEST(ExecutableProgram, PrintsCanonicalExecutableProgram) {

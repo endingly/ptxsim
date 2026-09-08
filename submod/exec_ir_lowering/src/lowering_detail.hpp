@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <map>
@@ -29,6 +30,18 @@ struct RegisterLayout {
 /** @brief Maps resolved label symbols to function-local branch targets. */
 using LabelTable = std::unordered_map<std::uint32_t, common::ProgramCounter>;
 
+/** @brief ABI record used to bind one entry-parameter symbol to its slot. */
+struct EntryParameterBinding {
+  /** @brief Immutable byte layout for this parameter in its entry argument blob. */
+  exec_ir::EntryParameterLayout layout;
+  /** @brief Exact scalar declaration type required of resolved address references. */
+  ptx_frontend::base::ScalarType type;
+};
+
+/** @brief Maps each entry-parameter symbol identity to its ABI binding record. */
+using EntryParameterTable =
+    std::unordered_map<std::uint32_t, EntryParameterBinding>;
+
 /**
  * @brief Immutable per-instruction bindings used by leaf lowering conversions.
  */
@@ -37,8 +50,10 @@ struct BindingContext {
   const RegisterLayout& registers;
   /** @brief Function-local labels; owned by the enclosing lower call. */
   const LabelTable& labels;
-  /** @brief Sole supported entry-parameter symbol, if this function has one. */
-  std::optional<std::uint32_t> entry_parameter_symbol;
+  /** @brief ABI bindings for entry parameters, owned by the enclosing lower call. */
+  const EntryParameterTable& entry_parameters;
+  /** @brief Whether this function owns an entry ABI rather than device parameters. */
+  bool function_is_entry;
   /** @brief Number of executable instructions in the current function body. */
   std::uint32_t body_size;
   /** @brief Dense function index reported in lowering diagnostics. */
@@ -62,6 +77,15 @@ struct BindingContext {
  */
 [[nodiscard]] auto raw_width_for(std::string_view type)
     -> std::optional<common::RawWidth>;
+
+/**
+ * @brief Translate a normalized PTX type spelling to its exact scalar type.
+ *
+ * @return The scalar type represented by @p type, or no value for unsupported
+ * declaration spellings.
+ */
+[[nodiscard]] auto scalar_type_for(std::string_view type)
+    -> std::optional<ptx_frontend::base::ScalarType>;
 
 /** @brief Bind one typed scalar register reference to a local register slot. */
 [[nodiscard]] auto bind_register(

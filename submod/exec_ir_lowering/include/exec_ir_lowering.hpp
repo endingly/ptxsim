@@ -18,6 +18,7 @@ enum class LoweringErrorCode : std::uint8_t {
   unsupported_form,
   unsupported_type,
   unsupported_operand,
+  invalid_entry_parameter_layout,
   invalid_branch_target,
   program_validation_failed,
 };

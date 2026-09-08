@@ -68,26 +68,74 @@ auto raw_width_for(ptx_frontend::base::ScalarType type)
   return std::nullopt;
 }
 
-auto raw_width_for(std::string_view type) -> std::optional<common::RawWidth> {
+auto scalar_type_for(std::string_view type)
+    -> std::optional<ptx_frontend::base::ScalarType> {
   if (type == ".pred")
-    return common::RawWidth::pred;
-  if (type == ".u8" || type == ".s8" || type == ".b8" || type == ".e4m3" ||
-      type == ".e5m2")
-    return common::RawWidth::b8;
-  if (type == ".u16" || type == ".s16" || type == ".b16" || type == ".f16" ||
-      type == ".bf16")
-    return common::RawWidth::b16;
-  if (type == ".u8x4" || type == ".u16x2" || type == ".u32" ||
-      type == ".s8x4" || type == ".s16x2" || type == ".s32" || type == ".b32" ||
-      type == ".f16x2" || type == ".f32" || type == ".bf16x2" ||
-      type == ".e4m3x2" || type == ".e5m2x2" || type == ".tf32")
-    return common::RawWidth::b32;
-  if (type == ".u64" || type == ".s64" || type == ".b64" || type == ".f32x2" ||
-      type == ".f64")
-    return common::RawWidth::b64;
+    return ScalarType::Pred;
+  if (type == ".u8")
+    return ScalarType::U8;
+  if (type == ".u8x4")
+    return ScalarType::U8x4;
+  if (type == ".u16")
+    return ScalarType::U16;
+  if (type == ".u16x2")
+    return ScalarType::U16x2;
+  if (type == ".u32")
+    return ScalarType::U32;
+  if (type == ".u64")
+    return ScalarType::U64;
+  if (type == ".s8")
+    return ScalarType::S8;
+  if (type == ".s8x4")
+    return ScalarType::S8x4;
+  if (type == ".s16")
+    return ScalarType::S16;
+  if (type == ".s16x2")
+    return ScalarType::S16x2;
+  if (type == ".s32")
+    return ScalarType::S32;
+  if (type == ".s64")
+    return ScalarType::S64;
+  if (type == ".b8")
+    return ScalarType::B8;
+  if (type == ".b16")
+    return ScalarType::B16;
+  if (type == ".b32")
+    return ScalarType::B32;
+  if (type == ".b64")
+    return ScalarType::B64;
   if (type == ".b128")
-    return common::RawWidth::b128;
+    return ScalarType::B128;
+  if (type == ".f16")
+    return ScalarType::F16;
+  if (type == ".f16x2")
+    return ScalarType::F16x2;
+  if (type == ".f32")
+    return ScalarType::F32;
+  if (type == ".f32x2")
+    return ScalarType::F32x2;
+  if (type == ".f64")
+    return ScalarType::F64;
+  if (type == ".bf16")
+    return ScalarType::BF16;
+  if (type == ".bf16x2")
+    return ScalarType::BF16x2;
+  if (type == ".e4m3")
+    return ScalarType::E4m3;
+  if (type == ".e4m3x2")
+    return ScalarType::E4m3x2;
+  if (type == ".e5m2")
+    return ScalarType::E5m2;
+  if (type == ".e5m2x2")
+    return ScalarType::E5m2x2;
+  if (type == ".tf32")
+    return ScalarType::TF32;
   return std::nullopt;
+}
+
+auto raw_width_for(std::string_view type) -> std::optional<common::RawWidth> {
+  const auto scalar_type = scalar_type_for(type);
+  return scalar_type ? raw_width_for(*scalar_type) : std::nullopt;
 }
 
 auto bind_register(const ResolvedRegisterRef& reference,
@@ -214,20 +262,38 @@ auto bind_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
   }
   const auto* parameter =
       std::get_if<ptx_frontend::resolved_ir::ResolvedSymbolRef>(&address.base);
-  if (parameter == nullptr || !parameter->symbol_id ||
-      !context.entry_parameter_symbol ||
-      parameter->symbol_id->value != *context.entry_parameter_symbol ||
-      parameter->parameterized_index ||
+  if (parameter == nullptr) {
+    return unsupported_operand(context);
+  }
+  if (!parameter->symbol_id) {
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
+  }
+  if (parameter->parameterized_index ||
       parameter->declaration_kind !=
           ptx_frontend::binding::SymbolKind::InputParameter ||
       parameter->declaration_state_space !=
           ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
       parameter->address_state_space !=
-          ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
-      parameter->declared_type != ScalarType::U32) {
-    return binding_error(LoweringErrorCode::unsupported_operand, context);
+          ptx_frontend::syntax_ast::AstStateSpace::Parameter) {
+    return unsupported_operand(context);
   }
-  return exec_ir::Address{common::RawValue::b64(std::uint64_t{0}), offset};
+  const auto found = context.entry_parameters.find(parameter->symbol_id->value);
+  if (found == context.entry_parameters.end()) {
+    return context.function_is_entry
+               ? binding_error(LoweringErrorCode::malformed_resolved_ir,
+                               context, parameter->symbol_id->value)
+               : unsupported_operand(context);
+  }
+  if (parameter->declared_type != found->second.type ||
+      !parameter->address_alignment ||
+      *parameter->address_alignment != found->second.layout.alignment ||
+      found->second.layout.offset > std::numeric_limits<std::uint64_t>::max()) {
+    return binding_error(LoweringErrorCode::malformed_resolved_ir, context,
+                         parameter->symbol_id->value);
+  }
+  return exec_ir::Address{common::RawValue::b64(static_cast<std::uint64_t>(
+                              found->second.layout.offset)),
+                          offset};
 }
 
 auto bind_label(const ptx_frontend::resolved_ir::ResolvedBranchTarget& target,

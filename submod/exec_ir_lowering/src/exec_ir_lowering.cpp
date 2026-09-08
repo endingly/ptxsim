@@ -3,6 +3,7 @@
 #include "exec_ir_lowering.gen.hpp"
 #include "lowering_detail.hpp"
 
+#include <cstddef>
 #include <limits>
 #include <utility>
 
@@ -11,8 +12,11 @@
 namespace ptxsim::exec_ir_lowering {
 namespace {
 
+using detail::EntryParameterBinding;
+using detail::EntryParameterTable;
 using detail::LabelTable;
 using detail::RegisterLayout;
+using ptx_frontend::base::ScalarType;
 using ptx_frontend::binding::ScopeId;
 using ptx_frontend::binding::Symbol;
 using ptx_frontend::binding::SymbolKind;
@@ -44,6 +48,22 @@ using ptx_frontend::binding::SymbolTable;
   }
   return false;
 }
+
+/** @brief Return whether @p value is a nonzero power-of-two byte alignment. */
+[[nodiscard]] constexpr auto valid_alignment(std::size_t value) noexcept
+    -> bool {
+  return value != 0U && (value & (value - 1U)) == 0U;
+}
+
+/** @brief Owns the layout records and symbol bindings for one entry function. */
+struct EntryParameterLayoutResult {
+  /** @brief Source-ordered records copied into the executable function layout. */
+  std::vector<exec_ir::EntryParameterLayout> layouts;
+  /** @brief Lookup table used while lowering parameter address operands. */
+  EntryParameterTable bindings;
+  /** @brief Exact end of the last slot, with no trailing alignment padding. */
+  std::size_t size = 0U;
+};
 
 [[nodiscard]] auto register_layout(const SymbolTable& symbols,
                                    const Symbol& function_symbol,
@@ -105,41 +125,108 @@ using ptx_frontend::binding::SymbolTable;
 }
 
 /**
- * @brief Return the only supported direct entry-parameter symbol, if present.
+ * @brief Derive validated ABI slots from owned source-ordered entry metadata.
  *
- * The resolved frontend representation does not retain broader parameter ABI
- * shape, so this lowering boundary accepts exactly one scalar `.u32` slot.
+ * This refuses to infer slots by searching symbols: every direct entry input
+ * must be represented once in @p function.entry_parameters.
  */
-[[nodiscard]] auto entry_parameter_symbol(const SymbolTable& symbols,
-                                          const Symbol& function_symbol,
-                                          std::uint32_t function)
-    -> std::expected<std::optional<std::uint32_t>, LoweringError> {
-  if (!function_symbol.function_is_entry) {
-    return std::nullopt;
+[[nodiscard]] auto entry_parameter_layout(
+    const ptx_frontend::resolved_ir::ResolvedFunction& function,
+    const SymbolTable& symbols, const Symbol& function_symbol,
+    std::uint32_t function_index)
+    -> std::expected<EntryParameterLayoutResult, LoweringError> {
+  if (function.is_entry != function_symbol.function_is_entry) {
+    return error(LoweringErrorCode::malformed_resolved_ir, function_index,
+                 std::nullopt, function_symbol.id.value);
+  }
+  if (!function.is_entry) {
+    if (!function.entry_parameters.empty()) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, function_symbol.id.value);
+    }
+    return EntryParameterLayoutResult{};
   }
   if (!function_symbol.owned_scope ||
       function_symbol.owned_scope->value >= symbols.scopes().size()) {
-    return error(LoweringErrorCode::malformed_resolved_ir, function,
+    return error(LoweringErrorCode::malformed_resolved_ir, function_index,
                  std::nullopt, function_symbol.id.value);
   }
 
-  std::optional<std::uint32_t> parameter;
-  for (const Symbol& symbol : symbols.symbols()) {
-    if (symbol.scope != *function_symbol.owned_scope ||
-        symbol.kind != SymbolKind::InputParameter) {
-      continue;
+  EntryParameterLayoutResult result;
+  result.layouts.reserve(function.entry_parameters.size());
+  result.bindings.reserve(function.entry_parameters.size());
+  for (const auto& parameter : function.entry_parameters) {
+    if (parameter.symbol_id.value >= symbols.symbols().size()) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
     }
-    if (parameter ||
+    const auto& symbol = symbols.symbols()[parameter.symbol_id.value];
+    const auto scalar_type = detail::scalar_type_for(parameter.type);
+    if (!scalar_type || *scalar_type == ScalarType::Pred) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
+    }
+    const auto element_size = ptx_frontend::base::scalar_size_of(*scalar_type);
+    if (element_size == 0U || !parameter.alignment ||
+        *parameter.alignment > std::numeric_limits<std::size_t>::max() ||
+        parameter.is_array != parameter.array_extent.has_value() ||
+        (parameter.array_extent && *parameter.array_extent == 0U) ||
+        symbol.id != parameter.symbol_id ||
+        symbol.scope != *function_symbol.owned_scope ||
+        symbol.kind != SymbolKind::InputParameter || symbol.vector_width ||
+        symbol.parameterized_count ||
         symbol.state_space !=
             ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
-        symbol.type != std::optional<std::string>{".u32"} ||
-        symbol.vector_width || symbol.parameterized_count) {
-      return error(LoweringErrorCode::unsupported_operand, function,
-                   std::nullopt, symbol.id.value);
+        symbol.type != std::optional<std::string>{parameter.type} ||
+        symbol.address_alignment != parameter.alignment) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
     }
-    parameter = symbol.id.value;
+    const auto alignment = static_cast<std::size_t>(*parameter.alignment);
+    if (!valid_alignment(alignment)) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
+    }
+    const auto extent = parameter.array_extent.value_or(1U);
+    if (extent > std::numeric_limits<std::size_t>::max() / element_size) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
+    }
+    const auto size = static_cast<std::size_t>(element_size) *
+                      static_cast<std::size_t>(extent);
+    const auto remainder = result.size % alignment;
+    const auto padding = remainder == 0U ? 0U : alignment - remainder;
+    if (padding > std::numeric_limits<std::size_t>::max() - result.size ||
+        size >
+            std::numeric_limits<std::size_t>::max() - (result.size + padding)) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
+    }
+    const auto layout = exec_ir::EntryParameterLayout{
+        .offset = result.size + padding,
+        .size = size,
+        .alignment = alignment,
+    };
+    if (!result.bindings
+             .emplace(parameter.symbol_id.value,
+                      EntryParameterBinding{layout, *scalar_type})
+             .second) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, parameter.symbol_id.value);
+    }
+    result.layouts.push_back(layout);
+    result.size = layout.offset + layout.size;
   }
-  return parameter;
+
+  for (const auto& symbol : symbols.symbols()) {
+    if (symbol.scope == *function_symbol.owned_scope &&
+        symbol.kind == SymbolKind::InputParameter &&
+        !result.bindings.contains(symbol.id.value)) {
+      return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                   function_index, std::nullopt, symbol.id.value);
+    }
+  }
+  return result;
 }
 
 [[nodiscard]] auto labels_for(
@@ -203,13 +290,13 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     }
     auto registers = register_layout(module.symbols, function_symbol,
                                      function_index, function.body.empty());
-    const auto entry_parameter =
-        entry_parameter_symbol(module.symbols, function_symbol, function_index);
+    auto entry_parameters = entry_parameter_layout(
+        function, module.symbols, function_symbol, function_index);
     const auto labels = labels_for(function, module.symbols, function_index);
     if (!registers)
       return std::unexpected(registers.error());
-    if (!entry_parameter)
-      return std::unexpected(entry_parameter.error());
+    if (!entry_parameters)
+      return std::unexpected(entry_parameters.error());
     if (!labels)
       return std::unexpected(labels.error());
     if (function.body.size() > std::numeric_limits<std::uint32_t>::max()) {
@@ -220,9 +307,13 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     for (std::size_t instruction_index = 0;
          instruction_index < function.body.size(); ++instruction_index) {
       const detail::BindingContext context{
-          *registers,       *labels,
-          *entry_parameter, static_cast<std::uint32_t>(function.body.size()),
-          function_index,   static_cast<std::uint32_t>(instruction_index),
+          *registers,
+          *labels,
+          entry_parameters->bindings,
+          function.is_entry,
+          static_cast<std::uint32_t>(function.body.size()),
+          function_index,
+          static_cast<std::uint32_t>(instruction_index),
       };
       auto lowered = generated::lower_instruction(
           function.body[instruction_index], context);
@@ -233,7 +324,8 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
     definition.functions.push_back(
         {common::FunctionId{function_index}, begin,
          static_cast<std::uint32_t>(function.body.size()),
-         std::move(registers->widths), *entry_parameter ? 4U : 0U});
+         std::move(registers->widths), entry_parameters->size,
+         std::move(entry_parameters->layouts)});
   }
 
   auto program = exec_ir::ExecutableProgram::create(std::move(definition));
