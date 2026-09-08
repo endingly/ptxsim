@@ -16,6 +16,34 @@ Prefer parallel read-only discovery and isolated implementation tasks for
 substantial work. Do not delegate a single routine command merely to satisfy a
 role label. Delegation remains subject to the session's tool and permission rules.
 
+## Task decomposition
+
+For substantial work, separate evidence collection, implementation, verification,
+and decision-making before starting a broad scan or change. Prefer delegating a
+bounded evidence or verification task to Luna when it can run independently
+alongside useful primary work. Do not keep all discovery and checking on the
+primary merely because the primary already knows the repository.
+
+- Give Luna explicit files or a bounded search area, questions, expected evidence,
+  and a stopping condition. Suitable tasks include enumerating consumers of an
+  IR field, mapping specified PTX instruction forms to tests, checking a defined
+  set of links, and running an agreed verification batch after the affected
+  files are stable.
+- Keep open-ended ISA interpretation, architecture, semantic equivalence, and
+  final acceptance with the primary or an appropriate technical reviewer. For
+  example, Luna gathers candidate duplicate tests and their assertions; the
+  primary decides whether they provide redundant coverage.
+- Assign cohesive implementation and deep debugging to Terra. Reuse a worker's
+  findings rather than rescanning the same area; investigate only unresolved
+  evidence or review concerns.
+- Batch related routine work into one useful task packet. Keep trivial or tightly
+  coupled work local when there is no useful parallel work or independent check.
+  There is no agent-count quota or mandatory handoff sequence.
+
+If a worker reaches its stated boundary without enough evidence, request the
+missing evidence narrowly or reassign the part that requires further judgment.
+Do not expand a bounded scan into an unbounded review by default.
+
 ## Model preferences
 
 | Role | Preferred model | Reasoning effort | Instructions |
@@ -23,7 +51,7 @@ role label. Delegation remains subject to the session's tool and permission rule
 | Primary | `gpt-6-astra` | Preserve the session setting | This document |
 | Optional independent technical review | `gpt-5.6-sol` | `high` | [Technical review](#independent-technical-review) |
 | Substantial implementation/deep debugging | `gpt-5.6-terra` | `high` | [Terra](terra.md) |
-| Broad scans, independent verification, Git | `gpt-5.6-luna` | `medium`; `high` for judgment-heavy verification | [Luna](luna.md) |
+| Bounded evidence scans, independent verification, Git | `gpt-5.6-luna` | `medium`; `high` for judgment-heavy verification | [Luna](luna.md) |
 | Optional narrow coding worker | `gpt-5.3-codex-spark` | `medium`; `high` only for a specific need | [Spark](gpt-5.3-codex-spark.md) |
 
 These are preferences, not assertions that every session offers these models.
@@ -69,6 +97,7 @@ Before delegating, read the selected worker's instructions. Provide:
 - relevant files, existing decisions, and ownership/lifetime constraints;
 - exact editable scope and shared-state restrictions;
 - required validation and expected evidence;
+- the search boundary, stopping condition, and concise return format;
 - whether Git operations or external publication are authorized.
 
 Workers report scope expansion or architectural conflicts to the primary agent.
@@ -96,9 +125,12 @@ unverified behavior, and relevant repository state without dumping full logs.
 
 ## Git workflow
 
-Prefer Luna for a delegated commit/push task. The primary may perform it when
-delegation offers no useful benefit or a worker is unavailable. Implementation
-workers do not stage or commit unless that scope was explicitly assigned.
+When Git work is authorized and ready, prefer a single bounded Luna task for
+status/diff checks, staging, commit, and any separately authorized publication
+when the primary can review the handoff or other task evidence in parallel.
+The primary may perform it when delegation offers no useful benefit or a worker
+is unavailable. Implementation workers do not stage or commit unless that scope
+was explicitly assigned.
 
 The Git owner checks status and the intended diff, reuses valid verification
 evidence, stages authorized files, checks the staged diff, creates a descriptive
