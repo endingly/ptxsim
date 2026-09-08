@@ -17,6 +17,8 @@ enum class subnormal_mode {
 };
 enum class saturation_mode { none, type_range, zero_to_one, finite };
 enum class activation_mode { none, relu };
+/** Defines the handling of the low-precision FMA OOB-NaN marker. */
+enum class oob_nan_mode { none, zero_result };
 enum class approximation_mode { exact, ptx_approximate, ptx_full };
 enum class minmax_nan_mode { number, propagate };
 enum class floating_test { finite, infinite, number, nan, normal, subnormal };
@@ -45,6 +47,14 @@ struct floating_control {
   subnormal_mode subnormal = subnormal_mode::preserve;
   saturation_mode saturation = saturation_mode::none;
   activation_mode activation = activation_mode::none;
+  /**
+   * With zero_result, an f16/bf16 multiplicand whose raw bits equal 0x7ff7
+   * forces +0. Other NaNs, including negative 0xfff7, follow ordinary FMA
+   * handling; the accumulator does not trigger this rule. The marker follows
+   * NVIDIA US20240168765A1's disclosed embodiment. Sign-sensitive matching and
+   * multiplicand-only detection are model choices pending hardware validation.
+   */
+  oob_nan_mode oob_nan = oob_nan_mode::none;
 };
 struct minmax_control {
   minmax_nan_mode nan = minmax_nan_mode::number;

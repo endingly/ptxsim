@@ -17,6 +17,7 @@ struct packed_format_capability : std::false_type {};
 template <typename Element>
 struct packed_format_capability<Element, 2, dense_packed_layout>
     : std::bool_constant<std::same_as<Element, float16_t> ||
+                         std::same_as<Element, float32_t> ||
                          std::same_as<Element, bfloat16_t> ||
                          std::same_as<Element, float8_e4m3_t> ||
                          std::same_as<Element, float8_e5m2_t> ||
@@ -79,9 +80,9 @@ constexpr std::array<typename Packed::element_type, Packed::lanes_count> unpack(
 template <packed_operation Operation, typename Packed>
 struct packed_operation_capability : std::false_type {};
 
-// PTX 9.3 has lane-wise scalar arithmetic for the standard x2 half and BF16
-// containers.  Do not infer arithmetic from storage capability (in
-// particular, FP8/FP6/FP4, UE8M0 and S2F6 are storage-only here).
+// PTX 9.3 FMA has lane-wise scalar arithmetic for f32x2 and the standard x2
+// half and BF16 containers. Do not infer arithmetic from storage capability
+// (in particular, FP8/FP6/FP4, UE8M0 and S2F6 are storage-only here).
 template <typename Element, std::size_t Lanes, typename Layout>
 struct operation_capability<
     scalar_operation::pack, packed_t<Element, Lanes, Layout>,
@@ -127,6 +128,7 @@ struct operation_capability<scalar_operation::fma,
                             packed_t<Element, 2, dense_packed_layout>,
                             packed_t<Element, 2, dense_packed_layout>>
     : std::bool_constant<(std::same_as<Element, float16_t> ||
+                          std::same_as<Element, float32_t> ||
                           std::same_as<Element, bfloat16_t>) &&
                          operation_capability<scalar_operation::fma, Element,
                                               Element, Element, Element>::value> {};
@@ -226,6 +228,10 @@ inline std::expected<result<packed_t<Element, Lanes, Layout>, floating_status>,
 fma(const context& ctx, packed_t<Element, Lanes, Layout> a,
     packed_t<Element, Lanes, Layout> b, packed_t<Element, Lanes, Layout> c,
     floating_control control = {}) {
+  if constexpr (std::same_as<Element, float32_t>) {
+    if (control.saturation != saturation_mode::none)
+      return std::unexpected(arithmetic_error::unsupported_saturation);
+  }
   std::array<Element, Lanes> out{};
   floating_status status{};
   for (std::size_t lane = 0; lane != Lanes; ++lane) {

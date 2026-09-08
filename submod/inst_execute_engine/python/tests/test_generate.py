@@ -57,6 +57,14 @@ class GenerateTests(unittest.TestCase):
             if instruction.opcode == "mul"
         )
 
+    def fma(self):
+        """Return the complete projected FMA instruction from pinned frontend input."""
+        return next(
+            instruction
+            for instruction in self.projected()
+            if instruction.opcode == "fma"
+        )
+
     def setp(self):
         """Return the complete projected Setp instruction from pinned frontend input."""
         return next(
@@ -87,7 +95,7 @@ class GenerateTests(unittest.TestCase):
 
     def all_operations(self):
         """Return every execution family currently emitted by this generator."""
-        return (self.add(), self.sub(), self.mul(), self.setp(), self.ld(), self.st(),
+        return (self.add(), self.sub(), self.mul(), self.fma(), self.setp(), self.ld(), self.st(),
                 self.bar(), self.bra(), self.exit())
 
     def render_instruction(self, instruction):
@@ -103,7 +111,7 @@ class GenerateTests(unittest.TestCase):
 
     def test_emits_every_projected_form_and_dynamic_type(self) -> None:
         """Generated dispatch has one adapter per form and every declared dynamic type."""
-        instructions = (self.add(), self.sub(), self.mul(), self.setp())
+        instructions = (self.add(), self.sub(), self.mul(), self.fma(), self.setp())
         _, source = artifacts(self.all_operations(), Path("value_alu.gen.hpp"))
         for instruction in instructions:
             self.assertIn(f'#include "semantics/{instruction.opcode}_semantics.hpp"', source)
@@ -118,12 +126,65 @@ class GenerateTests(unittest.TestCase):
         self.assertEqual(source.count("case exec_ir::DataType::"), expected_cases)
         self.assertEqual(
             source.count("return prepare_add_") + source.count("return prepare_sub_")
-            + source.count("return prepare_mul_") + source.count("return prepare_setp_"),
+            + source.count("return prepare_mul_") + source.count("return prepare_fma_")
+            + source.count("return prepare_setp_"),
             sum(len(instruction.forms) for instruction in instructions),
         )
         for path in ("rn_f32", "lo_u32", "hi_u32", "wide_u32", "wide_s32"):
             self.assertIn(f"auto prepare_mul_{path}", source)
         self.assertNotIn("unsupported_instruction", source)
+
+    def test_fma_inventory_controls_and_three_read_preparation_are_complete(self) -> None:
+        """FMA emits every pinned form, selector, and source read without an implicit fallback."""
+        fma = self.fma()
+        expected_forms = (
+            "RnF32", "DirectedF32", "RnF64", "DirectedF64", "F32x2",
+            "RnF16", "RnF16x2", "HalfRelu", "HalfOob", "HalfOobRelu",
+            "Bf16", "Bf16x2", "Bf16Oob", "Bf16x2Oob", "MixedF32F16",
+            "MixedF32Bf16",
+        )
+        self.assertEqual(tuple(form.source.cpp_name for form in fma.forms), expected_forms)
+        dynamic_type_selector_count = sum(
+            len(modifier.values)
+            for form in fma.forms
+            for modifier in form.variant.modifiers
+            if modifier.presence == "required" and modifier.kind == "type"
+        )
+        optional_flag_count = sum(
+            1
+            for form in fma.forms
+            for modifier in form.variant.modifiers
+            if modifier.presence == "optional" and modifier.kind == "flag"
+        )
+        fixed_or_required_cardinality = sum(
+            __import__("math").prod(
+                len(modifier.values) if modifier.presence == "required" else 2
+                for modifier in form.variant.modifiers
+                if modifier.presence in {"required", "optional"}
+                and (modifier.presence == "required" or modifier.kind == "flag")
+            )
+            for form in fma.forms
+        )
+        self.assertEqual(fixed_or_required_cardinality, 70)
+
+        _, source = self.render_instruction(fma)
+        fma_begin = source.index("auto prepare_fma_")
+        fma_end = source.index("auto prepare_setp_")
+        fma_source = source[fma_begin:fma_end]
+        emitted_type_paths = sum(
+            len(form.dynamic_type_selector.cases)
+            if form.dynamic_type_selector is not None else 1
+            for form in _value_alu_forms(fma)
+        )
+        self.assertIn('#include "semantics/fma_semantics.hpp"', source)
+        self.assertEqual(source.count("return prepare_fma_"), len(expected_forms))
+        self.assertEqual(fma_source.count("case exec_ir::DataType::"), dynamic_type_selector_count)
+        self.assertEqual(optional_flag_count, 17)
+        self.assertEqual(fma_source.count("read_value<"), 3 * emitted_type_paths)
+        self.assertEqual(
+            fma_source.count("semantics::fma(arithmetic, form, *src1, *src2, *src3)"),
+            emitted_type_paths,
+        )
 
     def test_template_rejects_missing_render_data(self) -> None:
         """Templates fail explicitly instead of silently eliding missing model data."""

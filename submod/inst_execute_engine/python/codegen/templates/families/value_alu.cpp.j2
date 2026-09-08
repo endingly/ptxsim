@@ -1,15 +1,12 @@
-{% macro typed_body(form, type_path, semantic_name) %}const auto {{ form.sources[0].name }} = read_value<{{ type_path.sources[0] }}>(registers->get(), form.{{ form.sources[0].name }});
-if (!{{ form.sources[0].name }}) {
-  return std::unexpected({{ form.sources[0].name }}.error());
+{% macro typed_body(form, type_path, semantic_name) %}{% for source in form.sources %}const auto {{ source.name }} = read_value<{{ type_path.sources[loop.index0] }}>(registers->get(), form.{{ source.name }});
+if (!{{ source.name }}) {
+  return std::unexpected({{ source.name }}.error());
 }
-const auto {{ form.sources[1].name }} = read_value<{{ type_path.sources[1] }}>(registers->get(), form.{{ form.sources[1].name }});
-if (!{{ form.sources[1].name }}) {
-  return std::unexpected({{ form.sources[1].name }}.error());
-}
+{% endfor %}
 if (const auto destination = resolve_destination<{{ type_path.destination }}>(registers->get(), form.{{ form.destination.name }}); !destination) {
   return std::unexpected(destination.error());
 }
-const auto value = semantics::{{ semantic_name }}(arithmetic, form, *{{ form.sources[0].name }}, *{{ form.sources[1].name }});
+const auto value = semantics::{{ semantic_name }}(arithmetic, form{% for source in form.sources %}, *{{ source.name }}{% endfor %});
 if (!value) {
   return std::unexpected(LaneFaultCause{value.error()});
 }

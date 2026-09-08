@@ -28,9 +28,12 @@ auto entry_argument_consumer() -> bool {
 .entry arguments(.param .u64 output, .param .u32 value) {
   .reg .u64 %address;
   .reg .u32 %value;
+  .reg .b32 %fused;
   ld.param.u64 %address, [output];
   ld.param.u32 %value, [value];
   st.global.u32 [%address], %value;
+  fma.rn.f32 %fused, 0f3f800001, 0f3f7ffffe, 0fbf800000;
+  st.global.b32 [%address+4], %fused;
   exit;
 }
 )ptx");
@@ -76,15 +79,20 @@ auto entry_argument_consumer() -> bool {
   simulator::Simulator runner{std::move(*program), runtime,
                               common::FunctionId{0}, arithmetic,
                               std::move(*packed)};
-  const auto run = runner.run(4);
+  const auto run = runner.run(6);
   const auto memory = runtime.address_spaces().view(global);
   if (!run || run->termination != simulator::RunTermination::completed ||
       !memory) {
     return false;
   }
   const auto output = memory->snapshot(memory::Address{8}, 4);
-  return output &&
-         *output == std::vector<std::byte>(value.begin(), value.end());
+  const auto fused = memory->snapshot(memory::Address{12}, 4);
+  // The exact fused result is -2^-46, while separately rounded mul/add gives zero.
+  const std::vector expected_fused{std::byte{0}, std::byte{0}, std::byte{0x80},
+                                  std::byte{0xa8}};
+  return output && fused &&
+         *output == std::vector<std::byte>(value.begin(), value.end()) &&
+         *fused == expected_fused;
 }
 
 }  // namespace

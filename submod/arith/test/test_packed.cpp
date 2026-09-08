@@ -26,6 +26,9 @@ static_assert(packed_operation_capability<packed_operation::add,
                                           float16x2_t>::value);
 static_assert(packed_operation_capability<packed_operation::fma,
                                           bfloat16x2_t>::value);
+static_assert(packed_operation_capability<packed_operation::fma,
+                                          float32x2_t>::value);
+static_assert(packed_format_capability_v<float32_t, 2, dense_packed_layout>);
 static_assert(!packed_operation_capability<packed_operation::add,
                                            float32x2_t>::value);
 static_assert(!packed_operation_capability<packed_operation::mul,
@@ -77,6 +80,61 @@ TEST(PackedFormats, LaneAccessChecksBoundsInDebug) {
 #ifndef NDEBUG
   EXPECT_DEATH((void)value[2], "lane < Lanes");
 #endif
+}
+
+TEST(PackedArithmetic, FmaF32x2RoundsAndFlushesEachLane) {
+  context c;
+  const auto one = float32_t::from_bits(0x3f800000u);
+  const auto negative_one = float32_t::from_bits(0xbf800000u);
+  const auto half_ulp = float32_t::from_bits(0x33800000u);
+  const auto a = pack<float32x2_t>({one, negative_one});
+  const auto b = pack<float32x2_t>({half_ulp, half_ulp});
+  const auto z = pack<float32x2_t>({one, negative_one});
+
+  for (const auto mode : {rounding_mode::nearest_even, rounding_mode::toward_zero,
+                          rounding_mode::toward_negative,
+                          rounding_mode::toward_positive}) {
+    const auto result = fma(c, a, b, z, {.rounding = mode});
+    ASSERT_TRUE(result);
+    const auto lanes = unpack(result->value);
+    EXPECT_EQ(lanes[0].bits(), mode == rounding_mode::toward_positive
+                                   ? 0x3f800001u
+                                   : 0x3f800000u);
+    EXPECT_EQ(lanes[1].bits(), mode == rounding_mode::toward_negative
+                                   ? 0xbf800001u
+                                   : 0xbf800000u);
+  }
+
+  const auto ftz = fma(
+      c, pack<float32x2_t>({float32_t::from_bits(0x00800000u),
+                             float32_t::from_bits(0x80800000u)}),
+      pack<float32x2_t>({float32_t::from_bits(0x3f000000u),
+                          float32_t::from_bits(0x3f000000u)}),
+      pack<float32x2_t>({float32_t{}, float32_t{}}),
+      {.subnormal = subnormal_mode::flush_input_and_output});
+  ASSERT_TRUE(ftz);
+  EXPECT_EQ(ftz->value.bits(), 0x8000000000000000ULL);
+
+  EXPECT_EQ(fma(c, a, b, z, {.saturation = saturation_mode::zero_to_one})
+                .error(),
+            arithmetic_error::unsupported_saturation);
+  EXPECT_EQ(fma(c, a, b, z, {.activation = activation_mode::relu}).error(),
+            arithmetic_error::unsupported_activation);
+}
+
+TEST(PackedArithmetic, FmaOobIsIndependentPerLowPrecisionLane) {
+  context c;
+  const auto result = fma(
+      c, pack<float16x2_t>({float16_t::from_bits(0x7ff7u),
+                             float16_t::from_bits(0x4000u)}),
+      pack<float16x2_t>({float16_t::from_bits(0x3c00u),
+                          float16_t::from_bits(0x4200u)}),
+      pack<float16x2_t>({float16_t::from_bits(0x3c00u),
+                          float16_t::from_bits(0x3c00u)}),
+      {.oob_nan = oob_nan_mode::zero_result});
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->value.bits(), 0x47000000u);
+  EXPECT_FALSE(result->status.invalid);
 }
 
 }  // namespace ptxsim::arith::test

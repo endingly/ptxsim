@@ -242,6 +242,62 @@ detection and halt-on-error enabled. This sanitizer run covers the new persisten
 collective ownership and deferred writeback paths; other sanitizer test binaries
 and release/Clang configurations were not rerun.
 
+## FMA execution follow-up
+
+The C++ overlay and Python dependency advance together to frontend
+`cf1f32161890b04e1060095a96ad5d8ab996db27` (frontend PR #56). FMA uses the
+existing ValueALU family with three independently typed sources, including
+mixed f16/bf16 multiplicands and an f32 accumulator/result.
+
+- [x] Generate all 16 variants and 70 canonical type/control combinations.
+- [x] Reuse true fused arithmetic and add f32x2 arithmetic/control support.
+- [x] Exercise the complete contract through PTX parsing, resolution, lowering,
+  public entry-argument binding, execution and global-memory readback.
+- [x] Check independent rounding/cancellation encodings, signed zeros,
+  subnormals, NaNs, saturation/ReLU and packed lane independence.
+- [x] Retain source aliases, predicate suppression, malformed-control rejection
+  and third-source lane-fault isolation without partial destination/PC commit.
+- [x] Verify the sdist-built installed wheel, all Python suites, identical
+  generator output and stable unchanged timestamps outside the source tree.
+- [x] Complete GCC/Clang CTest, sanitizer and installed-consumer verification.
+- [ ] Establish strict hardware OOB-NaN behavior before whole-op ISA acceptance.
+
+The current OOB behavior matches raw `0x7ff7` multiplicands and produces positive
+zero independently per lane. The marker follows NVIDIA US20240168765A1's
+disclosed embodiment. Ordinary NaNs retain normal FMA handling; negative
+`0xfff7` and a marker in the accumulator alone do not trigger the rule in this
+model. These sign/operand-position choices have not been established as an
+exhaustive hardware predicate. The
+[architecture](../arch/instruction_execution_families.md#fma-scope) records the
+reference and limitation. This item keeps issue #25 open for strict whole-op
+acceptance; normal fused arithmetic and all declared execution paths are present.
+
+Initial verification evidence (2026-09-08, before the OOB marker refinement):
+GCC 15.2 and Clang 21.1 Debug/Release each
+passed all 574 CTest cases, including build-tree/installed consumers and the
+isolated semantic-link contract. GCC ASan+UBSan also passed all 574 cases with
+leak detection and halt-on-error enabled. The final 88 focused FMA cases passed.
+The installed consumer parses and executes a fused f32 cancellation case and
+checks the exact global output bytes. Independent review reported no remaining
+actionable defect within the documented compatibility scope.
+
+All 38 Python tests passed from both the editable package and an sdist-built
+wheel installed outside the checkout. All three installed generators emitted
+byte-identical build artifacts and retained timestamps on unchanged output.
+Installed Python VCS metadata and wheel dependency metadata confirm the same
+frontend revision as the SHA512-verified C++ port.
+
+OOB marker refinement (2026-09-08): replaced all-NaN matching with exact raw
+`0x7ff7` recognition. Scalar tests cover both f16/bf16, quiet/signaling NaNs,
+negative `0xfff7`, canonical `0x7fff`, all three source positions, disabled OOB,
+ReLU and invalid status. Packed PTX cases distinguish ordinary NaNs from an
+adjacent OOB lane. GCC Debug passed all 574 CTest cases, including consumers
+and the link contract; GCC Debug, Clang Debug and GCC ASan+UBSan each passed
+all 88 focused FMA cases after the refinement. Sanitizers used leak detection
+and halt-on-error. Independent review found no actionable defect. Release
+configurations and Python/wheel checks were not rerun for this arithmetic-only
+refinement; their preceding evidence is retained above.
+
 ## 1. Decision summary
 
 The executor was designed before the C++ `exec_ir` representation; the

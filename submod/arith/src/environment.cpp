@@ -458,17 +458,36 @@ template <typename T>
   }
   if (control.activation == activation_mode::relu) {
     if (is_nan(value)) {
-      using Traits = FormatTraits<T>;
-      return T::from_bits(static_cast<typename Traits::Bits>(
-          (static_cast<typename Traits::Bits>(Traits::canonical_nan_exponent_field)
-           << Traits::fraction_bits) |
-          static_cast<typename Traits::Bits>(
-              Traits::canonical_nan_fraction_field)));
+      if constexpr (std::same_as<T, float16_t> ||
+                    std::same_as<T, bfloat16_t>)
+        return T::from_bits(0x7fffu);
+      else {
+        using Traits = FormatTraits<T>;
+        return T::from_bits(static_cast<typename Traits::Bits>(
+            (static_cast<typename Traits::Bits>(Traits::canonical_nan_exponent_field)
+             << Traits::fraction_bits) |
+            static_cast<typename Traits::Bits>(
+                Traits::canonical_nan_fraction_field)));
+      }
     }
     if (is_negative(value))
       return T{};
   }
   return value;
+}
+
+/**
+ * Recognizes the positive raw OOB-NaN marker in the adopted numeric model.
+ *
+ * NVIDIA US20240168765A1, paragraph 0343 and Table 89, discloses 0x7ff7 for
+ * both f16 and bf16 tensor OOB fills. Exact matching preserves ordinary NaNs;
+ * negative 0xfff7 is not an alias in this model. This disclosed embodiment
+ * is not a claim of verified hardware behavior across GPU targets.
+ */
+template <typename T>
+  requires(std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>)
+[[nodiscard]] constexpr bool is_oob_nan(T value) noexcept {
+  return value.bits() == 0x7ff7u;
 }
 template <scalar_operation Op, typename T, typename... Operands>
 std::expected<void, arithmetic_error> validate(floating_control control) {
@@ -483,8 +502,13 @@ std::expected<void, arithmetic_error> validate(floating_control control) {
     return std::unexpected(arithmetic_error::unsupported_saturation);
   if (!Capability::supports(control.activation))
     return std::unexpected(arithmetic_error::unsupported_activation);
-  if (!Capability::supports(control))
+  if (!Capability::supports(control.oob_nan))
+    return std::unexpected(arithmetic_error::unsupported_oob_nan_mode);
+  if (!Capability::supports(control)) {
+    if (control.oob_nan != oob_nan_mode::none)
+      return std::unexpected(arithmetic_error::unsupported_oob_nan_mode);
     return std::unexpected(arithmetic_error::unsupported_activation);
+  }
   return {};
 }
 template <scalar_operation Op, typename T, typename F>
@@ -497,6 +521,25 @@ std::expected<result<T, floating_status>, arithmetic_error> execute(
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
 }
+/** Executes a fused ternary operation after applying its OOB-NaN rule. */
+template <FloatingFormat T, typename F>
+  requires std::invocable<F, T, T, T>
+std::expected<result<T, floating_status>, arithmetic_error> execute_fma(
+    floating_control control, F&& operation, T a, T b, T c) {
+  if (auto valid = validate<scalar_operation::fma, T>(control); !valid)
+    return std::unexpected(valid.error());
+  if constexpr (std::same_as<T, float16_t> || std::same_as<T, bfloat16_t>) {
+    if (control.oob_nan == oob_nan_mode::zero_result &&
+        (is_oob_nan(a) || is_oob_nan(b)))
+      return result<T, floating_status>{T{}, {}};
+  }
+  auto raw = operation(input_ftz(a, control.subnormal),
+                       input_ftz(b, control.subnormal),
+                       input_ftz(c, control.subnormal));
+  return result<T, floating_status>{
+      apply_result_controls(output_ftz(raw.value, control.subnormal), control),
+      status(raw.flags)};
+}
 template <scalar_operation Op, typename T, typename F>
 std::expected<result<T, floating_status>, arithmetic_error> execute(
     floating_control control, F&& operation, T a, T b) {
@@ -504,18 +547,6 @@ std::expected<result<T, floating_status>, arithmetic_error> execute(
     return std::unexpected(valid.error());
   auto raw = operation(input_ftz(a, control.subnormal),
                        input_ftz(b, control.subnormal));
-  return result<T, floating_status>{
-      apply_result_controls(output_ftz(raw.value, control.subnormal), control),
-      status(raw.flags)};
-}
-template <scalar_operation Op, typename T, typename F>
-std::expected<result<T, floating_status>, arithmetic_error> execute(
-    floating_control control, F&& operation, T a, T b, T c) {
-  if (auto valid = validate<Op, T>(control); !valid)
-    return std::unexpected(valid.error());
-  auto raw = operation(input_ftz(a, control.subnormal),
-                       input_ftz(b, control.subnormal),
-                       input_ftz(c, control.subnormal));
   return result<T, floating_status>{
       apply_result_controls(output_ftz(raw.value, control.subnormal), control),
       status(raw.flags)};
@@ -629,7 +660,7 @@ std::expected<result<float64_t, floating_status>, arithmetic_error> div(
 #define PTXSIM_DISPATCH_FMA(T)                                             \
   std::expected<result<T, floating_status>, arithmetic_error> fma(         \
       T a, T b, T z, floating_control c) {                                 \
-    return execute<scalar_operation::fma, T>(c, [&](T x, T y, T q) { return backend::fma(x, y, q, legacy(c)); }, a, b, z); \
+    return execute_fma(c, [&](T x, T y, T q) { return backend::fma(x, y, q, legacy(c)); }, a, b, z); \
   }
 PTXSIM_DISPATCH_FMA(float16_t)
 PTXSIM_DISPATCH_FMA(bfloat16_t)
