@@ -26,6 +26,7 @@ auto entry_argument_consumer() -> bool {
   using namespace ptxsim;
   ptx_frontend::PtxSyntaxParser parser(R"ptx(
 .entry arguments(.param .u64 output, .param .u32 value) {
+  .param .align 8 .b8 call_scratch[2][3];
   .reg .u64 %address;
   .reg .u32 %value;
   .reg .b32 %fused;
@@ -43,6 +44,16 @@ auto entry_argument_consumer() -> bool {
   }
   const auto resolved = ptx_frontend::resolved_ir::resolveModule(*ast);
   if (!resolved) {
+    return false;
+  }
+  const auto& declarations = resolved->functions.front().parameter_declarations;
+  if (declarations.size() != 3 ||
+      declarations.front().role !=
+          ptx_frontend::resolved_ir::ParameterDeclarationRole::EntryInput ||
+      declarations.back().role !=
+          ptx_frontend::resolved_ir::ParameterDeclarationRole::BodyLocal ||
+      declarations.back().array_extents.size() != 2 ||
+      declarations.back().byte_extent != 6) {
     return false;
   }
   auto program = exec_ir_lowering::lower(*resolved);

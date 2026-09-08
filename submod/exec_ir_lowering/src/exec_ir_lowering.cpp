@@ -5,9 +5,12 @@
 
 #include <cstddef>
 #include <limits>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
+#include <ptx_frontend/semantic/ptx_declaration_semantics.hpp>
 
 namespace ptxsim::exec_ir_lowering {
 namespace {
@@ -18,9 +21,12 @@ using detail::LabelTable;
 using detail::RegisterLayout;
 using ptx_frontend::base::ScalarType;
 using ptx_frontend::binding::ScopeId;
+using ptx_frontend::binding::ScopeKind;
 using ptx_frontend::binding::Symbol;
 using ptx_frontend::binding::SymbolKind;
 using ptx_frontend::binding::SymbolTable;
+using ptx_frontend::resolved_ir::ParameterDeclarationRole;
+using ptx_frontend::resolved_ir::ResolvedParameterDeclaration;
 
 [[nodiscard]] auto error(
     LoweringErrorCode code,
@@ -128,11 +134,68 @@ struct EntryParameterLayoutResult {
   return result;
 }
 
+/** @brief Return whether @p role names one published parameter declaration role. */
+[[nodiscard]] constexpr auto valid_parameter_role(
+    ParameterDeclarationRole role) noexcept -> bool {
+  switch (role) {
+    case ParameterDeclarationRole::EntryInput:
+    case ParameterDeclarationRole::DeviceInput:
+    case ParameterDeclarationRole::DeviceReturn:
+    case ParameterDeclarationRole::BodyLocal:
+      return true;
+  }
+  return false;
+}
+
+/**
+ * @brief Check checked declaration extent metadata and return its exact byte count.
+ *
+ * A missing result denotes invalid metadata. Zero is reserved for the one
+ * supported unsized DeviceInput form; every sized declaration returns nonzero.
+ */
+[[nodiscard]] auto declared_byte_extent(
+    const ResolvedParameterDeclaration& parameter, bool is_entry)
+    -> std::optional<std::uint64_t> {
+  if (parameter.scalar_type == ScalarType::Invalid ||
+      parameter.scalar_type == ScalarType::Pred ||
+      parameter.vector_width != 1U) {
+    return std::nullopt;
+  }
+  std::uint64_t size =
+      ptx_frontend::base::scalar_size_of(parameter.scalar_type);
+  if (size == 0U)
+    return std::nullopt;
+  bool unsized = false;
+  for (const auto extent : parameter.array_extents) {
+    if (!extent) {
+      if (unsized)
+        return std::nullopt;
+      unsized = true;
+      continue;
+    }
+    if (*extent == 0U ||
+        size > std::numeric_limits<std::uint64_t>::max() / *extent)
+      return std::nullopt;
+    size *= *extent;
+  }
+  if (unsized) {
+    if (is_entry || parameter.role != ParameterDeclarationRole::DeviceInput ||
+        parameter.scalar_type != ScalarType::B8 ||
+        parameter.array_extents.size() != 1U || parameter.byte_extent) {
+      return std::nullopt;
+    }
+    return std::uint64_t{0};
+  }
+  if (!parameter.byte_extent || *parameter.byte_extent != size)
+    return std::nullopt;
+  return size;
+}
+
 /**
  * @brief Derive validated ABI slots from owned source-ordered entry metadata.
  *
- * This refuses to infer slots by searching symbols: every direct entry input
- * must be represented once in @p function.entry_parameters.
+ * Only EntryInput records become launch slots. Device signatures and body-local
+ * declarations are validated as frontend metadata without becoming launch ABI.
  */
 [[nodiscard]] auto entry_parameter_layout(
     const ptx_frontend::resolved_ir::ResolvedFunction& function,
@@ -143,61 +206,100 @@ struct EntryParameterLayoutResult {
     return error(LoweringErrorCode::malformed_resolved_ir, function_index,
                  std::nullopt, function_symbol.id.value);
   }
-  if (!function.is_entry) {
-    if (!function.entry_parameters.empty()) {
-      return error(LoweringErrorCode::invalid_entry_parameter_layout,
-                   function_index, std::nullopt, function_symbol.id.value);
-    }
-    return EntryParameterLayoutResult{};
-  }
   if (!function_symbol.owned_scope ||
       function_symbol.owned_scope->value >= symbols.scopes().size()) {
+    if (!function.is_entry && function.parameter_declarations.empty())
+      return EntryParameterLayoutResult{};
     return error(LoweringErrorCode::malformed_resolved_ir, function_index,
                  std::nullopt, function_symbol.id.value);
   }
 
+  const auto function_scope = *function_symbol.owned_scope;
   EntryParameterLayoutResult result;
-  result.layouts.reserve(function.entry_parameters.size());
-  result.bindings.reserve(function.entry_parameters.size());
-  for (const auto& parameter : function.entry_parameters) {
-    if (parameter.symbol_id.value >= symbols.symbols().size()) {
+  result.layouts.reserve(function.parameter_declarations.size());
+  result.bindings.reserve(function.parameter_declarations.size());
+  std::unordered_set<std::uint32_t> declared_symbols;
+  /** True after the terminal unsized DeviceInput declaration in source order. */
+  bool unsized_device_input_seen = false;
+  for (const auto& parameter : function.parameter_declarations) {
+    if (!valid_parameter_role(parameter.role) ||
+        parameter.symbol_id.value >= symbols.symbols().size()) {
       return error(LoweringErrorCode::invalid_entry_parameter_layout,
                    function_index, std::nullopt, parameter.symbol_id.value);
     }
     const auto& symbol = symbols.symbols()[parameter.symbol_id.value];
-    const auto scalar_type = detail::scalar_type_for(parameter.type);
-    if (!scalar_type || *scalar_type == ScalarType::Pred) {
-      return error(LoweringErrorCode::invalid_entry_parameter_layout,
-                   function_index, std::nullopt, parameter.symbol_id.value);
-    }
-    const auto element_size = ptx_frontend::base::scalar_size_of(*scalar_type);
-    if (element_size == 0U || !parameter.alignment ||
-        *parameter.alignment > std::numeric_limits<std::size_t>::max() ||
-        parameter.is_array != parameter.array_extent.has_value() ||
-        (parameter.array_extent && *parameter.array_extent == 0U) ||
-        symbol.id != parameter.symbol_id ||
-        symbol.scope != *function_symbol.owned_scope ||
-        symbol.kind != SymbolKind::InputParameter || symbol.vector_width ||
-        symbol.parameterized_count ||
+    const auto expected_kind = [&] {
+      switch (parameter.role) {
+        case ParameterDeclarationRole::EntryInput:
+        case ParameterDeclarationRole::DeviceInput:
+          return SymbolKind::InputParameter;
+        case ParameterDeclarationRole::DeviceReturn:
+          return SymbolKind::ReturnParameter;
+        case ParameterDeclarationRole::BodyLocal:
+          return SymbolKind::CallParameter;
+      }
+      return SymbolKind::Variable;
+    }();
+    const auto role_matches_function =
+        parameter.role == ParameterDeclarationRole::EntryInput
+            ? function.is_entry
+        : parameter.role == ParameterDeclarationRole::DeviceInput ||
+                parameter.role == ParameterDeclarationRole::DeviceReturn
+            ? !function.is_entry
+            : true;
+    const auto scope_matches = [&] {
+      if (parameter.role == ParameterDeclarationRole::EntryInput)
+        return parameter.scope_id == function_scope;
+      if (parameter.role == ParameterDeclarationRole::BodyLocal)
+        return descendant_of(symbols, parameter.scope_id, function_scope);
+      if (parameter.scope_id.value >= symbols.scopes().size())
+        return false;
+      // Prototypes and definitions have distinct parameter scopes even though
+      // their shared function symbol records the latest definition scope.
+      const auto& scope = symbols.scopes()[parameter.scope_id.value];
+      return scope.id == parameter.scope_id &&
+             scope.kind == ScopeKind::Function &&
+             scope.owner == function.symbol_id;
+    }();
+    const auto symbol_scalar =
+        symbol.type ? ptx_frontend::declaration_semantics::parameterScalarType(
+                          *symbol.type)
+                    : std::nullopt;
+    const auto byte_extent = declared_byte_extent(parameter, function.is_entry);
+    const auto follows_unsized_device_input =
+        unsized_device_input_seen &&
+        parameter.role == ParameterDeclarationRole::DeviceInput;
+    if (!role_matches_function || !scope_matches ||
+        follows_unsized_device_input ||
+        parameter.alignment > std::numeric_limits<std::size_t>::max() ||
+        !valid_alignment(static_cast<std::size_t>(parameter.alignment)) ||
+        !byte_extent || symbol.id != parameter.symbol_id ||
+        symbol.scope != parameter.scope_id || symbol.kind != expected_kind ||
         symbol.state_space !=
             ptx_frontend::syntax_ast::AstStateSpace::Parameter ||
-        symbol.type != std::optional<std::string>{parameter.type} ||
-        symbol.address_alignment != parameter.alignment) {
+        symbol_scalar != parameter.scalar_type ||
+        symbol.address_alignment != parameter.alignment ||
+        !declared_symbols.insert(parameter.symbol_id.value).second) {
       return error(LoweringErrorCode::invalid_entry_parameter_layout,
                    function_index, std::nullopt, parameter.symbol_id.value);
     }
-    const auto alignment = static_cast<std::size_t>(*parameter.alignment);
-    if (!valid_alignment(alignment)) {
+    if (parameter.role == ParameterDeclarationRole::DeviceInput &&
+        *byte_extent == 0U) {
+      unsized_device_input_seen = true;
+    }
+    if (parameter.role != ParameterDeclarationRole::EntryInput)
+      continue;
+    if (parameter.array_extents.size() > 1U || symbol.vector_width ||
+        symbol.parameterized_count) {
       return error(LoweringErrorCode::invalid_entry_parameter_layout,
                    function_index, std::nullopt, parameter.symbol_id.value);
     }
-    const auto extent = parameter.array_extent.value_or(1U);
-    if (extent > std::numeric_limits<std::size_t>::max() / element_size) {
+    const auto size = *byte_extent;
+    if (size > std::numeric_limits<std::size_t>::max()) {
       return error(LoweringErrorCode::invalid_entry_parameter_layout,
                    function_index, std::nullopt, parameter.symbol_id.value);
     }
-    const auto size = static_cast<std::size_t>(element_size) *
-                      static_cast<std::size_t>(extent);
+    const auto alignment = static_cast<std::size_t>(parameter.alignment);
     const auto remainder = result.size % alignment;
     const auto padding = remainder == 0U ? 0U : alignment - remainder;
     if (padding > std::numeric_limits<std::size_t>::max() - result.size ||
@@ -208,12 +310,12 @@ struct EntryParameterLayoutResult {
     }
     const auto layout = exec_ir::EntryParameterLayout{
         .offset = result.size + padding,
-        .size = size,
+        .size = static_cast<std::size_t>(size),
         .alignment = alignment,
     };
     if (!result.bindings
              .emplace(parameter.symbol_id.value,
-                      EntryParameterBinding{layout, *scalar_type})
+                      EntryParameterBinding{layout, parameter.scalar_type})
              .second) {
       return error(LoweringErrorCode::invalid_entry_parameter_layout,
                    function_index, std::nullopt, parameter.symbol_id.value);
@@ -222,12 +324,14 @@ struct EntryParameterLayoutResult {
     result.size = layout.offset + layout.size;
   }
 
-  for (const auto& symbol : symbols.symbols()) {
-    if (symbol.scope == *function_symbol.owned_scope &&
-        symbol.kind == SymbolKind::InputParameter &&
-        !result.bindings.contains(symbol.id.value)) {
-      return error(LoweringErrorCode::invalid_entry_parameter_layout,
-                   function_index, std::nullopt, symbol.id.value);
+  if (function.is_entry) {
+    for (const auto& symbol : symbols.symbols()) {
+      if (symbol.scope == function_scope &&
+          symbol.kind == SymbolKind::InputParameter &&
+          !result.bindings.contains(symbol.id.value)) {
+        return error(LoweringErrorCode::invalid_entry_parameter_layout,
+                     function_index, std::nullopt, symbol.id.value);
+      }
     }
   }
   return result;

@@ -218,10 +218,11 @@ Acceptance:
 ### Entry parameter input (implemented)
 
 The C++ port and Python generator dependency are both pinned to
-`ptx_frontend@0db25e8872277a6bb8957c5d17475f6d2e068c0c`. Its owned
-`ResolvedFunction::entry_parameters` retains declaration order, type, effective
-parameter alignment, pointer properties and array extent after the AST/source
-has been destroyed.
+`ptx_frontend@233bec4d8e979d05003e83d2102eb3a35dafe6da`. Its owned
+`ResolvedFunction::parameter_declarations` retains declaration order, typed
+element type, effective parameter alignment, pointer properties, array extents
+and declared byte extent after the AST/source has been destroyed. Only records
+with `ParameterDeclarationRole::EntryInput` contribute launch argument slots.
 
 Lowering constructs a source-ordered `FunctionLayout::entry_parameters` vector
 of byte offsets, sizes and alignments. Each slot starts at the next offset
@@ -263,6 +264,44 @@ Sanitizer runs enabled leak detection and halt-on-error. All 37 Python tests
 passed; installed Python provenance and built-wheel dependency metadata both
 match the C++ frontend commit. Independent review found no remaining actionable
 issues. Clang was unavailable in this environment and was not tested.
+
+### Parameter declaration API migration
+
+[ptxsim #35](https://github.com/endingly/ptxsim/issues/35) adapts the frontend
+API change in `233bec4d8e979d05003e83d2102eb3a35dafe6da`, on top of the MOV
+integration branch at `8c7194473dfe008210fbe3caf8fbdf82c09ea6e8`.
+`ResolvedFunction::entry_parameters` and `ResolvedEntryParameter` no longer
+exist upstream. The simulator's separate `FunctionLayout::entry_parameters`
+remains the owned ABI layout and is unchanged by this migration.
+
+- [x] Migrate lowering to typed `parameter_declarations`, selecting entry inputs
+  in declaration order while accepting legitimate device and body-local roles.
+- [x] Preserve symbol/scope identity and validate role, scalar shape, effective
+  alignment and checked byte extent for directly constructed resolved metadata.
+- [x] Verify mixed parameter roles, malformed metadata and unchanged argument
+  offsets, padding, size and packing; update fixtures rejected by the frontend's
+  stricter declaration validation.
+- [x] Validate the matching C++/Python dependency pin through compiler,
+  sanitizer, generator and installed-consumer checks.
+
+The supported launch ABI remains scalar and sized one-dimensional arrays.
+Device-call execution, parameter-frame allocation, multidimensional launch
+arguments and instruction-family expansion are outside this API adaptation.
+Device prototypes and definitions retain their separate parameter scopes even
+when they share a function symbol; header validation checks scope ownership.
+Regression coverage includes a final unsized device byte input and confirms
+that neither device header nor body-local declarations create launch slots.
+
+Validation (2026-09-08): GCC Debug/Release, Clang Debug/Release and GCC
+ASan+UBSan each passed the full 600-test suite. After adding the final
+unsized-input ordering guard, all 37 affected lowering, argument-packing and
+build-tree/installed-consumer tests passed again in each configuration.
+Sanitizer runs enabled leak detection and halt-on-error. All 43 Python tests
+passed both from source and from a fresh wheel installed outside the checkout;
+all three generators match rebuilt C++ output and preserve timestamps on
+repeated generation. Installed C++ source provenance and Python direct-URL
+metadata both identify the new frontend commit. Independent review, diff and
+local documentation link checks passed.
 
 ## 7. Deferred work
 

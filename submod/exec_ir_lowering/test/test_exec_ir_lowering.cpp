@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <limits>
+#include <optional>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -340,10 +341,10 @@ TEST(ExecIrLowering, LowersOverAlignedByteArraysWithoutTrailingPadding) {
             }));
 }
 
-TEST(ExecIrLowering, UsesPhysicalByteWidthsForPackedFp8Pairs) {
+TEST(ExecIrLowering, UsesPhysicalByteWidthsForTwoByteDeclarations) {
   const auto program = lower(resolve(R"ptx(
-.entry kernel(.param .align 2 .e4m3x2 first,
-              .param .align 2 .e5m2x2 second,
+.entry kernel(.param .align 2 .b16 first,
+              .param .align 2 .b16 second,
               .param .u32 count) {
   exit;
 }
@@ -387,55 +388,188 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
   };
 
   auto duplicate = resolve(source);
-  duplicate.functions[0].entry_parameters.push_back(
-      duplicate.functions[0].entry_parameters.front());
+  duplicate.functions[0].parameter_declarations.push_back(
+      duplicate.functions[0].parameter_declarations.front());
   expect_invalid(std::move(duplicate));
 
   auto foreign = resolve(source);
-  foreign.functions[0].entry_parameters.front().symbol_id =
-      foreign.functions[1].entry_parameters.front().symbol_id;
+  foreign.functions[0].parameter_declarations.front().symbol_id =
+      foreign.functions[1].parameter_declarations.front().symbol_id;
   expect_invalid(std::move(foreign));
 
   auto missing = resolve(source);
-  missing.functions[0].entry_parameters.erase(
-      missing.functions[0].entry_parameters.begin());
+  missing.functions[0].parameter_declarations.erase(
+      missing.functions[0].parameter_declarations.begin());
   expect_invalid(std::move(missing));
 
-  auto invalid_alignment = resolve(source);
-  invalid_alignment.functions[0].entry_parameters.front().alignment = 0U;
-  expect_invalid(std::move(invalid_alignment));
+  auto missing_extent = resolve(source);
+  missing_extent.functions[0]
+      .parameter_declarations.front()
+      .byte_extent.reset();
+  expect_invalid(std::move(missing_extent));
 
-  // Deliberately corrupt non-const module storage through the frontend's
-  // read-only symbol view to exercise unsupported declaration shapes.
+  auto non_power_two_alignment = resolve(source);
+  non_power_two_alignment.functions[0]
+      .parameter_declarations.front()
+      .alignment = 3U;
+  expect_invalid(std::move(non_power_two_alignment));
+
+  auto mismatched_symbol_alignment = resolve(source);
+  auto& alignment_symbol = const_cast<ptx_frontend::binding::Symbol&>(
+      mismatched_symbol_alignment.symbols.symbol(
+          mismatched_symbol_alignment.functions[0]
+              .parameter_declarations.front()
+              .symbol_id));
+  alignment_symbol.address_alignment = 8U;
+  expect_invalid(std::move(mismatched_symbol_alignment));
+
+  auto invalid_role = resolve(source);
+  invalid_role.functions[0].parameter_declarations.front().role =
+      static_cast<ptx_frontend::resolved_ir::ParameterDeclarationRole>(255U);
+  expect_invalid(std::move(invalid_role));
+
+  auto device_role_on_entry = resolve(source);
+  device_role_on_entry.functions[0].parameter_declarations.front().role =
+      ptx_frontend::resolved_ir::ParameterDeclarationRole::DeviceInput;
+  expect_invalid(std::move(device_role_on_entry));
+
+  auto entry_role_on_device = resolve(R"ptx(
+.func helper(.param .u32 input) { exit; }
+)ptx");
+  entry_role_on_device.functions[0].parameter_declarations.front().role =
+      ptx_frontend::resolved_ir::ParameterDeclarationRole::EntryInput;
+  expect_invalid(std::move(entry_role_on_device));
+
+  auto reordered_unsized_input = resolve(R"ptx(
+.version 9.3
+.target sm_100
+.func helper(.param .u32 first, .param .b8 bytes[]) { exit; }
+)ptx");
+  std::swap(reordered_unsized_input.functions[0].parameter_declarations[0],
+            reordered_unsized_input.functions[0].parameter_declarations[1]);
+  expect_invalid(std::move(reordered_unsized_input));
+
+  auto invalid_scope = resolve(source);
+  invalid_scope.functions[0].parameter_declarations.front().scope_id =
+      invalid_scope.symbols.moduleScope();
+  expect_invalid(std::move(invalid_scope));
+
+  auto invalid_size = resolve(source);
+  invalid_size.functions[0].parameter_declarations.front().byte_extent = 8U;
+  expect_invalid(std::move(invalid_size));
+
   auto vector_parameter = resolve(source);
-  auto& vector_symbol = const_cast<ptx_frontend::binding::Symbol&>(
-      vector_parameter.symbols.symbol(
-          vector_parameter.functions[0].entry_parameters.front().symbol_id));
-  vector_symbol.vector_width = 2U;
+  vector_parameter.functions[0].parameter_declarations.front().vector_width =
+      2U;
   expect_invalid(std::move(vector_parameter));
 
+  auto multi_dimensional = resolve(source);
+  multi_dimensional.functions[0]
+      .parameter_declarations[1]
+      .array_extents.push_back(1U);
+  expect_invalid(std::move(multi_dimensional));
+
+  // Deliberately corrupt non-const module storage through the frontend's
+  // read-only symbol view to exercise unsupported entry declaration shapes.
+  auto vector_symbol_metadata = resolve(source);
+  auto& vector_symbol = const_cast<ptx_frontend::binding::Symbol&>(
+      vector_symbol_metadata.symbols.symbol(vector_symbol_metadata.functions[0]
+                                                .parameter_declarations.front()
+                                                .symbol_id));
+  vector_symbol.vector_width = 2U;
+  expect_invalid(std::move(vector_symbol_metadata));
+
   auto parameter_group = resolve(source);
-  auto& group_symbol =
-      const_cast<ptx_frontend::binding::Symbol&>(parameter_group.symbols.symbol(
-          parameter_group.functions[0].entry_parameters.front().symbol_id));
+  auto& group_symbol = const_cast<
+      ptx_frontend::binding::Symbol&>(parameter_group.symbols.symbol(
+      parameter_group.functions[0].parameter_declarations.front().symbol_id));
   group_symbol.parameterized_count = 2U;
   expect_invalid(std::move(parameter_group));
 
   auto zero_extent = resolve(source);
-  zero_extent.functions[0].entry_parameters[1].array_extent = 0U;
+  zero_extent.functions[0].parameter_declarations[1].array_extents[0] = 0U;
   expect_invalid(std::move(zero_extent));
 
-  auto overflow = resolve(source);
-  overflow.functions[0].entry_parameters[1].array_extent =
+  auto cumulative_overflow = resolve(source);
+  cumulative_overflow.functions[0].parameter_declarations[1].array_extents[0] =
       std::numeric_limits<std::uint64_t>::max();
-  expect_invalid(std::move(overflow));
+  cumulative_overflow.functions[0].parameter_declarations[1].byte_extent =
+      std::numeric_limits<std::uint64_t>::max();
+  expect_invalid(std::move(cumulative_overflow));
 
-  const auto unsized = lower(resolve(R"ptx(
-.entry kernel(.param .align 8 .b8 bytes[]) { exit; }
+  auto multiplication_overflow = resolve(R"ptx(
+.entry kernel(.param .b16 values[2]) { exit; }
+)ptx");
+  multiplication_overflow.functions[0]
+      .parameter_declarations[0]
+      .array_extents[0] = std::numeric_limits<std::uint64_t>::max();
+  multiplication_overflow.functions[0].parameter_declarations[0].byte_extent =
+      std::numeric_limits<std::uint64_t>::max();
+  expect_invalid(std::move(multiplication_overflow));
+
+  auto unsized = resolve(source);
+  unsized.functions[0].parameter_declarations[1].array_extents[0] =
+      std::nullopt;
+  unsized.functions[0].parameter_declarations[1].byte_extent.reset();
+  expect_invalid(std::move(unsized));
+}
+
+TEST(ExecIrLowering, RejectsEmptyEntryWithoutAnOwnedScope) {
+  auto module = resolve(R"ptx(
+.entry kernel() {}
+)ptx");
+  auto& symbol = const_cast<ptx_frontend::binding::Symbol&>(
+      module.symbols.symbol(module.functions[0].symbol_id));
+  symbol.owned_scope.reset();
+  const auto program = lower(module);
+  ASSERT_FALSE(program);
+  EXPECT_EQ(program.error().code, LoweringErrorCode::malformed_resolved_ir);
+}
+
+TEST(ExecIrLowering, RetainsPrototypeAndDefinitionParameterScopes) {
+  const auto program = lower(resolve(R"ptx(
+.version 9.3
+.target sm_100
+.func (.param .b16 result) helper(
+    .param .u32 input, .param .align 8 .b8 bytes[]);
+.func (.param .b16 result) helper(
+    .param .u32 input, .param .align 8 .b8 bytes[]) {
+  exit;
+}
 )ptx"));
-  ASSERT_FALSE(unsized);
-  EXPECT_EQ(unsized.error().code,
-            LoweringErrorCode::invalid_entry_parameter_layout);
+  ASSERT_TRUE(program);
+  for (const auto function : {common::FunctionId{0}, common::FunctionId{1}}) {
+    const auto layout = program->function_layout(function);
+    ASSERT_TRUE(layout);
+    EXPECT_EQ(layout->get().entry_parameter_size, 0U);
+    EXPECT_TRUE(layout->get().entry_parameters.empty());
+  }
+}
+
+TEST(ExecIrLowering, IgnoresValidNonEntryParameterRolesInLaunchLayouts) {
+  const auto program = lower(resolve(R"ptx(
+.version 9.3
+.target sm_100
+.entry kernel(.param .u32 input) {
+  .param .align 8 .b8 staging[4];
+  exit;
+}
+.func (.param .u16 result) helper(.param .u32 input) {
+  .param .u16 local[2][3];
+  exit;
+}
+)ptx"));
+  ASSERT_TRUE(program);
+  const auto entry_layout = program->function_layout(common::FunctionId{0});
+  const auto device_layout = program->function_layout(common::FunctionId{1});
+  ASSERT_TRUE(entry_layout);
+  ASSERT_TRUE(device_layout);
+  EXPECT_EQ(entry_layout->get().entry_parameter_size, 4U);
+  EXPECT_EQ(entry_layout->get().entry_parameters,
+            (std::vector<exec_ir::EntryParameterLayout>{
+                {.offset = 0U, .size = 4U, .alignment = 4U}}));
+  EXPECT_EQ(device_layout->get().entry_parameter_size, 0U);
+  EXPECT_TRUE(device_layout->get().entry_parameters.empty());
 }
 
 TEST(ExecIrLowering, KeepsDeviceFunctionParametersUnsupported) {
