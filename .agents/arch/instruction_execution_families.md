@@ -18,14 +18,15 @@ generators or introduce another YAML specification.
 
 The first real opcode is **Add**, not a synthetic opcode or a u32-only capability.
 The agreed scope is every Add variant currently described by
-`ptx_frontend@cf1f32161890b04e1060095a96ad5d8ab996db27` and projected into
+`ptx_frontend@233bec4d8e979d05003e83d2102eb3a35dafe6da` and projected into
 `exec_ir::Add`. All its declared types and controls are obligations. This is a
 functional execution model across the forms in that fixed specification, not
 a newly selected SM target. Target-SM/family availability validation is not
 introduced by this change.
 
-This pin retains owned entry-parameter metadata and completes the frontend FMA
-contract. The C++ port and Python generator dependency use the same commit.
+This pin retains the frontend FMA contract and uses the single owned
+`parameter_declarations` table. Lowering selects `EntryInput` declarations for
+the launch ABI. The C++ port and Python generator dependency use the same commit.
 
 Extended-precision `add.cc` / `addc` and implicit condition-code state are
 explicitly outside this task, as agreed by the maintainer. They require frontend

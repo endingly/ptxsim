@@ -302,7 +302,8 @@ refinement; their preceding evidence is retained above.
 
 Implements the movement and topology work tracked in
 [ptxsim #21](https://github.com/endingly/ptxsim/issues/21), from main `2ef3f8f`.
-The frontend C++/Python pin remains `cf1f32161890b04e1060095a96ad5d8ab996db27`;
+The MOV integration was validated with frontend C++/Python pin
+`cf1f32161890b04e1060095a96ad5d8ab996db27`;
 the later storage-declaration frontend PR does not itself supply a simulator
 resource allocator or change the movement projection.
 
