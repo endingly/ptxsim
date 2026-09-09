@@ -37,35 +37,30 @@ jobs:
             cxx: /usr/bin/g++
             vcpkg_cache: gcc
             writes_vcpkg_downloads: true
-            writes_vcpkg_binaries: true
           - name: GCC Release
             preset: ci-linux-gcc-release
             cc: /usr/bin/gcc
             cxx: /usr/bin/g++
             vcpkg_cache: gcc
             writes_vcpkg_downloads: false
-            writes_vcpkg_binaries: false
           - name: Clang Debug
             preset: ci-linux-clang-debug
             cc: /usr/bin/clang
             cxx: /usr/bin/clang++
             vcpkg_cache: clang
             writes_vcpkg_downloads: false
-            writes_vcpkg_binaries: true
           - name: Clang Release
             preset: ci-linux-clang-release
             cc: /usr/bin/clang
             cxx: /usr/bin/clang++
             vcpkg_cache: clang
             writes_vcpkg_downloads: false
-            writes_vcpkg_binaries: false
           - name: GCC ASan + UBSan
             preset: ci-linux-gcc-asan-ubsan
             cc: /usr/bin/gcc
             cxx: /usr/bin/g++
             vcpkg_cache: gcc
             writes_vcpkg_downloads: false
-            writes_vcpkg_binaries: false
 
     steps:
       - name: Check out source
@@ -97,8 +92,9 @@ jobs:
           path: .cache/vcpkg/downloads
           key: ${{ steps.setup.outputs.downloads-cache-key }}
 
+      # Jobs may use different runner images and therefore different binary keys.
       - name: Save vcpkg binary cache
-        if: matrix.writes_vcpkg_binaries && steps.setup.outputs.binary-cache-hit != 'true'
+        if: steps.setup.outputs.binary-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/archives
