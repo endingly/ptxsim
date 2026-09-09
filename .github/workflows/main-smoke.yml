@@ -1,4 +1,4 @@
-name: Main smoke and dependency cache
+name: Main smoke and build caches
 
 on:
   push:
@@ -20,13 +20,53 @@ env:
   CCACHE_MAXSIZE: 1G
 
 jobs:
-  smoke:
-    name: GCC Debug public API smoke
+  warm:
+    name: ${{ matrix.name }} cache warmup
     runs-on: ubuntu-26.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
-      CC: /usr/bin/gcc
-      CXX: /usr/bin/g++
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GCC Debug
+            preset: ci-linux-gcc-debug
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: true
+            writes_vcpkg_binaries: true
+          - name: GCC Release
+            preset: ci-linux-gcc-release
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
+          - name: Clang Debug
+            preset: ci-linux-clang-debug
+            cc: /usr/bin/clang
+            cxx: /usr/bin/clang++
+            vcpkg_cache: clang
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: true
+          - name: Clang Release
+            preset: ci-linux-clang-release
+            cc: /usr/bin/clang
+            cxx: /usr/bin/clang++
+            vcpkg_cache: clang
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
+          - name: GCC ASan + UBSan
+            preset: ci-linux-gcc-asan-ubsan
+            cc: /usr/bin/gcc
+            cxx: /usr/bin/g++
+            vcpkg_cache: gcc
+            writes_vcpkg_downloads: false
+            writes_vcpkg_binaries: false
+
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -35,43 +75,44 @@ jobs:
         id: setup
         uses: ./.github/actions/setup-linux
         with:
-          compiler: gcc
-          writes-downloads: 'true'
+          compiler: ${{ matrix.vcpkg_cache }}
+          writes-downloads: ${{ matrix.writes_vcpkg_downloads }}
 
       - name: Restore compiler cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/ccache
-          key: ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-
-            ccache-v6-${{ runner.os }}-${{ runner.arch }}-ci-linux-gcc-debug-${{ steps.setup.outputs.compiler-identity }}-
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-
+            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-
 
-      - name: Configure GCC Debug
-        run: cmake --preset ci-linux-gcc-debug
+      - name: Configure build
+        run: cmake --preset "${{ matrix.preset }}"
 
       - name: Save vcpkg downloads cache
-        if: steps.setup.outputs.downloads-cache-hit != 'true'
+        if: matrix.writes_vcpkg_downloads && steps.setup.outputs.downloads-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/downloads
           key: ${{ steps.setup.outputs.downloads-cache-key }}
 
       - name: Save vcpkg binary cache
-        if: steps.setup.outputs.binary-cache-hit != 'true'
+        if: matrix.writes_vcpkg_binaries && steps.setup.outputs.binary-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/archives
           key: ${{ steps.setup.outputs.binary-cache-key }}
 
-      # Configure registers the consumer checks, but this target list builds no
-      # unit-test executables. Include the diagnostic library required by install.
-      - name: Build libraries used by public consumers
-        run: >-
-          cmake --build --preset ci-linux-gcc-debug --target
-          ptxsim_simulator ptxsim_exec_ir_lowering ptxsim_arith_validation
+      - name: Reset compiler cache statistics
+        run: ccache --zero-stats
+
+      # Match the PR build targets, including unit-test objects, for each preset.
+      - name: Build all libraries and tests
+        run: cmake --build --preset "${{ matrix.preset }}"
 
       - name: Run build-tree and installed-package smoke tests
+        if: matrix.preset == 'ci-linux-gcc-debug'
         run: >-
           ctest --preset ci-linux-gcc-debug --output-on-failure --no-tests=error
           -R '^ptxsim_arith_(build-tree|installed)_consumer$'
@@ -79,34 +120,3 @@ jobs:
       - name: Show compiler cache statistics
         if: always()
         run: ccache --show-stats || true
-
-  clang-dependencies:
-    name: Populate Clang dependencies on cache miss
-    runs-on: ubuntu-26.04
-    timeout-minutes: 30
-    env:
-      CC: /usr/bin/clang
-      CXX: /usr/bin/clang++
-    steps:
-      - name: Check out source
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Inspect dependency cache and prepare on miss
-        id: setup
-        uses: ./.github/actions/setup-linux
-        with:
-          compiler: clang
-          dependencies-only: 'true'
-
-      # Configuration installs the same vcpkg feature set as the full PR matrix.
-      # No ptxsim build, CTest run or compiler-cache snapshot is needed here.
-      - name: Populate missing Clang dependency cache
-        if: steps.setup.outputs.binary-cache-hit != 'true'
-        run: cmake --preset ci-linux-clang-debug
-
-      - name: Save vcpkg binary cache
-        if: steps.setup.outputs.binary-cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .cache/vcpkg/archives
-          key: ${{ steps.setup.outputs.binary-cache-key }}
