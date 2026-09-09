@@ -1,5 +1,5 @@
 name: Set up Linux build dependencies
-description: Shared toolchain setup and cache identity for acceptance and main smoke jobs
+description: Shared toolchain setup and cache identity for acceptance and main cache warmup jobs
 
 inputs:
   compiler:
@@ -7,9 +7,6 @@ inputs:
     required: true
   writes-downloads:
     description: Whether this job owns shared APT and vcpkg download cache writes
-    default: 'false'
-  dependencies-only:
-    description: Inspect the binary cache without downloading it; skip remaining setup on an exact hit
     default: 'false'
 
 outputs:
@@ -81,16 +78,14 @@ runs:
       shell: bash
       run: python3 .github/scripts/compiler-cache-identity.py
 
-    - name: Restore or inspect vcpkg binary cache
+    - name: Restore vcpkg binary cache
       id: binaries
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/vcpkg/archives
         key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json') }}
-        lookup-only: ${{ inputs.dependencies-only == 'true' }}
 
     - name: Set up Python environment
-      if: inputs.dependencies-only != 'true' || steps.binaries.outputs.cache-hit != 'true'
       shell: bash
       run: |
         python3 -m venv .venv
@@ -99,7 +94,6 @@ runs:
         echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
 
     - name: Restore vcpkg downloads cache
-      if: inputs.dependencies-only != 'true' || steps.binaries.outputs.cache-hit != 'true'
       id: downloads
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
@@ -109,12 +103,10 @@ runs:
           vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-
 
     - name: Prepare vcpkg cache directories
-      if: inputs.dependencies-only != 'true' || steps.binaries.outputs.cache-hit != 'true'
       shell: bash
       run: mkdir -p "$VCPKG_BINARY_CACHE" "$VCPKG_DOWNLOADS"
 
     - name: Set up vcpkg
-      if: inputs.dependencies-only != 'true' || steps.binaries.outputs.cache-hit != 'true'
       uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11.6
       with:
         vcpkgDirectory: ${{ env.VCPKG_ROOT }}
