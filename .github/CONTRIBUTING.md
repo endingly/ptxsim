@@ -33,8 +33,12 @@ exact builtin baseline. The binary-cache key also hashes the manifests, overlay
 ports and presets, including the test dependency feature selection.
 
 Every matrix job restores dependencies and configures its build on each main
-push. GCC Debug and Clang Debug save missing binary archives for their compiler
-family after configure; only GCC Debug writes the shared APT/source-download
+push. In both workflows, every matrix job that misses its exact binary-cache key
+can save the resulting archives: after successful configure in the main workflow,
+or after the successful CMake workflow in full CI. This covers different runner
+images within one compiler family instead of relying on a fixed Debug writer.
+Jobs sharing an exact key may race to save; the cache action handles duplicate
+saves without failing the job. Only GCC Debug writes the shared APT/source-download
 caches. Project compilation still runs on a dependency-cache hit so new or
 changed project and test sources enter the compiler cache.
 
