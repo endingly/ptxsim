@@ -14,7 +14,7 @@ outputs:
     description: UTC cache maintenance epoch
     value: ${{ steps.epoch.outputs.month }}
   compiler-identity:
-    description: Fingerprint of the installed compilers, build tools and runner image
+    description: Fingerprint of installed compilers, build tools and OS, excluding runner image revisions
     value: ${{ steps.identity.outputs.compiler }}
   binary-cache-key:
     description: Exact dependency cache key shared by main and PR jobs
