@@ -21,12 +21,11 @@ def resolve_compiler(variable: str) -> Path:
 
 
 def compiler_identity() -> str:
-    """Hash the same ordered bytes as the original Linux shell implementation."""
+    """Hash installed tools and OS identity, excluding runner image revisions."""
     compilers = [resolve_compiler(variable) for variable in ("CC", "CXX")]
     identity = hashlib.sha256()
     identity.update(Path("/etc/os-release").read_bytes())
-    for variable in ("ImageOS", "ImageVersion"):
-        identity.update(f"{variable}={os.environ.get(variable) or 'local'}\n".encode())
+    identity.update(f"ImageOS={os.environ.get('ImageOS') or 'local'}\n".encode())
     for command in (["cmake", "--version"], ["ninja", "--version"]):
         identity.update(subprocess.check_output(command))
     for executable in compilers:

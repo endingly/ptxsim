@@ -136,7 +136,7 @@ jobs:
           path: .cache/vcpkg/downloads
           key: ${{ steps.setup.outputs.downloads-cache-key }}
 
-      # Jobs may use different runner images and therefore different binary keys.
+      # Jobs may use different installed toolchains and therefore different binary keys.
       - name: Save vcpkg binary cache
         if: success() && steps.setup.outputs.binary-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6

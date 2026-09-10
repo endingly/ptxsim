@@ -28,15 +28,16 @@ instruction and sanitizer tests remain in the full workflow.
 ## Cache ownership and identity
 
 Both workflows use `actions/setup-linux`. It identifies the installed C/C++
-compilers, CMake, Ninja and runner image, and selects vcpkg using the manifest's
+compilers, CMake, Ninja, OS release and `ImageOS`, excluding `ImageVersion` so
+an image revision alone does not invalidate caches. It selects vcpkg using the manifest's
 exact builtin baseline. The binary-cache key also hashes the manifests, overlay
 ports and presets, including the test dependency feature selection.
 
 Every matrix job restores dependencies and configures its build on each main
 push. In both workflows, every matrix job that misses its exact binary-cache key
 can save the resulting archives: after successful configure in the main workflow,
-or after the successful CMake workflow in full CI. This covers different runner
-images within one compiler family instead of relying on a fixed Debug writer.
+or after the successful CMake workflow in full CI. This covers different installed
+toolchains within one compiler family instead of relying on a fixed Debug writer.
 Jobs sharing an exact key may race to save; the cache action handles duplicate
 saves without failing the job. Only GCC Debug writes the shared APT/source-download
 caches. Project compilation still runs on a dependency-cache hit so new or
