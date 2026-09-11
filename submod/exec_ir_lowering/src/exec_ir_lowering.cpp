@@ -5,6 +5,9 @@
 
 #include <cstddef>
 #include <limits>
+#include <map>
+#include <new>
+#include <stdexcept>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -28,12 +31,323 @@ using ptx_frontend::binding::SymbolTable;
 using ptx_frontend::resolved_ir::ParameterDeclarationRole;
 using ptx_frontend::resolved_ir::ResolvedParameterDeclaration;
 
+/** @brief Retain the source identity and structured cause of a lowering failure. */
 [[nodiscard]] auto error(
     LoweringErrorCode code,
     std::optional<std::uint32_t> function = std::nullopt,
     std::optional<std::uint32_t> instruction = std::nullopt,
     std::optional<std::uint32_t> symbol = std::nullopt,
     std::optional<exec_ir::ProgramError> program_error = std::nullopt)
+    -> std::unexpected<LoweringError>;
+
+/** @brief Copy normalized frontend storage into owned executable byte layouts. */
+[[nodiscard]] auto storage_layout(
+    const ptx_frontend::resolved_ir::ResolvedModule& module)
+    -> std::expected<std::vector<exec_ir::StorageDeclaration>, LoweringError> {
+  std::map<std::uint32_t, common::FunctionId> functions;
+  for (std::size_t index = 0; index < module.functions.size(); ++index) {
+    functions.emplace(module.functions[index].symbol_id.value,
+                      common::FunctionId{static_cast<std::uint32_t>(index)});
+  }
+  std::vector<exec_ir::StorageDeclaration> result;
+  std::map<std::uint32_t,
+           const ptx_frontend::resolved_ir::ResolvedStorageDeclaration*>
+      seen;
+  for (const auto& source : module.storage_declarations) {
+    if (source.symbol_id.value >= module.symbols.symbols().size()) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    const auto& symbol = module.symbols.symbols()[source.symbol_id.value];
+    if (symbol.id != source.symbol_id || symbol.kind != SymbolKind::Variable ||
+        symbol.scope != source.scope_id || symbol.linkage != source.linkage ||
+        symbol.vector_width.value_or(1) != source.vector_width ||
+        symbol.address_alignment != source.alignment ||
+        symbol.parameterized_count != source.parameterized_count) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    if (source.parameterized_count || source.is_managed || source.unified_id ||
+        !source.alignment ||
+        (!source.byte_extent &&
+         source.initialization !=
+             ptx_frontend::resolved_ir::StorageInitializationKind::External) ||
+        (source.byte_extent &&
+         *source.byte_extent > std::numeric_limits<std::size_t>::max()) ||
+        *source.alignment > std::numeric_limits<std::size_t>::max() ||
+        !std::holds_alternative<ptx_frontend::base::ScalarType>(
+            source.element_type)) {
+      return error(LoweringErrorCode::unsupported_storage_declaration,
+                   std::nullopt, std::nullopt, source.symbol_id.value);
+    }
+    const auto scalar = std::get<ScalarType>(source.element_type);
+    const auto declared_scalar =
+        symbol.type ? ptx_frontend::declaration_semantics::parameterScalarType(
+                          *symbol.type)
+                    : std::nullopt;
+    // Packed half storage is a fundamental declaration type even though the
+    // entry-parameter helper intentionally does not classify that spelling.
+    if ((!declared_scalar || *declared_scalar != scalar) &&
+        !(symbol.type == ".f16x2" && scalar == ScalarType::F16x2)) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    const auto scalar_bytes = ptx_frontend::base::scalar_size_of(scalar);
+    if (scalar_bytes == 0U || scalar_bytes * source.vector_width > 16U ||
+        source.vector_width != 1U && source.vector_width != 2U &&
+            source.vector_width != 4U ||
+        *source.alignment == 0U ||
+        (*source.alignment & (*source.alignment - 1U)) != 0U ||
+        (source.explicit_alignment &&
+         source.explicit_alignment != source.alignment)) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    if (source.alignment !=
+        source.explicit_alignment.value_or(
+            static_cast<std::uint64_t>(scalar_bytes) * source.vector_width)) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    std::uint64_t computed_extent = scalar_bytes * source.vector_width;
+    bool unsized = false;
+    for (std::size_t index = 0; index < source.array_extents.size(); ++index) {
+      const auto dimension = source.array_extents[index];
+      if (!dimension) {
+        if (index != 0U ||
+            source.declaration_kind !=
+                ptx_frontend::resolved_ir::StorageDeclarationKind::External) {
+          return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                       std::nullopt, source.symbol_id.value);
+        }
+        unsized = true;
+      } else {
+        if (*dimension == 0U ||
+            *dimension >
+                std::numeric_limits<std::uint64_t>::max() / computed_extent) {
+          return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                       std::nullopt, source.symbol_id.value);
+        }
+        computed_extent *= *dimension;
+      }
+    }
+    if (unsized ? source.byte_extent.has_value()
+                : source.byte_extent != computed_extent) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    if (computed_extent >= exec_ir::kStorageAddressSpaceSize) {
+      return error(LoweringErrorCode::unsupported_storage_declaration,
+                   std::nullopt, std::nullopt, source.symbol_id.value);
+    }
+    std::optional<ptx_frontend::binding::SymbolId> scope_owner;
+    auto scope = source.scope_id;
+    bool reached_owner = false;
+    for (std::size_t depth = 0; depth <= module.symbols.scopes().size();
+         ++depth) {
+      if (scope.value >= module.symbols.scopes().size())
+        break;
+      const auto& record = module.symbols.scopes()[scope.value];
+      if (record.id != scope)
+        break;
+      if (record.kind == ScopeKind::Function) {
+        scope_owner = record.owner;
+        reached_owner = scope_owner.has_value();
+        break;
+      }
+      if (record.kind == ScopeKind::Module) {
+        reached_owner = !record.parent && scope.value == 0U;
+        break;
+      }
+      if (record.kind != ScopeKind::Block || !record.parent)
+        break;
+      scope = *record.parent;
+    }
+    if (!reached_owner || scope_owner != source.owner_function) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    std::optional<common::FunctionId> owner;
+    if (source.owner_function) {
+      const auto found = functions.find(source.owner_function->value);
+      if (found == functions.end())
+        return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                     std::nullopt, source.symbol_id.value);
+      owner = found->second;
+    }
+    exec_ir::StorageSpace space;
+    switch (source.space) {
+      case ptx_frontend::resolved_ir::StorageSpace::Global:
+        space = exec_ir::StorageSpace::global;
+        break;
+      case ptx_frontend::resolved_ir::StorageSpace::Constant:
+        space = exec_ir::StorageSpace::constant;
+        break;
+      case ptx_frontend::resolved_ir::StorageSpace::Shared:
+        space = exec_ir::StorageSpace::shared;
+        break;
+      case ptx_frontend::resolved_ir::StorageSpace::Local:
+        space = exec_ir::StorageSpace::local;
+        break;
+      default:
+        return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                     std::nullopt, source.symbol_id.value);
+    }
+    using AstSpace = ptx_frontend::syntax_ast::AstStateSpace;
+    const auto expected_space =
+        space == exec_ir::StorageSpace::global     ? AstSpace::Global
+        : space == exec_ir::StorageSpace::constant ? AstSpace::Constant
+        : space == exec_ir::StorageSpace::shared   ? AstSpace::Shared
+                                                   : AstSpace::Local;
+    const bool external =
+        source.declaration_kind ==
+        ptx_frontend::resolved_ir::StorageDeclarationKind::External;
+    if (symbol.state_space != expected_space ||
+        (source.declaration_kind !=
+             ptx_frontend::resolved_ir::StorageDeclarationKind::Definition &&
+         !external) ||
+        external !=
+            (source.initialization ==
+             ptx_frontend::resolved_ir::StorageInitializationKind::External) ||
+        external != (source.linkage ==
+                     ptx_frontend::binding::SymbolLinkage::External) ||
+        source.is_dynamic_shared !=
+            (external && unsized && space == exec_ir::StorageSpace::shared)) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    if (external && (space == exec_ir::StorageSpace::local ||
+                     (space == exec_ir::StorageSpace::shared &&
+                      !source.is_dynamic_shared))) {
+      return error(LoweringErrorCode::unsupported_storage_declaration,
+                   std::nullopt, std::nullopt, source.symbol_id.value);
+    }
+    if (const auto previous = seen.find(source.symbol_id.value);
+        previous != seen.end()) {
+      const auto& first = *previous->second;
+      if (!external || first.declaration_kind != source.declaration_kind ||
+          first.space != source.space ||
+          first.element_type != source.element_type ||
+          first.vector_width != source.vector_width ||
+          first.array_extents != source.array_extents ||
+          first.byte_extent != source.byte_extent ||
+          first.alignment != source.alignment ||
+          first.scope_id != source.scope_id ||
+          first.owner_function != source.owner_function ||
+          first.linkage != source.linkage ||
+          first.parameterized_count != source.parameterized_count ||
+          first.initialization != source.initialization ||
+          !source.initializer.empty()) {
+        return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                     std::nullopt, source.symbol_id.value);
+      }
+      continue;
+    }
+    seen.emplace(source.symbol_id.value, &source);
+    exec_ir::StorageInitialization initialization;
+    switch (source.initialization) {
+      case ptx_frontend::resolved_ir::StorageInitializationKind::Uninitialized:
+        initialization = exec_ir::StorageInitialization::uninitialized;
+        break;
+      case ptx_frontend::resolved_ir::StorageInitializationKind::Zero:
+        initialization = exec_ir::StorageInitialization::zero;
+        break;
+      case ptx_frontend::resolved_ir::StorageInitializationKind::Explicit:
+        initialization = exec_ir::StorageInitialization::explicit_bytes;
+        break;
+      case ptx_frontend::resolved_ir::StorageInitializationKind::External:
+        initialization = exec_ir::StorageInitialization::external;
+        break;
+      default:
+        return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                     std::nullopt, source.symbol_id.value);
+    }
+    const auto extent =
+        source.byte_extent ? static_cast<std::size_t>(*source.byte_extent) : 0U;
+    const auto external_extent_multiple =
+        unsized && !source.is_dynamic_shared
+            ? static_cast<std::size_t>(computed_extent)
+            : std::size_t{1};
+    if ((extent == 0U &&
+         initialization != exec_ir::StorageInitialization::external) ||
+        (source.is_dynamic_shared &&
+         (space != exec_ir::StorageSpace::shared ||
+          initialization != exec_ir::StorageInitialization::external))) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    if (initialization != exec_ir::StorageInitialization::explicit_bytes &&
+        !source.initializer.empty()) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, source.symbol_id.value);
+    }
+    std::vector<std::byte> bytes;
+    if (initialization == exec_ir::StorageInitialization::explicit_bytes) {
+      std::unordered_set<std::uint64_t> initialized;
+      for (const auto& item : source.initializer) {
+        if (!std::holds_alternative<ptx_frontend::resolved_ir::StorageConstant>(
+                item.value))
+          return error(LoweringErrorCode::unsupported_storage_relocation,
+                       std::nullopt, std::nullopt, source.symbol_id.value);
+        if (item.byte_offset % scalar_bytes != 0U ||
+            item.byte_offset > extent ||
+            scalar_bytes > extent - item.byte_offset ||
+            !initialized.insert(item.byte_offset).second)
+          return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                       std::nullopt, source.symbol_id.value);
+      }
+      for (const auto& item : source.initializer) {
+        const auto& constant =
+            std::get<ptx_frontend::resolved_ir::StorageConstant>(item.value);
+        if ((scalar_bytes <= 8U && constant.high_bits != 0U) ||
+            (scalar_bytes < 8U &&
+             (constant.bits >> (scalar_bytes * 8U)) != 0U)) {
+          return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                       std::nullopt, source.symbol_id.value);
+        }
+      }
+      try {
+        bytes.assign(extent, std::byte{0});
+      } catch (const std::bad_alloc&) {
+        return error(LoweringErrorCode::unsupported_storage_declaration,
+                     std::nullopt, std::nullopt, source.symbol_id.value);
+      } catch (const std::length_error&) {
+        return error(LoweringErrorCode::unsupported_storage_declaration,
+                     std::nullopt, std::nullopt, source.symbol_id.value);
+      }
+      for (const auto& item : source.initializer) {
+        const auto* constant =
+            std::get_if<ptx_frontend::resolved_ir::StorageConstant>(
+                &item.value);
+        if (constant == nullptr || item.byte_offset % scalar_bytes != 0U ||
+            item.byte_offset > extent ||
+            scalar_bytes > extent - item.byte_offset)
+          return error(constant
+                           ? LoweringErrorCode::malformed_resolved_ir
+                           : LoweringErrorCode::unsupported_storage_relocation,
+                       std::nullopt, std::nullopt, source.symbol_id.value);
+        for (std::size_t byte = 0; byte < scalar_bytes; ++byte) {
+          const auto destination =
+              static_cast<std::size_t>(item.byte_offset) + byte;
+          const auto word = byte < 8U ? constant->bits : constant->high_bits;
+          bytes[destination] =
+              std::byte{static_cast<unsigned char>(word >> (8U * (byte % 8U)))};
+        }
+      }
+    }
+    result.push_back(
+        {common::SymbolId{source.symbol_id.value}, symbol.name, space, owner,
+         extent, static_cast<std::size_t>(*source.alignment), initialization,
+         std::move(bytes), source.is_dynamic_shared, external_extent_multiple});
+  }
+  return result;
+}
+
+[[nodiscard]] auto error(LoweringErrorCode code,
+                         std::optional<std::uint32_t> function,
+                         std::optional<std::uint32_t> instruction,
+                         std::optional<std::uint32_t> symbol,
+                         std::optional<exec_ir::ProgramError> program_error)
     -> std::unexpected<LoweringError> {
   return std::unexpected(
       LoweringError{code, function, instruction, symbol, program_error});
@@ -122,8 +436,9 @@ struct EntryParameterLayoutResult {
                              : std::nullopt;
       const auto slot = common::RegisterSlot{
           static_cast<std::uint32_t>(result.widths.size())};
-      if (!result.slots.emplace(std::pair{symbol.id.value, index},
-                                detail::RegisterBinding{slot, components})
+      if (!result.slots
+               .emplace(std::pair{symbol.id.value, index},
+                        detail::RegisterBinding{slot, components})
                .second) {
         return error(LoweringErrorCode::malformed_resolved_ir, function,
                      std::nullopt, symbol.id.value);
@@ -382,6 +697,47 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
   }
 
   exec_ir::ProgramDefinition definition;
+  const auto storage = storage_layout(module);
+  if (!storage)
+    return std::unexpected(storage.error());
+  definition.storage_declarations = *storage;
+  detail::StorageSymbolTable storage_symbols;
+  for (const auto& declaration : definition.storage_declarations) {
+    if (declaration.symbol.value() >= module.symbols.symbols().size()) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, declaration.symbol.value());
+    }
+    const auto& symbol = module.symbols.symbols()[declaration.symbol.value()];
+    const auto type =
+        symbol.type ? detail::scalar_type_for(*symbol.type) : std::nullopt;
+    if (!type || !symbol.address_alignment ||
+        *symbol.address_alignment != declaration.alignment) {
+      return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                   std::nullopt, declaration.symbol.value());
+    }
+    std::optional<ptx_frontend::syntax_ast::AstStateSpace> space;
+    switch (declaration.space) {
+      case exec_ir::StorageSpace::global:
+        space = ptx_frontend::syntax_ast::AstStateSpace::Global;
+        break;
+      case exec_ir::StorageSpace::constant:
+        space = ptx_frontend::syntax_ast::AstStateSpace::Constant;
+        break;
+      case exec_ir::StorageSpace::shared:
+        space = ptx_frontend::syntax_ast::AstStateSpace::Shared;
+        break;
+      case exec_ir::StorageSpace::local:
+        space = ptx_frontend::syntax_ast::AstStateSpace::Local;
+        break;
+      default:
+        return error(LoweringErrorCode::malformed_resolved_ir, std::nullopt,
+                     std::nullopt, declaration.symbol.value());
+    }
+    storage_symbols.emplace(
+        declaration.symbol.value(),
+        detail::StorageSymbolBinding{*type, *space, *symbol.address_alignment,
+                                     declaration.owner_function});
+  }
   definition.functions.reserve(module.functions.size());
   for (std::size_t index = 0; index < module.functions.size(); ++index) {
     const auto function_index = static_cast<std::uint32_t>(index);
@@ -418,6 +774,7 @@ auto lower(const ptx_frontend::resolved_ir::ResolvedModule& module)
           *registers,
           *labels,
           entry_parameters->bindings,
+          storage_symbols,
           function.is_entry,
           static_cast<std::uint32_t>(function.body.size()),
           function_index,

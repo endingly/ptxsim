@@ -3,9 +3,9 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO endingly/ptx_frontend
-    REF 233bec4d8e979d05003e83d2102eb3a35dafe6da
-    SHA512 c879f1f6640c21d1db086077cd35a799a28b174c22d9888ae2d2f0ba09cecb1032d69f422509309072d2ad1b61f43e49b67fecbd9537ad1865d8df0669160135
-    HEAD_REF dev
+    REF 1a32fac33be61c0f540caaecf2ce14373c281b45
+    SHA512 416e8922f10daf750b02ca5f3a80bb55d158512c41a31f9fd097d1be02c65e9d77a34bdcc9937f8069d6ce98cc05354156a4fb169a6ad9e603c91c6cde2327e3
+    HEAD_REF main
 )
 
 # The requirements file's editable path is relative to the source checkout;
@@ -14,13 +14,6 @@ vcpkg_replace_string(
     "${SOURCE_PATH}/requirements.txt"
     "-e ./python"
     "-e ${SOURCE_PATH}/python"
-)
-
-# fmt 12 keeps fmt::format in format.h rather than core.h.
-vcpkg_replace_string(
-    "${SOURCE_PATH}/submod/resolved_ir/include/ptx_resolved_ir.hpp"
-    "#include <fmt/core.h>"
-    "#include <fmt/format.h>"
 )
 
 x_vcpkg_get_python_packages(

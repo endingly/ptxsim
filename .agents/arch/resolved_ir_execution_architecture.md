@@ -621,3 +621,58 @@ Key invariants:
 - [Resolved IR public types](https://github.com/endingly/ptx_frontend/blob/dev/submod/resolved_ir/include/ptx_resolved_ir.hpp)
 - [Resolved module construction](https://github.com/endingly/ptx_frontend/blob/dev/submod/resolved_ir/src/ptx_resolved_module.cpp)
 - [Resolved IR CMake target](https://github.com/endingly/ptx_frontend/blob/dev/submod/resolved_ir/CMakeLists.txt)
+
+## Storage declaration provisioning
+
+`ExecutableProgram` owns frontend-independent storage declarations: stable symbol
+identity, diagnostic name, state space, function ownership, byte extent and
+alignment, and initialization policy with owned bytes. Lowering consumes the
+frontend's normalized storage table; it does not recover declarations from AST
+nodes or reconstruct a second declaration specification. Scalar initializer bits
+are serialized in little-endian order, and sparse initializer entries leave zero
+bytes in the remaining declared extent. Relocations and storage categories without
+an executable resource contract produce explicit lowering errors.
+
+`LaunchRuntime` consumes this immutable metadata and caller launch options. It
+owns the resulting storage for the launch lifetime, using the existing memory
+manager: global and constant regions are launch-wide, shared regions are private
+to each CTA, and local frames are private to a thread/function pair. The current
+no-call execution model has one active frame per such pair; recursive activation
+lifetimes remain part of the future call contract. Constant regions retain their
+read-only runtime permission; loader initialization uses the existing privileged
+initialization operation.
+
+Automatic storage is appended after the entire existing bound region, preserving
+caller bytes, initialization bits, permissions and handle identity. Growing a
+region does not make old handles stale and never shrinks the region. The memory
+manager reserves appended bytes against subsequent global/constant allocations.
+A stale binding fails validation instead of being replaced. Explicit external
+bindings select caller-owned ranges by declaration name; they are validated for
+extent, alignment and lifetime and are never initialized by the loader. Unsized
+external arrays require a nonempty whole number of their scalar/vector rows,
+including any sized inner dimensions. Dynamic shared declarations alias one
+segment aligned for every declaration, following all static shared data; the
+segment uses the launch byte count, which may be zero. All contextual layouts
+and existing handles are checked before growing or initializing module storage.
+Offsets and extents must fit the existing fixed address-space window.
+
+Symbol-bearing executable operands retain only stable execution symbol IDs.
+The engine resolves them through runtime bindings after predicate gating. A
+symbolic `mov` produces a state-space-relative address, which can subsequently
+be used by an explicit-space load/store through a register. Generic memory
+operands use the existing fixed address-space windows. This follows the
+[PTX address and Mov contract](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#data-movement-and-conversion-instructions-mov);
+no host address becomes a simulated address.
+
+`Simulator` provisions declarations during initialization and retains structured
+initialization failures, just as it does for argument and register-frame setup.
+Its public constructor accepts storage launch options after the existing packed
+entry arguments. Empty storage metadata leaves manually bound-resource programs
+on their existing path. The runtime's new dependency is on `exec_ir` metadata,
+not on frontend types; memory and execution topology remain independent modules.
+
+The supported declarations are normalized scalar/vector and sized-array global,
+constant, shared and local storage, explicit global/constant external ranges, and
+unsized external dynamic shared storage. Parameterized declaration names, opaque
+objects, managed/unified storage, initializer relocations, and sized external
+shared/local bindings currently return explicit unsupported-declaration errors.

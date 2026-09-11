@@ -64,6 +64,7 @@ enum class RunErrorCode {
   register_error,
   address_space_error,
   runtime_binding_error,
+  storage_error,
   execution_error,
 };
 
@@ -100,6 +101,8 @@ struct RunError {
   std::optional<memory::AddressSpaceError> address_space_error;
   /** @brief Runtime binding failure when @ref code is runtime_binding_error. */
   std::optional<runtime::RuntimeBindingError> runtime_binding_error;
+  /** @brief Static-storage preparation failure before any instruction issues. */
+  std::optional<runtime::StorageError> storage_error;
   /** @brief Engine rejection when @ref code is execution_error. */
   std::optional<inst_execute_engine::StepError> execution_error;
 
@@ -176,7 +179,8 @@ class Simulator final {
    */
   Simulator(exec_ir::ExecutableProgram program, runtime::LaunchRuntime& runtime,
             common::FunctionId entry_function, const arith::context& arithmetic,
-            std::vector<std::byte> entry_parameters = {}) noexcept;
+            std::vector<std::byte> entry_parameters = {},
+            runtime::StorageLaunchOptions storage_options = {}) noexcept;
 
   /**
    * @brief Execute at most one deterministic same-PC issue group.
@@ -216,6 +220,8 @@ class Simulator final {
   inst_execute_engine::InstExecuteEngine engine_;
   /** @brief Packed bytes copied into the entry-parameter region during initialization. */
   std::vector<std::byte> entry_parameters_;
+  /** @brief Owned launch inputs consumed while materializing static storage. */
+  runtime::StorageLaunchOptions storage_options_;
   /** @brief Whether entry-frame provisioning has completed successfully. */
   bool initialized_ = false;
   /** @brief Cached initialization failure, preventing a later retry/mutation. */

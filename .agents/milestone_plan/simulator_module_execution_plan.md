@@ -43,7 +43,7 @@ subsystems; none of those subsystems may acquire a dependency on `simulator`.
 
 ```text
 exec_ir_lowering -> exec_ir + ptx_frontend
-runtime          -> execution_model + memory
+runtime          -> execution_model + memory + exec_ir
 inst_execute_engine
                  -> exec_ir + execution_model + runtime + arith
 simulator        -> exec_ir + execution_model + runtime
@@ -302,6 +302,34 @@ all three generators match rebuilt C++ output and preserve timestamps on
 repeated generation. Installed C++ source provenance and Python direct-URL
 metadata both identify the new frontend commit. Independent review, diff and
 local documentation link checks passed.
+
+### Storage declaration provisioning (issue #22)
+
+- [x] Pin C++ and Python frontend dependencies to main commit
+  `1a32fac33be61c0f540caaecf2ce14373c281b45`.
+- [x] Lower normalized storage metadata into owned executable declarations and
+  validate symbolic address references against that table.
+- [x] Provision launch global/constant, CTA shared and thread/function local
+  resources, preserving existing caller regions and handle identities.
+- [x] Materialize aligned initial data, enforce constant permissions, and accept
+  explicit external ranges and aliased dynamic shared launch storage.
+- [x] Reject malformed metadata, relocations, incompatible external ranges,
+  overflow and stale bindings with structured errors.
+
+The adopted ownership and supported-declaration boundaries are recorded in
+[storage provisioning](../arch/resolved_ir_execution_architecture.md#storage-declaration-provisioning).
+Real-PTX regressions exercise automatic allocation, symbol-address MOV and
+load/store execution, initialized data, CTA/thread isolation, external ranges,
+and dynamic shared storage. Additional component tests cover distinct prebound
+frame sizes, multiple function frames, repeated preflight failures and malformed
+frontend metadata. Local validation for this change is restricted to Debug by
+user instruction; other compiler/configuration gates are delegated to CI.
+
+Validation (2026-09-11): the GCC Debug build and all 631 CTest cases passed,
+including build-tree and installed C++ consumers. All 43 source Python tests
+passed. An sdist-to-wheel rebuild retained the exact frontend pin and all three
+installed generators ran successfully. Independent review of the reported
+storage edge cases, diff checks and local documentation link checks passed.
 
 ## 7. Deferred work
 

@@ -4,9 +4,12 @@
 #include <expected>
 #include <map>
 #include <optional>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include <ptxsim/common/ids.hpp>
+#include <ptxsim/exec_ir/exec_ir.hpp>
 #include <ptxsim/execution_model/grid.hpp>
 #include <ptxsim/execution_model/ids.hpp>
 #include <ptxsim/memory/memory.hpp>
@@ -36,6 +39,52 @@ struct RuntimeBindingError {
 
   constexpr bool operator==(const RuntimeBindingError&) const noexcept =
       default;
+};
+
+/** @brief Caller-selected subrange used to satisfy one named external declaration. */
+struct ExternalStorageBinding {
+  /** @brief Declaration spelling retained in the executable storage layout. */
+  std::string name;
+  /** @brief Byte offset within the already-bound address-space resource. */
+  std::size_t offset;
+  /** @brief Number of bytes made available to the external declaration. */
+  std::size_t extent;
+};
+
+/** @brief Launch-owned inputs required to materialize static executable storage. */
+struct StorageLaunchOptions {
+  /** @brief Explicit caller ranges for external declarations. */
+  std::vector<ExternalStorageBinding> externals;
+  /** @brief Bytes in the per-CTA segment aliased by all dynamic shared symbols. */
+  std::size_t dynamic_shared_bytes = 0;
+};
+
+/** @brief Reasons static storage cannot be prepared for this launch. */
+enum class StorageErrorCode : std::uint8_t {
+  already_prepared,
+  different_program,
+  duplicate_external_binding,
+  missing_external_binding,
+  ambiguous_external_binding,
+  invalid_external_binding,
+  invalid_symbol,
+  incompatible_address_space,
+  runtime_binding_failure,
+  address_space_failure,
+};
+
+/** @brief Structured storage materialization or symbolic-address failure. */
+struct StorageError {
+  /** @brief Stable reason without flattened diagnostic text. */
+  StorageErrorCode code;
+  /** @brief Declaration identity involved when one is known. */
+  std::optional<common::SymbolId> symbol;
+  /** @brief Underlying resource binding failure when applicable. */
+  std::optional<RuntimeBindingError> runtime_error;
+  /** @brief Underlying memory resource failure when applicable. */
+  std::optional<memory::AddressSpaceError> address_space_error;
+
+  constexpr bool operator==(const StorageError&) const noexcept = default;
 };
 
 /**
@@ -110,6 +159,22 @@ class LaunchRuntime final {
                                      common::FunctionId function) const
       -> std::expected<memory::ExecutionAddressContext, RuntimeBindingError>;
 
+  /** @brief Materialize one program's static declarations before its first issue. */
+  [[nodiscard]] auto prepare_storage(const exec_ir::ExecutableProgram& program,
+                                     const StorageLaunchOptions& options = {})
+      -> std::expected<void, StorageError>;
+
+  /** @brief Resolve one symbolic address to a numeric direct or generic PTX address. */
+  [[nodiscard]] auto resolve_symbol_address(
+      exec_ir::SymbolRef symbol, execution_model::ThreadId thread,
+      common::FunctionId function, exec_ir::AddressSpace requested) const
+      -> std::expected<std::uint64_t, StorageError>;
+  /** @brief Resolve a symbolic declaration to its state-space-relative byte offset. */
+  [[nodiscard]] auto resolve_symbol_offset(exec_ir::SymbolRef symbol,
+                                           execution_model::ThreadId thread,
+                                           common::FunctionId function) const
+      -> std::expected<std::uint64_t, StorageError>;
+
  private:
   using ThreadFunction =
       std::pair<execution_model::ThreadId, common::FunctionId>;
@@ -128,6 +193,16 @@ class LaunchRuntime final {
       tensor_spaces_;
   std::map<ThreadFunction, memory::RegisterFrameHandle> register_frames_;
   std::map<ThreadFunction, memory::LocalFrameHandle> local_frames_;
+  /** @brief One stable layout copy prevents symbolic lookup against another program. */
+  std::optional<std::vector<exec_ir::StorageDeclaration>> storage_layout_;
+  /** @brief Allocation offsets keyed by executable symbol identity. */
+  std::map<std::uint32_t, std::size_t> storage_offsets_;
+  /** @brief CTA-specific shared offsets when callers prebind differently sized regions. */
+  std::map<std::pair<execution_model::CtaId, std::uint32_t>, std::size_t>
+      shared_storage_offsets_;
+  /** @brief Thread/function-specific local offsets when callers prebind frames. */
+  std::map<std::pair<ThreadFunction, std::uint32_t>, std::size_t>
+      local_storage_offsets_;
 };
 
 }  // namespace ptxsim::runtime

@@ -36,6 +36,25 @@ auto LaneResourceResolver::thread() const noexcept
   return thread_;
 }
 
+auto LaneResourceResolver::resolve_symbol_address(exec_ir::SymbolRef symbol,
+                                                  exec_ir::AddressSpace space)
+    -> std::expected<std::uint64_t, LaneFaultCause> {
+  const auto resolved =
+      runtime_.resolve_symbol_address(symbol, thread_.id(), function_, space);
+  if (!resolved)
+    return std::unexpected(LaneFaultCause{resolved.error()});
+  return *resolved;
+}
+
+auto LaneResourceResolver::resolve_symbol_offset(exec_ir::SymbolRef symbol)
+    -> std::expected<std::uint64_t, LaneFaultCause> {
+  const auto resolved =
+      runtime_.resolve_symbol_offset(symbol, thread_.id(), function_);
+  if (!resolved)
+    return std::unexpected(LaneFaultCause{resolved.error()});
+  return *resolved;
+}
+
 namespace {
 
 /** @brief Decode a b32/b64 address register or b64 immediate address base. */
@@ -108,7 +127,15 @@ auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
   if (!registers) {
     return std::unexpected(registers.error());
   }
-  const auto value = numeric_address(registers->get(), address);
+  const auto value = [&]() -> std::expected<std::uint64_t, LaneFaultCause> {
+    if (const auto* symbol = std::get_if<exec_ir::SymbolRef>(&address.base)) {
+      const auto base = resolve_symbol_address(*symbol, space);
+      if (!base)
+        return std::unexpected(base.error());
+      return apply_offset(*base, address.offset);
+    }
+    return numeric_address(registers->get(), address);
+  }();
   if (!value)
     return std::unexpected(value.error());
   switch (space) {

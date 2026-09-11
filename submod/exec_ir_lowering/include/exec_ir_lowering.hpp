@@ -20,6 +20,8 @@ enum class LoweringErrorCode : std::uint8_t {
   unsupported_operand,
   invalid_entry_parameter_layout,
   invalid_branch_target,
+  unsupported_storage_declaration,
+  unsupported_storage_relocation,
   program_validation_failed,
 };
 

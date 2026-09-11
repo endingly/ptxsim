@@ -3,7 +3,7 @@ add_library(ptxsim_runtime ${ptxsim_runtime_srcs})
 add_library(ptxsim::runtime ALIAS ptxsim_runtime)
 set_target_properties(ptxsim_runtime PROPERTIES EXPORT_NAME runtime)
 target_compile_features(ptxsim_runtime PUBLIC cxx_std_23)
-target_link_libraries(ptxsim_runtime PUBLIC ptxsim::execution_model ptxsim::memory)
+target_link_libraries(ptxsim_runtime PUBLIC ptxsim::execution_model ptxsim::memory ptxsim::exec_ir)
 register_headers(ptxsim_runtime runtime PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 ptxsim_enable_sanitizers(ptxsim_runtime)
 

@@ -147,9 +147,9 @@ execution-model nodes do not acquire memory handles or instruction semantics.
 These rules follow the [PTX ISA Mov and special-register sections](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#data-movement-and-conversion-instructions-mov).
 Structural coverage is not whole-ISA certification. Entry-input parameter
 addresses reuse the existing ABI byte offsets and are consumed by indirect
-`ld.param`; address materialization does not load the parameter value. Other
-symbolic storage address materialization still needs
-executable resource bindings and allocation. Device-function formal addresses
+`ld.param`; address materialization does not load the parameter value. Global, constant, shared and local
+symbol addresses use the owned executable declarations and automatic runtime
+bindings described in [storage provisioning](resolved_ir_execution_architecture.md#storage-declaration-provisioning). Device-function formal addresses
 need activation-owned local storage, and function addresses need a defined
 executable code-address model. Physical SM placement and device capacities,
 clustering, timers, performance/environment registers, graph execution and shared
@@ -337,7 +337,9 @@ target read-only spaces. Generic stores retain the memory subsystem's permission
 checks. Numeric b32/b64 address registers, immediate addresses and checked byte
 offsets are supported. Entry-parameter symbols use the source-ordered layouts
 owned by `exec_ir`; the simulator packs arguments and automatically binds their
-region. This does not allocate symbolic global/shared/local declarations.
+region. Symbolic global, constant, shared and local declarations are provisioned
+by the same runtime before execution; shared allocations are CTA-owned and local
+frames are thread/function-owned.
 
 Preparation captures every source and validates all destinations and the full
 memory span before architectural mutation. Vector load writes commit in operand

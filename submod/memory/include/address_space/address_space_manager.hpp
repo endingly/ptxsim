@@ -198,6 +198,19 @@ class AddressSpaceManager final {
                               std::size_t alignment = 1)
       -> std::expected<AddressRange, AddressSpaceError>;
 
+  /** @brief Grow a live global allocation without invalidating its handle. */
+  [[nodiscard]] auto grow(GlobalSpaceHandle handle, std::size_t size)
+      -> std::expected<void, AddressSpaceError>;
+  /** @brief Grow a live constant allocation without invalidating its handle. */
+  [[nodiscard]] auto grow(ConstantSpaceHandle handle, std::size_t size)
+      -> std::expected<void, AddressSpaceError>;
+  /** @brief Grow a live local frame without invalidating its handle. */
+  [[nodiscard]] auto grow(LocalFrameHandle handle, std::size_t size)
+      -> std::expected<void, AddressSpaceError>;
+  /** @brief Grow a live CTA shared allocation without invalidating its handle. */
+  [[nodiscard]] auto grow(SharedSpaceHandle handle, std::size_t size)
+      -> std::expected<void, AddressSpaceError>;
+
  private:
   std::shared_ptr<detail::AddressSpaceManagerState> state_;
 };
