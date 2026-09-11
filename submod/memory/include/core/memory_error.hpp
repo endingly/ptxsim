@@ -18,6 +18,7 @@ enum class MemoryErrorCode : std::uint8_t {
   UninitializedRead,
   WriteToReadOnlyRegion,
   InvalidAlignment,
+  AllocationFailure,
 };
 
 /**
@@ -60,6 +61,9 @@ constexpr std::string_view to_string(MemoryErrorCode code) noexcept {
 
     case MemoryErrorCode::InvalidAlignment:
       return "invalid memory alignment";
+
+    case MemoryErrorCode::AllocationFailure:
+      return "memory allocation failed";
   }
 
   return "unknown memory error";

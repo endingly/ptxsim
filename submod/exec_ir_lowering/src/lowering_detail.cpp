@@ -345,6 +345,27 @@ auto bind_address(const ptx_frontend::resolved_ir::ResolvedAddress& address,
   if (!parameter->symbol_id) {
     return binding_error(LoweringErrorCode::malformed_resolved_ir, context);
   }
+  if (parameter->declaration_kind ==
+          ptx_frontend::binding::SymbolKind::Variable &&
+      !parameter->parameterized_index) {
+    const auto found =
+        context.storage_symbols.find(parameter->symbol_id->value);
+    if (found == context.storage_symbols.end() ||
+        parameter->declared_type != found->second.type ||
+        parameter->declaration_state_space != found->second.space ||
+        parameter->address_state_space != found->second.space ||
+        !parameter->address_alignment ||
+        *parameter->address_alignment != found->second.alignment ||
+        (found->second.owner_function &&
+         *found->second.owner_function !=
+             common::FunctionId{context.function_index})) {
+      return binding_error(LoweringErrorCode::malformed_resolved_ir, context,
+                           parameter->symbol_id->value);
+    }
+    return exec_ir::Address{
+        exec_ir::SymbolRef{common::SymbolId{parameter->symbol_id->value}},
+        offset};
+  }
   if (parameter->parameterized_index ||
       parameter->declaration_kind !=
           ptx_frontend::binding::SymbolKind::InputParameter ||

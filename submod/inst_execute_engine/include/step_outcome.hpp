@@ -93,11 +93,12 @@ struct StepError {
 
 /** @brief Typed faults that can occur while preparing or committing one lane. */
 using LaneFaultCause =
-    std::variant<runtime::RuntimeBindingError, memory::RegisterError,
-                 common::RawValueError, arith::arithmetic_error,
-                 memory::AddressResolutionError, memory::AddressSpaceError,
-                 UnsupportedSpecialRegister, UnsupportedMovSource,
-                 UnsupportedMovType, InvalidMovVector, InvalidMovPredicate>;
+    std::variant<runtime::RuntimeBindingError, runtime::StorageError,
+                 memory::RegisterError, common::RawValueError,
+                 arith::arithmetic_error, memory::AddressResolutionError,
+                 memory::AddressSpaceError, UnsupportedSpecialRegister,
+                 UnsupportedMovSource, UnsupportedMovType, InvalidMovVector,
+                 InvalidMovPredicate>;
 
 /** @brief A fault retained after the issue's other eligible lanes execute. */
 struct LaneFault {

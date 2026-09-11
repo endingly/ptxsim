@@ -41,6 +41,12 @@ auto runtime_binding_error(runtime::RuntimeBindingError error) -> RunError {
           .runtime_binding_error = error};
 }
 
+/** @brief Package a static-storage preparation failure as a runner error. */
+auto storage_error(runtime::StorageError error) -> RunError {
+  return {.code = RunErrorCode::storage_error,
+          .storage_error = std::move(error)};
+}
+
 /** @brief Package an instruction-engine rejection as a runner error. */
 auto execution_error(inst_execute_engine::StepError error) -> RunError {
   return {.code = RunErrorCode::execution_error, .execution_error = error};
@@ -151,13 +157,15 @@ Simulator::Simulator(exec_ir::ExecutableProgram program,
                      runtime::LaunchRuntime& runtime,
                      common::FunctionId entry_function,
                      const arith::context& arithmetic,
-                     std::vector<std::byte> entry_parameters) noexcept
+                     std::vector<std::byte> entry_parameters,
+                     runtime::StorageLaunchOptions storage_options) noexcept
     : program_(std::move(program)),
       runtime_(runtime),
       entry_function_(entry_function),
       arithmetic_(arithmetic),
       engine_(runtime_, entry_function_, arithmetic_),
-      entry_parameters_(std::move(entry_parameters)) {}
+      entry_parameters_(std::move(entry_parameters)),
+      storage_options_(std::move(storage_options)) {}
 
 auto Simulator::initialize() -> std::expected<void, RunError> {
   if (initialization_error_) {
@@ -174,6 +182,11 @@ auto Simulator::initialize() -> std::expected<void, RunError> {
   if (entry_parameters_.size() != layout->get().entry_parameter_size) {
     initialization_error_ = entry_parameter_size_error(
         layout->get().entry_parameter_size, entry_parameters_.size());
+    return std::unexpected(*initialization_error_);
+  }
+  if (const auto storage = runtime_.prepare_storage(program_, storage_options_);
+      !storage) {
+    initialization_error_ = storage_error(storage.error());
     return std::unexpected(*initialization_error_);
   }
   if (layout->get().entry_parameter_size != 0U) {

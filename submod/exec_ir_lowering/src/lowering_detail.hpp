@@ -50,6 +50,22 @@ struct EntryParameterBinding {
 using EntryParameterTable =
     std::unordered_map<std::uint32_t, EntryParameterBinding>;
 
+/** @brief Frontend facts retained only while validating one lowered storage symbol. */
+struct StorageSymbolBinding {
+  /** @brief Resolved declaration scalar type required by every address reference. */
+  ptx_frontend::base::ScalarType type;
+  /** @brief Declared and produced PTX address space for this storage symbol. */
+  ptx_frontend::syntax_ast::AstStateSpace space;
+  /** @brief Address alignment promised by the normalized declaration. */
+  std::uint64_t alignment;
+  /** @brief Owning executable function for local storage, when any. */
+  std::optional<common::FunctionId> owner_function;
+};
+
+/** @brief Maps only executable storage symbols to their resolved validation facts. */
+using StorageSymbolTable =
+    std::unordered_map<std::uint32_t, StorageSymbolBinding>;
+
 /**
  * @brief Immutable per-instruction bindings used by leaf lowering conversions.
  */
@@ -60,6 +76,8 @@ struct BindingContext {
   const LabelTable& labels;
   /** @brief ABI bindings for entry parameters, owned by the enclosing lower call. */
   const EntryParameterTable& entry_parameters;
+  /** @brief Storage identities eligible for bound variable address lowering. */
+  const StorageSymbolTable& storage_symbols;
   /** @brief Whether this function owns an entry ABI rather than device parameters. */
   bool function_is_entry;
   /** @brief Number of executable instructions in the current function body. */

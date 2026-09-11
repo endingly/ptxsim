@@ -203,7 +203,7 @@ auto topology_value(const execution_model::Thread& thread,
 
 /** @brief Read a scalar MOV source with no address or symbol fabrication. */
 auto scalar_source(const memory::RegisterView& registers,
-                   const execution_model::Thread& thread,
+                   LaneResourceResolver& resolver,
                    const exec_ir::MovSource& source, common::RawWidth width)
     -> std::expected<common::RawValue, LaneFaultCause> {
   if (const auto* slot = std::get_if<common::RegisterSlot>(&source)) {
@@ -224,10 +224,27 @@ auto scalar_source(const memory::RegisterView& registers,
     return *immediate;
   }
   if (const auto* special = std::get_if<exec_ir::SpecialRegisterRef>(&source))
-    return topology_value(thread, *special, width);
+    return topology_value(resolver.thread(), *special, width);
   if (const auto* address = std::get_if<exec_ir::Address>(&source)) {
     if (std::holds_alternative<exec_ir::SymbolRef>(address->base)) {
-      return std::unexpected(LaneFaultCause{UnsupportedMovSource{}});
+      const auto numeric = resolver.resolve_symbol_offset(
+          std::get<exec_ir::SymbolRef>(address->base));
+      if (!numeric)
+        return std::unexpected(numeric.error());
+      std::uint64_t value = *numeric;
+      if (address->offset) {
+        const auto magnitude = address->offset->value.as_b64();
+        if (!magnitude)
+          return std::unexpected(LaneFaultCause{magnitude.error()});
+        if ((address->offset->subtract && *magnitude > value) ||
+            (!address->offset->subtract &&
+             *magnitude > std::numeric_limits<std::uint64_t>::max() - value)) {
+          return std::unexpected(LaneFaultCause{UnsupportedMovSource{}});
+        }
+        value =
+            address->offset->subtract ? value - *magnitude : value + *magnitude;
+      }
+      return raw_bits(width, value);
     }
     const auto numeric = numeric_address(registers, *address);
     if (!numeric)
@@ -377,7 +394,7 @@ auto prepare_scalar_move(LaneResourceResolver& resolver, exec_ir::DataType type,
   const auto registers = resolver.resolve();
   if (!registers)
     return std::unexpected(registers.error());
-  const auto value = scalar_source(registers->get(), resolver.thread(), source, *width);
+  const auto value = scalar_source(registers->get(), resolver, source, *width);
   if (!value)
     return std::unexpected(value.error());
   const auto valid = valid_destination(registers->get(), destination, *width);

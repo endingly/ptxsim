@@ -94,6 +94,14 @@ class MemoryRegion final {
     return bytes_.empty();
   }
 
+  /**
+   * @brief Extend storage without changing existing bytes, initialization, or access.
+   *
+   * New bytes are zero-filled but uninitialized. Shrinking is rejected so any
+   * address already visible to the launch remains valid.
+   */
+  [[nodiscard]] std::expected<void, MemoryError> grow(std::size_t size);
+
   [[nodiscard]]
   RegionAccess access() const noexcept {
     return access_;

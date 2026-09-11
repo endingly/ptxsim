@@ -40,6 +40,14 @@ class LaneResourceResolver final {
       -> std::expected<std::pair<memory::AddressSpaceView, memory::Address>,
                        LaneFaultCause>;
 
+  /** @brief Resolve one symbolic declaration to an address for this lane. */
+  auto resolve_symbol_address(exec_ir::SymbolRef symbol,
+                              exec_ir::AddressSpace space)
+      -> std::expected<std::uint64_t, LaneFaultCause>;
+  /** @brief Resolve a symbolic declaration to its state-space-relative offset. */
+  auto resolve_symbol_offset(exec_ir::SymbolRef symbol)
+      -> std::expected<std::uint64_t, LaneFaultCause>;
+
  private:
   /** Launch resource owner borrowed for this execute call. */
   runtime::LaunchRuntime& runtime_;

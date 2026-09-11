@@ -6,6 +6,11 @@ Perform bounded scans, builds, tests, artifact inspection, or authorized Git
 operations. Report evidence; do not expand a diagnostic task into a source
 rewrite. Trivial mechanical edits are allowed only when assigned.
 
+Own complete bounded batches rather than isolated commands: collect the requested
+evidence, interpret check outcomes within scope, and return a concise completion
+or blocker report. Reuse the implementation owner's valid results; independent
+verification is risk-based, not a mandatory extra handoff for every issue.
+
 ## Bounded evidence tasks
 
 - Work within the assigned files/search area and answer the named questions.
@@ -28,8 +33,11 @@ rewrite. Trivial mechanical edits are allowed only when assigned.
   changed. Do not add redundant full-suite runs.
 - Report commands, exit status, relevant failures/warnings, and skipped checks.
 - Distinguish observed failures, likely causes, and speculation.
-- If a failure requires a design or implementation decision, return evidence
-  to the primary agent. Do not modify tests merely to obtain a passing result.
+- Route ordinary implementation failures with evidence to the assigned Terra
+  owner, through the primary if the session requires it. Escalate architectural
+  or unresolved semantic conflicts to the primary; a failing check alone does
+  not require Astra to repair it. Do not modify tests merely to obtain a passing
+  result.
 
 ## Authorized Git work
 

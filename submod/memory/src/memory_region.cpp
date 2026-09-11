@@ -3,12 +3,46 @@
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <new>
+#include <stdexcept>
 #include <utility>
 
 namespace ptxsim::memory {
 
 MemoryRegion::MemoryRegion(std::size_t size, RegionAccess access)
     : bytes_(size, std::byte{0}), initialized_(size, false), access_(access) {}
+
+std::expected<void, MemoryError> MemoryRegion::grow(std::size_t size) {
+  if (size < bytes_.size()) {
+    return std::unexpected(MemoryError{.code = MemoryErrorCode::OutOfBounds,
+                                       .address = Address{size},
+                                       .size = bytes_.size() - size});
+  }
+  if (size > bytes_.max_size() || size > initialized_.max_size()) {
+    return std::unexpected(MemoryError{.code = MemoryErrorCode::OutOfBounds,
+                                       .address = Address{0},
+                                       .size = size});
+  }
+  // Reserve both arrays before changing their logical extent. If either
+  // allocation fails, bytes and initialization metadata still describe the
+  // original region; successful reserve never invalidates manager handles.
+  try {
+    bytes_.reserve(size);
+    initialized_.reserve(size);
+  } catch (const std::bad_alloc&) {
+    return std::unexpected(
+        MemoryError{.code = MemoryErrorCode::AllocationFailure,
+                    .address = Address{0},
+                    .size = size});
+  } catch (const std::length_error&) {
+    return std::unexpected(MemoryError{.code = MemoryErrorCode::OutOfBounds,
+                                       .address = Address{0},
+                                       .size = size});
+  }
+  bytes_.resize(size, std::byte{0});
+  initialized_.resize(size, false);
+  return {};
+}
 
 bool MemoryRegion::contains(Address address,
                             std::size_t requested_size) const noexcept {

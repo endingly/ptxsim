@@ -1,5 +1,6 @@
 #include <ptxsim/memory/address_space/address_space_manager.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <limits>
 #include <map>
@@ -134,6 +135,23 @@ struct AddressSpaceManagerState {
     }
     value.next_free = begin + size;
     return AddressRange{Address{begin}, size};
+  }
+
+  /** @brief Extend a resource and reserve all appended bytes for later allocation. */
+  [[nodiscard]] auto grow(const AddressSpaceLocator& locator, std::size_t size)
+      -> std::expected<void, AddressSpaceError> {
+    auto resource = find(locator);
+    if (!resource) {
+      return std::unexpected(resource.error());
+    }
+    auto& value = **resource;
+    if (const auto grown = value.region.grow(size); !grown) {
+      return std::unexpected(
+          memory_error(AddressSpaceErrorCode::storage_failure, locator.index,
+                       grown.error()));
+    }
+    value.next_free = std::max(value.next_free, size);
+    return {};
   }
 
   std::uint64_t token;
@@ -438,6 +456,30 @@ auto AddressSpaceManager::allocate(ConstantSpaceHandle handle, std::size_t size,
   const auto locator =
       state_->locator(handle, detail::AddressSpaceKind::constant);
   return state_->allocate(locator, size, alignment);
+}
+
+auto AddressSpaceManager::grow(GlobalSpaceHandle handle, std::size_t size)
+    -> std::expected<void, AddressSpaceError> {
+  return state_->grow(state_->locator(handle, detail::AddressSpaceKind::global),
+                      size);
+}
+
+auto AddressSpaceManager::grow(ConstantSpaceHandle handle, std::size_t size)
+    -> std::expected<void, AddressSpaceError> {
+  return state_->grow(
+      state_->locator(handle, detail::AddressSpaceKind::constant), size);
+}
+
+auto AddressSpaceManager::grow(LocalFrameHandle handle, std::size_t size)
+    -> std::expected<void, AddressSpaceError> {
+  return state_->grow(state_->locator(handle, detail::AddressSpaceKind::local),
+                      size);
+}
+
+auto AddressSpaceManager::grow(SharedSpaceHandle handle, std::size_t size)
+    -> std::expected<void, AddressSpaceError> {
+  return state_->grow(state_->locator(handle, detail::AddressSpaceKind::shared),
+                      size);
 }
 
 auto AddressSpaceView::size() const

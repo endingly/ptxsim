@@ -54,6 +54,59 @@ struct FunctionLayout {
   std::vector<EntryParameterLayout> entry_parameters;
 };
 
+/** @brief State space selected for one fully bound static storage declaration. */
+enum class StorageSpace : std::uint8_t { global, constant, shared, local };
+
+/** @brief Byte capacity of one fixed generic-address state-space window. */
+inline constexpr std::uint64_t kStorageAddressSpaceSize = std::uint64_t{1}
+                                                          << 60;
+
+/** @brief Initialization policy applied when a launch materializes storage. */
+enum class StorageInitialization : std::uint8_t {
+  uninitialized,
+  zero,
+  explicit_bytes,
+  external,
+};
+
+/**
+ * @brief Frontend-independent allocation and initialization inputs for one symbol.
+ *
+ * @ref initializer_bytes owns a complete byte image only for
+ * @c explicit_bytes.  The symbol name remains only for explicit external
+ * binding; execution always refers to @ref symbol.
+ */
+struct StorageDeclaration {
+  /** @brief Stable executable identity used by address and MOV operands. */
+  common::SymbolId symbol;
+  /** @brief Source spelling retained solely to select a caller extern binding. */
+  std::string name;
+  /** @brief Address space containing the declaration. */
+  StorageSpace space;
+  /** @brief Owning function for thread/function-local declarations. */
+  std::optional<common::FunctionId> owner_function;
+  /** @brief Allocation extent in bytes, excluding inter-declaration padding. */
+  std::size_t extent;
+  /** @brief Nonzero power-of-two byte alignment of the allocation offset. */
+  std::size_t alignment;
+  /** @brief Runtime initialization policy for the allocated extent. */
+  StorageInitialization initialization;
+  /** @brief Complete owned initial byte image when @ref initialization is explicit. */
+  std::vector<std::byte> initializer_bytes;
+  /** @brief Whether this external shared declaration consumes launch dynamic bytes. */
+  bool dynamic_shared = false;
+  /**
+   * @brief Required byte multiple for an unsized non-dynamic external binding.
+   *
+   * This is the scalar/vector/inner-dimension stride retained when @ref extent
+   * is zero. All other declarations retain the neutral value one.
+   */
+  std::size_t external_extent_multiple = 1;
+
+  /** @brief Compare every execution-relevant declaration property. */
+  bool operator==(const StorageDeclaration&) const = default;
+};
+
 /**
  * @brief Input records used to construct a self-consistent executable container.
  *
@@ -65,6 +118,8 @@ struct ProgramDefinition {
   std::vector<Instruction> instructions;
   /** @brief Dense function layouts covering every instruction exactly once. */
   std::vector<FunctionLayout> functions;
+  /** @brief Fully bound storage declarations owned for the program lifetime. */
+  std::vector<StorageDeclaration> storage_declarations;
 };
 
 /** @brief Reasons an executable-program operation can fail. */
@@ -75,6 +130,8 @@ enum class ProgramErrorCode : std::uint8_t {
   invalid_layout_range,
   invalid_register_width,
   invalid_entry_parameter_layout,
+  invalid_storage_declaration,
+  duplicate_storage_symbol,
   function_not_found,
   pc_out_of_range,
   no_fallthrough,
@@ -90,6 +147,8 @@ struct ProgramError {
   std::optional<common::ProgramCounter> pc;
   /** @brief Observed invalid width when applicable. */
   std::optional<common::RawWidth> actual;
+  /** @brief Storage symbol whose layout violates an invariant when applicable. */
+  std::optional<common::SymbolId> symbol;
 
   constexpr bool operator==(const ProgramError&) const noexcept = default;
 };
@@ -146,6 +205,9 @@ class ExecutableProgram final {
   /** @brief Return the next location within the same function. */
   [[nodiscard]] auto fallthrough(common::CodeLocation location) const
       -> std::expected<common::CodeLocation, ProgramError>;
+  /** @brief Return immutable storage layout records for launch materialization. */
+  [[nodiscard]] auto storage_declarations() const noexcept
+      -> const std::vector<StorageDeclaration>&;
 
  private:
   friend auto to_string(const ExecutableProgram& program) -> std::string;
@@ -157,6 +219,8 @@ class ExecutableProgram final {
   std::vector<Instruction> instructions_;
   /** @brief Dense layouts corresponding to the owned instruction storage. */
   std::vector<FunctionLayout> functions_;
+  /** @brief Static storage metadata with no frontend lifetime dependency. */
+  std::vector<StorageDeclaration> storage_declarations_;
 };
 
 /** @brief Format the validated execution records for diagnostics. */
