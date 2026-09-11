@@ -645,7 +645,11 @@ initialization operation.
 Automatic storage is appended after the entire existing bound region, preserving
 caller bytes, initialization bits, permissions and handle identity. Growing a
 region does not make old handles stale and never shrinks the region. The memory
-manager reserves appended bytes against subsequent global/constant allocations.
+manager reserves the complete provisioned extent against subsequent
+global/constant allocations. Provisioning applies this reservation to newly
+created resources as well as existing ones: a same-size `grow` advances the
+allocation watermark without changing capacity. The low-level `create_*` APIs
+continue to create unallocated capacity for manual callers.
 A stale binding fails validation instead of being replaced. Explicit external
 bindings select caller-owned ranges by declaration name; they are validated for
 extent, alignment and lifetime and are never initialized by the loader. Unsized

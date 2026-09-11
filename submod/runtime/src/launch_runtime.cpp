@@ -576,6 +576,10 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
       try {
         const auto handle =
             address_spaces_.create_global({.capacity = global_end});
+        if (const auto reserved = address_spaces_.grow(handle, global_end);
+            !reserved)
+          return storage_error(StorageErrorCode::address_space_failure,
+                               std::nullopt, std::nullopt, reserved.error());
         if (const auto bound = bind_global(handle); !bound)
           return storage_error(StorageErrorCode::runtime_binding_failure,
                                std::nullopt, bound.error());
@@ -596,6 +600,10 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
       try {
         const auto handle =
             address_spaces_.create_constant({.capacity = constant_end});
+        if (const auto reserved = address_spaces_.grow(handle, constant_end);
+            !reserved)
+          return storage_error(StorageErrorCode::address_space_failure,
+                               std::nullopt, std::nullopt, reserved.error());
         if (const auto bound = bind_constant(handle); !bound)
           return storage_error(StorageErrorCode::runtime_binding_failure,
                                std::nullopt, bound.error());
@@ -660,6 +668,10 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
       try {
         const auto handle =
             address_spaces_.create_shared({.size = shared_size});
+        if (const auto reserved = address_spaces_.grow(handle, shared_size);
+            !reserved)
+          return storage_error(StorageErrorCode::address_space_failure,
+                               std::nullopt, std::nullopt, reserved.error());
         if (const auto bound = bind_shared(cta_id, handle); !bound)
           return storage_error(StorageErrorCode::runtime_binding_failure,
                                std::nullopt, bound.error());
@@ -682,6 +694,10 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
       try {
         const auto handle =
             address_spaces_.create_local_frame({.size = local_size});
+        if (const auto reserved = address_spaces_.grow(handle, local_size);
+            !reserved)
+          return storage_error(StorageErrorCode::address_space_failure,
+                               std::nullopt, std::nullopt, reserved.error());
         if (const auto bound = bind_local_frame(thread_id, function, handle);
             !bound)
           return storage_error(StorageErrorCode::runtime_binding_failure,

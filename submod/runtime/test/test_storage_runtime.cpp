@@ -124,6 +124,86 @@ TEST(StorageRuntime, EmptyMetadataRetainsLegacyRuntimeReuse) {
   EXPECT_FALSE(runtime.constant());
 }
 
+TEST(StorageRuntime,
+     AutomaticallyCreatedDeclarationStorageReservesProvisionedCapacity) {
+  const std::array constant_bytes{std::byte{0x12}, std::byte{0x34},
+                                  std::byte{0x56}, std::byte{0x78}};
+  auto program = storage_layout(
+      {{.symbol = common::SymbolId{0},
+        .name = "global",
+        .space = exec_ir::StorageSpace::global,
+        .extent = 4,
+        .alignment = 8,
+        .initialization = exec_ir::StorageInitialization::zero},
+       {.symbol = common::SymbolId{1},
+        .name = "constant",
+        .space = exec_ir::StorageSpace::constant,
+        .extent = constant_bytes.size(),
+        .alignment = 16,
+        .initialization = exec_ir::StorageInitialization::explicit_bytes,
+        .initializer_bytes = {constant_bytes.begin(), constant_bytes.end()}},
+       {.symbol = common::SymbolId{2},
+        .name = "shared",
+        .space = exec_ir::StorageSpace::shared,
+        .extent = 5,
+        .alignment = 8,
+        .initialization = exec_ir::StorageInitialization::uninitialized},
+       {.symbol = common::SymbolId{3},
+        .name = "local",
+        .space = exec_ir::StorageSpace::local,
+        .owner_function = common::FunctionId{0},
+        .extent = 6,
+        .alignment = 16,
+        .initialization = exec_ir::StorageInitialization::uninitialized}});
+  ASSERT_TRUE(program);
+  LaunchRuntime runtime{
+      execution_model::GridId{921},
+      {.cta_dim = {1, 1, 1}, .thread_dim = {1, 1, 1}, .warp_size = 1}};
+
+  ASSERT_TRUE(runtime.prepare_storage(*program));
+  const auto global = runtime.global();
+  const auto constant = runtime.constant();
+  ASSERT_TRUE(global);
+  ASSERT_TRUE(constant);
+  auto global_view = runtime.address_spaces().view(*global);
+  auto constant_view = runtime.address_spaces().view(*constant);
+  ASSERT_TRUE(global_view);
+  ASSERT_TRUE(constant_view);
+  EXPECT_EQ(*global_view->size(), 4U);
+  EXPECT_EQ(*constant_view->size(), constant_bytes.size());
+  std::array<std::byte, 4> global_bytes{};
+  std::array<std::byte, 4> observed_constant{};
+  ASSERT_TRUE(global_view->read(memory::Address{0}, global_bytes));
+  ASSERT_TRUE(constant_view->read(memory::Address{0}, observed_constant));
+  EXPECT_EQ(global_bytes, (std::array<std::byte, 4>{}));
+  EXPECT_EQ(observed_constant, constant_bytes);
+  const auto global_end = runtime.address_spaces().allocate(*global, 0, 1);
+  const auto constant_end = runtime.address_spaces().allocate(*constant, 0, 1);
+  ASSERT_TRUE(global_end);
+  ASSERT_TRUE(constant_end);
+  EXPECT_EQ(*global_end, (memory::AddressRange{memory::Address{4}, 0}));
+  EXPECT_EQ(*constant_end,
+            (memory::AddressRange{memory::Address{constant_bytes.size()}, 0}));
+  EXPECT_FALSE(runtime.address_spaces().allocate(*global, 1));
+  EXPECT_FALSE(runtime.address_spaces().allocate(*constant, 1));
+
+  for (const auto& cta : runtime.grid())
+    for (const auto& warp : cta)
+      for (const auto& thread : warp) {
+        const auto shared = runtime.shared(cta.id());
+        const auto local =
+            runtime.local_frame(thread.id(), common::FunctionId{0});
+        ASSERT_TRUE(shared);
+        ASSERT_TRUE(local);
+        const auto shared_view = runtime.address_spaces().view(*shared);
+        const auto local_view = runtime.address_spaces().view(*local);
+        ASSERT_TRUE(shared_view);
+        ASSERT_TRUE(local_view);
+        EXPECT_EQ(*shared_view->size(), 5U);
+        EXPECT_EQ(*local_view->size(), 6U);
+      }
+}
+
 TEST(StorageRuntime, ZeroDynamicSharedSizeIsValidWhenUnused) {
   auto program = storage_layout(
       {{.symbol = common::SymbolId{0},
