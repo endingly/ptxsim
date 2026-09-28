@@ -78,13 +78,13 @@ class GenerateTests(unittest.TestCase):
             self.assertNotIn("switch (", header)
             self.assertIn("namespace ptxsim::exec_ir {", header)
             self.assertIn("}  // namespace ptxsim::exec_ir", header)
-            from ptx_frontend.spec import load_packaged_spec_database
+            from ptx_frontend.spec.database import load_codegen_database
             from ptx_frontend.base.utils import file_stem_to_pascal_case
 
-            database = load_packaged_spec_database()
-            self.assertEqual(len(database.instructions), 69)
+            database = load_codegen_database(spec_dir=packaged_spec_dir())
+            self.assertEqual(len(database.instructions), 92)
             self.assertEqual(
-                sum(len(item.variants) for item in database.instructions), 270
+                sum(len(item.variants) for item in database.instructions), 805
             )
             self.assertEqual(
                 sum(
@@ -92,7 +92,7 @@ class GenerateTests(unittest.TestCase):
                     for item in database.instructions
                     for form in item.variants
                 ),
-                333,
+                972,
             )
             for instruction in database.instructions:
                 self.assertIn(

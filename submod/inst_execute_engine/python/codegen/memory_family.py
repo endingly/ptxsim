@@ -17,12 +17,8 @@ from ptxsim_codegen.exec_ir.model import GenerationError, ProjectedForm, Project
 
 
 _TYPES = ("b8", "b16", "b32", "b64", "u8", "u16", "u32", "u64",
-          "s8", "s16", "s32", "s64", "f32", "f64")
+          "s8", "s16", "s32", "s64", "f32", "b128", "f64")
 _ORDINARY_FORMS = {"GenericScalar", "ExplicitScalar", "GenericVector", "ExplicitVector"}
-_UNSUPPORTED_FORMS = {
-    "GlobalU32L1Evict", "GlobalU32L2CacheHint", "GlobalNcL1NoAllocateU32",
-}
-
 
 @dataclass(frozen=True)
 class _MemoryForm:
@@ -67,11 +63,10 @@ def memory_operation(instruction: ProjectedInstruction) -> MemoryOperation:
     if instruction.opcode not in {"ld", "st"}:
         raise GenerationError(f"{instruction.opcode}: not a memory opcode")
     names = {form.source.cpp_name for form in instruction.forms}
-    unknown = names - _ORDINARY_FORMS - _UNSUPPORTED_FORMS
     missing = _ORDINARY_FORMS - names
-    if unknown or missing:
+    if missing:
         raise GenerationError(
-            f"{instruction.opcode}: memory form drift unknown={sorted(unknown)} missing={sorted(missing)}"
+            f"{instruction.opcode}: missing ordinary memory forms {sorted(missing)}"
         )
     forms = tuple(
         _memory_form(instruction, form)
@@ -126,7 +121,7 @@ def _memory_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _Mem
     address_binding = bindings[address.name]
     if address_binding.type_expression.kind is not ResolvedOperandTypeExpressionKind.NONE:
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}/{address.name}: memory address type drift")
-    modifiers = {modifier.name: modifier for modifier in form.variant.modifiers if modifier.presence != "absent"}
+    modifiers = {modifier.name: modifier for modifier in form.variant.modifiers if modifier.presence.value != "absent"}
     required = {"semantics", "scope", "cache", "type"}
     if explicit:
         required.add("state_space")

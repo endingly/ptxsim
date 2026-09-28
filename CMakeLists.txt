@@ -110,4 +110,4 @@ install_project_targets(
         "sul-dynamic_bitset CONFIG REQUIRED"
         "fmt CONFIG REQUIRED"
         "magic_enum CONFIG REQUIRED"
-        "ptx_frontend 0.0.1 CONFIG REQUIRED COMPONENTS resolved_ir")
+        "ptx_frontend 0.7.0 CONFIG REQUIRED COMPONENTS resolved_ir")

@@ -225,6 +225,37 @@ template <typename Target, typename Source>
     if (!second)
       return std::unexpected(second.error());
     return exec_ir::PredicatePair{*first, *second};
+  } else if constexpr (
+      std::same_as<Target, exec_ir::PredicateOrSink> &&
+      std::same_as<SourceValue,
+                   ptx_frontend::resolved_ir::ResolvedPredicateOrSink>) {
+    if (!source.predicate)
+      return exec_ir::PredicateOrSink{std::nullopt};
+    const auto predicate =
+        bind_operand<exec_ir::Predicate>(*source.predicate, context);
+    if (!predicate)
+      return std::unexpected(predicate.error());
+    return exec_ir::PredicateOrSink{*predicate};
+  } else if constexpr (
+      std::same_as<Target, exec_ir::PredicatePairOrSink> &&
+      std::same_as<SourceValue,
+                   ptx_frontend::resolved_ir::ResolvedPredicatePairOrSink>) {
+    exec_ir::PredicatePairOrSink result;
+    if (source.first) {
+      const auto first =
+          bind_operand<exec_ir::Predicate>(*source.first, context);
+      if (!first)
+        return std::unexpected(first.error());
+      result.first = *first;
+    }
+    if (source.second) {
+      const auto second =
+          bind_operand<exec_ir::Predicate>(*source.second, context);
+      if (!second)
+        return std::unexpected(second.error());
+      result.second = *second;
+    }
+    return result;
   } else if constexpr (std::same_as<Target, exec_ir::RegisterVector> &&
                        std::same_as<
                            SourceValue,
@@ -260,12 +291,17 @@ template <typename Target, typename Source>
         return std::unexpected(value.error());
       return exec_ir::PredicateSource{*value};
     }
-    const auto value = bind_special_register(
-        std::get<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(source),
-        context);
-    if (!value)
-      return std::unexpected(value.error());
-    return exec_ir::PredicateSource{*value};
+    if (const auto* special = std::get_if<
+            ptx_frontend::resolved_ir::ResolvedPredicateSpecialRegister>(&source)) {
+      const auto value = bind_special_register(special->register_ref, context);
+      if (!value)
+        return std::unexpected(value.error());
+      return exec_ir::PredicateSource{
+          exec_ir::SpecialPredicateSource{*value, special->negated}};
+    }
+    return exec_ir::PredicateSource{
+        std::get<ptx_frontend::resolved_ir::ResolvedPredicateConstant>(source)
+            .value};
   } else if constexpr (std::same_as<Target, exec_ir::MovSource> &&
                        std::same_as<
                            SourceValue,

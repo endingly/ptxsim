@@ -28,7 +28,7 @@ add_custom_target(ptxsim_exec_ir_lowering_codegen DEPENDS
     "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}")
 
 file(GLOB_RECURSE ptxsim_exec_ir_lowering_srcs CONFIGURE_DEPENDS src/*.cpp)
-find_package(ptx_frontend 0.0.1 CONFIG REQUIRED COMPONENTS resolved_ir)
+find_package(ptx_frontend 0.7.0 CONFIG REQUIRED COMPONENTS resolved_ir)
 add_library(ptxsim_exec_ir_lowering
     ${ptxsim_exec_ir_lowering_srcs}
     "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}")

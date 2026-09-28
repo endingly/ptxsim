@@ -27,7 +27,7 @@ auto valid_mul(const exec_ir::Mul::WideS32&) noexcept -> bool {
 auto mul(const arith::context& context, const exec_ir::Mul::RnF32& form,
          arith::float32_t lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error> {
-  const auto control = floating_detail::controls(exec_ir::Mul::RnF32::rounding);
+  const auto control = floating_detail::controls(form.rounding);
   if (!control)
     return std::unexpected(control.error());
   const auto product = arith::mul(context, lhs, rhs, *control);

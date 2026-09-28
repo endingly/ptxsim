@@ -1,4 +1,4 @@
-{% macro adapter(form, operation) %}{% if form.kind == "scalar" %}/** @brief Prepare projected MOV scalar layout alternatives. */
+{% macro adapter(form, operation) %}{% if form.kind in ("scalar", "aggregate") %}/** @brief Prepare projected MOV scalar layout alternatives. */
 auto {{ form.function_name }}(LaneResourceResolver& resolver, const arith::context&,
                 const exec_ir::{{ operation.cpp_name }}::{{ form.cpp_name }}& form,
                 std::optional<common::ProgramCounter> successor)

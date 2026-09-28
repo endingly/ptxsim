@@ -29,7 +29,8 @@ auto resolve(std::string_view source) -> ResolvedModule {
   }
   auto module = ptx_frontend::resolved_ir::resolveModule(*ast);
   if (!module) {
-    ADD_FAILURE() << "PTX resolve failed";
+    for (const auto& diagnostic : module.error())
+      ADD_FAILURE() << "PTX resolve failed: " << diagnostic.message;
     return {};
   }
   return std::move(*module);
@@ -74,11 +75,13 @@ auto lowered_entry_parameters_after_frontend_dies()
 }
 TEST(ExecIrLowering, PreservesMemoryVectorSinksAndSubtractedOffsets) {
   const auto program = lower(resolve(R"ptx(
+.version 9.3
+.target sm_100
 .entry kernel() {
   .reg .b32 %r;
   .reg .b64 %a;
   ld.global.v8.b32 {%r, _, _, _, _, _, _, _}, [%a-32];
-  ld.global.u32 %r, [-4];
+  ld.global.u32 %r, [4];
   exit;
 }
 )ptx"));
@@ -598,11 +601,16 @@ TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {
       program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
   const auto& setp = std::get<exec_ir::Setp>(instruction->get());
-  const auto& form = std::get<exec_ir::Setp::LtU32>(setp.variant);
+  const auto& form = std::get<exec_ir::Setp::Unsigned>(setp.variant);
+  const auto& operands =
+      std::get<exec_ir::Setp::Unsigned::SingleOperands>(form.operands);
   EXPECT_EQ(form.comparison, exec_ir::ComparisonOperator::lt);
-  EXPECT_EQ(form.dst, (exec_ir::Predicate{common::RegisterSlot{0}}));
-  EXPECT_EQ(form.src1, (exec_ir::ScalarOperand{common::RegisterSlot{1}}));
-  EXPECT_EQ(form.src2, (exec_ir::ScalarOperand{common::RawValue::b32(1U)}));
+  EXPECT_EQ(form.type, exec_ir::DataType::u32);
+  EXPECT_EQ(
+      operands.dst,
+      (exec_ir::PredicateOrSink{exec_ir::Predicate{common::RegisterSlot{0}}}));
+  EXPECT_EQ(operands.src1, (exec_ir::ScalarOperand{common::RegisterSlot{1}}));
+  EXPECT_EQ(operands.src2, (exec_ir::ScalarOperand{common::RawValue::b32(1U)}));
 }
 
 TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {

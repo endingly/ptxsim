@@ -19,7 +19,6 @@ from ptx_frontend.ir.resolved_ir import (
 from ptxsim_codegen.exec_ir.model import GenerationError, ProjectedForm, ProjectedInstruction
 from ptxsim_codegen.exec_ir.cpp_names import instruction_cpp_name
 
-from .setp_family import _CODECS as _SETP_CODECS
 from .setp_family import SetpOperation, setp_operation
 from .memory_family import MemoryOperation, memory_operation
 from .bar_family import BarOperation, _ControlOperation, bar_operation, bra_operation, exit_operation
@@ -68,6 +67,15 @@ _VALUE_ALU_CONTROLS = {
     "fma": {"rounding", "ftz", "sat", "relu", "oob"},
 }
 
+# These forms have execution semantics and codecs in this engine. Other projected
+# variants still exist in executable IR and are rejected by the capability gate.
+_SUPPORTED_VALUE_ALU_VARIANTS = {
+    "add": frozenset({"add_float_f32", "add_float_f32x2", "add_float_f64", "add_half", "add_bfloat", "add_mixed_f32", "add_integer_no_sat", "add_sat", "add_packed_optional_sat"}),
+    "sub": frozenset({"sub_float_f32", "sub_float_f32x2", "sub_float_f64", "sub_half", "sub_bfloat", "sub_mixed_f32", "sub_integer_no_sat", "sub_optional_sat"}),
+    "mul": frozenset({"mul_rn_f32", "mul_lo_u32", "mul_hi_u32", "mul_wide_u32", "mul_wide_s32"}),
+    "fma": frozenset({"fma_rn_f32", "fma_directed_f32", "fma_rn_f64", "fma_directed_f64", "fma_f32x2", "fma_rn_f16", "fma_rn_f16x2", "fma_half_relu", "fma_half_oob", "fma_half_oob_relu", "fma_bf16", "fma_bf16x2", "fma_bf16_oob", "fma_bf16x2_oob", "fma_mixed_f32_f16", "fma_mixed_f32_bf16"}),
+}
+
 
 _TEMPLATES = Environment(
     loader=PackageLoader("ptxsim_codegen.inst_execute_engine"),
@@ -76,7 +84,6 @@ _TEMPLATES = Environment(
     keep_trailing_newline=True,
     newline_sequence="\n",
 )
-_TEMPLATES.filters["setp_codec"] = _SETP_CODECS.__getitem__
 
 
 @dataclass(frozen=True)
@@ -139,8 +146,19 @@ class _ValueAluOperation:
 
 
 def _value_alu_forms(instruction: ProjectedInstruction) -> tuple[_ValueAluForm, ...]:
-    """Derive every ValueALU adapter from one projected instruction record."""
-    forms = tuple(_value_alu_form(instruction, form) for form in instruction.forms)
+    """Derive adapters for the forms with implemented arithmetic semantics."""
+    supported = _SUPPORTED_VALUE_ALU_VARIANTS[instruction.opcode]
+    present = {form.variant.name for form in instruction.forms}
+    missing = supported - present
+    if missing:
+        raise GenerationError(
+            f"{instruction.opcode}: missing supported forms {sorted(missing)}"
+        )
+    forms = tuple(
+        _value_alu_form(instruction, form)
+        for form in instruction.forms
+        if form.variant.name in supported
+    )
     if not forms:
         raise GenerationError(f"{instruction.opcode}: no projected forms")
     return forms
@@ -242,12 +260,12 @@ def _value_alu_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _
     unsupported_modifiers = {
         modifier.name
         for modifier in form.variant.modifiers
-        if modifier.presence != "absent"
+        if modifier.presence.value != "absent"
         and modifier.name not in (
             type_modifier_names | semantic_type_modifier_names |
             _VALUE_ALU_CONTROLS[instruction.opcode]
         )
-        and not (modifier.presence == "fixed" and (
+        and not (modifier.presence.value == "fixed" and (
             modifier.name in {"lo", "hi", "wide"}
             or (modifier.name == "type" and fixed_operand_types)
         ))

@@ -17,6 +17,7 @@ from ptxsim_codegen.exec_ir.model import (
     ProjectedForm,
     ProjectedInstruction,
 )
+from ptxsim_codegen.exec_ir.projection import frontend_backend
 
 _DOMAINS = {
     "type": "SCALAR_TYPES",
@@ -25,6 +26,8 @@ _DOMAINS = {
     "boolean_op": "BOOLEAN_OPERATORS",
     "cache": "CACHE_OPERATORS",
     "eviction_priority": "EVICTION_PRIORITIES",
+    "prefetch_size": "PREFETCH_SIZES",
+    "test_property": "TEST_PROPERTIES",
     "semantics": "MEMORY_CONSISTENCIES",
     "scope": "MEMORY_SCOPES",
     "vector": "VECTOR_ARITIES",
@@ -85,11 +88,14 @@ def _target_value(backend: BackendSpec, expression: str) -> str:
 def _conversion_declarations(backend: BackendSpec) -> str:
     """Emit semantic enum conversions; frontend and execution enums are distinct."""
     chunks: list[str] = []
+    source_backend = frontend_backend()
     for kind, domain_name in _DOMAINS.items():
         domain_id = getattr(
             ptx_frontend.code_gen.cpp_backend.CppDomain, domain_name
         )
-        domain = ptx_frontend.code_gen.cpp_backend.cpp_domain(domain_id)
+        domain = ptx_frontend.code_gen.cpp_backend.cpp_domain(
+            domain_id, backend=source_backend
+        )
         source_type = _source_type(domain.cpp_type)
         mapping = backend.modifier_kinds[kind]
         target_type = _qualified_type(backend, mapping.cpp_type)
@@ -123,8 +129,9 @@ def _modifier_bindings(
 ) -> tuple[str, tuple[str, ...]]:
     """Emit conversions for instance modifiers in target aggregate member order."""
     lines, names = [], []
+    source_backend = frontend_backend()
     for modifier in form.variant.modifiers:
-        if modifier.presence in {"absent", "fixed"}:
+        if modifier.presence.value in {"absent", "fixed"}:
             continue
         source = _field(form, modifier.name)
         if source.storage.name != "INSTANCE":
@@ -133,16 +140,21 @@ def _modifier_bindings(
             )
         name = f"bound_{modifier.name}"
         names.append(name)
-        if modifier.kind == "flag":
+        cpp_field = ptx_frontend.code_gen.cpp_backend.cpp_optional_value(
+            ptx_frontend.code_gen.cpp_backend.CppDomain.MODIFIER_FIELD_NAMES,
+            source.name,
+            backend=source_backend,
+        ) or source.name
+        if modifier.kind.value == "flag":
             lines.append(
                 f"{indent}const auto {name} = "
-                f"std::optional{{form.{source.name}.value}};"
+                f"std::optional{{form.{cpp_field}.value}};"
             )
         else:
             lines.append(
                 f"{indent}const auto {name} = "
-                f"detail::{_conversion_name(modifier.kind)}("
-                f"form.{source.name}.value);"
+                f"detail::{_conversion_name(modifier.kind.value)}("
+                f"form.{cpp_field}.value);"
             )
             lines.append(
                 f"{indent}if (!{name})\n"
@@ -168,7 +180,7 @@ def _operand_bindings(
             )
         name = f"bound_{operand.name}"
         names.append(name)
-        target = _qualified_type(backend, backend.operand_kinds[operand.kind].cpp_type)
+        target = _qualified_type(backend, backend.operand_kinds[operand.kind.value].cpp_type)
         lines.append(
             f"{indent}const auto {name} = detail::bind_operand<{target}>(\n"
             f"{indent}    {owner}.{source.name}.value, context);"
@@ -196,7 +208,7 @@ def _target_form(
     active = tuple(
         modifier
         for modifier in form.variant.modifiers
-        if modifier.presence not in {"absent", "fixed"}
+        if modifier.presence.value not in {"absent", "fixed"}
     )
     modifiers = "\n".join(
         f"  .{modifier.name} = std::move(*{name}),"

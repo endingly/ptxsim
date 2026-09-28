@@ -32,7 +32,7 @@ def _emit_operand(backend: BackendSpec, operand: OperandSpec, indent: str) -> st
     """Emit one fully bound operand declaration at the requested indentation."""
     return f"""\
 {indent}/** @brief Fully-bound `{operand.role}` operand. */
-{indent}{backend.operand_kinds[operand.kind].cpp_type} {operand.name};
+{indent}{backend.operand_kinds[operand.kind.value].cpp_type} {operand.name};
 """
 
 
@@ -54,8 +54,8 @@ def _emit_layout(backend: BackendSpec, layout: OperandLayoutSpec, indent: str) -
 
 def _emit_modifier(backend: BackendSpec, modifier: ModifierSpec) -> str:
     """Emit one non-absent modifier declaration for a projected form."""
-    kind_mapping = backend.modifier_kinds[modifier.kind]
-    if modifier.presence == "fixed":
+    kind_mapping = backend.modifier_kinds[modifier.kind.value]
+    if modifier.presence.value == "fixed":
         if modifier.value is None:
             raise GenerationError(
                 f"fixed modifier {modifier.name!r} has no semantic value"
@@ -78,7 +78,7 @@ def _emit_modifiers(backend: BackendSpec, form: ProjectedForm) -> str:
     return "".join(
         _emit_modifier(backend, modifier)
         for modifier in form.variant.modifiers
-        if modifier.presence != "absent"
+        if modifier.presence.value != "absent"
     )
 
 
@@ -86,7 +86,7 @@ def _modifier_value_expression(
     backend: BackendSpec, modifier: ModifierSpec, value: BackendValue
 ) -> str:
     """Return the C++ member value expression for one frontend semantic value."""
-    return backend.modifier_kinds[modifier.kind].cpp_value(value)
+    return backend.modifier_kinds[modifier.kind.value].cpp_value(value)
 
 
 def _emit_modifier_value(
@@ -116,14 +116,14 @@ def _emit_modifier_append(
     backend: BackendSpec, modifier: ModifierSpec
 ) -> str:
     """Emit one modifier suffix, suppressing its optional default value."""
-    if backend.modifier_kinds[modifier.kind].cpp_type == "bool":
+    if backend.modifier_kinds[modifier.kind.value].cpp_type == "bool":
         token = modifier.token or next(
             (value.token for value in modifier.values if value.value is True),
             None,
         )
         if token is None:
             token = f".{modifier.name}"
-        if modifier.presence == "fixed":
+        if modifier.presence.value == "fixed":
             return f'  output += "{token}";\n' if modifier.value else ""
         if modifier.default is not False:
             raise GenerationError(
@@ -131,7 +131,7 @@ def _emit_modifier_append(
             )
         return f'  if ({modifier.name})\n    output += "{token}";\n'
 
-    if modifier.presence == "fixed":
+    if modifier.presence.value == "fixed":
         if modifier.token:
             return f'  output += "{modifier.token}";\n'
         return _emit_modifier_value(backend, modifier, "  ") + "\n"
@@ -152,7 +152,7 @@ def _emit_modifier_appends(backend: BackendSpec, form: ProjectedForm) -> str:
     return "".join(
         _emit_modifier_append(backend, modifier)
         for modifier in form.variant.modifiers
-        if modifier.presence != "absent"
+        if modifier.presence.value != "absent"
     )
 
 
