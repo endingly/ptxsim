@@ -143,6 +143,7 @@ def _memory_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _Mem
     cache = source_fields.get("cache")
     mmio = source_fields.get("mmio")
     consistency = form.source.memory_consistency
+    vector_constraint = form.source.memory_vector
     if (semantics is None or scope is None or cache is None or consistency is None
             or consistency.semantics_field_id != semantics.name
             or consistency.scope_field_id != scope.name
@@ -150,10 +151,9 @@ def _memory_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _Mem
             or consistency.address_field_id != address.name
             or ("mmio" in modifiers and (mmio is None or consistency.mmio_field_id != mmio.name))
             or ("mmio" not in modifiers and consistency.mmio_field_id not in {None, ""})
-            or bool(form.source.memory_vector) != vector):
+            or (vector_constraint is not None) != vector):
         raise GenerationError(f"{instruction.opcode}/{form.variant.name}: memory constraint drift")
-    if vector:
-        vector_constraint = form.source.memory_vector
+    if vector_constraint is not None:
         if (vector_constraint.type_field_id != type_field.name
                 or vector_constraint.vector_field_id != data.name
                 or vector_constraint.address_field_id != address.name):

@@ -153,7 +153,7 @@ def _control_operation(instruction: ProjectedInstruction, opcode: str, *, contro
         binding = layout.bindings[0]
         if (field.operand_access is not ResolvedOperandAccess.CONTROL
                 or field.allowed_operand_shapes != (ResolvedOperandShape.BRANCH_TARGET,)
-                or operand.role.value != "label"
+                or operand.role is None or operand.role.value != "label"
                 or binding.type_expression.kind is not ResolvedOperandTypeExpressionKind.NONE):
             raise GenerationError(f"{opcode}/{form.variant.name}: branch target topology drift")
         target = field.name
@@ -173,7 +173,9 @@ def _bar_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _BarFor
         raise GenerationError(f"bar/{form.variant.name}: collective effects cannot carry unrelated constraints")
     ranges = {(item.operand_field_id, item.minimum, item.maximum)
               for item in form.source.immediate_ranges}
-    expected_ranges = set() if form.variant.name == "bar_warp_sync" else {("barrier", 0, 15)}
+    expected_ranges: set[tuple[str, int, int | None]] = (
+        set() if form.variant.name == "bar_warp_sync" else {("barrier", 0, 15)}
+    )
     if form.variant.name in {"bar_arrive", "bar_cta_arrive"}:
         expected_ranges.add(("thread_count", 1, None))
     multiple = form.source.immediate_multiple_of

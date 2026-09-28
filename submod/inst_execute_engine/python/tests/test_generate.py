@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
+from typing import Callable, cast
 import unittest
 
 from jinja2 import UndefinedError
@@ -16,6 +17,7 @@ from ptxsim_codegen.inst_execute_engine.setp_family import setp_operation
 from ptxsim_codegen.inst_execute_engine.bar_family import bar_operation, bra_operation, exit_operation
 from ptxsim_codegen.inst_execute_engine.mov_family import mov_operation
 from ptxsim_codegen.exec_ir.model import GenerationError
+from ptx_frontend.ir.resolved_ir import ResolvedOperandAccess
 
 
 class GenerateTests(unittest.TestCase):
@@ -355,7 +357,8 @@ class GenerateTests(unittest.TestCase):
         """The family template does not hard-code the operation-specific C++ names."""
         form = _value_alu_forms(self.add())[0]
         family = _TEMPLATES.get_template("families/value_alu.cpp.j2").module
-        source = family.adapter(form, "Dummy", "dummy")
+        adapter = cast(Callable[[object, str, str], str], getattr(family, "adapter"))
+        source = adapter(form, "Dummy", "dummy")
         self.assertIn("exec_ir::Dummy::FloatF32", source)
         self.assertIn("semantics::dummy", source)
 
@@ -443,7 +446,7 @@ class GenerateTests(unittest.TestCase):
         form = instruction.forms[0]
         layout = form.source.operand_layouts[0]
         changed_fields = (
-            replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ_WRITE),
+            replace(layout.fields[0], operand_access=ResolvedOperandAccess.READ_WRITE),
             *layout.fields[1:],
         )
         changed_layout = replace(layout, fields=changed_fields)
@@ -576,6 +579,9 @@ class GenerateTests(unittest.TestCase):
         load = self.ld()
         form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
         layout = form.source.operand_layouts[0]
+        memory_consistency = form.source.memory_consistency
+        if memory_consistency is None:
+            self.fail("generic scalar load form must define memory consistency")
         renamed = {layout.fields[0].name: "result", layout.fields[1].name: "location"}
         changed_layout = replace(
             layout,
@@ -589,7 +595,7 @@ class GenerateTests(unittest.TestCase):
                 form.source,
                 operand_layouts=(changed_layout,),
                 memory_consistency=replace(
-                    form.source.memory_consistency, address_field_id="location"
+                    memory_consistency, address_field_id="location"
                 ),
                 address_alignments=tuple(
                     replace(alignment, address_field_ids=("location",))
@@ -707,7 +713,7 @@ class GenerateTests(unittest.TestCase):
             form,
             source=replace(
                 form.source,
-                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ),)),),
+                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=ResolvedOperandAccess.READ),)),),
             ),
         )
         with self.assertRaises(GenerationError):

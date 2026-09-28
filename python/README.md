@@ -28,6 +28,18 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s python/tests -v
 ```
 
+For Pylance, select `.venv/bin/python` as the interpreter. The root
+`pyrightconfig.json` checks the Python source and tests with Pyright:
+
+```sh
+npm exec --yes --package=pyright -- pyright --pythonpath .venv/bin/python
+```
+
+The package links under `python/ptxsim_codegen/` and the `instructions` link
+under the execution-IR generator mirror the `setup.cfg` package mappings for
+source-tree analysis. Keep these links when checking out the repository; the
+wheel builds from the canonical module directories.
+
 Linux CI runs these suites serially in the dedicated `Python generators` job.
 The C++ compiler matrix keeps its Python environment for code generation but
 does not repeat the Python tests. The engine suite loads its projected fixture

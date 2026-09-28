@@ -72,16 +72,23 @@ def _setp_form(form: ProjectedForm) -> _SetpForm:
     expected_modifiers = {"comparison", "type"} | ({"boolean"} if boolean else set())
     if set(modifiers) != expected_modifiers:
         raise GenerationError(f"setp/{variant_id}: modifier inventory drift")
-    types = tuple(value.value for value in modifiers["type"].values)
-    if types != expected_types:
+    types: list[str] = []
+    for value in modifiers["type"].values:
+        if not isinstance(value.value, str):
+            raise GenerationError(f"setp/{variant_id}: integer type inventory drift")
+        types.append(value.value)
+    if tuple(types) != expected_types:
         raise GenerationError(f"setp/{variant_id}: integer type inventory drift")
-    comparisons = {value.value for value in modifiers["comparison"].values}
-    if not comparisons or not comparisons <= _COMPARISONS:
+    comparison_values: list[str] = []
+    for value in modifiers["comparison"].values:
+        if not isinstance(value.value, str):
+            raise GenerationError(f"setp/{variant_id}: unsupported comparison values")
+        comparison_values.append(value.value)
+    if not comparison_values or not set(comparison_values) <= _COMPARISONS:
         raise GenerationError(f"setp/{variant_id}: unsupported comparison values")
     if boolean and {value.value for value in modifiers["boolean"].values} != {"and", "or", "xor"}:
         raise GenerationError(f"setp/{variant_id}: unsupported boolean values")
-    return _SetpForm(form.source.cpp_name, boolean, types,
-                     tuple(value.value for value in modifiers["comparison"].values))
+    return _SetpForm(form.source.cpp_name, boolean, tuple(types), tuple(comparison_values))
 
 
 def setp_operation(instruction: ProjectedInstruction) -> SetpOperation:

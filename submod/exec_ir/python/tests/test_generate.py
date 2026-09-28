@@ -50,8 +50,9 @@ class GenerateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             backend = root / "invalid.yaml"
+            original, invalid = replacement.split("\n", 1)
             backend.write_text(
-                self.backend_text().replace(*replacement.split("\n", 1)),
+                self.backend_text().replace(original, invalid),
                 encoding="utf-8",
             )
             return self.generate(root / "unused.hpp", backend=backend)

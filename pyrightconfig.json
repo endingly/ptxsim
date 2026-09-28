@@ -1,0 +1,14 @@
+{
+  "include": ["python", "submod"],
+  "exclude": [
+    "build",
+    "out",
+    ".venv",
+    "python/ptxsim_codegen/exec_ir",
+    "python/ptxsim_codegen/exec_ir_lowering",
+    "python/ptxsim_codegen/inst_execute_engine"
+  ],
+  "extraPaths": ["python"],
+  "pythonVersion": "3.14",
+  "typeCheckingMode": "basic"
+}
