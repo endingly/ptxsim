@@ -21,10 +21,14 @@ enum class DataType : std::uint8_t {
   b32,
   b64,
   b128,
+  u2,
+  u4,
   u8,
   u16,
   u32,
   u64,
+  s2,
+  s4,
   s8,
   s16,
   s32,
@@ -39,12 +43,28 @@ enum class DataType : std::uint8_t {
   u8x4,
   u16x2,
   s8x4,
-  s16x2
+  s16x2,
+  tf32,
+  e4m3x2,
+  e5m2x2,
+  e2m1x2,
+  e2m3x2,
+  e3m2x2,
+  e4m3x4,
+  e5m2x4,
+  e2m1x4,
+  e2m3x4,
+  e3m2x4,
+  ue8m0x2,
+  s2f6x2
 };
 /** @brief Rounding direction selected by a floating-point form. */
-enum class RoundingMode : std::uint8_t { rn, rz, rm, rp, rzi };
+enum class RoundingMode : std::uint8_t { rn, rz, rm, rp, rzi, rna, rni, rmi, rpi, rs };
 /** @brief Comparison relation selected by compare forms. */
-enum class ComparisonOperator : std::uint8_t { eq, lt, ge };
+enum class ComparisonOperator : std::uint8_t {
+  eq, lt, ge, ne, le, gt, lo, ls, hi, hs, equ, neu, ltu, leu, gtu, geu,
+  num, nan
+};
 /** @brief Boolean relation selected by predicate-combining forms. */
 enum class BooleanOperator : std::uint8_t { and_, or_, xor_ };
 /** @brief Cache policy retained from a memory instruction. */
@@ -63,7 +83,15 @@ enum class EvictionPriority : std::uint8_t {
   evict_first,
   evict_last,
   evict_normal,
+  evict_unchanged,
+  invalid,
   no_allocate
+};
+/** @brief Cache-line prefetch hint retained from a memory instruction. */
+enum class PrefetchSize : std::uint8_t { none, l2_64b, l2_128b, l2_256b };
+/** @brief Floating-point category selected by a test instruction. */
+enum class TestProperty : std::uint8_t {
+  finite, infinite, number, notanumber, normal, subnormal
 };
 /** @brief Memory consistency qualifier retained from a memory instruction. */
 enum class MemoryConsistency : std::uint8_t {
@@ -88,7 +116,9 @@ enum class AddressSpace : std::uint8_t {
   param,
   param_entry,
   param_func,
-  shared
+  shared,
+  shared_cta,
+  shared_cluster
 };
 /** @brief Mbarrier phase qualifier. */
 enum class MbarrierPhaseType : std::uint8_t { conditional, primary };
@@ -119,6 +149,10 @@ enum class ProxyKindPair : std::uint8_t { async_generic, tensormap_generic };
 /** @brief Format an eviction policy using its stable PTX spelling. */
 [[nodiscard]] auto to_string(EvictionPriority value) noexcept
     -> std::string_view;
+/** @brief Format a cache-line prefetch hint using its PTX spelling. */
+[[nodiscard]] auto to_string(PrefetchSize value) noexcept -> std::string_view;
+/** @brief Format a floating-point test category using its PTX spelling. */
+[[nodiscard]] auto to_string(TestProperty value) noexcept -> std::string_view;
 /** @brief Format a memory-consistency qualifier using its stable PTX spelling. */
 [[nodiscard]] auto to_string(MemoryConsistency value) noexcept
     -> std::string_view;
@@ -191,6 +225,26 @@ struct RegisterOrSink {
   constexpr bool operator==(const RegisterOrSink&) const noexcept = default;
 };
 
+/** @brief A predicate destination that can discard its result. */
+struct PredicateOrSink {
+  /** @brief Bound destination, absent only for the discard sink. */
+  std::optional<Predicate> predicate;
+  /** @brief Compare the bound predicate and sink selection. */
+  constexpr bool operator==(const PredicateOrSink&) const noexcept = default;
+};
+
+/** @brief Two predicate destinations with independent discard sinks. */
+struct PredicatePairOrSink {
+  /** @brief First destination, absent for a discard sink. */
+  std::optional<Predicate> first;
+  /** @brief Complement destination, absent for a discard sink. */
+  std::optional<Predicate> second;
+  /** @brief Compare both bound destinations and sink selections. */
+  constexpr bool operator==(const PredicatePairOrSink&) const noexcept = default;
+};
+/** @brief One or two predicate comparison destinations with sink positions. */
+using SetpDestination = std::variant<PredicateOrSink, PredicatePairOrSink>;
+
 /** @brief Stable reference to one special register and optional vector component. */
 struct SpecialRegisterRef {
   /** @brief Stable special-register identity owned by the program representation. */
@@ -200,8 +254,17 @@ struct SpecialRegisterRef {
   /** @brief Compare special-register identity and component. */
   constexpr bool operator==(const SpecialRegisterRef&) const noexcept = default;
 };
-/** @brief A predicate source that can be a predicate register or special register. */
-using PredicateSource = std::variant<Predicate, SpecialRegisterRef>;
+/** @brief A special predicate register read with source-level inversion. */
+struct SpecialPredicateSource {
+  /** @brief Stable special-register identity and component. */
+  SpecialRegisterRef register_ref;
+  /** @brief Whether the source value is inverted before use. */
+  bool negated = false;
+  /** @brief Compare special-register identity and inversion. */
+  constexpr bool operator==(const SpecialPredicateSource&) const noexcept = default;
+};
+/** @brief A predicate source held as a register, special register, or constant. */
+using PredicateSource = std::variant<Predicate, SpecialPredicateSource, bool>;
 /** @brief A declared vector-register base. */
 struct VectorRegisterRef {
   /** @brief First of the contiguous component slots of a declared vector. */
@@ -325,6 +388,12 @@ struct MbarrierStateToken {
 [[nodiscard]] auto to_string(const Predicate& value) -> std::string;
 /** @brief Format a register-or-sink destination without source spelling. */
 [[nodiscard]] auto to_string(const RegisterOrSink& value) -> std::string;
+/** @brief Format a predicate destination or discard sink. */
+[[nodiscard]] auto to_string(const PredicateOrSink& value) -> std::string;
+/** @brief Format two predicate destinations, including discard sinks. */
+[[nodiscard]] auto to_string(const PredicatePairOrSink& value) -> std::string;
+/** @brief Format a predicate source with its inversion or constant value. */
+[[nodiscard]] auto to_string(const PredicateSource& value) -> std::string;
 /** @brief Format a special-register reference and its optional component. */
 [[nodiscard]] auto to_string(const SpecialRegisterRef& value) -> std::string;
 /** @brief Format a vector-register base by its bound register identity. */

@@ -19,7 +19,7 @@ from ptxsim_codegen.exec_ir.cpp_names import instruction_cpp_name
 
 _SCALAR_TYPES = (
     "b16", "u16", "s16", "b32", "u32", "s32", "f32", "b64", "u64",
-    "s64", "b128", "f64",
+    "s64", "f64",
 )
 
 
@@ -79,7 +79,7 @@ def _require_consumed_modifiers(form: ProjectedForm, consumed: set[str]) -> None
     unsupported = {
         modifier.name
         for modifier in form.variant.modifiers
-        if modifier.presence != "absent" and modifier.name not in source_names
+        if modifier.presence.value != "absent" and modifier.name not in source_names
     }
     if unsupported:
         raise GenerationError(
@@ -97,7 +97,7 @@ def _modifier_values(form: ProjectedForm, field: str) -> tuple[str, ...]:
             raise GenerationError(f"mov/{form.variant.name}/{field}: non-string static selector")
         return (source.constant_value,)
     modifier = next((item for item in form.variant.modifiers if item.name == source.source_name), None)
-    if modifier is None or modifier.presence == "absent":
+    if modifier is None or modifier.presence.value == "absent":
         raise GenerationError(f"mov/{form.variant.name}/{field}: absent selector")
     return tuple(str(item.value) for item in modifier.values)
 
@@ -179,6 +179,20 @@ def _scalar_form(form: ProjectedForm) -> MovForm:
                    layouts, types, ())
 
 
+def _aggregate_form(form: ProjectedForm) -> MovForm:
+    """Derive the fixed b128 pack and unpack adapter."""
+    layouts = tuple(_movement_layout(form, layout) for layout in form.source.operand_layouts)
+    if len(layouts) != 2 or {layout.kind for layout in layouts} != {"pack", "unpack"}:
+        raise GenerationError(f"mov/{form.variant.name}: incomplete b128 layouts")
+    if {_type_field(form, layout) for layout in form.source.operand_layouts} != {"type"}:
+        raise GenerationError(f"mov/{form.variant.name}: b128 layouts need one type field")
+    _require_consumed_modifiers(form, {"type"})
+    if _modifier_values(form, "type") != ("b128",):
+        raise GenerationError(f"mov/{form.variant.name}: unsupported aggregate type")
+    return MovForm(form.source.cpp_name, "aggregate", "type", None, None, None,
+                   layouts, ("b128",), ())
+
+
 def _vector_form(form: ProjectedForm) -> MovForm:
     """Derive the topology vector movement form from its projected operands."""
     if len(form.source.operand_layouts) != 1:
@@ -229,7 +243,7 @@ def _predicate_form(form: ProjectedForm) -> MovForm:
     if (destination.operand_access is not ResolvedOperandAccess.WRITE or
             source.operand_access is not ResolvedOperandAccess.READ or
             destination.allowed_operand_shapes != (ResolvedOperandShape.PREDICATE,) or
-            set(source.allowed_operand_shapes) != {ResolvedOperandShape.PREDICATE, ResolvedOperandShape.SPECIAL_REGISTER}):
+            set(source.allowed_operand_shapes) != {ResolvedOperandShape.PREDICATE, ResolvedOperandShape.SPECIAL_REGISTER, ResolvedOperandShape.IMMEDIATE}):
         raise GenerationError(f"mov/{form.variant.name}: unrecognized predicate topology")
     bindings = {binding.target_field_id: binding for binding in layout.bindings}
     if set(bindings) != {destination.name, source.name}:
@@ -257,6 +271,8 @@ def mov_operation(instruction: ProjectedInstruction) -> MovOperation:
         layouts = form.source.operand_layouts
         if len(layouts) == 3:
             forms.append(_scalar_form(form))
+        elif len(layouts) == 2:
+            forms.append(_aggregate_form(form))
         elif len(layouts) == 1:
             fields = layouts[0].fields
             if fields and fields[0].allowed_operand_shapes == (ResolvedOperandShape.VECTOR,):
@@ -265,6 +281,6 @@ def mov_operation(instruction: ProjectedInstruction) -> MovOperation:
                 forms.append(_predicate_form(form))
         else:
             raise GenerationError(f"mov/{form.variant.name}: unrecognized form topology")
-    if len(forms) != 3 or {form.kind for form in forms} != {"scalar", "vector", "predicate"}:
+    if len(forms) != 4 or {form.kind for form in forms} != {"scalar", "aggregate", "vector", "predicate"}:
         raise GenerationError("mov: incomplete projected movement family")
     return MovOperation("mov", instruction_cpp_name("mov"), tuple(forms))

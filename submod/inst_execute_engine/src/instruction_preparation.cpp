@@ -23,6 +23,8 @@ auto select_move(const exec_ir::Instruction& operation)
 /** @brief Select every generated and structurally valid projected Add form. */
 auto select_add(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::supports_add(operation))
+    return unsupported_instruction();
   if (!generated::validate_add(operation)) {
     return std::unexpected(StepErrorCode::invalid_instruction);
   }
@@ -32,6 +34,8 @@ auto select_add(const exec_ir::Instruction& operation)
 /** @brief Select every generated and structurally valid projected Sub form. */
 auto select_sub(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::supports_sub(operation))
+    return unsupported_instruction();
   if (!generated::validate_sub(operation)) {
     return std::unexpected(StepErrorCode::invalid_instruction);
   }
@@ -41,6 +45,8 @@ auto select_sub(const exec_ir::Instruction& operation)
 /** @brief Select every generated and structurally valid projected Mul form. */
 auto select_mul(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::supports_mul(operation))
+    return unsupported_instruction();
   if (!generated::validate_mul(operation)) {
     return std::unexpected(StepErrorCode::invalid_instruction);
   }
@@ -50,6 +56,8 @@ auto select_mul(const exec_ir::Instruction& operation)
 /** @brief Select every generated and structurally valid projected FMA form. */
 auto select_fma(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::supports_fma(operation))
+    return unsupported_instruction();
   if (!generated::validate_fma(operation)) {
     return std::unexpected(StepErrorCode::invalid_instruction);
   }
@@ -59,6 +67,8 @@ auto select_fma(const exec_ir::Instruction& operation)
 /** @brief Select every generated and structurally valid projected Setp form. */
 auto select_setp(const exec_ir::Instruction& operation)
     -> std::expected<SelectedPreparer, StepErrorCode> {
+  if (!generated::supports_setp(operation))
+    return unsupported_instruction();
   if (!generated::validate_setp(operation)) {
     return std::unexpected(StepErrorCode::invalid_instruction);
   }

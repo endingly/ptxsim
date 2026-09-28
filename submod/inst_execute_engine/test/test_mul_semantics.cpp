@@ -14,9 +14,10 @@ namespace {
 
 using common::RegisterSlot;
 
-/** @brief Build a dummy fixed-rounding f32 form whose operand fields are unused. */
+/** @brief Build a round-to-nearest f32 form whose operand fields are unused. */
 auto f32_form() -> exec_ir::Mul::RnF32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+  return {exec_ir::RoundingMode::rn, false,           false,
+          RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
 }
 
 /** @brief Build a dummy low unsigned form whose operand fields are unused. */

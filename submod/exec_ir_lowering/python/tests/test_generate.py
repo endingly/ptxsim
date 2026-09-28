@@ -43,11 +43,11 @@ class GenerateTests(unittest.TestCase):
             self.assertEqual(first_source.read_bytes(), second_source.read_bytes())
             header = first_header.read_text()
             source = first_source.read_text()
-            self.assertEqual(header.count("[[nodiscard]] auto lower_"), 70)
+            self.assertEqual(header.count("[[nodiscard]] auto lower_"), 93)
             for opcode in ("mov", "add", "sub", "bra", "ld", "st", "bar", "exit"):
                 self.assertIn(f"auto lower_{opcode}(", header)
                 self.assertIn(f"return lower_{opcode}(", source)
-            self.assertEqual(source.count("auto lower_"), 70)
+            self.assertEqual(source.count("auto lower_"), 93)
             self.assertIn(
                 ".operands = ptxsim::exec_ir::Mov::Scalar::Operands{", source
             )

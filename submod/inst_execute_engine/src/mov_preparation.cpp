@@ -547,8 +547,11 @@ auto prepare_predicate_move(LaneResourceResolver& resolver,
     if (!decoded)
       return std::unexpected(LaneFaultCause{decoded.error()});
     value = predicate->negated ? !*decoded : *decoded;
+  } else if (const auto* constant = std::get_if<bool>(&source)) {
+    value = *constant;
   } else {
-    return unsupported_special(std::get<exec_ir::SpecialRegisterRef>(source));
+    return unsupported_special(
+        std::get<exec_ir::SpecialPredicateSource>(source).register_ref);
   }
   const auto valid = valid_destination(registers->get(), destination.source,
                                        common::RawWidth::pred);

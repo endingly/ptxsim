@@ -48,6 +48,18 @@ auto to_string(CacheOperator value) noexcept -> std::string_view {
 auto to_string(EvictionPriority value) noexcept -> std::string_view {
   return enum_text(value);
 }
+auto to_string(PrefetchSize value) noexcept -> std::string_view {
+  switch (value) {
+    case PrefetchSize::none: return "none";
+    case PrefetchSize::l2_64b: return "L2::64B";
+    case PrefetchSize::l2_128b: return "L2::128B";
+    case PrefetchSize::l2_256b: return "L2::256B";
+  }
+  return "<invalid>";
+}
+auto to_string(TestProperty value) noexcept -> std::string_view {
+  return enum_text(value);
+}
 auto to_string(MemoryConsistency value) noexcept -> std::string_view {
   return without_trailing_underscore(enum_text(value));
 }
@@ -65,6 +77,10 @@ auto to_string(AddressSpace value) noexcept -> std::string_view {
       return "param::entry";
     case AddressSpace::param_func:
       return "param::func";
+    case AddressSpace::shared_cta:
+      return "shared::cta";
+    case AddressSpace::shared_cluster:
+      return "shared::cluster";
     default:
       return enum_text(value);
   }
@@ -116,6 +132,26 @@ auto to_string(const Predicate& value) -> std::string {
 }
 auto to_string(const RegisterOrSink& value) -> std::string {
   return value.register_slot ? common::to_string(*value.register_slot) : "_";
+}
+auto to_string(const PredicateOrSink& value) -> std::string {
+  return value.predicate ? to_string(*value.predicate) : "_";
+}
+auto to_string(const PredicatePairOrSink& value) -> std::string {
+  return fmt::format("{{{}, {}}}",
+                     value.first ? to_string(*value.first) : "_",
+                     value.second ? to_string(*value.second) : "_");
+}
+auto to_string(const PredicateSource& value) -> std::string {
+  return std::visit([](const auto& item) -> std::string {
+    using Item = std::remove_cvref_t<decltype(item)>;
+    if constexpr (std::same_as<Item, Predicate>)
+      return to_string(item);
+    else if constexpr (std::same_as<Item, SpecialPredicateSource>)
+      return fmt::format("{}{}", item.negated ? "!" : "",
+                         to_string(item.register_ref));
+    else
+      return item ? "true" : "false";
+  }, value);
 }
 auto to_string(const SpecialRegisterRef& value) -> std::string {
   if (!value.component)

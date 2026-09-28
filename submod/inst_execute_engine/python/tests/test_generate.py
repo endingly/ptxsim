@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
+from typing import Callable, cast
 import unittest
 
 from jinja2 import UndefinedError
@@ -16,6 +17,7 @@ from ptxsim_codegen.inst_execute_engine.setp_family import setp_operation
 from ptxsim_codegen.inst_execute_engine.bar_family import bar_operation, bra_operation, exit_operation
 from ptxsim_codegen.inst_execute_engine.mov_family import mov_operation
 from ptxsim_codegen.exec_ir.model import GenerationError
+from ptx_frontend.ir.resolved_ir import ResolvedOperandAccess
 
 
 class GenerateTests(unittest.TestCase):
@@ -110,6 +112,16 @@ class GenerateTests(unittest.TestCase):
     def render_instruction(self, instruction):
         """Render one modified enabled instruction with every other enabled binding."""
         enabled = self.all_operations()
+        if instruction.opcode in {"add", "sub", "mul", "fma"}:
+            original = next(item for item in enabled if item.opcode == instruction.opcode)
+            replacements = {}
+            for form in instruction.forms:
+                replacements.setdefault(form.variant.name, form)
+            instruction = replace(
+                original,
+                forms=tuple(replacements.get(form.variant.name, form)
+                            for form in original.forms),
+            )
         return artifacts(
             tuple(
                 instruction if candidate.opcode == instruction.opcode else candidate
@@ -126,18 +138,20 @@ class GenerateTests(unittest.TestCase):
             self.assertIn(f'#include "semantics/{instruction.opcode}_semantics.hpp"', source)
         expected_cases = sum(
             len(modifier.values)
-            for instruction in instructions
-            for form in instruction.forms
-            for modifier in form.variant.modifiers
+            for instruction in instructions[:4]
+            for form in _value_alu_forms(instruction)
+            for modifier in next(projected_form for projected_form in instruction.forms
+                                 if projected_form.source.cpp_name == form.cpp_name).variant.modifiers
             if modifier.name in {"type", "input_type"}
-            and modifier.presence != "fixed"
+            and modifier.presence.value != "fixed"
         )
         self.assertEqual(source.count("case exec_ir::DataType::"), expected_cases)
         self.assertEqual(
             source.count("return prepare_add_") + source.count("return prepare_sub_")
             + source.count("return prepare_mul_") + source.count("return prepare_fma_")
             + source.count("return prepare_setp_"),
-            sum(len(instruction.forms) for instruction in instructions),
+            sum(len(_value_alu_forms(instruction)) for instruction in instructions[:4])
+            + len(setp_operation(instructions[4]).forms),
         )
         for path in ("rn_f32", "lo_u32", "hi_u32", "wide_u32", "wide_s32"):
             self.assertIn(f"auto prepare_mul_{path}", source)
@@ -147,11 +161,12 @@ class GenerateTests(unittest.TestCase):
         """MOV topology is derived from layouts, including b128-only aggregate paths."""
         family = mov_operation(self.mov())
         self.assertEqual(tuple(form.kind for form in family.forms),
-                         ("scalar", "vector", "predicate"))
+                         ("scalar", "aggregate", "vector", "predicate"))
         scalar = family.forms[0]
         self.assertEqual(tuple(layout.kind for layout in scalar.layouts),
                          ("scalar", "pack", "unpack"))
-        self.assertIn("b128", scalar.type_values)
+        self.assertNotIn("b128", scalar.type_values)
+        self.assertEqual(family.forms[1].type_values, ("b128",))
         _, source = self.render_instruction(self.mov())
         self.assertIn("prepare_scalar_move(resolver, form.type", source)
         self.assertIn("prepare_pack_move(resolver, form.type", source)
@@ -293,20 +308,20 @@ class GenerateTests(unittest.TestCase):
             len(modifier.values)
             for form in fma.forms
             for modifier in form.variant.modifiers
-            if modifier.presence == "required" and modifier.kind == "type"
+            if modifier.presence.value == "required" and modifier.kind.value == "type"
         )
         optional_flag_count = sum(
             1
             for form in fma.forms
             for modifier in form.variant.modifiers
-            if modifier.presence == "optional" and modifier.kind == "flag"
+            if modifier.presence.value == "optional" and modifier.kind.value == "flag"
         )
         fixed_or_required_cardinality = sum(
             __import__("math").prod(
-                len(modifier.values) if modifier.presence == "required" else 2
+                len(modifier.values) if modifier.presence.value == "required" else 2
                 for modifier in form.variant.modifiers
-                if modifier.presence in {"required", "optional"}
-                and (modifier.presence == "required" or modifier.kind == "flag")
+                if modifier.presence.value in {"required", "optional"}
+                and (modifier.presence.value == "required" or modifier.kind.value == "flag")
             )
             for form in fma.forms
         )
@@ -342,7 +357,8 @@ class GenerateTests(unittest.TestCase):
         """The family template does not hard-code the operation-specific C++ names."""
         form = _value_alu_forms(self.add())[0]
         family = _TEMPLATES.get_template("families/value_alu.cpp.j2").module
-        source = family.adapter(form, "Dummy", "dummy")
+        adapter = cast(Callable[[object, str, str], str], getattr(family, "adapter"))
+        source = adapter(form, "Dummy", "dummy")
         self.assertIn("exec_ir::Dummy::FloatF32", source)
         self.assertIn("semantics::dummy", source)
 
@@ -430,7 +446,7 @@ class GenerateTests(unittest.TestCase):
         form = instruction.forms[0]
         layout = form.source.operand_layouts[0]
         changed_fields = (
-            replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ_WRITE),
+            replace(layout.fields[0], operand_access=ResolvedOperandAccess.READ_WRITE),
             *layout.fields[1:],
         )
         changed_layout = replace(layout, fields=changed_fields)
@@ -468,14 +484,13 @@ class GenerateTests(unittest.TestCase):
     def test_setp_derives_every_projected_form_and_predicate_topology(self) -> None:
         """The predicate family derives pair and combine handling from operand projection."""
         family = setp_operation(self.setp())
-        self.assertEqual(len(family.forms), 5)
-        pair = next(form for form in family.forms if form.pair_destination)
-        self.assertEqual(pair.destination.name, "dst")
-        self.assertFalse(pair.destination.allows_negation)
-        unsigned_combine = next(form for form in family.forms if form.cpp_name == "LtAndU32")
-        signed_pair = next(form for form in family.forms if form.cpp_name == "LtAndS32Pair")
-        self.assertTrue(unsigned_combine.combine.allows_negation)
-        self.assertFalse(signed_pair.combine.allows_negation)
+        self.assertEqual(len(family.forms), 4)
+        self.assertEqual(tuple(form.cpp_name for form in family.forms),
+                         ("Signed", "SignedBoolean", "Unsigned", "UnsignedBoolean"))
+        self.assertEqual(next(form for form in family.forms if form.cpp_name == "Signed").type_values,
+                         ("s16", "s32", "s64"))
+        self.assertTrue(next(form for form in family.forms
+                             if form.cpp_name == "UnsignedBoolean").boolean)
         _, source = artifacts(
             self.all_operations(), Path("setp.gen.hpp")
         )
@@ -484,18 +499,23 @@ class GenerateTests(unittest.TestCase):
     def test_setp_rejects_predicate_shape_drift(self) -> None:
         """A predicate-pair field cannot be silently treated as one destination."""
         instruction = self.setp()
-        form = next(form for form in instruction.forms if form.source.cpp_name == "EqU32Pair")
-        layout = form.source.operand_layouts[0]
+        form = next(form for form in instruction.forms if form.source.cpp_name == "Signed")
+        layout = form.source.operand_layouts[1]
         changed_field = replace(
             layout.fields[0],
             allowed_operand_shapes=(type(layout.fields[0].allowed_operand_shapes[0]).PREDICATE,),
         )
         changed_form = replace(
             form,
-            source=replace(form.source, operand_layouts=(replace(layout, fields=(changed_field, *layout.fields[1:])),)),
+            source=replace(form.source, operand_layouts=(
+                form.source.operand_layouts[0],
+                replace(layout, fields=(changed_field, *layout.fields[1:])),
+            )),
         )
         with self.assertRaises(GenerationError):
-            setp_operation(replace(instruction, forms=(changed_form, *instruction.forms[1:])))
+            setp_operation(replace(instruction, forms=tuple(
+                changed_form if item.variant.name == form.variant.name else item
+                for item in instruction.forms)))
 
     def test_derives_sub_mixed_operand_names_from_its_layout(self) -> None:
         """Sub mixed forms retain their distinct source and subtrahend field names."""
@@ -559,6 +579,9 @@ class GenerateTests(unittest.TestCase):
         load = self.ld()
         form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
         layout = form.source.operand_layouts[0]
+        memory_consistency = form.source.memory_consistency
+        if memory_consistency is None:
+            self.fail("generic scalar load form must define memory consistency")
         renamed = {layout.fields[0].name: "result", layout.fields[1].name: "location"}
         changed_layout = replace(
             layout,
@@ -572,7 +595,7 @@ class GenerateTests(unittest.TestCase):
                 form.source,
                 operand_layouts=(changed_layout,),
                 memory_consistency=replace(
-                    form.source.memory_consistency, address_field_id="location"
+                    memory_consistency, address_field_id="location"
                 ),
                 address_alignments=tuple(
                     replace(alignment, address_field_ids=("location",))
@@ -690,7 +713,7 @@ class GenerateTests(unittest.TestCase):
             form,
             source=replace(
                 form.source,
-                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ),)),),
+                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=ResolvedOperandAccess.READ),)),),
             ),
         )
         with self.assertRaises(GenerationError):

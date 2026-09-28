@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-from importlib.resources import as_file
 from pathlib import Path
+from functools import cache
 
 import ptx_frontend.code_gen.cpp_backend
-import ptx_frontend.code_gen.resources
 import ptx_frontend.ir.resolved_ir
-from ptx_frontend.spec import (
-    PtxSpecDatabase,
-    load_packaged_spec_database,
-    load_spec_database,
-)
-from ptx_frontend.spec.model import ModifierSpec
+from ptx_frontend.code_gen.model import CodegenUnit
+from ptx_frontend.spec.database import CodegenDatabase, load_codegen_database
+from ptx_frontend.spec.model import ModifierKind, ModifierPresence, ModifierSpec
+from ptx_frontend.spec.resources import packaged_backend_spec, packaged_spec_dir
 
 from .model import (
     BackendSpec,
@@ -24,20 +21,23 @@ from .model import (
 )
 
 
-def database(spec_dir: Path | None = None) -> PtxSpecDatabase:
+@cache
+def frontend_backend() -> CodegenUnit:
+    """Load the C++ mapping bundled with the installed frontend package."""
+    return ptx_frontend.code_gen.cpp_backend.load_cpp_backend(
+        packaged_backend_spec()
+    )
+
+
+def database(spec_dir: Path | None = None) -> CodegenDatabase:
     """Load normalized PTX facts from an explicit or packaged specification."""
-    resource = ptx_frontend.code_gen.resources.packaged_cpp_backend()
-    with as_file(resource) as backend_path:
-        ptx_frontend.code_gen.cpp_backend.configure_cpp_backend(backend_path)
-        # Cache the packaged resource before a zip-backed temporary path expires.
-        ptx_frontend.code_gen.cpp_backend.get_cpp_backend()
-        if spec_dir is not None:
-            return load_spec_database(spec_dir=spec_dir)
-        return load_packaged_spec_database()
+    return load_codegen_database(
+        spec_dir=spec_dir if spec_dir is not None else packaged_spec_dir()
+    )
 
 
 def project_database(
-    database: PtxSpecDatabase,
+    database: CodegenDatabase,
     backend: BackendSpec,
 ) -> tuple[ProjectedInstruction, ...]:
     """Validate C++ leaves and return the complete frontend topology."""
@@ -45,14 +45,14 @@ def project_database(
         raise GenerationError("frontend spec schema mismatch")
 
     modifier_kinds = {
-        modifier.kind
+        modifier.kind.value
         for instruction in database.instructions
         for variant in instruction.variants
         for modifier in variant.modifiers
-        if modifier.presence != "absent"
+        if modifier.presence is not ModifierPresence.ABSENT
     }
     operand_kinds = {
-        operand.kind
+        operand.kind.value
         for instruction in database.instructions
         for variant in instruction.variants
         for layout in variant.operand_layouts
@@ -65,9 +65,9 @@ def project_database(
     for instruction in database.instructions:
         for variant in instruction.variants:
             for modifier in variant.modifiers:
-                if modifier.presence == "absent":
+                if modifier.presence is ModifierPresence.ABSENT:
                     continue
-                mapping = backend.modifier_kinds[modifier.kind]
+                mapping = backend.modifier_kinds[modifier.kind.value]
                 if any(
                     value not in mapping.values
                     for value in _modifier_values(modifier)
@@ -119,7 +119,7 @@ def project_database(
 def _modifier_values(modifier: ModifierSpec) -> set[BackendValue]:
     """Return every normalized value a frontend modifier can carry."""
     values = {item.value for item in modifier.values}
-    if modifier.kind == "flag":
+    if modifier.kind is ModifierKind.FLAG:
         values.update({False, True})
     if modifier.value is not None:
         values.add(modifier.value)

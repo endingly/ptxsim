@@ -24,6 +24,9 @@ auto prepare_{{ mov_operation.opcode }}(LaneResourceResolver& resolver, const ar
 {% for operation in operations %}/** @brief Validate the projected {{ operation.cpp_name }} form before any lane resources are read. */
 auto validate_{{ operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
 
+/** @brief Report whether this {{ operation.cpp_name }} form has an execution adapter. */
+auto supports_{{ operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
 /**
  * @brief Prepare every projected {{ operation.cpp_name }} form without architectural mutation.
  * @pre @ref validate_{{ operation.opcode }} has accepted @p instruction and @p successor is set.
@@ -46,6 +49,9 @@ auto prepare_{{ operation.opcode }}(LaneResourceResolver& resolver, const arith:
 {% endfor %}
 /** @brief Validate the projected {{ setp_operation.cpp_name }} form before any lane resources are read. */
 auto validate_{{ setp_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
+
+/** @brief Report whether this {{ setp_operation.cpp_name }} form has integer execution semantics. */
+auto supports_{{ setp_operation.opcode }}(const exec_ir::Instruction& instruction) noexcept -> bool;
 
 /**
  * @brief Prepare every projected {{ setp_operation.cpp_name }} form without architectural mutation.

@@ -23,12 +23,23 @@ auto compare(const arith::context& context,
   switch (relation) {
     case exec_ir::ComparisonOperator::eq:
       return lhs == rhs;
+    case exec_ir::ComparisonOperator::ne:
+      return lhs != rhs;
     case exec_ir::ComparisonOperator::lt:
+    case exec_ir::ComparisonOperator::lo:
       return lhs < rhs;
+    case exec_ir::ComparisonOperator::le:
+    case exec_ir::ComparisonOperator::ls:
+      return lhs <= rhs;
+    case exec_ir::ComparisonOperator::gt:
+    case exec_ir::ComparisonOperator::hi:
+      return lhs > rhs;
     case exec_ir::ComparisonOperator::ge:
+    case exec_ir::ComparisonOperator::hs:
       return lhs >= rhs;
+    default:
+      return std::unexpected(arith::arithmetic_error::unsupported_operation);
   }
-  return std::unexpected(arith::arithmetic_error::unsupported_operation);
 }
 
 }  // namespace ptxsim::inst_execute_engine::detail::semantics

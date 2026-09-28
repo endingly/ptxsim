@@ -42,6 +42,7 @@ set(PTXSIM_LINK_CONTRACT_COMMON_SOURCES
     "${PTXSIM_GENERATED_SOURCE}"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/resource_resolution.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/mov_preparation.cpp"
+    "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/setp_preparation.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/memory_preparation.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/barrier_preparation.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/missing_add_semantics.cc")

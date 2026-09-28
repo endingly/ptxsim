@@ -102,9 +102,11 @@ auto fma_rn_f32(std::optional<exec_ir::Predicate> predicate,
 /** @brief Build the implemented scalar unsigned less-than predicate comparison. */
 auto setp_lt_u32(exec_ir::Predicate destination, exec_ir::ScalarOperand lhs,
                  exec_ir::ScalarOperand rhs) -> exec_ir::Instruction {
-  exec_ir::Setp::LtU32 form{exec_ir::ComparisonOperator::lt,
-                            std::move(destination), std::move(lhs),
-                            std::move(rhs)};
+  exec_ir::Setp::Unsigned form{
+      exec_ir::ComparisonOperator::lt, exec_ir::DataType::u32,
+      exec_ir::Setp::Unsigned::SingleOperands{
+          exec_ir::PredicateOrSink{std::move(destination)}, std::move(lhs),
+          std::move(rhs)}};
   return exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}};
 }
 /** @brief Build a generated scalar load using its selected address space. */
@@ -745,11 +747,12 @@ TEST_F(InstExecuteEngineTest,
   ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(7U)));
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
-  const exec_ir::Setp::GeS32 form{
-      exec_ir::ComparisonOperator::lt,
-      exec_ir::Predicate{RegisterSlot{0}},
-      RegisterSlot{1},
-      RawValue::b32(0U),
+  const exec_ir::Setp::Signed form{
+      static_cast<exec_ir::ComparisonOperator>(255),
+      exec_ir::DataType::s32,
+      exec_ir::Setp::Signed::SingleOperands{
+          exec_ir::PredicateOrSink{exec_ir::Predicate{RegisterSlot{0}}},
+          RegisterSlot{1}, RawValue::b32(0U)},
   };
   const exec_ir::Instruction instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
@@ -765,8 +768,7 @@ TEST_F(InstExecuteEngineTest,
   EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::b32(7U));
 }
 
-TEST_F(InstExecuteEngineTest,
-       SetpRejectsNegatedDestinationsAndForbiddenCombine) {
+TEST_F(InstExecuteEngineTest, SetpRejectsNegatedDestinationsAndInvalidCombine) {
   const auto frame =
       bind(LaneId{0}, {RawWidth::pred, RawWidth::pred, RawWidth::b32});
   auto registers = view(frame);
@@ -775,10 +777,11 @@ TEST_F(InstExecuteEngineTest,
   ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(1U)));
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
-  const exec_ir::Setp::LtU32 negated_destination{
-      exec_ir::ComparisonOperator::lt,
-      exec_ir::Predicate{RegisterSlot{0}, true}, RegisterSlot{2},
-      RawValue::b32(2U)};
+  const exec_ir::Setp::Unsigned negated_destination{
+      exec_ir::ComparisonOperator::lt, exec_ir::DataType::u32,
+      exec_ir::Setp::Unsigned::SingleOperands{
+          exec_ir::PredicateOrSink{exec_ir::Predicate{RegisterSlot{0}, true}},
+          RegisterSlot{2}, RawValue::b32(2U)}};
   const exec_ir::Instruction negated_instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{negated_destination}}};
   const auto negated_result = engine_.execute(
@@ -786,13 +789,13 @@ TEST_F(InstExecuteEngineTest,
   ASSERT_FALSE(negated_result);
   EXPECT_EQ(negated_result.error().code, StepErrorCode::invalid_instruction);
 
-  const exec_ir::Setp::LtAndU32 invalid_boolean{
+  const exec_ir::Setp::UnsignedBoolean invalid_boolean{
       exec_ir::ComparisonOperator::lt,
-      exec_ir::BooleanOperator::or_,
-      exec_ir::Predicate{RegisterSlot{0}},
-      RegisterSlot{2},
-      RawValue::b32(2U),
-      exec_ir::Predicate{RegisterSlot{1}}};
+      static_cast<exec_ir::BooleanOperator>(255), exec_ir::DataType::u32,
+      exec_ir::Setp::UnsignedBoolean::SingleOperands{
+          exec_ir::PredicateOrSink{exec_ir::Predicate{RegisterSlot{0}}},
+          RegisterSlot{2}, RawValue::b32(2U),
+          exec_ir::Predicate{RegisterSlot{1}}}};
   const exec_ir::Instruction boolean_instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{invalid_boolean}}};
   const auto boolean_result = engine_.execute(
@@ -800,23 +803,23 @@ TEST_F(InstExecuteEngineTest,
   ASSERT_FALSE(boolean_result);
   EXPECT_EQ(boolean_result.error().code, StepErrorCode::invalid_instruction);
 
-  const exec_ir::Setp::LtAndS32Pair negated_combine{
-      exec_ir::ComparisonOperator::lt,
-      exec_ir::BooleanOperator::and_,
-      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
-                             exec_ir::Predicate{RegisterSlot{1}}},
-      RegisterSlot{2},
-      RawValue::b32(2U),
-      exec_ir::Predicate{RegisterSlot{1}, true}};
+  const exec_ir::Setp::SignedBoolean negated_combine{
+      exec_ir::ComparisonOperator::lt, exec_ir::BooleanOperator::and_,
+      exec_ir::DataType::s32,
+      exec_ir::Setp::SignedBoolean::PairOperands{
+          exec_ir::PredicatePairOrSink{exec_ir::Predicate{RegisterSlot{0}},
+                                       exec_ir::Predicate{RegisterSlot{1}}},
+          RegisterSlot{2}, RawValue::b32(2U),
+          exec_ir::Predicate{RegisterSlot{1}, true}}};
   const exec_ir::Instruction combine_instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{negated_combine}}};
   const auto combine_result = engine_.execute(
       warp(), issue(initial_pc, {0}), combine_instruction, move_fallthrough);
-  ASSERT_FALSE(combine_result);
-  EXPECT_EQ(combine_result.error().code, StepErrorCode::invalid_instruction);
-  EXPECT_EQ(thread.pc(), initial_pc);
+  ASSERT_TRUE(combine_result);
+  EXPECT_TRUE(combine_result->faults.empty());
+  EXPECT_EQ(thread.pc(), move_fallthrough);
   EXPECT_EQ(*registers.read(RegisterSlot{0}), RawValue::pred(false));
-  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::pred(true));
+  EXPECT_EQ(*registers.read(RegisterSlot{1}), RawValue::pred(false));
 }
 
 TEST_F(InstExecuteEngineTest, PairSetpStagesBothDestinationsBeforeCommit) {
@@ -828,11 +831,12 @@ TEST_F(InstExecuteEngineTest, PairSetpStagesBothDestinationsBeforeCommit) {
   ASSERT_TRUE(registers.write(RegisterSlot{2}, RawValue::b32(4U)));
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
-  const exec_ir::Setp::EqU32Pair form{
-      exec_ir::ComparisonOperator::eq,
-      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
-                             exec_ir::Predicate{RegisterSlot{2}}},
-      RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::Setp::Unsigned form{
+      exec_ir::ComparisonOperator::eq, exec_ir::DataType::u32,
+      exec_ir::Setp::Unsigned::PairOperands{
+          exec_ir::PredicatePairOrSink{exec_ir::Predicate{RegisterSlot{0}},
+                                       exec_ir::Predicate{RegisterSlot{2}}},
+          RegisterSlot{1}, RegisterSlot{2}}};
   const exec_ir::Instruction instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
 
@@ -854,9 +858,11 @@ TEST_F(InstExecuteEngineTest, PredicatedOffSetpSkipsItsSources) {
   ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::pred(false)));
   auto& thread = warp().thread(LaneId{0});
   thread.set_pc(initial_pc);
-  const exec_ir::Setp::LtU32 form{exec_ir::ComparisonOperator::lt,
-                                  exec_ir::Predicate{RegisterSlot{0}},
-                                  RegisterSlot{2}, RawValue::b32(1U)};
+  const exec_ir::Setp::Unsigned form{
+      exec_ir::ComparisonOperator::lt, exec_ir::DataType::u32,
+      exec_ir::Setp::Unsigned::SingleOperands{
+          exec_ir::PredicateOrSink{exec_ir::Predicate{RegisterSlot{0}}},
+          RegisterSlot{2}, RawValue::b32(1U)}};
   const exec_ir::Instruction instruction{exec_ir::Setp{
       exec_ir::Predicate{RegisterSlot{1}}, exec_ir::Setp::Variant{form}}};
 
@@ -875,14 +881,14 @@ TEST_F(InstExecuteEngineTest, SetpCapturesPredicateSourceBeforeAliasedWrite) {
   ASSERT_TRUE(registers.write(RegisterSlot{0}, RawValue::pred(true)));
   ASSERT_TRUE(registers.write(RegisterSlot{1}, RawValue::b32(1U)));
   warp().thread(LaneId{0}).set_pc(initial_pc);
-  const exec_ir::Setp::LtAndS32Pair form{
-      exec_ir::ComparisonOperator::lt,
-      exec_ir::BooleanOperator::and_,
-      exec_ir::PredicatePair{exec_ir::Predicate{RegisterSlot{0}},
-                             exec_ir::Predicate{RegisterSlot{0}}},
-      RegisterSlot{1},
-      RawValue::b32(2U),
-      exec_ir::Predicate{RegisterSlot{0}}};
+  const exec_ir::Setp::SignedBoolean form{
+      exec_ir::ComparisonOperator::lt, exec_ir::BooleanOperator::and_,
+      exec_ir::DataType::s32,
+      exec_ir::Setp::SignedBoolean::PairOperands{
+          exec_ir::PredicatePairOrSink{exec_ir::Predicate{RegisterSlot{0}},
+                                       exec_ir::Predicate{RegisterSlot{0}}},
+          RegisterSlot{1}, RawValue::b32(2U),
+          exec_ir::Predicate{RegisterSlot{0}}}};
   const exec_ir::Instruction instruction{
       exec_ir::Setp{std::nullopt, exec_ir::Setp::Variant{form}}};
 

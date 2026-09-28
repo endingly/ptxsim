@@ -12,6 +12,7 @@ from ptx_frontend.ir.resolved_ir import (
     ResolvedOperandTypeExpressionKind,
     ResolvedRegisterWidthPolicy,
 )
+from ptx_frontend.ir.resolved_value_kind import ResolvedValueKind
 
 from ptxsim_codegen.exec_ir.cpp_names import instruction_cpp_name, layout_cpp_name
 from ptxsim_codegen.exec_ir.model import GenerationError, ProjectedForm, ProjectedInstruction
@@ -152,7 +153,7 @@ def _control_operation(instruction: ProjectedInstruction, opcode: str, *, contro
         binding = layout.bindings[0]
         if (field.operand_access is not ResolvedOperandAccess.CONTROL
                 or field.allowed_operand_shapes != (ResolvedOperandShape.BRANCH_TARGET,)
-                or operand.role != "label"
+                or operand.role is None or operand.role.value != "label"
                 or binding.type_expression.kind is not ResolvedOperandTypeExpressionKind.NONE):
             raise GenerationError(f"{opcode}/{form.variant.name}: branch target topology drift")
         target = field.name
@@ -168,22 +169,34 @@ def _bar_form(instruction: ProjectedInstruction, form: ProjectedForm) -> _BarFor
     if len(form.layouts) != len(form.source.operand_layouts) or not form.layouts:
         raise GenerationError(f"bar/{form.variant.name}: layout count drift")
     if (form.source.memory_consistency is not None or form.source.address_alignments
-            or form.source.memory_vector is not None or form.source.immediate_value is not None
-            or form.source.immediate_ranges or form.source.immediate_multiple_of is not None):
+            or form.source.memory_vector is not None or form.source.immediate_value is not None):
         raise GenerationError(f"bar/{form.variant.name}: collective effects cannot carry unrelated constraints")
+    ranges = {(item.operand_field_id, item.minimum, item.maximum)
+              for item in form.source.immediate_ranges}
+    expected_ranges: set[tuple[str, int, int | None]] = (
+        set() if form.variant.name == "bar_warp_sync" else {("barrier", 0, 15)}
+    )
+    if form.variant.name in {"bar_arrive", "bar_cta_arrive"}:
+        expected_ranges.add(("thread_count", 1, None))
+    multiple = form.source.immediate_multiple_of
+    if ranges != expected_ranges or (
+        (multiple is None) != (form.variant.name == "bar_warp_sync")
+    ) or (multiple is not None and
+          (multiple.operand_field_id != "thread_count" or multiple.divisor != 32)):
+        raise GenerationError(f"bar/{form.variant.name}: immediate constraint drift")
     modifiers = {modifier.name: modifier for modifier in form.variant.modifiers}
     if len(modifiers) != len(form.variant.modifiers):
         raise GenerationError(f"bar/{form.variant.name}: duplicate modifier name")
     active = {
         modifier.name: modifier
         for modifier in modifiers.values()
-        if modifier.presence != "absent"
+        if modifier.presence.value != "absent"
     }
     allowed = {"cta", "warp", "sync", "arrive", "red", "reduction", "result_type"}
     if set(modifiers) - allowed:
         raise GenerationError(f"bar/{form.variant.name}: unsupported modifier topology")
     for modifier in active.values():
-        if modifier.presence != "fixed":
+        if modifier.presence.value != "fixed":
             raise GenerationError(f"bar/{form.variant.name}: collective modifiers must be fixed")
     _validate_fixed_modifier_projection(form, active)
     warp = "warp" in active
@@ -243,7 +256,7 @@ def _bar_layout(instruction: ProjectedInstruction, form: ProjectedForm, layout, 
         matches = [
             (operand, fields[operand.name], bindings[fields[operand.name].name])
             for operand in source_layout.operands
-            if operand.role == role and fields[operand.name].operand_access is access
+            if operand.role.value == role and fields[operand.name].operand_access is access
         ]
         if len(matches) > 1:
             raise GenerationError(f"bar/{form.variant.name}/{layout.layout_id}: duplicate {role} role")
@@ -257,7 +270,7 @@ def _bar_layout(instruction: ProjectedInstruction, form: ProjectedForm, layout, 
         binding = bindings[field.name]
         if (field.operand_access is not ResolvedOperandAccess.READ
                 or not _is_u32_scalar(field, binding)
-                or operand.role not in {"src", "membermask"}):
+                or operand.role.value not in {"src", "membermask"}):
             raise GenerationError(f"bar/{form.variant.name}/{layout.layout_id}: warp member mask drift")
         return _BarLayout(layout_cpp_name(source_layout.name),
                           _BarOperand(field.name, field.allowed_operand_shapes == (ResolvedOperandShape.IMMEDIATE,)),
@@ -282,13 +295,13 @@ def _bar_layout(instruction: ProjectedInstruction, form: ProjectedForm, layout, 
              if field.operand_access is ResolvedOperandAccess.WRITE),
             None,
         )
-        if (predicate is None or predicate[0].kind != "pred_or_not"
+        if (predicate is None or predicate[0].kind.value != "pred_or_not"
                 or not _is_predicate(predicate[1], predicate[2])
                 or destination_match is None
                 or len(layout.fields) != 3 + (count is not None)):
             raise GenerationError(f"bar/{form.variant.name}/{layout.layout_id}: reduction operand drift")
         _, destination_field, destination_binding = destination_match
-        predicate_destination = (destination_match[0].kind == "pred"
+        predicate_destination = (destination_match[0].kind.value == "pred"
                                  and _is_predicate(destination_field, destination_binding))
         register_destination = _is_u32_register(destination_field, destination_binding)
         expected_predicate_destination = protocol in {"ReduceAnd", "ReduceOr"}
@@ -372,11 +385,11 @@ def _validate_branch_modifiers(form: ProjectedForm) -> None:
     if len(form.variant.modifiers) != 1:
         raise GenerationError(f"bra/{form.variant.name}: unsupported branch modifiers")
     modifier = form.variant.modifiers[0]
-    if (modifier.name != "uni" or modifier.kind != "flag"
-            or modifier.presence != "optional" or modifier.token != ".uni"):
+    if (modifier.name != "uni" or modifier.kind.value != "flag"
+            or modifier.presence.value != "optional" or modifier.token != ".uni"):
         raise GenerationError(f"bra/{form.variant.name}: branch uniformity modifier drift")
     fields = {field.source_name: field for field in form.source.modifier_fields}
     source = fields.get("uni")
     if (source is None or source.storage is not ResolvedFieldStorage.INSTANCE
-            or source.value_cpp_type != "bool"):
+            or source.value_kind is not ResolvedValueKind.BOOL):
         raise GenerationError(f"bra/{form.variant.name}: branch uniformity field drift")
