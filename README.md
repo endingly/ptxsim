@@ -63,7 +63,7 @@ root in the same shell:
 ```sh
 python3 -m venv .venv
 . .venv/bin/activate
-python -m pip install -e .
+python -m pip install -e ./python
 
 export VCPKG_ROOT="$PWD/.cache/vcpkg"
 git clone https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"

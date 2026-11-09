@@ -40,15 +40,12 @@ jobs:
         shell: bash
         run: |
           python3 -m venv .venv
-          .venv/bin/python -m pip install -e .
+          .venv/bin/python -m pip install -e ./python
 
       - name: Test Python generators
         shell: bash
         run: |
           .venv/bin/python -m unittest discover -s python/tests -v
-          .venv/bin/python -m unittest discover -s submod/exec_ir/python/tests -v
-          .venv/bin/python -m unittest discover -s submod/exec_ir_lowering/python/tests -v
-          .venv/bin/python -m unittest discover -s submod/inst_execute_engine/python/tests -v
 
   test:
     name: ${{ matrix.name }}
