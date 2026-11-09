@@ -1,5 +1,8 @@
 # PTXSim `exec_ir` Module Execution Plan
 
+> **Current migration gate:** [Inherited executable IR delivery](inherited_exec_ir_execution_plan.md) supersedes the representation/binding migration scope below. Historical completed items are retained as previous-design evidence.
+
+
 > **Status:** WP0 generator contract probe, WP1 executable program core, the
 > source-built frontend overlay port, WP2 resolved-IR lowering, WP3 generated
 > topology/lowering, and WP5 scalar load/store are implemented

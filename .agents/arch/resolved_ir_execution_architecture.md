@@ -1,5 +1,8 @@
 # Audit and Decision: `resolved_ir` to Executable Program
 
+> **Supersession:** [Inherited executable IR](inherited_exec_ir.md) now owns the instruction hierarchy, complete binding, capability and Python boundaries. In particular, the old variant topology and permission for missing leaf binders below are superseded. Remaining identity/storage/issue contracts continue as described by the new decision.
+
+
 > **Status:** original direct-execution proposal audited and not adopted;
 > follow-up executable-lowering architecture adopted
 > **Scope:** program representation, instruction lowering, code location,
