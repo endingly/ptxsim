@@ -1,5 +1,8 @@
 # PTXSim `inst_execute_engine` Module Execution Plan
 
+> **Current migration gate:** [Inherited executable IR delivery](inherited_exec_ir_execution_plan.md) owns capability and dispatch migration while requiring preservation of the execution behavior described below.
+
+
 > **Status:** WP0-WP5 and the minimal WP6 warp synchronization slice are implemented
 > **Current prerequisite:** `execution_model`, `memory`, `runtime`, and `arith`
 > **Current integration:** deterministic program fetch and issue orchestration in

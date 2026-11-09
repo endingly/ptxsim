@@ -1,5 +1,8 @@
 # Instruction execution families
 
+> **Supersession:** [Inherited executable IR](inherited_exec_ir.md) now owns Python layout, capability granularity and dispatch. The historical whole-opcode completion restriction and old source pin below do not limit the new full projection. Existing semantic and issue-ordering guarantees remain required.
+
+
 ## Adopted scope and ownership
 
 Execution preparation is generated from the pinned frontend instruction model
