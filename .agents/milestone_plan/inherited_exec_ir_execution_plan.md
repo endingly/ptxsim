@@ -90,8 +90,8 @@ are inventory checks, not claims of semantic executor coverage.
 
 | Slice | Scope and required evidence | Status |
 | --- | --- | --- |
-| S0 | Adopted architecture, current plan, exact source/artifact inventory, explicit old-contract supersession, role/effort/provenance record; diff and local-link checks | In progress |
-| S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Pending |
+| S0 | Adopted architecture, current plan, exact source/artifact inventory, explicit old-contract supersession, role/effort/provenance record; diff and local-link checks | Accepted and committed `8d7b6a2` |
+| S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Verified; slice acceptance pending |
 | S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | Pending |
 | S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | Pending |
 | S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Pending |
@@ -114,6 +114,24 @@ target is complete. No compatibility manifest or form-alias layer is added.
 
 ## Verification record
 
+- S0 committed as `8d7b6a29365cd666c8fb73638fb91bebf9c3c144`. Independent
+  `gpt-6.1-sol/max` and Authority `gpt-6.1-sol/high` accepted the actual staged
+  15-file fingerprint
+  `c7fb938c7b3dc7b950d5cd66cfc2620256e26dc81094c94d81381618630b881c`.
+  Git normalized CRLF to LF in four historical documents; per-file comparison
+  proved no other byte differences. Policy-byte, local-link and diff checks
+  passed; no C++ tests were needed for that documentation-only slice.
+- Bounded baseline scan found an existing Simulator ordering gap: `Simulator::step`
+  asks for fallthrough before the engine selects unsupported. Engine-only tests
+  do not prove simulator ordering. S4 must reject unsupported before ordinary
+  reads, state changes and terminal/invalid-successor fallthrough errors, with
+  end-to-end regression tests; supported instruction ordering remains intact.
+- Existing generated execution covers mov/add/sub/mul/fma/setp/ld/st/bar/bra/exit.
+  SETP currently exposes u32/s32, eq/lt/ge and optional and (helper or/xor code
+  does not establish exposed support). FMA has 70 canonical PTX spellings and
+  16 old IR forms. Preserve these tests and arithmetic/MOV/memory/barrier,
+  predication, prepare/commit, entry-argument and storage pipeline coverage.
+
 - Baseline worktree began clean at the exact fetched main SHA above. Apart from
   the user-authorized nine policy files extracted byte-for-byte from `ea0dc33`,
   no original working-tree content was copied or restored; the old dirty
@@ -122,8 +140,66 @@ target is complete. No compatibility manifest or form-alias layer is added.
 - Frontend inventory command: existing exact-wheel Python 3.14 environment,
   `get_packaged_spec_database()` and `from_instruction_spec()` across all
   instructions; observed counts and contract ledger above.
-- New package tests, C++ builds, runtime regressions, isolated distribution,
-  installed consumers, compiler matrix and sanitizers: not yet run.
+- S1 source verification: the consolidated `python/tests` suite passed all 43
+  existing tests in a fresh Python 3.14 environment. Its frontend came from a
+  clean Git archive of exact `1a32fac33be61c0f540caaecf2ce14373c281b45`;
+  the new editable project metadata points to this worktree's `python` project.
+- S1 generated-artifact comparison: all three generators' headers and sources
+  matched the pre-move `8d7b6a2` snapshot byte-for-byte after replacing only the
+  generated warning's module path. The 43 test methods and existing PTX cases
+  remain present; no semantic execution behavior was changed in this slice.
+- S1 distribution verification: isolated setuptools/wheel builds produced a
+  wheel and source distribution, then a second wheel built from that sdist.
+  Both wheels contain all eight backend/template resources and exclude tests.
+  The source distribution contains the same resources and retains four source
+  test files. Separate fresh environments installed each wheel with normal dependency
+  resolution. Both frontend `direct_url.json` records identify the declared
+  GitHub URL and exact requested/actual old commit; `pip check` passed. From
+  outside the checkout, installed-package paths, resource loading and all
+  three console generators passed. Later wheel refreshes after resource EOL
+  normalization preserve that verified dependency environment.
+- S1 independent C++ verification used GCC 15.2 Debug/x64-linux, Python
+  3.14.4 and the isolated prefix
+  `/tmp/ptxsim-inherited-s1-build/vcpkg_installed`. Vcpkg completed successfully
+  (session 41594), restoring eight ABI-exact packages from read-only cache and
+  building `ptx-frontend 0.0.1b0#6` from exact REF
+  `1a32fac33be61c0f540caaecf2ce14373c281b45`. Its ABI was
+  `e494efa3713cb775afe3cc39e74d28f36e18377eb571a3d8109ca17b7c0475f1`;
+  downloaded source SHA512
+  `416e8922f10daf750b02ca5f3a80bb55d158512c41a31f9fd097d1be02c65e9d77a34bdcc9937f8069d6ce98cc05354156a4fb169a6ad9e603c91c6cde2327e3`
+  matched the port. No 0.8.0 prefix/binary was reused for this slice.
+- Fresh Ninja configuration in `/tmp/ptxsim-inherited-s1-build/s1-gcc-debug`
+  passed with `BUILD_TESTING=ON`, `PTXSIM_BUILD_CONSUMER_TESTS=ON`, the isolated
+  installed directory, manifest install disabled, and the new editable Python
+  interpreter. All three codegen targets passed. Building
+  `test_ptxsim_exec_ir`, `test_ptxsim_exec_ir_lowering`,
+  `test_ptxsim_inst_execute_engine` and `test_ptxsim_simulator` with parallelism
+  four passed all 72 build steps; `ptxsim_arith_validation` also built for
+  install completeness.
+- Focused CTest for those four affected executables and
+  `InstExecuteEngineSemanticsLinkContract` passed **386/386**. Separate
+  `^ptxsim_arith_(build-tree|installed)_consumer$` gates passed **2/2**, covering
+  build-tree and installed-package consumers. These are the affected checks,
+  not a claim that the full CI matrix ran.
+- Incremental checks touched engine `__init__.py`, an engine template, the IR
+  generator source, and binding generator source. Each invoked only its owning
+  generator; all six generated artifact hashes stayed unchanged. A subsequent
+  build at the same touched template mtime invoked no generator and reported
+  no work; original source mtimes were restored. Shared marker/publication
+  files use exact dependency paths, while recursive globs cover only each
+  generator's actual import/template closure.
+- C++ evidence logs are under `/tmp/ptxsim-inherited-s1-build/logs/`:
+  `vcpkg-install.log`, `cmake-configure.log`, `build-codegen.log`,
+  `build-tests.log`, `build-consumer-prereq.log`, `ctest-focused.log`,
+  `ctest-consumers.log`, `incremental-summary.log`, and `noop-gate-summary.log`.
+  Package validation used `/tmp/ptxsim-inherited-s1-venv` for source tests and
+  builds, plus distinct `-wheel-env` and `-sdist-env` environments for normal
+  dependency installation and installed-resource/CLI checks.
+- S1 changes physical package ownership and build inputs only. The legacy
+  frontend pin and direct Jinja2 declaration are explicitly transitional;
+  release 0.8.0/full representation/full binding/execution migration remain
+  S2-S4 obligations. Release, Clang, ASan/UBSan and the full compiler matrix
+  remain S5 gates and have not been run for S1.
 
 ## Review artifact mapping
 
