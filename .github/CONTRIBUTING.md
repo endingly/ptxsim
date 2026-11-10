@@ -17,7 +17,9 @@ Configuration and build use all three PR presets with testing enabled:
 Clang Debug, Clang Release and Clang ASan+UBSan. Each job builds the
 default target, including the unit-test executables, with the same compiler and
 options as its PR counterpart. Matrix jobs have independent compiler caches and
-do not cancel each other on failure.
+do not cancel each other on failure. The presets build shared ptxsim components
+and use the `x64-linux-llvm-dynamic` overlay triplet for shared frontend/dependency
+libraries with LLVM tools throughout. SoftFloat keeps its static PIC linkage.
 
 Only Clang Debug invokes CTest. It runs exactly the build-tree and installed-package
 consumers, with `--no-tests=error`. These separately compile and run the public client, covering
@@ -31,7 +33,7 @@ Both workflows use `actions/setup-linux`. It identifies the installed C/C++
 compilers, LLVM companion tools (including lld), CMake, Ninja, OS release and `ImageOS`, excluding `ImageVersion` so
 an image revision alone does not invalidate caches. It selects vcpkg using the manifest's
 exact builtin baseline. The binary-cache key also hashes the manifests, overlay
-ports, presets and LLVM toolchain file, including the test dependency feature selection.
+ports, presets, LLVM toolchain and overlay triplet files, including the test dependency feature selection.
 
 Every matrix job restores dependencies and configures its build on each main
 push. In both workflows, every matrix job that misses its exact binary-cache key

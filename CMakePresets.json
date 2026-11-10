@@ -12,6 +12,9 @@
             "cacheVariables": {
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
                 "BUILD_TESTING": "ON",
+                "BUILD_SHARED_LIBS": "ON",
+                "VCPKG_TARGET_TRIPLET": "x64-linux-llvm-dynamic",
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/.triplets",
                 "VCPKG_MANIFEST_FEATURES": "tests",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",

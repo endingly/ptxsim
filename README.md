@@ -50,7 +50,9 @@ The maintained build matrix is Linux with Clang and LLVM tools. You need CMake 3
 Ninja, Python 3.14+, and a compiler/standard library supporting C++23
 `std::expected` and the `__int128` extension. CI uses Ubuntu 26.04. Other platforms
 are not covered by that matrix. The presets cover Debug, Release, and ASan+UBSan,
-using LLVM archive tools and lld.
+using LLVM archive tools and lld. Libraries default to shared builds, with shared
+`ptx_frontend` dependencies selected by the `x64-linux-llvm-dynamic` overlay
+triplet. SoftFloat remains a static library built with position independent code.
 
 On Ubuntu, install the build tools:
 
@@ -86,6 +88,12 @@ ctest --preset ci-linux-clang-debug --output-on-failure --no-tests=error \
 For an existing environment, reuse its vcpkg checkout instead of cloning again.
 The first configure downloads and builds dependencies. Reduce build parallelism
 if compiler memory use is too high.
+
+To build static ptxsim libraries, configure with `-DBUILD_SHARED_LIBS=OFF`.
+Dependency linkage is independent: add `-DVCPKG_TARGET_TRIPLET=x64-linux` for
+static vcpkg dependencies, using a separate build directory when changing triplets.
+Linux shared installs find sibling ptxsim libraries relative to their location;
+external dependency libraries remain in their separately managed vcpkg prefix.
 
 The two consumer checks compile and run a public C++ client against the build-tree
 and installed packages. Despite their historical `arith` names, they also parse,

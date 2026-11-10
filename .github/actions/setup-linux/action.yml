@@ -83,7 +83,7 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/vcpkg/archives
-        key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json', 'cmake/toolchains/**') }}
+        key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json', 'cmake/toolchains/**', '.triplets/**') }}
 
     - name: Set up Python environment
       shell: bash
