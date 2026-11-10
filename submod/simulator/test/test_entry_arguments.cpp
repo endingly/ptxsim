@@ -126,15 +126,15 @@ TEST(EntryArguments, PacksMixedWidthGemmSignatureAtIndependentOffsets) {
   ASSERT_TRUE(layout);
   EXPECT_EQ(layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {0, 4, 4},
-                {16, 8, 16},
-                {24, 4, 4},
-                {32, 8, 8},
-                {40, 4, 4},
-                {48, 8, 8},
-                {56, 4, 4},
-                {60, 4, 4},
-                {64, 4, 4},
+                {0, 4, 4, exec_ir::ParameterId{0}},
+                {16, 8, 16, exec_ir::ParameterId{1}},
+                {24, 4, 4, exec_ir::ParameterId{2}},
+                {32, 8, 8, exec_ir::ParameterId{3}},
+                {40, 4, 4, exec_ir::ParameterId{4}},
+                {48, 8, 8, exec_ir::ParameterId{5}},
+                {56, 4, 4, exec_ir::ParameterId{6}},
+                {60, 4, 4, exec_ir::ParameterId{7}},
+                {64, 4, 4, exec_ir::ParameterId{8}},
             }));
   EXPECT_EQ(layout->get().entry_parameter_size, 68U);
 
@@ -278,7 +278,7 @@ TEST(EntryArguments, PacksAlignedByteArraysAndLoadsTheirBoundaryBytes) {
   ASSERT_TRUE(layout);
   EXPECT_EQ(
       layout->get().entry_parameters,
-      (std::vector<exec_ir::EntryParameterLayout>{{0, 1, 16}, {16, 8, 16}}));
+      (std::vector<exec_ir::EntryParameterLayout>{{0, 1, 16, exec_ir::ParameterId{0}}, {16, 8, 16, exec_ir::ParameterId{1}}}));
   EXPECT_EQ(layout->get().entry_parameter_size, 24U);
 
   const std::array scalar{std::byte{0x01}};

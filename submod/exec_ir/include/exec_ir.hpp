@@ -4,226 +4,154 @@
 #include <cstdint>
 #include <expected>
 #include <functional>
+#include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
-#include <ptxsim/exec_ir/exec_ir.gen.hpp>
-#include <ptxsim/exec_ir/exec_ir_types.hpp>
+#include <ptxsim/exec_ir/instruction_base.gen.hpp>
+#include <ptxsim/exec_ir/program_records.hpp>
 
 namespace ptxsim::exec_ir {
 
-/**
- * @brief One source-ordered entry-parameter slot in a kernel argument blob.
- *
- * All fields are measured in bytes. @ref alignment constrains this slot in
- * the blob; it deliberately does not describe the alignment of a pointer's
- * target. A valid sequence starts each slot at the aligned end of its
- * predecessor and has no implicit trailing padding.
+/** @brief Query whether a supported form can require a same-body successor.
+ *  Call only after execution capability has admitted the selected exact form.
  */
-struct EntryParameterLayout {
-  /** @brief Byte position from the first byte of the raw argument blob. */
-  std::size_t offset;
-  /** @brief Number of payload bytes occupied by this slot. */
-  std::size_t size;
-  /** @brief Nonzero power-of-two byte alignment required for this slot. */
-  std::size_t alignment;
+[[nodiscard]] auto may_fallthrough(const Instruction&) noexcept -> bool;
 
-  /** @brief Compare every byte-layout property. */
-  constexpr bool operator==(const EntryParameterLayout&) const noexcept =
-      default;
-};
-
-/** @brief Function-local instruction range and register layout. */
-struct FunctionLayout {
-  /** @brief Dense function identity used by code locations. */
-  common::FunctionId id;
-  /** @brief First instruction index in the owning program instruction vector. */
-  std::size_t begin;
-  /** @brief Number of instructions belonging to this function. */
-  std::uint32_t instruction_count;
-  /** @brief Declared width for each function-local register slot. */
-  std::vector<common::RawWidth> register_widths;
-  /**
-   * @brief Exact byte count of the entry argument blob required before execution.
-   *
-   * This is the end of the final slot, without trailing alignment padding.
-   */
-  std::size_t entry_parameter_size = 0;
-  /** @brief Source-ordered layout of each entry argument slot. */
-  std::vector<EntryParameterLayout> entry_parameters;
-};
-
-/** @brief State space selected for one fully bound static storage declaration. */
-enum class StorageSpace : std::uint8_t { global, constant, shared, local };
-
-/** @brief Byte capacity of one fixed generic-address state-space window. */
-inline constexpr std::uint64_t kStorageAddressSpaceSize = std::uint64_t{1}
-                                                          << 60;
-
-/** @brief Initialization policy applied when a launch materializes storage. */
-enum class StorageInitialization : std::uint8_t {
-  uninitialized,
-  zero,
-  explicit_bytes,
-  external,
-};
-
-/**
- * @brief Frontend-independent allocation and initialization inputs for one symbol.
- *
- * @ref initializer_bytes owns a complete byte image only for
- * @c explicit_bytes.  The symbol name remains only for explicit external
- * binding; execution always refers to @ref symbol.
- */
-struct StorageDeclaration {
-  /** @brief Stable executable identity used by address and MOV operands. */
-  common::SymbolId symbol;
-  /** @brief Source spelling retained solely to select a caller extern binding. */
-  std::string name;
-  /** @brief Address space containing the declaration. */
-  StorageSpace space;
-  /** @brief Owning function for thread/function-local declarations. */
-  std::optional<common::FunctionId> owner_function;
-  /** @brief Allocation extent in bytes, excluding inter-declaration padding. */
-  std::size_t extent;
-  /** @brief Nonzero power-of-two byte alignment of the allocation offset. */
-  std::size_t alignment;
-  /** @brief Runtime initialization policy for the allocated extent. */
-  StorageInitialization initialization;
-  /** @brief Complete owned initial byte image when @ref initialization is explicit. */
-  std::vector<std::byte> initializer_bytes;
-  /** @brief Whether this external shared declaration consumes launch dynamic bytes. */
-  bool dynamic_shared = false;
-  /**
-   * @brief Required byte multiple for an unsized non-dynamic external binding.
-   *
-   * This is the scalar/vector/inner-dimension stride retained when @ref extent
-   * is zero. All other declarations retain the neutral value one.
-   */
-  std::size_t external_extent_multiple = 1;
-
-  /** @brief Compare every execution-relevant declaration property. */
-  bool operator==(const StorageDeclaration&) const = default;
-};
-
-/**
- * @brief Input records used to construct a self-consistent executable container.
- *
- * Construction validates ownership and layout invariants, not whether a
- * particular executor supports every contained instruction.
- */
+/** @brief Caller-owned mutable construction graph, independently frozen by create. */
 struct ProgramDefinition {
-  /** @brief Flat instruction records, owned by the definition. */
-  std::vector<Instruction> instructions;
-  /** @brief Dense function layouts covering every instruction exactly once. */
-  std::vector<FunctionLayout> functions;
-  /** @brief Fully bound storage declarations owned for the program lifetime. */
+  /** @brief Actual final instruction inputs; aliases remain caller-owned after create. */
+  std::vector<std::unique_ptr<Instruction>> instructions;
+  /** @brief Dense canonical functions, including body-less callable declarations. */
+  std::vector<FunctionRecord> functions;
+  /** @brief Distinct declaration scopes and their full callable contracts. */
+  std::vector<FunctionDeclaration> function_declarations;
+  /** @brief Every full storage declaration, without imposing runtime allocation support. */
   std::vector<StorageDeclaration> storage_declarations;
+  /** @brief Module and entry opaque resource declarations. */
+  std::vector<ResourceDeclaration> resources;
+  /** @brief Full scalar parameter declaration table. */
+  std::vector<ParameterDeclaration> parameters;
+  /** @brief Indirect-call prototype metadata. */
+  std::vector<PrototypeRecord> prototypes;
+  /** @brief Ordered canonical callable target sets. */
+  std::vector<CallTargetSetRecord> call_target_sets;
+  /** @brief Ordered function-local branch target sets. */
+  std::vector<BranchTargetSetRecord> branch_target_sets;
+  /** @brief Sparse callable storage tables and complete ABI contracts. */
+  std::vector<CallTableRecord> call_tables;
+  /** @brief Owned alias boundary names and their canonical callable targets. */
+  std::vector<FunctionAlias> aliases;
+  /** @brief Checked source interpretation profiles, independent of source buffers. */
+  std::vector<SourceProfile> source_profiles;
 };
 
-/** @brief Reasons an executable-program operation can fail. */
+/** @brief Structural container or static-location error, separate from execution support. */
 enum class ProgramErrorCode : std::uint8_t {
   function_id_not_dense,
   function_count_not_representable,
+  declaration_id_not_dense,
+  metadata_id_not_dense,
   invalid_layout,
   invalid_layout_range,
   invalid_register_width,
   invalid_entry_parameter_layout,
   invalid_storage_declaration,
-  duplicate_storage_symbol,
+  invalid_resource_declaration,
+  invalid_parameter_declaration,
+  invalid_callable_metadata,
+  invalid_declaration_reference,
+  null_instruction,
+  invalid_instruction_shape,
   function_not_found,
+  nonexecutable_function,
   pc_out_of_range,
   no_fallthrough,
+  empty_program_handle
 };
-
-/** @brief Context attached to a failed executable-program operation. */
+/** @brief Typed context attached to one failed structural operation. */
 struct ProgramError {
-  /** @brief Stable category of the rejected invariant. */
+  /** @brief Rejected structural operation or invariant. */
   ProgramErrorCode code;
-  /** @brief Function containing the invalid record when applicable. */
+  /** @brief Canonical function containing the failure when applicable. */
   std::optional<common::FunctionId> function;
-  /** @brief Function-relative instruction location when applicable. */
+  /** @brief Function-local instruction position when applicable. */
   std::optional<common::ProgramCounter> pc;
-  /** @brief Observed invalid width when applicable. */
+  /** @brief Observed invalid physical register width when applicable. */
   std::optional<common::RawWidth> actual;
-  /** @brief Storage symbol whose layout violates an invariant when applicable. */
-  std::optional<common::SymbolId> symbol;
-
-  constexpr bool operator==(const ProgramError&) const noexcept = default;
+  /** @brief Storage declaration containing the failure when applicable. */
+  std::optional<StorageId> storage;
+  /** @brief Compare structural category and typed diagnostic context. */
+  bool operator==(const ProgramError&) const = default;
 };
 
-/**
- * @brief Report an instruction's control-flow classification for an executor.
- *
- * Executors call this only after selecting a supported instruction form.
- */
-[[nodiscard]] constexpr auto may_fallthrough(
-    const Instruction& instruction) noexcept -> bool {
-  switch (op(instruction)) {
-    case Op::bra:
-    case Op::exit:
-      return execution_predicate(instruction).has_value();
-    default:
-      return true;
-  }
-}
-
-/**
- * @brief Validated, owning execution-program container.
- *
- * A valid container can include declaration-only instructions that a particular
- * executor does not support.
- */
+/** @brief Shared immutable executable snapshot with no mutable input aliases. */
 class ExecutableProgram final {
  public:
+  /** @brief Share the same independently frozen immutable storage. */
   ExecutableProgram(const ExecutableProgram&) = default;
+  /** @brief Share another frozen program without cloning its instructions. */
   ExecutableProgram& operator=(const ExecutableProgram&) = default;
+  /** @brief Transfer a frozen program handle. */
   ExecutableProgram(ExecutableProgram&&) noexcept = default;
+  /** @brief Transfer a frozen program handle. */
   ExecutableProgram& operator=(ExecutableProgram&&) noexcept = default;
+  /** @brief Release this handle; other copies retain the immutable snapshot. */
   ~ExecutableProgram() = default;
 
-  /** @brief Validate container and layout invariants, then take ownership. */
-  [[nodiscard]] static auto create(ProgramDefinition definition)
+  /** @brief Validate and deep-copy all inputs into fresh actual const storage. */
+  [[nodiscard]] static auto create(const ProgramDefinition&)
       -> std::expected<ExecutableProgram, ProgramError>;
-
-  /**
-   * @brief Return the validated layout for one dense function identity.
-   *
-   * The returned reference remains valid for this program's lifetime and
-   * exposes the register frame layout required by an executor.
-   */
-  [[nodiscard]] auto function_layout(common::FunctionId function) const
-      -> std::expected<std::reference_wrapper<const FunctionLayout>,
-                       ProgramError>;
-  /** @brief Return the instruction at one validated function-relative location. */
-  [[nodiscard]] auto fetch(common::CodeLocation location) const
+  /** @brief Query a canonical callable, including prototypes without a body. */
+  [[nodiscard]] auto function_record(common::FunctionId) const
+      -> std::expected<std::reference_wrapper<const FunctionRecord>, ProgramError>;
+  /** @brief Query a real body; declarations report nonexecutable_function. */
+  [[nodiscard]] auto function_layout(common::FunctionId) const
+      -> std::expected<std::reference_wrapper<const FunctionLayout>, ProgramError>;
+  /** @brief Fetch one owned final object at a function-local executable location. */
+  [[nodiscard]] auto fetch(common::CodeLocation) const
       -> std::expected<std::reference_wrapper<const Instruction>, ProgramError>;
-  /** @brief Translate a function-relative location to the owned flat index. */
-  [[nodiscard]] auto flat_offset(common::CodeLocation location) const
+  /** @brief Resolve a valid local instruction position to its flat storage index. */
+  [[nodiscard]] auto flat_offset(common::CodeLocation) const
       -> std::expected<std::size_t, ProgramError>;
-  /** @brief Return the next location within the same function. */
-  [[nodiscard]] auto fallthrough(common::CodeLocation location) const
+  /** @brief Return a successor only inside the same actual function body. */
+  [[nodiscard]] auto fallthrough(common::CodeLocation) const
       -> std::expected<common::CodeLocation, ProgramError>;
-  /** @brief Return immutable storage layout records for launch materialization. */
-  [[nodiscard]] auto storage_declarations() const noexcept
-      -> const std::vector<StorageDeclaration>&;
+  /** @brief Borrow only const canonical callable records for this snapshot's lifetime. */
+  [[nodiscard]] auto functions() const noexcept -> std::span<const FunctionRecord>;
+  /** @brief Borrow only const specific declaration records. */
+  [[nodiscard]] auto function_declarations() const noexcept -> std::span<const FunctionDeclaration>;
+  /** @brief Borrow only const full storage declarations. */
+  [[nodiscard]] auto storage_declarations() const noexcept -> std::span<const StorageDeclaration>;
+  /** @brief Borrow only const typed resource declarations. */
+  [[nodiscard]] auto resources() const noexcept -> std::span<const ResourceDeclaration>;
+  /** @brief Borrow only const full scalar parameter declarations. */
+  [[nodiscard]] auto parameters() const noexcept -> std::span<const ParameterDeclaration>;
+  /** @brief Borrow only const indirect-call prototype metadata. */
+  [[nodiscard]] auto prototypes() const noexcept -> std::span<const PrototypeRecord>;
+  /** @brief Borrow only const ordered callable target sets. */
+  [[nodiscard]] auto call_target_sets() const noexcept -> std::span<const CallTargetSetRecord>;
+  /** @brief Borrow only const ordered local branch target sets. */
+  [[nodiscard]] auto branch_target_sets() const noexcept -> std::span<const BranchTargetSetRecord>;
+  /** @brief Borrow only const sparse callable storage tables. */
+  [[nodiscard]] auto call_tables() const noexcept -> std::span<const CallTableRecord>;
+  /** @brief Borrow only const owned external/API alias names. */
+  [[nodiscard]] auto aliases() const noexcept -> std::span<const FunctionAlias>;
+  /** @brief Borrow only const checked source interpretation profiles. */
+  [[nodiscard]] auto source_profiles() const noexcept -> std::span<const SourceProfile>;
 
  private:
-  friend auto to_string(const ExecutableProgram& program) -> std::string;
-
-  /** @brief Take ownership after the factory has established all invariants. */
-  explicit ExecutableProgram(ProgramDefinition definition) noexcept;
-
-  /** @brief Flat instruction storage owned for the program lifetime. */
-  std::vector<Instruction> instructions_;
-  /** @brief Dense layouts corresponding to the owned instruction storage. */
-  std::vector<FunctionLayout> functions_;
-  /** @brief Static storage metadata with no frontend lifetime dependency. */
-  std::vector<StorageDeclaration> storage_declarations_;
+  /** @brief Actual const object that owns all independently copied value graphs. */
+  struct Storage;
+  /** @brief Publish only a factory-created actual const storage object. */
+  explicit ExecutableProgram(std::shared_ptr<const Storage>) noexcept;
+  /** @brief Shared immutable snapshot; no API exposes its mutable ownership. */
+  std::shared_ptr<const Storage> storage_;
 };
 
-/** @brief Format the validated execution records for diagnostics. */
-[[nodiscard]] auto to_string(const ExecutableProgram& program) -> std::string;
+/** @brief Print frozen owned instructions and their canonical function locations. */
+[[nodiscard]] auto to_string(const ExecutableProgram&) -> std::string;
 
 }  // namespace ptxsim::exec_ir

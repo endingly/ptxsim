@@ -27,40 +27,19 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
     return std::unexpected(valid.error());
   }
 
-  const auto preparer = detail::select_preparer(instruction);
-  if (!preparer) {
-    return detail::step_error(preparer.error());
-  }
-  if (exec_ir::may_fallthrough(instruction) && !successor) {
-    return detail::step_error(StepErrorCode::missing_fallthrough);
-  }
-  StepReport report;
-  std::vector<detail::PreparedLane> prepared;
-  prepared.reserve(issue.size());
-  for (std::uint32_t index = 0; index < warp.architectural_warp_size();
-       ++index) {
-    const execution_model::LaneId lane{index};
-    if (!issue.lanes.test(lane)) {
-      continue;
-    }
-    auto& thread = warp.thread(lane);
-    detail::LaneResourceResolver resolver(runtime_, thread, function_);
-    const auto effect = detail::prepare_lane(resolver, *preparer, arithmetic_,
-                                             instruction, successor);
-    if (!effect) {
-      report.faults.push_back({lane, effect.error()});
-      continue;
-    }
-    prepared.push_back({&thread, *effect});
-  }
+  auto group = detail::prepare_issue(runtime_, function_, arithmetic_, warp, issue,
+                                      instruction, successor);
+  if (!group) return std::unexpected(group.error());
+  auto& report = group->report;
+  auto& prepared = group->lanes;
 
-  if (preparer->kind == detail::PrepareKind::warp_sync ||
-      preparer->kind == detail::PrepareKind::cta_barrier) {
+  if (group->kind == detail::PrepareKind::warp_sync ||
+      group->kind == detail::PrepareKind::cta_barrier) {
     if (!report.faults.empty()) {
       detail::trap_faulted_lanes(warp, report);
       return report;
     }
-    const auto committed = preparer->kind == detail::PrepareKind::warp_sync
+    const auto committed = group->kind == detail::PrepareKind::warp_sync
                                ? detail::commit_warp_sync(warp, issue, prepared)
                                : commit_cta_barrier(warp, issue, prepared, report);
     if (!committed) {

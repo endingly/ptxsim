@@ -10,7 +10,7 @@
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/arith/packed.hpp>
 #include <ptxsim/arith/scalar.hpp>
-#include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/add.gen.hpp>
 
 #include "../floating_controls.hpp"
 #include "../value_alu_helpers.hpp"
@@ -46,27 +46,27 @@ auto add_packed_integer(const arith::context& context,
 }  // namespace add_detail
 
 /** @brief Validate controls retained by the scalar f32 add form. */
-auto valid_add(const exec_ir::Add::FloatF32& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddFloatF32& form) noexcept -> bool;
 /** @brief Validate controls retained by the packed f32 add form. */
-auto valid_add(const exec_ir::Add::FloatF32x2& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddFloatF32x2& form) noexcept -> bool;
 /** @brief Validate controls retained by the f64 add form. */
-auto valid_add(const exec_ir::Add::FloatF64& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddFloatF64& form) noexcept -> bool;
 /** @brief Validate the rn-only PTX half-precision add control. */
-auto valid_add(const exec_ir::Add::Half& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddHalf& form) noexcept -> bool;
 /** @brief Validate the rn-only PTX bfloat16 add control. */
-auto valid_add(const exec_ir::Add::Bfloat& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddBfloat& form) noexcept -> bool;
 /** @brief Validate controls retained by mixed low-precision-to-f32 add. */
-auto valid_add(const exec_ir::Add::MixedF32& form) noexcept -> bool;
+auto valid_add(const exec_ir::AddMixedF32& form) noexcept -> bool;
 /** @brief Integer forms have no dynamic arithmetic controls to validate. */
-auto valid_add(const exec_ir::Add::IntegerNoSat&) noexcept -> bool;
+auto valid_add(const exec_ir::AddIntegerNoSat&) noexcept -> bool;
 /** @brief Saturating integer forms have no dynamic arithmetic controls to validate. */
-auto valid_add(const exec_ir::Add::Sat&) noexcept -> bool;
+auto valid_add(const exec_ir::AddSat&) noexcept -> bool;
 /** @brief Packed integer forms have no dynamic arithmetic controls to validate. */
-auto valid_add(const exec_ir::Add::PackedOptionalSat&) noexcept -> bool;
+auto valid_add(const exec_ir::AddPackedOptionalSat&) noexcept -> bool;
 
 /** @brief Evaluate wrapping same-width scalar integer addition. */
 template <arith::arithmetic_integer T>
-auto add(const arith::context& context, const exec_ir::Add::IntegerNoSat&,
+auto add(const arith::context& context, const exec_ir::AddIntegerNoSat&,
          T lhs, T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto sum = arith::add(context, lhs, rhs);
   if (!sum)
@@ -76,7 +76,7 @@ auto add(const arith::context& context, const exec_ir::Add::IntegerNoSat&,
 
 /** @brief Evaluate wrapping packed integer addition without cross-lane carry. */
 template <PackedIntegerElement Element, std::size_t Lanes>
-auto add(const arith::context& context, const exec_ir::Add::IntegerNoSat&,
+auto add(const arith::context& context, const exec_ir::AddIntegerNoSat&,
          packed_integer<Element, Lanes> lhs, packed_integer<Element, Lanes> rhs)
     -> std::expected<packed_integer<Element, Lanes>, arith::arithmetic_error> {
   return add_detail::add_packed_integer(
@@ -85,7 +85,7 @@ auto add(const arith::context& context, const exec_ir::Add::IntegerNoSat&,
 
 /** @brief Evaluate saturating same-width scalar integer addition. */
 template <arith::arithmetic_integer T>
-auto add(const arith::context& context, const exec_ir::Add::Sat&, T lhs, T rhs)
+auto add(const arith::context& context, const exec_ir::AddSat&, T lhs, T rhs)
     -> std::expected<T, arith::arithmetic_error> {
   const auto sum = arith::add(
       context, lhs, rhs, {.overflow = arith::integer_overflow_mode::saturate});
@@ -96,7 +96,7 @@ auto add(const arith::context& context, const exec_ir::Add::Sat&, T lhs, T rhs)
 
 /** @brief Evaluate saturating packed integer addition without cross-lane carry. */
 template <PackedIntegerElement Element, std::size_t Lanes>
-auto add(const arith::context& context, const exec_ir::Add::Sat&,
+auto add(const arith::context& context, const exec_ir::AddSat&,
          packed_integer<Element, Lanes> lhs, packed_integer<Element, Lanes> rhs)
     -> std::expected<packed_integer<Element, Lanes>, arith::arithmetic_error> {
   return add_detail::add_packed_integer(
@@ -104,17 +104,17 @@ auto add(const arith::context& context, const exec_ir::Add::Sat&,
 }
 
 /** @brief Evaluate scalar f32 addition with its PTX rounding, FTZ, and sat controls. */
-auto add(const arith::context& context, const exec_ir::Add::FloatF32& form,
+auto add(const arith::context& context, const exec_ir::AddFloatF32& form,
          arith::float32_t lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error>;
 
 /** @brief Evaluate f32x2 as two independent scalar f32 additions. */
-auto add(const arith::context& context, const exec_ir::Add::FloatF32x2& form,
+auto add(const arith::context& context, const exec_ir::AddFloatF32x2& form,
          arith::float32x2_t lhs, arith::float32x2_t rhs)
     -> std::expected<arith::float32x2_t, arith::arithmetic_error>;
 
 /** @brief Evaluate scalar f64 addition with the selected PTX rounding mode. */
-auto add(const arith::context& context, const exec_ir::Add::FloatF64& form,
+auto add(const arith::context& context, const exec_ir::AddFloatF64& form,
          arith::float64_t lhs, arith::float64_t rhs)
     -> std::expected<arith::float64_t, arith::arithmetic_error>;
 
@@ -122,7 +122,7 @@ auto add(const arith::context& context, const exec_ir::Add::FloatF64& form,
 template <typename T>
   requires(std::same_as<T, arith::float16_t> ||
            std::same_as<T, arith::float16x2_t>)
-auto add(const arith::context& context, const exec_ir::Add::Half& form, T lhs,
+auto add(const arith::context& context, const exec_ir::AddHalf& form, T lhs,
          T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto control =
       floating_detail::controls(form.rounding, form.ftz, form.sat);
@@ -138,7 +138,7 @@ auto add(const arith::context& context, const exec_ir::Add::Half& form, T lhs,
 template <typename T>
   requires(std::same_as<T, arith::bfloat16_t> ||
            std::same_as<T, arith::bfloat16x2_t>)
-auto add(const arith::context& context, const exec_ir::Add::Bfloat& form, T lhs,
+auto add(const arith::context& context, const exec_ir::AddBfloat& form, T lhs,
          T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto control = floating_detail::controls(form.rounding);
   if (!control)
@@ -153,7 +153,7 @@ auto add(const arith::context& context, const exec_ir::Add::Bfloat& form, T lhs,
 template <typename Low>
   requires(std::same_as<Low, arith::float16_t> ||
            std::same_as<Low, arith::bfloat16_t>)
-auto add(const arith::context& context, const exec_ir::Add::MixedF32& form,
+auto add(const arith::context& context, const exec_ir::AddMixedF32& form,
          Low lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error> {
   const auto control =
@@ -169,7 +169,7 @@ auto add(const arith::context& context, const exec_ir::Add::MixedF32& form,
 /** @brief Evaluate lane-wise packed integer add with optional saturation. */
 template <PackedIntegerElement Element, std::size_t Lanes>
 auto add(const arith::context& context,
-         const exec_ir::Add::PackedOptionalSat& form,
+         const exec_ir::AddPackedOptionalSat& form,
          packed_integer<Element, Lanes> lhs, packed_integer<Element, Lanes> rhs)
     -> std::expected<packed_integer<Element, Lanes>, arith::arithmetic_error> {
   return add_detail::add_packed_integer(

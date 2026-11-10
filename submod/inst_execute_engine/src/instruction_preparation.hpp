@@ -2,6 +2,7 @@
 
 #include <expected>
 #include <optional>
+#include <vector>
 
 #include <ptxsim/arith/context.hpp>
 #include <ptxsim/exec_ir/exec_ir.hpp>
@@ -15,31 +16,24 @@ namespace ptxsim::inst_execute_engine::detail {
 /** @brief Selects whether a prepared instruction commits lane-wise or together. */
 enum class PrepareKind { scalar, warp_sync, cta_barrier };
 
-/** @brief Result of selecting an implemented instruction form. */
-struct SelectedPreparer {
-  /** Preparation function for one issued lane. */
-  std::expected<PreparedEffect, LaneFaultCause> (*handler)(
-      LaneResourceResolver&, const arith::context&, const exec_ir::Instruction&,
-      std::optional<common::ProgramCounter>);
-  /** Commit path required by the selected instruction form. */
+/** @brief Transient completed issue preparation, before any architectural commit. */
+struct PreparedIssue {
+  /** @brief Scalar versus collective commit protocol selected by the typed group. */
   PrepareKind kind;
+  /** @brief All lane faults observed while preparing this issue. */
+  StepReport report;
+  /** @brief Successful lane effects, retained until every issued lane is prepared. */
+  std::vector<PreparedLane> lanes;
 };
 
-/** @brief Select the implemented preparation handler for one instruction form. */
-auto select_preparer(const exec_ir::Instruction& operation)
-    -> std::expected<SelectedPreparer, StepErrorCode>;
-
-/**
- * @brief Prepare a lane, including its execution predicate, without mutation.
- *
- * The caller supplies a selected, supported form and the successor required by
- * any fallthrough or predicated control effect.
- */
-auto prepare_lane(LaneResourceResolver& resolver,
-                  const SelectedPreparer& preparer,
-                  const arith::context& arithmetic,
-                  const exec_ir::Instruction& instruction,
-                  std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedEffect, LaneFaultCause>;
+/** @brief Decode one dense Kind and invoke one typed issue-group entry. */
+[[nodiscard]] auto prepare_issue(runtime::LaunchRuntime& runtime,
+                                 common::FunctionId function,
+                                 const arith::context& arithmetic,
+                                 execution_model::Warp& warp,
+                                 const execution_model::WarpIssueGroup& issue,
+                                 const exec_ir::Instruction& instruction,
+                                 std::optional<common::ProgramCounter> successor)
+    -> std::expected<PreparedIssue, StepError>;
 
 }  // namespace ptxsim::inst_execute_engine::detail

@@ -18,23 +18,23 @@ using common::RegisterSlot;
 
 /** @brief Make one scalar register-or-immediate operand from exact raw bits. */
 auto immediate(std::uint32_t bits) -> exec_ir::ScalarOperand {
-  return RawValue::b32(bits);
+  return exec_ir::Immediate{bits,exec_ir::DataType::b32};
 }
 
 /** @brief Build a dummy integer form whose fields do not affect pure arithmetic. */
-auto integer_form(exec_ir::DataType type) -> exec_ir::Add::IntegerNoSat {
-  return {type, RegisterSlot{0}, immediate(0), immediate(0)};
+auto integer_form(exec_ir::DataType type) -> exec_ir::AddIntegerNoSat {
+  return {exec_ir::AddIntegerNoSat::Operands{}, exec_ir::AddIntegerNoSat::Controls{type}};
 }
 
 /** @brief Build a dummy saturating integer form. */
-auto sat_form(exec_ir::DataType type) -> exec_ir::Add::Sat {
-  return {type, RegisterSlot{0}, immediate(0), immediate(0)};
+auto sat_form(exec_ir::DataType type) -> exec_ir::AddSat {
+  return {exec_ir::AddSat::Operands{}, exec_ir::AddSat::Controls{type}};
 }
 
 /** @brief Build a dummy packed integer form with the requested saturation bit. */
 auto packed_form(exec_ir::DataType type, bool sat)
-    -> exec_ir::Add::PackedOptionalSat {
-  return {sat, type, RegisterSlot{0}, immediate(0), immediate(0)};
+    -> exec_ir::AddPackedOptionalSat {
+  return {exec_ir::AddPackedOptionalSat::Operands{}, exec_ir::AddPackedOptionalSat::Controls{sat, type}};
 }
 
 /** @brief Check that one codec is a lossless architectural bit round-trip. */
@@ -107,24 +107,12 @@ TEST(AddSemantics, PackedIntegerLanesNeverCarryAcrossTheirBoundaries) {
 
 TEST(AddSemantics, FloatControlsUsePtxBitResultsRatherThanHostEvaluation) {
   const arith::context context;
-  const exec_ir::Add::FloatF32 nearest{
-      exec_ir::RoundingMode::rn, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF32 upward{
-      exec_ir::RoundingMode::rp, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF32 toward_zero{
-      exec_ir::RoundingMode::rz, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF32 downward{
-      exec_ir::RoundingMode::rm, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF32 ftz_sat{
-      exec_ir::RoundingMode::rn, true,         true,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF32 ftz{
-      exec_ir::RoundingMode::rn, true,         false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
+  const exec_ir::AddFloatF32 nearest{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rn, false, false}};
+  const exec_ir::AddFloatF32 upward{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rp, false, false}};
+  const exec_ir::AddFloatF32 toward_zero{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rz, false, false}};
+  const exec_ir::AddFloatF32 downward{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rm, false, false}};
+  const exec_ir::AddFloatF32 ftz_sat{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rn, true, true}};
+  const exec_ir::AddFloatF32 ftz{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rn, true, false}};
   EXPECT_EQ((*add(context, nearest, arith::float32_t::from_bits(0x3f80'0000U),
                   arith::float32_t::from_bits(0x3380'0000U)))
                 .bits(),
@@ -162,69 +150,23 @@ TEST(AddSemantics, FloatControlsUsePtxBitResultsRatherThanHostEvaluation) {
 
 TEST(AddSemantics, FloatingFormsCoverPackedHalfBfloatF64AndMixedPaths) {
   const arith::context context;
-  const exec_ir::Add::FloatF32x2 f32x2{exec_ir::RoundingMode::rn, false,
-                                       RegisterSlot{0}, RegisterSlot{1},
-                                       RegisterSlot{2}};
-  const exec_ir::Add::FloatF32x2 f32x2_ftz{exec_ir::RoundingMode::rn, true,
-                                           RegisterSlot{0}, RegisterSlot{1},
-                                           RegisterSlot{2}};
-  const exec_ir::Add::FloatF64 f64_upward{
-      exec_ir::RoundingMode::rp, RegisterSlot{0}, immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF64 f64_nearest{
-      exec_ir::RoundingMode::rn, RegisterSlot{0}, immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF64 f64_toward_zero{
-      exec_ir::RoundingMode::rz, RegisterSlot{0}, immediate(0), immediate(0)};
-  const exec_ir::Add::FloatF64 f64_downward{
-      exec_ir::RoundingMode::rm, RegisterSlot{0}, immediate(0), immediate(0)};
-  const exec_ir::Add::Half half{exec_ir::RoundingMode::rn,
-                                false,
-                                false,
-                                exec_ir::DataType::f16x2,
-                                RegisterSlot{0},
-                                RegisterSlot{1},
-                                RegisterSlot{2}};
-  const exec_ir::Add::Bfloat bfloat{exec_ir::RoundingMode::rn,
-                                    exec_ir::DataType::bf16x2, RegisterSlot{0},
-                                    RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::Half half_scalar{exec_ir::RoundingMode::rn,
-                                       false,
-                                       false,
-                                       exec_ir::DataType::f16,
-                                       RegisterSlot{0},
-                                       RegisterSlot{1},
-                                       RegisterSlot{2}};
-  const exec_ir::Add::Half half_ftz{exec_ir::RoundingMode::rn,
-                                    true,
-                                    false,
-                                    exec_ir::DataType::f16,
-                                    RegisterSlot{0},
-                                    RegisterSlot{1},
-                                    RegisterSlot{2}};
-  const exec_ir::Add::Half half_ftz_sat{exec_ir::RoundingMode::rn,
-                                        true,
-                                        true,
-                                        exec_ir::DataType::f16,
-                                        RegisterSlot{0},
-                                        RegisterSlot{1},
-                                        RegisterSlot{2}};
-  const exec_ir::Add::Bfloat bfloat_scalar{
-      exec_ir::RoundingMode::rn, exec_ir::DataType::bf16, RegisterSlot{0},
-      RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::MixedF32 mixed_half{
-      exec_ir::RoundingMode::rn, false,           exec_ir::DataType::f16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::MixedF32 mixed_bfloat{
-      exec_ir::RoundingMode::rp, false,           exec_ir::DataType::bf16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::MixedF32 mixed_nearest{
-      exec_ir::RoundingMode::rn, false,           exec_ir::DataType::bf16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::MixedF32 mixed_toward_zero{
-      exec_ir::RoundingMode::rz, false,           exec_ir::DataType::bf16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Add::MixedF32 mixed_downward{
-      exec_ir::RoundingMode::rm, false,           exec_ir::DataType::bf16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::AddFloatF32x2 f32x2{exec_ir::AddFloatF32x2::Operands{}, exec_ir::AddFloatF32x2::Controls{exec_ir::RoundingMode::rn, false}};
+  const exec_ir::AddFloatF32x2 f32x2_ftz{exec_ir::AddFloatF32x2::Operands{}, exec_ir::AddFloatF32x2::Controls{exec_ir::RoundingMode::rn, true}};
+  const exec_ir::AddFloatF64 f64_upward{exec_ir::AddFloatF64::Operands{}, exec_ir::AddFloatF64::Controls{exec_ir::RoundingMode::rp}};
+  const exec_ir::AddFloatF64 f64_nearest{exec_ir::AddFloatF64::Operands{}, exec_ir::AddFloatF64::Controls{exec_ir::RoundingMode::rn}};
+  const exec_ir::AddFloatF64 f64_toward_zero{exec_ir::AddFloatF64::Operands{}, exec_ir::AddFloatF64::Controls{exec_ir::RoundingMode::rz}};
+  const exec_ir::AddFloatF64 f64_downward{exec_ir::AddFloatF64::Operands{}, exec_ir::AddFloatF64::Controls{exec_ir::RoundingMode::rm}};
+  const exec_ir::AddHalf half{exec_ir::AddHalf::Operands{}, exec_ir::AddHalf::Controls{exec_ir::RoundingMode::rn, false, false, exec_ir::DataType::f16x2}};
+  const exec_ir::AddBfloat bfloat{exec_ir::AddBfloat::Operands{}, exec_ir::AddBfloat::Controls{exec_ir::RoundingMode::rn, exec_ir::DataType::bf16x2}};
+  const exec_ir::AddHalf half_scalar{exec_ir::AddHalf::Operands{}, exec_ir::AddHalf::Controls{exec_ir::RoundingMode::rn, false, false, exec_ir::DataType::f16}};
+  const exec_ir::AddHalf half_ftz{exec_ir::AddHalf::Operands{}, exec_ir::AddHalf::Controls{exec_ir::RoundingMode::rn, true, false, exec_ir::DataType::f16}};
+  const exec_ir::AddHalf half_ftz_sat{exec_ir::AddHalf::Operands{}, exec_ir::AddHalf::Controls{exec_ir::RoundingMode::rn, true, true, exec_ir::DataType::f16}};
+  const exec_ir::AddBfloat bfloat_scalar{exec_ir::AddBfloat::Operands{}, exec_ir::AddBfloat::Controls{exec_ir::RoundingMode::rn, exec_ir::DataType::bf16}};
+  const exec_ir::AddMixedF32 mixed_half{exec_ir::AddMixedF32::Operands{}, exec_ir::AddMixedF32::Controls{exec_ir::RoundingMode::rn, false, exec_ir::DataType::f16}};
+  const exec_ir::AddMixedF32 mixed_bfloat{exec_ir::AddMixedF32::Operands{}, exec_ir::AddMixedF32::Controls{exec_ir::RoundingMode::rp, false, exec_ir::DataType::bf16}};
+  const exec_ir::AddMixedF32 mixed_nearest{exec_ir::AddMixedF32::Operands{}, exec_ir::AddMixedF32::Controls{exec_ir::RoundingMode::rn, false, exec_ir::DataType::bf16}};
+  const exec_ir::AddMixedF32 mixed_toward_zero{exec_ir::AddMixedF32::Operands{}, exec_ir::AddMixedF32::Controls{exec_ir::RoundingMode::rz, false, exec_ir::DataType::bf16}};
+  const exec_ir::AddMixedF32 mixed_downward{exec_ir::AddMixedF32::Operands{}, exec_ir::AddMixedF32::Controls{exec_ir::RoundingMode::rm, false, exec_ir::DataType::bf16}};
   EXPECT_EQ((*add(context, f32x2,
                   arith::float32x2_t::from_bits(0xbf80'0000'3f80'0000ULL),
                   arith::float32x2_t::from_bits(0x8000'0000'3f80'0000ULL)))
@@ -304,19 +246,8 @@ TEST(AddSemantics, FloatingFormsCoverPackedHalfBfloatF64AndMixedPaths) {
 }
 
 TEST(AddSemantics, RejectsNonPtxRoundingBeforeLanePreparation) {
-  const exec_ir::Add::FloatF32 invalid{exec_ir::RoundingMode::rzi,
-                                       false,
-                                       false,
-                                       RegisterSlot{0},
-                                       immediate(0),
-                                       immediate(0)};
-  const exec_ir::Add::Half invalid_half{exec_ir::RoundingMode::rz,
-                                        false,
-                                        false,
-                                        exec_ir::DataType::f16,
-                                        RegisterSlot{0},
-                                        RegisterSlot{1},
-                                        RegisterSlot{2}};
+  const exec_ir::AddFloatF32 invalid{exec_ir::AddFloatF32::Operands{}, exec_ir::AddFloatF32::Controls{exec_ir::RoundingMode::rzi, false, false}};
+  const exec_ir::AddHalf invalid_half{exec_ir::AddHalf::Operands{}, exec_ir::AddHalf::Controls{exec_ir::RoundingMode::rz, false, false, exec_ir::DataType::f16}};
   EXPECT_FALSE(valid_add(invalid));
   EXPECT_FALSE(valid_add(invalid_half));
 }

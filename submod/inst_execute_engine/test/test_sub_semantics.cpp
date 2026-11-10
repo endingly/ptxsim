@@ -18,18 +18,18 @@ using common::RegisterSlot;
 
 /** @brief Make one scalar register-or-immediate operand from exact raw bits. */
 auto immediate(std::uint32_t bits) -> exec_ir::ScalarOperand {
-  return RawValue::b32(bits);
+  return exec_ir::Immediate{bits,exec_ir::DataType::b32};
 }
 
 /** @brief Build a dummy wrapping integer form whose fields do not affect arithmetic. */
-auto integer_form(exec_ir::DataType type) -> exec_ir::Sub::IntegerNoSat {
-  return {type, RegisterSlot{0}, immediate(0), immediate(0)};
+auto integer_form(exec_ir::DataType type) -> exec_ir::SubIntegerNoSat {
+  return {exec_ir::SubIntegerNoSat::Operands{}, exec_ir::SubIntegerNoSat::Controls{type}};
 }
 
 /** @brief Build a dummy optional-saturation form. */
 auto optional_sat_form(exec_ir::DataType type, bool sat)
-    -> exec_ir::Sub::OptionalSat {
-  return {sat, type, RegisterSlot{0}, immediate(0), immediate(0)};
+    -> exec_ir::SubOptionalSat {
+  return {exec_ir::SubOptionalSat::Operands{}, exec_ir::SubOptionalSat::Controls{sat, type}};
 }
 
 TEST(SubSemantics, IntegerFormsWrapAndOptionalSaturationClamp) {
@@ -79,18 +79,10 @@ TEST(SubSemantics, PackedIntegerLanesNeverBorrowAcrossTheirBoundaries) {
 
 TEST(SubSemantics, FloatControlsPreserveRoundingFtzSaturationAndSignedZero) {
   const arith::context context;
-  const exec_ir::Sub::FloatF32 nearest{
-      exec_ir::RoundingMode::rn, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Sub::FloatF32 downward{
-      exec_ir::RoundingMode::rm, false,        false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Sub::FloatF32 ftz{
-      exec_ir::RoundingMode::rn, true,         false,
-      RegisterSlot{0},           immediate(0), immediate(0)};
-  const exec_ir::Sub::FloatF32 sat{
-      exec_ir::RoundingMode::rn, false,        true,
-      RegisterSlot{0},           immediate(0), immediate(0)};
+  const exec_ir::SubFloatF32 nearest{exec_ir::SubFloatF32::Operands{}, exec_ir::SubFloatF32::Controls{exec_ir::RoundingMode::rn, false, false}};
+  const exec_ir::SubFloatF32 downward{exec_ir::SubFloatF32::Operands{}, exec_ir::SubFloatF32::Controls{exec_ir::RoundingMode::rm, false, false}};
+  const exec_ir::SubFloatF32 ftz{exec_ir::SubFloatF32::Operands{}, exec_ir::SubFloatF32::Controls{exec_ir::RoundingMode::rn, true, false}};
+  const exec_ir::SubFloatF32 sat{exec_ir::SubFloatF32::Operands{}, exec_ir::SubFloatF32::Controls{exec_ir::RoundingMode::rn, false, true}};
   EXPECT_EQ((*sub(context, nearest, arith::float32_t::from_bits(0x3f80'0000U),
                   arith::float32_t::from_bits(0x3300'0000U)))
                 .bits(),
@@ -115,24 +107,11 @@ TEST(SubSemantics, FloatControlsPreserveRoundingFtzSaturationAndSignedZero) {
 
 TEST(SubSemantics, FloatingFormsCoverPackedLowPrecisionF64AndMixedPaths) {
   const arith::context context;
-  const exec_ir::Sub::FloatF32x2 f32x2{exec_ir::RoundingMode::rn, false,
-                                       RegisterSlot{0}, RegisterSlot{1},
-                                       RegisterSlot{2}};
-  const exec_ir::Sub::FloatF64 f64{exec_ir::RoundingMode::rn, RegisterSlot{0},
-                                   immediate(0), immediate(0)};
-  const exec_ir::Sub::Half half{exec_ir::RoundingMode::rn,
-                                false,
-                                false,
-                                exec_ir::DataType::f16x2,
-                                RegisterSlot{0},
-                                RegisterSlot{1},
-                                RegisterSlot{2}};
-  const exec_ir::Sub::Bfloat bfloat{exec_ir::RoundingMode::rn,
-                                    exec_ir::DataType::bf16, RegisterSlot{0},
-                                    RegisterSlot{1}, RegisterSlot{2}};
-  const exec_ir::Sub::MixedF32 mixed{
-      exec_ir::RoundingMode::rn, false,           exec_ir::DataType::bf16,
-      RegisterSlot{0},           RegisterSlot{1}, RegisterSlot{2}};
+  const exec_ir::SubFloatF32x2 f32x2{exec_ir::SubFloatF32x2::Operands{}, exec_ir::SubFloatF32x2::Controls{exec_ir::RoundingMode::rn, false}};
+  const exec_ir::SubFloatF64 f64{exec_ir::SubFloatF64::Operands{}, exec_ir::SubFloatF64::Controls{exec_ir::RoundingMode::rn}};
+  const exec_ir::SubHalf half{exec_ir::SubHalf::Operands{}, exec_ir::SubHalf::Controls{exec_ir::RoundingMode::rn, false, false, exec_ir::DataType::f16x2}};
+  const exec_ir::SubBfloat bfloat{exec_ir::SubBfloat::Operands{}, exec_ir::SubBfloat::Controls{exec_ir::RoundingMode::rn, exec_ir::DataType::bf16}};
+  const exec_ir::SubMixedF32 mixed{exec_ir::SubMixedF32::Operands{}, exec_ir::SubMixedF32::Controls{exec_ir::RoundingMode::rn, false, exec_ir::DataType::bf16}};
   EXPECT_EQ((*sub(context, f32x2,
                   arith::float32x2_t::from_bits(0x4000'0000'3f80'0000ULL),
                   arith::float32x2_t::from_bits(0x3f80'0000'4000'0000ULL)))
@@ -158,19 +137,8 @@ TEST(SubSemantics, FloatingFormsCoverPackedLowPrecisionF64AndMixedPaths) {
 }
 
 TEST(SubSemantics, RejectsNonPtxRoundingBeforeLanePreparation) {
-  const exec_ir::Sub::FloatF32 invalid{exec_ir::RoundingMode::rzi,
-                                       false,
-                                       false,
-                                       RegisterSlot{0},
-                                       immediate(0),
-                                       immediate(0)};
-  const exec_ir::Sub::Half invalid_half{exec_ir::RoundingMode::rz,
-                                        false,
-                                        false,
-                                        exec_ir::DataType::f16,
-                                        RegisterSlot{0},
-                                        RegisterSlot{1},
-                                        RegisterSlot{2}};
+  const exec_ir::SubFloatF32 invalid{exec_ir::SubFloatF32::Operands{}, exec_ir::SubFloatF32::Controls{exec_ir::RoundingMode::rzi, false, false}};
+  const exec_ir::SubHalf invalid_half{exec_ir::SubHalf::Operands{}, exec_ir::SubHalf::Controls{exec_ir::RoundingMode::rz, false, false, exec_ir::DataType::f16}};
   EXPECT_FALSE(valid_sub(invalid));
   EXPECT_FALSE(valid_sub(invalid_half));
 }

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <set>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
@@ -16,12 +17,17 @@
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/fma.gen.hpp>
+#include <ptxsim/exec_ir/instruction_catalogue.gen.hpp>
 #include <ptxsim/simulator/simulator.hpp>
 
 namespace ptxsim::simulator::test {
 namespace {
 
 using common::RawValue;
+
+/** @brief Exact sixteen native FMA semantic forms covered by the public pipeline cases. */
+constexpr std::array kFmaKinds{exec_ir::FmaRnF32::kind, exec_ir::FmaDirectedF32::kind, exec_ir::FmaRnF64::kind, exec_ir::FmaDirectedF64::kind, exec_ir::FmaF32x2::kind, exec_ir::FmaRnF16::kind, exec_ir::FmaRnF16x2::kind, exec_ir::FmaHalfRelu::kind, exec_ir::FmaHalfOob::kind, exec_ir::FmaHalfOobRelu::kind, exec_ir::FmaBf16::kind, exec_ir::FmaBf16x2::kind, exec_ir::FmaBf16Oob::kind, exec_ir::FmaBf16x2Oob::kind, exec_ir::FmaMixedF32F16::kind, exec_ir::FmaMixedF32Bf16::kind};
 
 /** @brief Real PTX spelling and independently encoded inputs and expected output. */
 struct FmaCase {
@@ -64,15 +70,9 @@ auto argument_bytes(const RawValue& value) -> std::vector<std::byte> {
   return result;
 }
 
-/**
- * @brief Run FMA through public argument binding and global output readback.
- *
- * All input registers are initialized by PTX loads. Output sentinels detect
- * writes beyond the result; aliases and immediate substitutions use this same
- * production path without register-frame seeding.
- */
-void expect_fma(const FmaCase& item, std::string_view destination = "%d",
-                std::array<std::string_view, 3> sources = {"%a", "%b", "%c"}) {
+/** @brief Build the same public-ABI kernel for execution and rejected-source regression cases. */
+auto fma_module_text(const FmaCase& item,std::string_view destination="%d",
+    std::array<std::string_view,3> sources={"%a","%b","%c"}) -> std::string {
   const std::array names{"a", "b", "c"};
   std::string parameters = ".param .u64 output";
   std::string declarations = ".reg .u64 %output;\n.reg " +
@@ -91,6 +91,19 @@ void expect_fma(const FmaCase& item, std::string_view destination = "%d",
       std::string(sources[0]) + ", " + std::string(sources[1]) + ", " +
       std::string(sources[2]) + ";\nst.global" + bit_type(item.expected) +
       " [%output], " + std::string(destination) + ";\nexit;\n}\n";
+  return text;
+}
+
+/**
+ * @brief Run FMA through public argument binding and global output readback.
+ *
+ * All input registers are initialized by PTX loads. Output sentinels detect
+ * writes beyond the result; aliases and immediate substitutions use this same
+ * production path without register-frame seeding.
+ */
+void expect_fma(const FmaCase& item, std::string_view destination = "%d",
+                std::array<std::string_view, 3> sources = {"%a", "%b", "%c"}) {
+  const auto text=fma_module_text(item,destination,sources);
   SCOPED_TRACE(text);
   ptx_frontend::PtxSyntaxParser parser(text);
   const auto ast = parser.parseModule();
@@ -102,7 +115,8 @@ void expect_fma(const FmaCase& item, std::string_view destination = "%d",
   const auto instruction = program->fetch({common::FunctionId{0},
                                            common::ProgramCounter{4}});
   ASSERT_TRUE(instruction);
-  ASSERT_TRUE(std::holds_alternative<exec_ir::Fma>(instruction->get()));
+  ASSERT_EQ(instruction->get().instruction_opcode(),exec_ir::Opcode::Fma);
+  ASSERT_NE(std::find(kFmaKinds.begin(),kFmaKinds.end(),instruction->get().instruction_kind()),kFmaKinds.end());
   const std::array bytes{
       argument_bytes(RawValue::b64(std::uint64_t{8})),
       argument_bytes(item.inputs[0]), argument_bytes(item.inputs[1]),
@@ -171,7 +185,7 @@ auto ordinary_case(std::string instruction, std::string_view type) -> FmaCase {
            RawValue::b32(0x3e800000U)}, RawValue::b32(0x3f000000U)};
 }
 
-/** @brief Independently enumerate the PTX 9.3 contract's 70 canonical spellings. */
+/** @brief Independently enumerate the 68 supported canonical spellings under frontend 0.8. */
 auto canonical_cases() -> std::vector<FmaCase> {
   std::vector<FmaCase> cases;
   const std::array<std::string, 4> rounding{"rn", "rz", "rm", "rp"};
@@ -192,8 +206,7 @@ auto canonical_cases() -> std::vector<FmaCase> {
         cases.push_back(ordinary_case("fma.rn" + flush + saturate + "." + type, type));
       cases.push_back(ordinary_case("fma.rn" + flush + ".relu." + type, type));
     }
-    for (const auto& saturate : sat)
-      cases.push_back(ordinary_case("fma.rn.oob" + saturate + "." + type, type));
+    cases.push_back(ordinary_case("fma.rn.oob." + type, type));
     cases.push_back(ordinary_case("fma.rn.oob.relu." + type, type));
   }
   for (const std::string type : {"bf16", "bf16x2"}) {
@@ -220,8 +233,25 @@ INSTANTIATE_TEST_SUITE_P(CompleteFmaContract, FmaPipeline,
                          ::testing::ValuesIn(canonical_cases()));
 
 TEST(FmaPipelineContract, HasEveryCanonicalModifierCombination) {
-  EXPECT_EQ(canonical_cases().size(), 70);
-  EXPECT_EQ(std::variant_size_v<exec_ir::Fma::Variant>, 16);
+  EXPECT_EQ(canonical_cases().size(), 68);
+  EXPECT_EQ(kFmaKinds.size(),16);
+  EXPECT_EQ((std::set<exec_ir::Kind>{kFmaKinds.begin(),kFmaKinds.end()}.size()),16);
+}
+
+TEST(FmaPipelineContract, RetiredOobSaturationSpellingsRemainSourceResolutionErrors) {
+  const std::array cases{
+      std::pair{"fma.rn.oob.sat.f16","f16"},
+      std::pair{"fma.rn.oob.sat.f16x2","f16x2"}};
+  for(const auto& [instruction,type]:cases) {
+    const auto text=fma_module_text(ordinary_case(instruction,type));
+    SCOPED_TRACE(text);
+    ptx_frontend::PtxSyntaxParser parser(text);
+    const auto ast=parser.parseModule(); ASSERT_TRUE(ast); EXPECT_TRUE(ast.diagnostics.empty());
+    const auto resolved=ptx_frontend::resolved_ir::resolveModule(*ast); ASSERT_FALSE(resolved);
+    EXPECT_TRUE(std::ranges::any_of(resolved.error(),[](const auto& error) {
+      return error.message.find("No variant of instruction 'fma' accepts this modifier combination.")!=std::string::npos;
+    }));
+  }
 }
 
 TEST(FmaPipelineContract, ReadsAllSourcesBeforeAliasedDestinationWriteback) {

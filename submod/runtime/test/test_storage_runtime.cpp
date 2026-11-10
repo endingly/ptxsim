@@ -14,15 +14,22 @@ namespace ptxsim::runtime::test {
 namespace {
 
 /** @brief Build an instruction-free program for runtime allocation tests. */
-auto storage_layout(std::vector<exec_ir::StorageDeclaration> declarations)
+auto storage_layout(std::vector<exec_ir::StorageDeclaration> declarations,
+                    std::uint32_t functions = 1)
     -> std::optional<exec_ir::ExecutableProgram> {
-  auto program = exec_ir::ExecutableProgram::create(
-      {.functions = {{common::FunctionId{0}, 0, 0, {}}},
-       .storage_declarations = std::move(declarations)});
-  EXPECT_TRUE(program);
-  return program
-             ? std::optional<exec_ir::ExecutableProgram>{std::move(*program)}
-             : std::nullopt;
+  exec_ir::ProgramDefinition input;
+  input.storage_declarations = std::move(declarations);
+  for (std::uint32_t id = 0; id < functions; ++id) {
+    input.function_declarations.push_back({.id = exec_ir::FunctionDeclarationId{id},
+        .function = common::FunctionId{id}});
+    input.functions.push_back({.id = common::FunctionId{id},
+        .declarations = {exec_ir::FunctionDeclarationId{id}},
+        .definition = exec_ir::FunctionDeclarationId{id},
+        .body = exec_ir::FunctionLayout{.id = common::FunctionId{id}}});
+  }
+  auto program = exec_ir::ExecutableProgram::create(input);
+  EXPECT_TRUE(program.has_value());
+  return program ? std::optional<exec_ir::ExecutableProgram>{std::move(*program)} : std::nullopt;
 }
 
 }  // namespace
@@ -30,17 +37,19 @@ auto storage_layout(std::vector<exec_ir::StorageDeclaration> declarations)
 TEST(StorageRuntime,
      AppendsToDifferentCallerSharedAndLocalSizesWithoutReplacingHandles) {
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "shared",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 8,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 8,
         .alignment = 16,
         .initialization = exec_ir::StorageInitialization::uninitialized},
-       {.symbol = common::SymbolId{1},
+       {.id = exec_ir::StorageId{1},
         .name = "local",
-        .space = exec_ir::StorageSpace::local,
         .owner_function = common::FunctionId{0},
-        .extent = 4,
+        .space = exec_ir::StorageSpace::local,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 4,
         .alignment = 8,
         .initialization = exec_ir::StorageInitialization::uninitialized}});
   ASSERT_TRUE(program);
@@ -78,9 +87,9 @@ TEST(StorageRuntime,
   for (std::size_t index = 0; index != threads.size(); ++index) {
     const auto prefix = 8 + index * 16;
     const auto shared_offset = runtime.resolve_symbol_offset(
-        {common::SymbolId{0}}, threads[index], common::FunctionId{0});
+        {exec_ir::StorageId{0}}, threads[index], common::FunctionId{0});
     const auto local_offset = runtime.resolve_symbol_offset(
-        {common::SymbolId{1}}, threads[index], common::FunctionId{0});
+        {exec_ir::StorageId{1}}, threads[index], common::FunctionId{0});
     ASSERT_TRUE(shared_offset);
     ASSERT_TRUE(local_offset);
     EXPECT_GE(*shared_offset, prefix);
@@ -129,30 +138,34 @@ TEST(StorageRuntime,
   const std::array constant_bytes{std::byte{0x12}, std::byte{0x34},
                                   std::byte{0x56}, std::byte{0x78}};
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "global",
         .space = exec_ir::StorageSpace::global,
-        .extent = 4,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 4,
         .alignment = 8,
         .initialization = exec_ir::StorageInitialization::zero},
-       {.symbol = common::SymbolId{1},
+       {.id = exec_ir::StorageId{1},
         .name = "constant",
         .space = exec_ir::StorageSpace::constant,
-        .extent = constant_bytes.size(),
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = constant_bytes.size(),
         .alignment = 16,
-        .initialization = exec_ir::StorageInitialization::explicit_bytes,
-        .initializer_bytes = {constant_bytes.begin(), constant_bytes.end()}},
-       {.symbol = common::SymbolId{2},
+        .initialization = exec_ir::StorageInitialization::explicit_values,
+        .initializer = {{0,exec_ir::Constant128{0x12,0}}, {1,exec_ir::Constant128{0x34,0}}, {2,exec_ir::Constant128{0x56,0}}, {3,exec_ir::Constant128{0x78,0}}}},
+       {.id = exec_ir::StorageId{2},
         .name = "shared",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 5,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 5,
         .alignment = 8,
         .initialization = exec_ir::StorageInitialization::uninitialized},
-       {.symbol = common::SymbolId{3},
+       {.id = exec_ir::StorageId{3},
         .name = "local",
-        .space = exec_ir::StorageSpace::local,
         .owner_function = common::FunctionId{0},
-        .extent = 6,
+        .space = exec_ir::StorageSpace::local,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 6,
         .alignment = 16,
         .initialization = exec_ir::StorageInitialization::uninitialized}});
   ASSERT_TRUE(program);
@@ -206,13 +219,15 @@ TEST(StorageRuntime,
 
 TEST(StorageRuntime, ZeroDynamicSharedSizeIsValidWhenUnused) {
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "dynamic",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 0,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = std::nullopt,
         .alignment = 16,
-        .initialization = exec_ir::StorageInitialization::external,
-        .dynamic_shared = true}});
+        .declaration_kind = exec_ir::StorageDeclarationKind::External,
+        .dynamic_shared = true,
+        .initialization = exec_ir::StorageInitialization::external}});
   ASSERT_TRUE(program);
   LaunchRuntime runtime{
       execution_model::GridId{93},
@@ -224,29 +239,37 @@ TEST(StorageRuntime, RejectsUnrepresentableGlobalSharedAndLocalLayouts) {
   const auto maximum = std::numeric_limits<std::size_t>::max();
   const std::array declarations{
       exec_ir::StorageDeclaration{
-          .symbol = common::SymbolId{0},
+          .id = exec_ir::StorageId{0},
           .name = "g",
           .space = exec_ir::StorageSpace::global,
-          .extent = maximum,
+          .element_type = exec_ir::DataType::b8,
+          .array_extents = {maximum},
+          .byte_extent = maximum,
           .alignment = 1,
           .initialization = exec_ir::StorageInitialization::zero},
       exec_ir::StorageDeclaration{
-          .symbol = common::SymbolId{1},
+          .id = exec_ir::StorageId{1},
           .name = "s",
           .space = exec_ir::StorageSpace::shared,
-          .extent = maximum,
+          .element_type = exec_ir::DataType::b8,
+          .array_extents = {maximum},
+          .byte_extent = maximum,
           .alignment = 1,
           .initialization = exec_ir::StorageInitialization::uninitialized},
       exec_ir::StorageDeclaration{
-          .symbol = common::SymbolId{2},
+          .id = exec_ir::StorageId{2},
           .name = "l",
-          .space = exec_ir::StorageSpace::local,
           .owner_function = common::FunctionId{0},
-          .extent = maximum,
+          .space = exec_ir::StorageSpace::local,
+          .element_type = exec_ir::DataType::b8,
+          .array_extents = {maximum},
+          .byte_extent = maximum,
           .alignment = 1,
           .initialization = exec_ir::StorageInitialization::uninitialized}};
   for (const auto& declaration : declarations) {
-    auto program = storage_layout({declaration});
+    auto single=declaration;
+    single.id=exec_ir::StorageId{0};
+    auto program = storage_layout({std::move(single)});
     ASSERT_TRUE(program);
     LaunchRuntime runtime{
         execution_model::GridId{94},
@@ -259,13 +282,15 @@ TEST(StorageRuntime, RejectsUnrepresentableGlobalSharedAndLocalLayouts) {
 
 TEST(StorageRuntime, RejectsUnrepresentableDynamicSharedBytes) {
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "dynamic",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 0,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = std::nullopt,
         .alignment = 1,
-        .initialization = exec_ir::StorageInitialization::external,
-        .dynamic_shared = true}});
+        .declaration_kind = exec_ir::StorageDeclarationKind::External,
+        .dynamic_shared = true,
+        .initialization = exec_ir::StorageInitialization::external}});
   ASSERT_TRUE(program);
   LaunchRuntime runtime{
       execution_model::GridId{95},
@@ -279,26 +304,31 @@ TEST(StorageRuntime, RejectsUnrepresentableDynamicSharedBytes) {
 
 TEST(StorageRuntime, DynamicSharedDeclarationsAliasOneAlignedSegment) {
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "a",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 0,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = std::nullopt,
         .alignment = 8,
-        .initialization = exec_ir::StorageInitialization::external,
-        .dynamic_shared = true},
-       {.symbol = common::SymbolId{1},
+        .declaration_kind = exec_ir::StorageDeclarationKind::External,
+        .dynamic_shared = true,
+        .initialization = exec_ir::StorageInitialization::external},
+       {.id = exec_ir::StorageId{1},
         .name = "static",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 8,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = 8,
         .alignment = 4,
         .initialization = exec_ir::StorageInitialization::uninitialized},
-       {.symbol = common::SymbolId{2},
+       {.id = exec_ir::StorageId{2},
         .name = "b",
         .space = exec_ir::StorageSpace::shared,
-        .extent = 0,
+        .element_type = exec_ir::DataType::b8,
+        .byte_extent = std::nullopt,
         .alignment = 16,
-        .initialization = exec_ir::StorageInitialization::external,
-        .dynamic_shared = true}});
+        .declaration_kind = exec_ir::StorageDeclarationKind::External,
+        .dynamic_shared = true,
+        .initialization = exec_ir::StorageInitialization::external}});
   ASSERT_TRUE(program);
   LaunchRuntime runtime{
       execution_model::GridId{96},
@@ -308,9 +338,9 @@ TEST(StorageRuntime, DynamicSharedDeclarationsAliasOneAlignedSegment) {
     for (const auto& warp : cta)
       for (const auto& thread : warp) {
         const auto first = runtime.resolve_symbol_offset(
-            {common::SymbolId{0}}, thread.id(), common::FunctionId{0});
+            {exec_ir::StorageId{0}}, thread.id(), common::FunctionId{0});
         const auto second = runtime.resolve_symbol_offset(
-            {common::SymbolId{2}}, thread.id(), common::FunctionId{0});
+            {exec_ir::StorageId{2}}, thread.id(), common::FunctionId{0});
         ASSERT_TRUE(first);
         ASSERT_TRUE(second);
         EXPECT_EQ(*first, 16U);
@@ -324,24 +354,23 @@ TEST(StorageRuntime, DynamicSharedDeclarationsAliasOneAlignedSegment) {
 }
 
 TEST(StorageRuntime, LocalLayoutsAppendIndependentlyForEachFunction) {
-  const auto program = exec_ir::ExecutableProgram::create(
-      {.functions = {{common::FunctionId{0}, 0, 0, {}},
-                     {common::FunctionId{1}, 0, 0, {}}},
-       .storage_declarations = {
-           {.symbol = common::SymbolId{0},
+  const auto program = storage_layout({
+           {.id = exec_ir::StorageId{0},
             .name = "first",
-            .space = exec_ir::StorageSpace::local,
             .owner_function = common::FunctionId{0},
-            .extent = 4,
+            .space = exec_ir::StorageSpace::local,
+            .element_type = exec_ir::DataType::b8,
+            .byte_extent = 4,
             .alignment = 16,
             .initialization = exec_ir::StorageInitialization::uninitialized},
-           {.symbol = common::SymbolId{1},
+           {.id = exec_ir::StorageId{1},
             .name = "second",
-            .space = exec_ir::StorageSpace::local,
             .owner_function = common::FunctionId{1},
-            .extent = 4,
+            .space = exec_ir::StorageSpace::local,
+            .element_type = exec_ir::DataType::b8,
+            .byte_extent = 4,
             .alignment = 16,
-            .initialization = exec_ir::StorageInitialization::uninitialized}}});
+            .initialization = exec_ir::StorageInitialization::uninitialized}}, 2);
   ASSERT_TRUE(program);
   LaunchRuntime runtime{
       execution_model::GridId{97},
@@ -359,15 +388,15 @@ TEST(StorageRuntime, LocalLayoutsAppendIndependentlyForEachFunction) {
                                              second));
         ASSERT_TRUE(runtime.prepare_storage(*program));
         const auto first_offset = runtime.resolve_symbol_offset(
-            {common::SymbolId{0}}, thread.id(), common::FunctionId{0});
+            {exec_ir::StorageId{0}}, thread.id(), common::FunctionId{0});
         const auto second_offset = runtime.resolve_symbol_offset(
-            {common::SymbolId{1}}, thread.id(), common::FunctionId{1});
+            {exec_ir::StorageId{1}}, thread.id(), common::FunctionId{1});
         ASSERT_TRUE(first_offset);
         ASSERT_TRUE(second_offset);
         EXPECT_EQ(*first_offset, 16U);
         EXPECT_EQ(*second_offset, 32U);
         EXPECT_FALSE(runtime.resolve_symbol_offset(
-            {common::SymbolId{0}}, thread.id(), common::FunctionId{1}));
+            {exec_ir::StorageId{0}}, thread.id(), common::FunctionId{1}));
         EXPECT_EQ(*runtime.address_spaces().view(first)->size(), 20U);
         EXPECT_EQ(*runtime.address_spaces().view(second)->size(), 36U);
       }
@@ -375,13 +404,14 @@ TEST(StorageRuntime, LocalLayoutsAppendIndependentlyForEachFunction) {
 
 TEST(StorageRuntime, UnsizedExternalRequiresNonemptyCallerRange) {
   auto program = storage_layout(
-      {{.symbol = common::SymbolId{0},
+      {{.id = exec_ir::StorageId{0},
         .name = "external",
         .space = exec_ir::StorageSpace::global,
-        .extent = 0,
+        .element_type = exec_ir::DataType::b8,
+        .array_extents = {std::nullopt,8},
+        .byte_extent = std::nullopt,
         .alignment = 4,
-        .initialization = exec_ir::StorageInitialization::external,
-        .external_extent_multiple = 8}});
+        .initialization = exec_ir::StorageInitialization::external}});
   ASSERT_TRUE(program);
   LaunchRuntime runtime{
       execution_model::GridId{98},
@@ -406,17 +436,19 @@ TEST(StorageRuntime, StaleContextResourcesFailBeforeModuleMutation) {
   for (const auto space :
        {exec_ir::StorageSpace::shared, exec_ir::StorageSpace::local}) {
     const auto program = storage_layout(
-        {{.symbol = common::SymbolId{0},
+        {{.id = exec_ir::StorageId{0},
           .name = "global",
           .space = exec_ir::StorageSpace::global,
-          .extent = 4,
+          .element_type = exec_ir::DataType::b8,
+          .byte_extent = 4,
           .alignment = 4,
           .initialization = exec_ir::StorageInitialization::zero},
-         {.symbol = common::SymbolId{1},
+         {.id = exec_ir::StorageId{1},
           .name = "context",
-          .space = space,
           .owner_function = common::FunctionId{0},
-          .extent = 4,
+          .space = space,
+          .element_type = exec_ir::DataType::b8,
+          .byte_extent = 4,
           .alignment = 4,
           .initialization = exec_ir::StorageInitialization::uninitialized}});
     ASSERT_TRUE(program);
@@ -454,6 +486,56 @@ TEST(StorageRuntime, StaleContextResourcesFailBeforeModuleMutation) {
       EXPECT_EQ(bytes, marker);
     }
   }
+}
+
+TEST(StorageRuntime, RejectsSizedExternalSharedWithoutAllocating) {
+  auto program=storage_layout({{.id=exec_ir::StorageId{0}, .name="sized",
+      .space=exec_ir::StorageSpace::shared, .element_type=exec_ir::DataType::b8,
+      .byte_extent=4, .alignment=4, .declaration_kind=exec_ir::StorageDeclarationKind::External,
+      .initialization=exec_ir::StorageInitialization::external}});
+  ASSERT_TRUE(program);
+  LaunchRuntime runtime{execution_model::GridId{101},
+      {.cta_dim={1,1,1}, .thread_dim={1,1,1}, .warp_size=1}};
+  const auto result=runtime.prepare_storage(*program);
+  ASSERT_FALSE(result); EXPECT_EQ(result.error().code,StorageErrorCode::unsupported_declaration);
+  for(const auto& cta:runtime.grid()) EXPECT_FALSE(runtime.shared(cta.id()));
+}
+TEST(StorageRuntime, RejectsAmbiguousExternalDeclarationNamesBeforeAllocation) {
+  exec_ir::StorageDeclaration first{.id=exec_ir::StorageId{0}, .name="external",
+      .space=exec_ir::StorageSpace::global, .element_type=exec_ir::DataType::b8,
+      .byte_extent=4, .alignment=4, .declaration_kind=exec_ir::StorageDeclarationKind::External,
+      .initialization=exec_ir::StorageInitialization::external};
+  auto second=first; second.id=exec_ir::StorageId{1};
+  auto program=storage_layout({first,second}); ASSERT_TRUE(program);
+  LaunchRuntime runtime{execution_model::GridId{102},
+      {.cta_dim={1,1,1}, .thread_dim={1,1,1}, .warp_size=1}};
+  const auto result=runtime.prepare_storage(*program,{.externals={{"external",0,4}}});
+  ASSERT_FALSE(result); EXPECT_EQ(result.error().code,StorageErrorCode::ambiguous_external_binding);
+  EXPECT_FALSE(runtime.global());
+}
+TEST(StorageRuntime, RejectsZeroUnsizedExternalStrideBeforeAllocation) {
+  auto program=storage_layout({{.id=exec_ir::StorageId{0}, .name="external",
+      .space=exec_ir::StorageSpace::global, .element_type=exec_ir::DataType::b8,
+      .array_extents={std::nullopt,0}, .alignment=4,
+      .declaration_kind=exec_ir::StorageDeclarationKind::External,
+      .initialization=exec_ir::StorageInitialization::external}});
+  ASSERT_TRUE(program);
+  LaunchRuntime runtime{execution_model::GridId{103},
+      {.cta_dim={1,1,1}, .thread_dim={1,1,1}, .warp_size=1}};
+  const auto result=runtime.prepare_storage(*program);
+  ASSERT_FALSE(result); EXPECT_EQ(result.error().code,StorageErrorCode::unsupported_declaration);
+  EXPECT_FALSE(runtime.global());
+}
+
+TEST(StorageRuntime, RejectsZeroUninitializedExtentBeforeAllocation) {
+  auto program=storage_layout({{.id=exec_ir::StorageId{0}, .name="empty",
+      .element_type=exec_ir::DataType::b8, .byte_extent=0, .alignment=4}});
+  ASSERT_TRUE(program);
+  LaunchRuntime runtime{execution_model::GridId{104},
+      {.cta_dim={1,1,1}, .thread_dim={1,1,1}, .warp_size=1}};
+  const auto result=runtime.prepare_storage(*program);
+  ASSERT_FALSE(result); EXPECT_EQ(result.error().code,StorageErrorCode::unsupported_declaration);
+  EXPECT_FALSE(runtime.global());
 }
 
 }  // namespace ptxsim::runtime::test

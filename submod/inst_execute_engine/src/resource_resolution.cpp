@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <ptxsim/memory/address_space/generic_address.hpp>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 
 namespace ptxsim::inst_execute_engine::detail {
 
@@ -57,12 +58,12 @@ auto LaneResourceResolver::resolve_symbol_offset(exec_ir::SymbolRef symbol)
 
 namespace {
 
-/** @brief Decode a b32/b64 address register or b64 immediate address base. */
+/** @brief Decode a b32/b64 address register or zero-extended numeric immediate base. */
 auto address_base(const memory::RegisterView& registers,
                   const exec_ir::Address& address)
     -> std::expected<std::uint64_t, LaneFaultCause> {
-  if (const auto* slot = std::get_if<common::RegisterSlot>(&address.base)) {
-    const auto value = registers.read(*slot);
+  if (const auto* slot = std::get_if<exec_ir::RegisterRef>(&address.base)) {
+    const auto value = registers.read(slot->slot);
     if (!value)
       return std::unexpected(LaneFaultCause{value.error()});
     if (const auto b32 = value->as_b32(); b32)
@@ -72,42 +73,50 @@ auto address_base(const memory::RegisterView& registers,
     return std::unexpected(LaneFaultCause{
         common::RawValueError{common::RawWidth::b64, value->width()}});
   }
-  const auto* immediate = std::get_if<common::RawValue>(&address.base);
+  const auto* immediate = std::get_if<exec_ir::Immediate>(&address.base);
   if (immediate == nullptr) {
     return std::unexpected(LaneFaultCause{
         common::RawValueError{common::RawWidth::b64, common::RawWidth::b32}});
   }
-  const auto value = immediate->as_b64();
+  const auto raw = exec_ir::immediate_value(*immediate);
+  if (!raw) return std::unexpected(LaneFaultCause{
+      common::RawValueError{common::RawWidth::b64, common::RawWidth::pred}});
+  if (const auto value=raw->as_b32(); value) return *value;
+  const auto value = raw->as_b64();
   if (!value)
     return std::unexpected(LaneFaultCause{value.error()});
   return *value;
 }
 
-/** @brief Apply one raw b64 signed-direction byte offset without wraparound. */
-auto apply_offset(std::uint64_t base,
+}  // namespace
+
+/** @brief Apply an operator and signed use-width byte offset without unsigned wraparound. */
+auto apply_address_offset(std::uint64_t base,
                   const std::optional<exec_ir::AddressOffset>& offset)
     -> std::expected<std::uint64_t, LaneFaultCause> {
   if (!offset)
     return base;
-  const auto magnitude = offset->value.as_b64();
-  if (!magnitude)
-    return std::unexpected(LaneFaultCause{magnitude.error()});
-  if (offset->subtract) {
-    if (*magnitude > base)
+  const auto raw = exec_ir::immediate_value(offset->value);
+  if (!raw) return std::unexpected(LaneFaultCause{
+      common::RawValueError{common::RawWidth::b64, common::RawWidth::pred}});
+  const auto bits = raw->as_b64();
+  if (!bits) return std::unexpected(LaneFaultCause{bits.error()});
+  const auto magnitude = offset->value.is_negative ? std::uint64_t{0} - *bits : *bits;
+  const bool subtract = (offset->operation == exec_ir::AddressOffsetOperator::Subtract) != offset->value.is_negative;
+  if (subtract) {
+    if (magnitude > base)
       return std::unexpected(LaneFaultCause{memory::AddressResolutionError{
           memory::AddressResolutionErrorCode::unmapped_address,
           memory::GenericAddress{base}, std::nullopt}});
-    return base - *magnitude;
+    return base - magnitude;
   }
-  if (*magnitude > std::numeric_limits<std::uint64_t>::max() - base) {
+  if (magnitude > std::numeric_limits<std::uint64_t>::max() - base) {
     return std::unexpected(LaneFaultCause{memory::AddressResolutionError{
         memory::AddressResolutionErrorCode::unmapped_address,
         memory::GenericAddress{base}, std::nullopt}});
   }
-  return base + *magnitude;
+  return base + magnitude;
 }
-
-}  // namespace
 
 auto numeric_address(const memory::RegisterView& registers,
                      const exec_ir::Address& address)
@@ -115,7 +124,7 @@ auto numeric_address(const memory::RegisterView& registers,
   const auto base = address_base(registers, address);
   if (!base)
     return std::unexpected(base.error());
-  return apply_offset(*base, address.offset);
+  return apply_address_offset(*base, address.offset);
 }
 
 auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
@@ -132,7 +141,7 @@ auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
       const auto base = resolve_symbol_address(*symbol, space);
       if (!base)
         return std::unexpected(base.error());
-      return apply_offset(*base, address.offset);
+      return apply_address_offset(*base, address.offset);
     }
     return numeric_address(registers->get(), address);
   }();
@@ -224,16 +233,19 @@ auto LaneResourceResolver::resolve_memory(exec_ir::AddressSpace space,
 }
 
 auto b32_operand(const memory::RegisterView& registers,
-                 const exec_ir::B32Operand& operand)
+                 const exec_ir::ScalarOperand& operand)
     -> std::expected<std::uint32_t, LaneFaultCause> {
-  if (const auto* immediate = std::get_if<common::RawValue>(&operand)) {
-    if (const auto value = immediate->as_b32(); value) {
+  if (const auto* immediate = std::get_if<exec_ir::Immediate>(&operand)) {
+    const auto raw = exec_ir::immediate_value(*immediate);
+    if (!raw) return std::unexpected(LaneFaultCause{
+        common::RawValueError{common::RawWidth::b32, common::RawWidth::pred}});
+    if (const auto value = raw->as_b32(); value) {
       return *value;
     } else {
       return std::unexpected(LaneFaultCause{value.error()});
     }
   }
-  const auto value = registers.read(std::get<common::RegisterSlot>(operand));
+  const auto value = registers.read(std::get<exec_ir::RegisterRef>(operand).slot);
   if (!value) {
     return std::unexpected(LaneFaultCause{value.error()});
   }

@@ -18,7 +18,7 @@ namespace ptxsim::inst_execute_engine {
 /** @brief A special register whose architectural backing is not modeled. */
 struct UnsupportedSpecialRegister {
   /** Program-stable special-register identity requested by the instruction. */
-  common::SpecialRegisterId id;
+  exec_ir::SpecialRegisterId id;
   /** Optional component requested from a vector-capable special register. */
   std::optional<std::uint8_t> component;
 
@@ -54,6 +54,16 @@ struct InvalidMovPredicate {
   /** @brief Compare malformed predicate-movement failures. */
   constexpr bool operator==(const InvalidMovPredicate&) const noexcept =
       default;
+};
+
+/** @brief A local branch operand names a different canonical callable. */
+struct InvalidBranchTarget {
+  /** @brief Canonical callable executing this supported branch. */
+  common::FunctionId expected;
+  /** @brief Canonical callable retained by the actual target operand. */
+  common::FunctionId actual;
+  /** @brief Compare the complete identity mismatch. */
+  bool operator==(const InvalidBranchTarget&) const = default;
 };
 
 /** @brief Reason an issue group cannot commit execution. */
@@ -98,7 +108,7 @@ using LaneFaultCause =
                  arith::arithmetic_error, memory::AddressResolutionError,
                  memory::AddressSpaceError, UnsupportedSpecialRegister,
                  UnsupportedMovSource, UnsupportedMovType, InvalidMovVector,
-                 InvalidMovPredicate>;
+                 InvalidMovPredicate, InvalidBranchTarget>;
 
 /** @brief A fault retained after the issue's other eligible lanes execute. */
 struct LaneFault {

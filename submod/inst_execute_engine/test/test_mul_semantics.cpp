@@ -15,28 +15,28 @@ namespace {
 using common::RegisterSlot;
 
 /** @brief Build a dummy fixed-rounding f32 form whose operand fields are unused. */
-auto f32_form() -> exec_ir::Mul::RnF32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+auto f32_form() -> exec_ir::MulRnF32 {
+  return {exec_ir::MulRnF32::Operands{}, exec_ir::MulRnF32::Controls{}};
 }
 
 /** @brief Build a dummy low unsigned form whose operand fields are unused. */
-auto low_form() -> exec_ir::Mul::LoU32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+auto low_form() -> exec_ir::MulLoU32 {
+  return {exec_ir::MulLoU32::Operands{}, exec_ir::MulLoU32::Controls{}};
 }
 
 /** @brief Build a dummy high unsigned form whose operand fields are unused. */
-auto high_form() -> exec_ir::Mul::HiU32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+auto high_form() -> exec_ir::MulHiU32 {
+  return {exec_ir::MulHiU32::Operands{}, exec_ir::MulHiU32::Controls{}};
 }
 
 /** @brief Build a dummy wide unsigned form whose operand fields are unused. */
-auto wide_unsigned_form() -> exec_ir::Mul::WideU32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+auto wide_unsigned_form() -> exec_ir::MulWideU32 {
+  return {exec_ir::MulWideU32::Operands{}, exec_ir::MulWideU32::Controls{}};
 }
 
 /** @brief Build a dummy wide signed form whose operand fields are unused. */
-auto wide_signed_form() -> exec_ir::Mul::WideS32 {
-  return {RegisterSlot{0}, RegisterSlot{1}, RegisterSlot{2}};
+auto wide_signed_form() -> exec_ir::MulWideS32 {
+  return {exec_ir::MulWideS32::Operands{}, exec_ir::MulWideS32::Controls{}};
 }
 
 TEST(MulSemantics, F32UsesProjectedRoundToNearestControl) {

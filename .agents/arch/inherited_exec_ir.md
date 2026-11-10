@@ -30,6 +30,14 @@ The Python artifact is
 [ptx_frontend-0.8.0-py3-none-any.whl](https://github.com/endingly/ptx_frontend/releases/download/v0.8.0/ptx_frontend-0.8.0-py3-none-any.whl),
 SHA256 `9306243b6d66d172f050c898338fba186567b6bf86d1a428e778e4c1b16a5e68`.
 
+The user's 2026-11-10 scope clarification explicitly retires
+`fma.rn.oob.sat.f16` and `fma.rn.oob.sat.f16x2`, which this pinned frontend
+rejects and does not represent as native forms with both controls. Retain both
+spellings as source-resolution rejection tests and preserve the other 68
+previous numeric execution cases and 16 native FMA forms. Do not add a parser
+shim, native extension or legacy form to restore the retired combinations.
+General arithmetic primitives remain outside this PTX combination retirement.
+
 One immutable ptxsim projection consumes frontend public normalized
 specification and resolved models. A version-local frontend C++ backend adapter
 may import `GenerationContext`, `with_cpp_backend_field_names`, and `form_name`
@@ -55,7 +63,9 @@ owned execution predicate, a virtual destructor, and typed queries. Every
 semantic form is one generated final direct subclass of `Instruction`. Opcode
 and Kind are ptxsim-owned identities fixed by closed generated construction,
 which keeps both identities and the dynamic type consistent; callers cannot
-forge an arbitrary base identity or mutate it afterward. Generated thunks
+forge an arbitrary base identity or mutate it afterward. Base construction and
+copy/move are private to generated final friends; a user-derived class cannot
+forge a tag by copying the base portion. Generated thunks
 provide structural validation and printing. The base contains no executor,
 runtime state, or frontend legality checker; its validation interface is
 structural only.
@@ -77,11 +87,31 @@ Binding coverage includes every projected form, layout, control, optional,
 list, and leaf. An absent binder is unfinished implementation, even for an
 instruction with no semantic handler.
 
-`ExecutableProgram` owns immutable instruction and metadata storage and may
-share that storage across copies. Mutable shared aliases must not let a caller
-change a constructed program. No polymorphic clone is required merely to
-preserve program copyability. Program validation checks structural/container
-invariants and does not reject an unexecuted instruction for missing semantics.
+`ExecutableProgram::create(const ProgramDefinition&)` freezes a fresh owned
+snapshot using internal generated Kind-to-typed-copy thunks. Each thunk creates
+an actual const final object and deep-value-copies nested containers. Metadata
+tables are copied as well. Private const ProgramStorage exposes only const
+instruction/metadata children; program copies share it. Legal mutable aliases
+to caller inputs remain valid and cannot mutate the program. This is an
+internal freeze boundary, not a public virtual clone API. Structural validation
+does not reject an unexecuted instruction for missing semantics.
+
+Every canonical callable function, including declarations, prototypes and
+aliases, receives an owned FunctionId. Function bodies are optional; an absent
+body is not an empty definition. Fetch on a declaration yields a structured
+nonexecutable-function error, while entry launch requires a real definition.
+Parameter declaration and definition scopes remain distinct. Strong storage,
+resource, parameter, prototype, target-set and call-table identities preserve
+indirect alternatives, ordered sparse slots, canonical targets and complete ABI.
+
+Owned declarations preserve unknown extents and opaque widths rather than
+requiring a runtime allocation. Sparse initializer constants and typed
+relocations, managed/unified UUIDs and opaque static objects remain data.
+Allocation views derive only from supported declarations; an unsupported runtime
+allocation is separate from binding completeness. All nested operand
+alternatives have typed binders. Semantic field identity includes form and
+layout, independently of C++ member access. Complete form-static contracts may
+use ptxsim-owned constexpr descriptors; absence represents a real model absence.
 
 ## Capability and issue dispatch
 

@@ -1,47 +1,659 @@
-schema: ptxsim-exec-ir-backend/v2
+schema: ptxsim-exec-ir-backend/v3
 ptx_spec_schema: ptx-instr/v1
-namespace: ptxsim::exec_ir
-
-# This maps normalized frontend leaf kinds to independent exec-IR C++ storage.
-# Opcode, variant, layout, and legality topology comes from PtxSpecDatabase.
-modifier_kinds:
-  type: {cpp_type: DataType, values: {pred: DataType::pred, b8: DataType::b8, b16: DataType::b16, b32: DataType::b32, b64: DataType::b64, b128: DataType::b128, u8: DataType::u8, u16: DataType::u16, u32: DataType::u32, u64: DataType::u64, s8: DataType::s8, s16: DataType::s16, s32: DataType::s32, s64: DataType::s64, f16: DataType::f16, f16x2: DataType::f16x2, f32: DataType::f32, f32x2: DataType::f32x2, f64: DataType::f64, bf16: DataType::bf16, bf16x2: DataType::bf16x2, u8x4: DataType::u8x4, u16x2: DataType::u16x2, s8x4: DataType::s8x4, s16x2: DataType::s16x2}}
-  rounding: {cpp_type: RoundingMode, values: {rn: RoundingMode::rn, rz: RoundingMode::rz, rm: RoundingMode::rm, rp: RoundingMode::rp, rzi: RoundingMode::rzi}}
-  comparison: {cpp_type: ComparisonOperator, values: {eq: ComparisonOperator::eq, lt: ComparisonOperator::lt, ge: ComparisonOperator::ge}}
-  boolean_op: {cpp_type: BooleanOperator, values: {and: BooleanOperator::and_, or: BooleanOperator::or_, xor: BooleanOperator::xor_}}
-  cache: {cpp_type: CacheOperator, values: {ca: CacheOperator::ca, cg: CacheOperator::cg, cs: CacheOperator::cs, cv: CacheOperator::cv, lu: CacheOperator::lu, unspecified: CacheOperator::unspecified, wb: CacheOperator::wb, wt: CacheOperator::wt}}
-  eviction_priority: {cpp_type: EvictionPriority, values: {evict_first: EvictionPriority::evict_first, evict_last: EvictionPriority::evict_last, evict_normal: EvictionPriority::evict_normal, no_allocate: EvictionPriority::no_allocate}}
-  semantics: {cpp_type: MemoryConsistency, values: {acq_rel: MemoryConsistency::acq_rel, acquire: MemoryConsistency::acquire, omitted: MemoryConsistency::omitted, relaxed: MemoryConsistency::relaxed, release: MemoryConsistency::release, volatile: MemoryConsistency::volatile_, weak: MemoryConsistency::weak}}
-  scope: {cpp_type: MemoryScope, values: {cluster: MemoryScope::cluster, cta: MemoryScope::cta, gpu: MemoryScope::gpu, none: MemoryScope::none, sys: MemoryScope::sys}}
-  vector: {cpp_type: VectorArity, values: {v2: VectorArity::v2, v4: VectorArity::v4, v8: VectorArity::v8}}
-  state_space: {cpp_type: AddressSpace, values: {const: AddressSpace::const_, generic: AddressSpace::generic, global: AddressSpace::global, local: AddressSpace::local, param: AddressSpace::param, "param::entry": AddressSpace::param_entry, "param::func": AddressSpace::param_func, shared: AddressSpace::shared}}
-  phase_type: {cpp_type: MbarrierPhaseType, values: {"phase_type::conditional": MbarrierPhaseType::conditional, "phase_type::primary": MbarrierPhaseType::primary}}
-  mbarrier_layout: {cpp_type: MbarrierLayout, values: {"layout::v0": MbarrierLayout::v0, "layout::v1": MbarrierLayout::v1}}
-  proxy: {cpp_type: AsyncProxyKind, values: {async: AsyncProxyKind::async, "async.global": AsyncProxyKind::async_global, "async.shared::cluster": AsyncProxyKind::async_shared_cluster, "async.shared::cta": AsyncProxyKind::async_shared_cta}}
-  proxy_pair: {cpp_type: ProxyKindPair, values: {"async::generic": ProxyKindPair::async_generic, "tensormap::generic": ProxyKindPair::tensormap_generic}}
-  flag: {cpp_type: bool, values: {true: "true", false: "false"}}
-
-operand_kinds:
-  reg: {cpp_type: common::RegisterSlot, values: {}}
-  imm: {cpp_type: common::RawValue, values: {}}
-  reg_or_imm: {cpp_type: ScalarOperand, values: {}}
-  reg_or_sink: {cpp_type: RegisterOrSink, values: {}}
-  shfl_dest: {cpp_type: ShflDestination, values: {}}
-  pred_pair: {cpp_type: PredicatePair, values: {}}
-  mov_scalar_src: {cpp_type: MovSource, values: {}}
-  cluster_address: {cpp_type: MovSource, values: {}}
-  vector_reg: {cpp_type: VectorRegisterRef, values: {}}
-  vector_sreg: {cpp_type: VectorSpecialRegisterRef, values: {}}
-  pred: {cpp_type: Predicate, values: {}}
-  pred_or_sreg: {cpp_type: PredicateSource, values: {}}
-  pred_or_not: {cpp_type: Predicate, values: {}}
-  label: {cpp_type: common::ProgramCounter, values: {}}
-  addr: {cpp_type: Address, values: {}}
-  reg_vector: {cpp_type: RegisterVector, values: {}}
-  direct_call_target: {cpp_type: FunctionRef, values: {}}
-  indirect_call_target: {cpp_type: IndirectCallee, values: {}}
-  indirect_call_metadata: {cpp_type: IndirectCallee, values: {}}
-  branch_target_set: {cpp_type: BranchTargetSet, values: {}}
-  call_return_param: {cpp_type: CallParameterRef, values: {}}
-  call_arguments: {cpp_type: CallArguments, values: {}}
-  mbarrier_state_token: {cpp_type: MbarrierStateToken, values: {}}
+domains:
+  Bool:
+    cpp_type: bool
+    values:
+    - value: false
+      cpp: 'false'
+    - value: true
+      cpp: 'true'
+  ScalarType:
+    cpp_type: DataType
+    values:
+    - value: u2
+      cpp: DataType::u2
+    - value: u4
+      cpp: DataType::u4
+    - value: u8
+      cpp: DataType::u8
+    - value: u8x4
+      cpp: DataType::u8x4
+    - value: u16
+      cpp: DataType::u16
+    - value: u16x2
+      cpp: DataType::u16x2
+    - value: u32
+      cpp: DataType::u32
+    - value: u64
+      cpp: DataType::u64
+    - value: s2
+      cpp: DataType::s2
+    - value: s4
+      cpp: DataType::s4
+    - value: s8
+      cpp: DataType::s8
+    - value: s8x4
+      cpp: DataType::s8x4
+    - value: s16
+      cpp: DataType::s16
+    - value: s16x2
+      cpp: DataType::s16x2
+    - value: s32
+      cpp: DataType::s32
+    - value: s64
+      cpp: DataType::s64
+    - value: b8
+      cpp: DataType::b8
+    - value: b1
+      cpp: DataType::b1
+    - value: b16
+      cpp: DataType::b16
+    - value: b32
+      cpp: DataType::b32
+    - value: b64
+      cpp: DataType::b64
+    - value: b128
+      cpp: DataType::b128
+    - value: f16
+      cpp: DataType::f16
+    - value: f16x2
+      cpp: DataType::f16x2
+    - value: f32
+      cpp: DataType::f32
+    - value: f32x2
+      cpp: DataType::f32x2
+    - value: f64
+      cpp: DataType::f64
+    - value: bf16
+      cpp: DataType::bf16
+    - value: bf16x2
+      cpp: DataType::bf16x2
+    - value: e4m3x2
+      cpp: DataType::e4m3x2
+    - value: e5m2x2
+      cpp: DataType::e5m2x2
+    - value: e2m1x2
+      cpp: DataType::e2m1x2
+    - value: e2m3x2
+      cpp: DataType::e2m3x2
+    - value: e3m2x2
+      cpp: DataType::e3m2x2
+    - value: e4m3x4
+      cpp: DataType::e4m3x4
+    - value: e5m2x4
+      cpp: DataType::e5m2x4
+    - value: e2m1x4
+      cpp: DataType::e2m1x4
+    - value: e2m3x4
+      cpp: DataType::e2m3x4
+    - value: e3m2x4
+      cpp: DataType::e3m2x4
+    - value: ue8m0x2
+      cpp: DataType::ue8m0x2
+    - value: s2f6x2
+      cpp: DataType::s2f6x2
+    - value: pred
+      cpp: DataType::pred
+    - value: tf32
+      cpp: DataType::tf32
+    - value: e4m3
+      cpp: DataType::e4m3
+    - value: e5m2
+      cpp: DataType::e5m2
+    - value: e3m2
+      cpp: DataType::e3m2
+    - value: e2m3
+      cpp: DataType::e2m3
+    - value: e2m1
+      cpp: DataType::e2m1
+    - value: ue8m0
+      cpp: DataType::ue8m0
+    - value: ue4m3
+      cpp: DataType::ue4m3
+  RoundingMode:
+    cpp_type: RoundingMode
+    values:
+    - value: rn
+      cpp: RoundingMode::rn
+    - value: rz
+      cpp: RoundingMode::rz
+    - value: rm
+      cpp: RoundingMode::rm
+    - value: rp
+      cpp: RoundingMode::rp
+    - value: rzi
+      cpp: RoundingMode::rzi
+    - value: rni
+      cpp: RoundingMode::rni
+    - value: rmi
+      cpp: RoundingMode::rmi
+    - value: rpi
+      cpp: RoundingMode::rpi
+    - value: rna
+      cpp: RoundingMode::rna
+    - value: rs
+      cpp: RoundingMode::rs
+  ComparisonOperator:
+    cpp_type: ComparisonOperator
+    values:
+    - value: eq
+      cpp: ComparisonOperator::eq
+    - value: ne
+      cpp: ComparisonOperator::ne
+    - value: lt
+      cpp: ComparisonOperator::lt
+    - value: le
+      cpp: ComparisonOperator::le
+    - value: gt
+      cpp: ComparisonOperator::gt
+    - value: ge
+      cpp: ComparisonOperator::ge
+    - value: lo
+      cpp: ComparisonOperator::lo
+    - value: ls
+      cpp: ComparisonOperator::ls
+    - value: hi
+      cpp: ComparisonOperator::hi
+    - value: hs
+      cpp: ComparisonOperator::hs
+    - value: equ
+      cpp: ComparisonOperator::equ
+    - value: neu
+      cpp: ComparisonOperator::neu
+    - value: ltu
+      cpp: ComparisonOperator::ltu
+    - value: leu
+      cpp: ComparisonOperator::leu
+    - value: gtu
+      cpp: ComparisonOperator::gtu
+    - value: geu
+      cpp: ComparisonOperator::geu
+    - value: num
+      cpp: ComparisonOperator::num
+    - value: nan
+      cpp: ComparisonOperator::nan
+  TestProperty:
+    cpp_type: TestProperty
+    values:
+    - value: finite
+      cpp: TestProperty::finite
+    - value: infinite
+      cpp: TestProperty::infinite
+    - value: number
+      cpp: TestProperty::number
+    - value: notanumber
+      cpp: TestProperty::notanumber
+    - value: normal
+      cpp: TestProperty::normal
+    - value: subnormal
+      cpp: TestProperty::subnormal
+  BooleanOperator:
+    cpp_type: BooleanOperator
+    values:
+    - value: and
+      cpp: BooleanOperator::and_
+    - value: or
+      cpp: BooleanOperator::or_
+    - value: xor
+      cpp: BooleanOperator::xor_
+  CacheOperator:
+    cpp_type: CacheOperator
+    values:
+    - value: unspecified
+      cpp: CacheOperator::unspecified
+    - value: ca
+      cpp: CacheOperator::ca
+    - value: cg
+      cpp: CacheOperator::cg
+    - value: cs
+      cpp: CacheOperator::cs
+    - value: lu
+      cpp: CacheOperator::lu
+    - value: cv
+      cpp: CacheOperator::cv
+    - value: wb
+      cpp: CacheOperator::wb
+    - value: wt
+      cpp: CacheOperator::wt
+  EvictionPriority:
+    cpp_type: EvictionPriority
+    values:
+    - value: invalid
+      cpp: EvictionPriority::invalid
+    - value: evict_normal
+      cpp: EvictionPriority::evict_normal
+    - value: evict_first
+      cpp: EvictionPriority::evict_first
+    - value: evict_last
+      cpp: EvictionPriority::evict_last
+    - value: evict_unchanged
+      cpp: EvictionPriority::evict_unchanged
+    - value: no_allocate
+      cpp: EvictionPriority::no_allocate
+  PrefetchSize:
+    cpp_type: PrefetchSize
+    values:
+    - value: none
+      cpp: PrefetchSize::none
+    - value: L2::64B
+      cpp: PrefetchSize::l2_64b
+    - value: L2::128B
+      cpp: PrefetchSize::l2_128b
+    - value: L2::256B
+      cpp: PrefetchSize::l2_256b
+  MemoryConsistency:
+    cpp_type: MemoryConsistency
+    values:
+    - value: omitted
+      cpp: MemoryConsistency::omitted
+    - value: weak
+      cpp: MemoryConsistency::weak
+    - value: volatile
+      cpp: MemoryConsistency::volatile_
+    - value: relaxed
+      cpp: MemoryConsistency::relaxed
+    - value: acquire
+      cpp: MemoryConsistency::acquire
+    - value: release
+      cpp: MemoryConsistency::release
+    - value: acq_rel
+      cpp: MemoryConsistency::acq_rel
+    - value: sc
+      cpp: MemoryConsistency::sc
+  MemoryScope:
+    cpp_type: MemoryScope
+    values:
+    - value: none
+      cpp: MemoryScope::none
+    - value: cta
+      cpp: MemoryScope::cta
+    - value: gl
+      cpp: MemoryScope::gl
+    - value: cluster
+      cpp: MemoryScope::cluster
+    - value: gpu
+      cpp: MemoryScope::gpu
+    - value: sys
+      cpp: MemoryScope::sys
+  VectorArity:
+    cpp_type: VectorArity
+    values:
+    - value: v2
+      cpp: VectorArity::v2
+    - value: v4
+      cpp: VectorArity::v4
+    - value: v8
+      cpp: VectorArity::v8
+  MemoryStateSpace:
+    cpp_type: AddressSpace
+    values:
+    - value: const
+      cpp: AddressSpace::const_
+    - value: generic
+      cpp: AddressSpace::generic
+    - value: global
+      cpp: AddressSpace::global
+    - value: local
+      cpp: AddressSpace::local
+    - value: param
+      cpp: AddressSpace::param
+    - value: param::entry
+      cpp: AddressSpace::param_entry
+    - value: param::func
+      cpp: AddressSpace::param_func
+    - value: shared
+      cpp: AddressSpace::shared
+    - value: shared::cta
+      cpp: AddressSpace::shared_cta
+    - value: shared::cluster
+      cpp: AddressSpace::shared_cluster
+  MbarrierPhaseType:
+    cpp_type: MbarrierPhaseType
+    values:
+    - value: phase_type::primary
+      cpp: MbarrierPhaseType::phase_type_primary
+    - value: phase_type::conditional
+      cpp: MbarrierPhaseType::phase_type_conditional
+  MbarrierLayout:
+    cpp_type: MbarrierLayout
+    values:
+    - value: layout::v0
+      cpp: MbarrierLayout::layout_v0
+    - value: layout::v1
+      cpp: MbarrierLayout::layout_v1
+  TcgenCtaGroup:
+    cpp_type: TcgenCtaGroup
+    values:
+    - value: cta_group::1
+      cpp: TcgenCtaGroup::cta_group_1
+    - value: cta_group::2
+      cpp: TcgenCtaGroup::cta_group_2
+  TcgenScaleVectorSize:
+    cpp_type: TcgenScaleVectorSize
+    values:
+    - value: absent
+      cpp: TcgenScaleVectorSize::absent
+    - value: scale_vec::1X
+      cpp: TcgenScaleVectorSize::scale_vec_1x
+    - value: scale_vec::2X
+      cpp: TcgenScaleVectorSize::scale_vec_2x
+    - value: scale_vec::4X
+      cpp: TcgenScaleVectorSize::scale_vec_4x
+    - value: block16
+      cpp: TcgenScaleVectorSize::block16
+    - value: block32
+      cpp: TcgenScaleVectorSize::block32
+  TcgenCollectorControl:
+    cpp_type: TcgenCollectorControl
+    values:
+    - value: absent
+      cpp: TcgenCollectorControl::absent
+    - value: collector::a::fill
+      cpp: TcgenCollectorControl::collector_a_fill
+    - value: collector::a::use
+      cpp: TcgenCollectorControl::collector_a_use
+    - value: collector::a::lastuse
+      cpp: TcgenCollectorControl::collector_a_lastuse
+    - value: collector::a::discard
+      cpp: TcgenCollectorControl::collector_a_discard
+    - value: collector::b0::fill
+      cpp: TcgenCollectorControl::collector_b0_fill
+    - value: collector::b0::use
+      cpp: TcgenCollectorControl::collector_b0_use
+    - value: collector::b0::lastuse
+      cpp: TcgenCollectorControl::collector_b0_lastuse
+    - value: collector::b0::discard
+      cpp: TcgenCollectorControl::collector_b0_discard
+    - value: collector::b1::fill
+      cpp: TcgenCollectorControl::collector_b1_fill
+    - value: collector::b1::use
+      cpp: TcgenCollectorControl::collector_b1_use
+    - value: collector::b1::lastuse
+      cpp: TcgenCollectorControl::collector_b1_lastuse
+    - value: collector::b1::discard
+      cpp: TcgenCollectorControl::collector_b1_discard
+    - value: collector::b2::fill
+      cpp: TcgenCollectorControl::collector_b2_fill
+    - value: collector::b2::use
+      cpp: TcgenCollectorControl::collector_b2_use
+    - value: collector::b2::lastuse
+      cpp: TcgenCollectorControl::collector_b2_lastuse
+    - value: collector::b2::discard
+      cpp: TcgenCollectorControl::collector_b2_discard
+    - value: collector::b3::fill
+      cpp: TcgenCollectorControl::collector_b3_fill
+    - value: collector::b3::use
+      cpp: TcgenCollectorControl::collector_b3_use
+    - value: collector::b3::lastuse
+      cpp: TcgenCollectorControl::collector_b3_lastuse
+    - value: collector::b3::discard
+      cpp: TcgenCollectorControl::collector_b3_discard
+  TcgenDataMovementShape:
+    cpp_type: TcgenDataMovementShape
+    values:
+    - value: s32x32b
+      cpp: TcgenDataMovementShape::s32x32b
+    - value: s16x64b
+      cpp: TcgenDataMovementShape::s16x64b
+    - value: s16x128b
+      cpp: TcgenDataMovementShape::s16x128b
+    - value: s16x256b
+      cpp: TcgenDataMovementShape::s16x256b
+    - value: s16x32bx2
+      cpp: TcgenDataMovementShape::s16x32bx2
+    - value: s128x256b
+      cpp: TcgenDataMovementShape::s128x256b
+    - value: s4x256b
+      cpp: TcgenDataMovementShape::s4x256b
+    - value: s128x128b
+      cpp: TcgenDataMovementShape::s128x128b
+    - value: s64x128b
+      cpp: TcgenDataMovementShape::s64x128b
+    - value: s32x128b
+      cpp: TcgenDataMovementShape::s32x128b
+  TcgenRepeat:
+    cpp_type: TcgenRepeat
+    values:
+    - value: x1
+      cpp: TcgenRepeat::x1
+    - value: x2
+      cpp: TcgenRepeat::x2
+    - value: x4
+      cpp: TcgenRepeat::x4
+    - value: x8
+      cpp: TcgenRepeat::x8
+    - value: x16
+      cpp: TcgenRepeat::x16
+    - value: x32
+      cpp: TcgenRepeat::x32
+    - value: x64
+      cpp: TcgenRepeat::x64
+    - value: x128
+      cpp: TcgenRepeat::x128
+  TcgenReductionOp:
+    cpp_type: TcgenReductionOp
+    values:
+    - value: min
+      cpp: TcgenReductionOp::min
+    - value: max
+      cpp: TcgenReductionOp::max
+  TcgenWaitClass:
+    cpp_type: TcgenWaitClass
+    values:
+    - value: wait::ld
+      cpp: TcgenWaitClass::wait_ld
+    - value: wait::st
+      cpp: TcgenWaitClass::wait_st
+  VideoScale:
+    cpp_type: VideoScale
+    values:
+    - value: none
+      cpp: VideoScale::none
+    - value: shr7
+      cpp: VideoScale::shr7
+    - value: shr15
+      cpp: VideoScale::shr15
+  VideoShiftMode:
+    cpp_type: VideoShiftMode
+    values:
+    - value: clamp
+      cpp: VideoShiftMode::clamp
+    - value: wrap
+      cpp: VideoShiftMode::wrap
+  VideoSecondaryOp:
+    cpp_type: VideoSecondaryOp
+    values:
+    - value: none
+      cpp: VideoSecondaryOp::none
+    - value: add
+      cpp: VideoSecondaryOp::add
+    - value: min
+      cpp: VideoSecondaryOp::min
+    - value: max
+      cpp: VideoSecondaryOp::max
+  VideoType:
+    cpp_type: VideoType
+    values:
+    - value: s32
+      cpp: VideoType::s32
+    - value: u32
+      cpp: VideoType::u32
+  AsyncProxyKind:
+    cpp_type: AsyncProxyKind
+    values:
+    - value: async
+      cpp: AsyncProxyKind::async
+    - value: async.global
+      cpp: AsyncProxyKind::async_global
+    - value: async.shared::cta
+      cpp: AsyncProxyKind::async_shared_cta
+    - value: async.shared::cluster
+      cpp: AsyncProxyKind::async_shared_cluster
+  ProxyKindPair:
+    cpp_type: ProxyKindPair
+    values:
+    - value: tensormap::generic
+      cpp: ProxyKindPair::tensormap_generic
+    - value: async::generic
+      cpp: ProxyKindPair::async_generic
+    - value: generic::fabric
+      cpp: ProxyKindPair::generic_fabric
+    - value: fabric::generic
+      cpp: ProxyKindPair::fabric_generic
+    - value: fabric::fabric
+      cpp: ProxyKindPair::fabric_fabric
+leaves:
+  Register:
+    cpp_type: RegisterRef
+    binder: bind_register
+  Predicate:
+    cpp_type: Predicate
+    binder: bind_predicate
+  PredicateOrSink:
+    cpp_type: PredicateOrSink
+    binder: bind_predicate_or_sink
+  PredicateSource:
+    cpp_type: PredicateSource
+    binder: bind_predicate_source
+  Immediate:
+    cpp_type: Immediate
+    binder: bind_immediate
+  RegOrImm:
+    cpp_type: ScalarOperand
+    binder: bind_reg_or_imm
+  RegisterOrSink:
+    cpp_type: RegisterOrSink
+    binder: bind_register_or_sink
+  CvtSource:
+    cpp_type: CvtSource
+    binder: bind_cvt_source
+  MovSource:
+    cpp_type: MovSource
+    binder: bind_mov_source
+  MovVectorSource:
+    cpp_type: MovVectorSource
+    binder: bind_mov_vector_source
+  CpAsyncSourceControl:
+    cpp_type: CpAsyncSourceControl
+    binder: bind_cp_async_source_control
+  VectorRegister:
+    cpp_type: VectorRegisterRef
+    binder: bind_vector_register
+  VectorSpecialRegister:
+    cpp_type: VectorSpecialRegisterRef
+    binder: bind_vector_special_register
+  BranchTarget:
+    cpp_type: BranchTarget
+    binder: bind_branch_target
+  SpecialRegister:
+    cpp_type: SpecialRegisterRef
+    binder: bind_special_register
+  Symbol:
+    cpp_type: SymbolRef
+    binder: bind_symbol
+  Address:
+    cpp_type: Address
+    binder: bind_address
+  RegisterVector:
+    cpp_type: RegisterVector
+    binder: bind_register_vector
+  ValueVector:
+    cpp_type: ValueVector
+    binder: bind_value_vector
+  TensorCoordinate:
+    cpp_type: TensorCoordinate
+    binder: bind_tensor_coordinate
+  TensorIm2colInfo:
+    cpp_type: TensorIm2colInfo
+    binder: bind_tensor_im2col_info
+  TensorOperand:
+    cpp_type: TensorOperand
+    binder: bind_tensor_operand
+  FabricHandle:
+    cpp_type: FabricHandle
+    binder: bind_fabric_handle
+  SurfaceAccess:
+    cpp_type: SurfaceAccess
+    binder: bind_surface_access
+  SurfaceQueryResource:
+    cpp_type: SurfaceQueryResource
+    binder: bind_surface_query_resource
+  StackToken:
+    cpp_type: StackToken
+    binder: bind_stack_token
+  LocalAllocationResult:
+    cpp_type: LocalAllocationResult
+    binder: bind_local_allocation_result
+  VideoOperand:
+    cpp_type: VideoOperand
+    binder: bind_video_operand
+  TextureAccess:
+    cpp_type: TextureAccess
+    binder: bind_texture_access
+  TextureQueryResource:
+    cpp_type: TextureQueryResource
+    binder: bind_texture_query_resource
+  TextureResult:
+    cpp_type: TextureResult
+    binder: bind_texture_result
+  TensorMemoryAddress:
+    cpp_type: TensorMemoryAddress
+    binder: bind_tensor_memory_address
+  TcgenBracketedAddress:
+    cpp_type: TensorMemoryAddress
+    binder: bind_tcgen_bracketed_address
+  TcgenHalfSplitOffset:
+    cpp_type: TcgenHalfSplitOffset
+    binder: bind_tcgen_half_split_offset
+  MatrixScaleSelector:
+    cpp_type: MatrixScaleSelector
+    binder: bind_matrix_scale_selector
+  SharedMatrixDescriptor:
+    cpp_type: SharedMatrixDescriptor
+    binder: bind_shared_matrix_descriptor
+  WgmmaScaleD:
+    cpp_type: PredicateSource
+    binder: bind_wgmma_scale_d
+  DirectCallTarget:
+    cpp_type: FunctionRef
+    binder: bind_direct_call_target
+  IndirectCallee:
+    cpp_type: IndirectCallee
+    binder: bind_indirect_callee
+  BranchTargetSet:
+    cpp_type: BranchTargetSet
+    binder: bind_branch_target_set
+  CallReturnParameter:
+    cpp_type: CallParameterRef
+    binder: bind_call_return_parameter
+  CallArguments:
+    cpp_type: CallArguments
+    binder: bind_call_arguments
+  ShflDestination:
+    cpp_type: ShflDestination
+    binder: bind_shfl_destination
+  PredicatePair:
+    cpp_type: PredicatePair
+    binder: bind_predicate_pair
+  PredicatePairOrSink:
+    cpp_type: PredicatePairOrSink
+    binder: bind_predicate_pair_or_sink
+  MbarrierStateToken:
+    cpp_type: MbarrierStateToken
+    binder: bind_mbarrier_state_token
+special_controls:
+  AtomicAddressQualifier:
+    cpp_type: AtomicAddressQualifier
+    binder: bind_atomic_address_qualifier
+    values:
+    - value: generic
+      cpp: AtomicAddressQualifier::generic
+    - value: global
+      cpp: AtomicAddressQualifier::global
+    - value: shared
+      cpp: AtomicAddressQualifier::shared
+    - value: shared::cta
+      cpp: AtomicAddressQualifier::shared_cta
+    - value: shared::cluster
+      cpp: AtomicAddressQualifier::shared_cluster

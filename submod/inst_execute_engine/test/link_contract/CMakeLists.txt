@@ -38,8 +38,10 @@ function(configure_link_contract_target target)
     endif()
 endfunction()
 
+include("${PTXSIM_GENERATED_PLAN}")
 set(PTXSIM_LINK_CONTRACT_COMMON_SOURCES
-    "${PTXSIM_GENERATED_SOURCE}"
+    ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCES}
+    "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/issue_validation.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/resource_resolution.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/mov_preparation.cpp"
     "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/memory_preparation.cpp"

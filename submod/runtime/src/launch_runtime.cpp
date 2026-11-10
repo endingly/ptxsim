@@ -2,14 +2,16 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <exception>
 #include <limits>
+#include <new>
 #include <set>
+#include <stdexcept>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 
 namespace ptxsim::runtime {
 
-static_assert(exec_ir::kStorageAddressSpaceSize ==
-              memory::GenericAddressLayout::window_size);
 namespace {
 
 auto error(RuntimeBindingErrorCode code, RuntimeResourceKind resource)
@@ -41,16 +43,114 @@ auto lookup(const std::map<Key, Handle>& bindings, const Key& key,
 
 /** @brief Construct a storage diagnostic retaining any available resource cause. */
 auto storage_error(StorageErrorCode code,
-                   std::optional<common::SymbolId> symbol = std::nullopt,
+                   std::optional<StorageTarget> symbol = std::nullopt,
                    std::optional<RuntimeBindingError> runtime = std::nullopt,
                    std::optional<memory::AddressSpaceError> address =
                        std::nullopt) -> std::unexpected<StorageError> {
   return std::unexpected(StorageError{code, symbol, runtime, address});
 }
 
+/** @brief Supported allocation plan derived from a complete immutable declaration. */
+struct AllocationDeclaration {
+  /** @brief Owned storage identity, independent of frontend symbol numbering. */
+  exec_ir::StorageId symbol{0};
+  /** @brief Boundary spelling used only to match an explicit external binding. */
+  std::string name;
+  /** @brief Real materialized byte-address space. */
+  exec_ir::StorageSpace space;
+  /** @brief Canonical owner for function-local storage. */
+  std::optional<common::FunctionId> owner_function;
+  /** @brief Byte extent of one supported allocated object. */
+  std::size_t extent;
+  /** @brief Effective power-of-two byte alignment. */
+  std::size_t alignment;
+  /** @brief Actual initialization policy retained from the full declaration. */
+  exec_ir::StorageInitialization initialization;
+  /** @brief Complete byte image derived only for supported explicit constants. */
+  std::vector<std::byte> initializer_bytes;
+  /** @brief Dynamic shared allocation consumes launch-selected bytes. */
+  bool dynamic_shared;
+  /** @brief Scalar/vector/inner-array byte multiple for an unsized external. */
+  std::size_t external_extent_multiple;
+};
+
+/** @brief Derive supported allocation inputs without discarding full IR metadata. */
+[[nodiscard]] auto allocation_declarations(std::span<const exec_ir::StorageDeclaration> sources)
+    -> std::expected<std::vector<AllocationDeclaration>, StorageError> try {
+  std::vector<AllocationDeclaration> result;
+  for (const auto& source : sources) {
+    if (source.byte_extent &&
+        (*source.byte_extent >= memory::GenericAddressLayout::window_size ||
+         *source.byte_extent > std::numeric_limits<std::size_t>::max()))
+      return storage_error(StorageErrorCode::invalid_symbol, source.id);
+    const auto* type = std::get_if<exec_ir::DataType>(&source.element_type);
+    if (!type || source.parameterized_count || source.managed || source.unified_id ||
+        (source.vector_width != 1 && source.vector_width != 2 && source.vector_width != 4) ||
+        !source.alignment || !std::has_single_bit(*source.alignment) ||
+        *source.alignment > std::numeric_limits<std::size_t>::max() ||
+        (source.space == exec_ir::StorageSpace::shared &&
+         source.initialization == exec_ir::StorageInitialization::external && source.byte_extent) ||
+        (source.byte_extent == 0 && source.initialization != exec_ir::StorageInitialization::explicit_values) ||
+        (!source.byte_extent && source.initialization != exec_ir::StorageInitialization::external))
+      return storage_error(StorageErrorCode::unsupported_declaration, source.id);
+    const auto width = exec_ir::data_type_width(*type);
+    if (!width || *width == common::RawWidth::pred)
+      return storage_error(StorageErrorCode::unsupported_declaration, source.id);
+    std::size_t scalar_size = 0;
+    switch (*width) {
+      case common::RawWidth::b8: scalar_size = 1; break;
+      case common::RawWidth::b16: scalar_size = 2; break;
+      case common::RawWidth::b32: scalar_size = 4; break;
+      case common::RawWidth::b64: scalar_size = 8; break;
+      case common::RawWidth::b128: scalar_size = 16; break;
+      case common::RawWidth::pred: break;
+    }
+    std::size_t multiple = scalar_size * source.vector_width;
+    for (const auto axis : source.array_extents) {
+      if (!axis) continue;
+      if (*axis == 0 || *axis > std::numeric_limits<std::size_t>::max() / multiple)
+        return storage_error(StorageErrorCode::unsupported_declaration, source.id);
+      multiple *= static_cast<std::size_t>(*axis);
+    }
+    AllocationDeclaration target{source.id, source.name, source.space, source.owner_function,
+        static_cast<std::size_t>(source.byte_extent.value_or(0)), static_cast<std::size_t>(*source.alignment),
+        source.initialization, {}, source.dynamic_shared,
+        !source.byte_extent && !source.dynamic_shared ? multiple : 1};
+    if (source.initialization == exec_ir::StorageInitialization::opaque_static)
+      return storage_error(StorageErrorCode::unsupported_declaration, source.id);
+    for (const auto& element : source.initializer)
+      if (!std::holds_alternative<exec_ir::Constant128>(element.value))
+        return storage_error(StorageErrorCode::unsupported_relocation, source.id);
+    if (source.initialization == exec_ir::StorageInitialization::explicit_values) {
+      target.initializer_bytes.assign(target.extent, std::byte{0});
+      std::set<std::uint64_t> initialized;
+      for (const auto& element : source.initializer) {
+        const auto& constant = std::get<exec_ir::Constant128>(element.value);
+        if (element.byte_offset % scalar_size != 0 || element.byte_offset > target.extent ||
+            scalar_size > target.extent - element.byte_offset ||
+            !initialized.insert(element.byte_offset).second ||
+            (scalar_size <= 8 && constant.high_bits != 0) ||
+            (scalar_size < 8 && (constant.bits >> (scalar_size * 8)) != 0))
+          return storage_error(StorageErrorCode::invalid_symbol, source.id);
+        for (std::size_t byte = 0; byte < scalar_size; ++byte) {
+          const auto word = byte < 8 ? constant.bits : constant.high_bits;
+          target.initializer_bytes[static_cast<std::size_t>(element.byte_offset) + byte] =
+              std::byte{static_cast<unsigned char>(word >> (8 * (byte % 8)))};
+        }
+      }
+    }
+    result.push_back(std::move(target));
+  }
+  return result;
+} catch (const std::bad_alloc&) {
+  return storage_error(StorageErrorCode::address_space_failure);
+} catch (const std::length_error&) {
+  return storage_error(StorageErrorCode::address_space_failure);
+}
+
 /** @brief Return the next offset satisfying a declaration's byte alignment. */
 auto aligned_end(std::size_t begin,
-                 const exec_ir::StorageDeclaration& declaration)
+                 const AllocationDeclaration& declaration)
     -> std::optional<std::size_t> {
   if (begin >
       std::numeric_limits<std::size_t>::max() - (declaration.alignment - 1U)) {
@@ -321,15 +421,31 @@ auto LaunchRuntime::address_context(execution_model::ThreadId thread,
 auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
                                     const StorageLaunchOptions& options)
     -> std::expected<void, StorageError> {
-  const auto& declarations = program.storage_declarations();
-  if (declarations.empty()) {
-    return {};
-  }
+  const auto full_declarations = program.storage_declarations();
   if (storage_layout_) {
-    return storage_error(*storage_layout_ == declarations
+    return storage_error(std::ranges::equal(*storage_layout_, full_declarations)
                              ? StorageErrorCode::already_prepared
                              : StorageErrorCode::different_program);
   }
+  decltype(parameter_offsets_) parameter_offsets;
+  for (const auto& function : program.functions()) {
+    if (!function.is_entry || !function.body) continue;
+    for (const auto& parameter : function.body->entry_parameters)
+      parameter_offsets.emplace(parameter.parameter, std::pair{function.id, parameter.offset});
+  }
+  if (full_declarations.empty()) {
+    parameter_offsets_ = std::move(parameter_offsets);
+    return {};
+  }
+  const auto allocation = allocation_declarations(full_declarations);
+  if (!allocation) return std::unexpected(allocation.error());
+  const auto& declarations = *allocation;
+
+  std::set<std::string> declaration_names;
+  for (const auto& declaration : declarations)
+    if (declaration.initialization == exec_ir::StorageInitialization::external &&
+        !declaration.dynamic_shared && !declaration_names.insert(declaration.name).second)
+      return storage_error(StorageErrorCode::ambiguous_external_binding, declaration.symbol);
 
   std::set<std::string> external_names;
   for (const auto& external : options.externals) {
@@ -482,8 +598,8 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
   std::map<ThreadFunction, std::size_t> local_sizes;
   // The same declaration may have a different offset in each prebound region.
   // Dynamic shared declarations alias one segment following all static data.
-  std::vector<const exec_ir::StorageDeclaration*> shared_declarations;
-  std::map<common::FunctionId, std::vector<const exec_ir::StorageDeclaration*>>
+  std::vector<const AllocationDeclaration*> shared_declarations;
+  std::map<common::FunctionId, std::vector<const AllocationDeclaration*>>
       local_declarations;
   for (const auto& declaration : declarations) {
     if (declaration.space == exec_ir::StorageSpace::shared)
@@ -521,7 +637,7 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
         shared_size = *end;
       }
       if (has_dynamic) {
-        const exec_ir::StorageDeclaration segment{
+        const AllocationDeclaration segment{
             .symbol = shared_declarations.front()->symbol,
             .extent = options.dynamic_shared_bytes,
             .alignment = dynamic_alignment};
@@ -637,7 +753,7 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
                            declaration.symbol, std::nullopt, handle.error());
     const auto begin = offsets.at(declaration.symbol.value());
     if (declaration.initialization ==
-        exec_ir::StorageInitialization::explicit_bytes) {
+        exec_ir::StorageInitialization::explicit_values) {
       if (const auto initialized = handle->initialize(
               memory::Address{begin}, declaration.initializer_bytes);
           !initialized)
@@ -717,7 +833,8 @@ auto LaunchRuntime::prepare_storage(const exec_ir::ExecutableProgram& program,
   shared_storage_offsets_ = std::move(shared_offsets);
   local_storage_offsets_ = std::move(local_offsets);
   storage_offsets_ = std::move(offsets);
-  storage_layout_ = declarations;
+  parameter_offsets_ = std::move(parameter_offsets);
+  storage_layout_.emplace(full_declarations.begin(), full_declarations.end());
   return {};
 }
 
@@ -725,86 +842,67 @@ auto LaunchRuntime::resolve_symbol_address(
     exec_ir::SymbolRef symbol, execution_model::ThreadId thread,
     common::FunctionId function, exec_ir::AddressSpace requested) const
     -> std::expected<std::uint64_t, StorageError> {
-  if (!storage_layout_ || !grid_.find_thread(thread))
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-  const auto found = std::find_if(
-      storage_layout_->begin(), storage_layout_->end(),
-      [&symbol](const auto& value) { return value.symbol == symbol.id; });
-  if (found == storage_layout_->end())
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-  if (found->owner_function && *found->owner_function != function)
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-  std::optional<std::size_t> offset;
-  if (found->space == exec_ir::StorageSpace::shared) {
-    const auto* topology_thread = grid_.find_thread(thread);
-    if (!topology_thread)
-      return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-    const auto local = shared_storage_offsets_.find(
-        {topology_thread->cta().id(), symbol.id.value()});
-    if (local != shared_storage_offsets_.end())
-      offset = local->second;
-  } else if (found->space == exec_ir::StorageSpace::local) {
-    const auto local =
-        local_storage_offsets_.find({{thread, function}, symbol.id.value()});
-    if (local != local_storage_offsets_.end())
-      offset = local->second;
-  } else if (const auto global = storage_offsets_.find(symbol.id.value());
-             global != storage_offsets_.end()) {
-    offset = global->second;
+  const auto offset = resolve_symbol_offset(symbol, thread, function);
+  if (!offset) return std::unexpected(offset.error());
+  if (std::holds_alternative<exec_ir::ParameterId>(symbol.target)) {
+    if (requested == exec_ir::AddressSpace::generic)
+      return memory::GenericAddressLayout::entry_parameter_base + *offset;
+    if (requested == exec_ir::AddressSpace::param || requested == exec_ir::AddressSpace::param_entry)
+      return *offset;
+    return storage_error(StorageErrorCode::incompatible_address_space, symbol.target);
   }
-  if (!offset)
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
+  const auto id = std::get<exec_ir::StorageId>(symbol.target);
+  const auto found = std::find_if(storage_layout_->begin(), storage_layout_->end(),
+      [id](const auto& value) { return value.id == id; });
   if (requested == exec_ir::AddressSpace::generic) {
     switch (found->space) {
-      case exec_ir::StorageSpace::global:
-        return static_cast<std::uint64_t>(*offset);
-      case exec_ir::StorageSpace::constant:
-        return memory::GenericAddressLayout::constant_base + *offset;
-      case exec_ir::StorageSpace::shared:
-        return memory::GenericAddressLayout::shared_base + *offset;
-      case exec_ir::StorageSpace::local:
-        return memory::GenericAddressLayout::local_base + *offset;
+      case exec_ir::StorageSpace::global: return *offset;
+      case exec_ir::StorageSpace::constant: return memory::GenericAddressLayout::constant_base + *offset;
+      case exec_ir::StorageSpace::shared: return memory::GenericAddressLayout::shared_base + *offset;
+      case exec_ir::StorageSpace::local: return memory::GenericAddressLayout::local_base + *offset;
     }
   }
   if (!matching_space(found->space, requested))
-    return storage_error(StorageErrorCode::incompatible_address_space,
-                         symbol.id);
-  (void)thread;
-  return static_cast<std::uint64_t>(*offset);
+    return storage_error(StorageErrorCode::incompatible_address_space, symbol.target);
+  return *offset;
 }
 
 auto LaunchRuntime::resolve_symbol_offset(exec_ir::SymbolRef symbol,
                                           execution_model::ThreadId thread,
                                           common::FunctionId function) const
     -> std::expected<std::uint64_t, StorageError> {
-  if (!storage_layout_ || !grid_.find_thread(thread))
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-  const auto found = std::find_if(
-      storage_layout_->begin(), storage_layout_->end(),
-      [&symbol](const auto& value) { return value.symbol == symbol.id; });
+  const auto* topology_thread = grid_.find_thread(thread);
+  if (!topology_thread || symbol.member)
+    return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
+  if (const auto* id = std::get_if<exec_ir::ParameterId>(&symbol.target)) {
+    const auto found = parameter_offsets_.find(*id);
+    if (found == parameter_offsets_.end() || found->second.first != function)
+      return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
+    return static_cast<std::uint64_t>(found->second.second);
+  }
+  if (!storage_layout_)
+    return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
+  const auto id = std::get<exec_ir::StorageId>(symbol.target);
+  const auto found = std::find_if(storage_layout_->begin(), storage_layout_->end(),
+      [id](const auto& value) { return value.id == id; });
   if (found == storage_layout_->end() ||
       (found->owner_function && *found->owner_function != function))
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
+    return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
   if (found->space == exec_ir::StorageSpace::shared) {
-    const auto* topology_thread = grid_.find_thread(thread);
-    if (!topology_thread)
-      return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
-    const auto offset = shared_storage_offsets_.find(
-        {topology_thread->cta().id(), symbol.id.value()});
+    const auto offset = shared_storage_offsets_.find({topology_thread->cta().id(), id.value()});
     if (offset == shared_storage_offsets_.end())
-      return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
+      return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
     return static_cast<std::uint64_t>(offset->second);
   }
   if (found->space == exec_ir::StorageSpace::local) {
-    const auto offset =
-        local_storage_offsets_.find({{thread, function}, symbol.id.value()});
+    const auto offset = local_storage_offsets_.find({{thread, function}, id.value()});
     if (offset == local_storage_offsets_.end())
-      return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
+      return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
     return static_cast<std::uint64_t>(offset->second);
   }
-  const auto offset = storage_offsets_.find(symbol.id.value());
+  const auto offset = storage_offsets_.find(id.value());
   if (offset == storage_offsets_.end())
-    return storage_error(StorageErrorCode::invalid_symbol, symbol.id);
+    return storage_error(StorageErrorCode::invalid_symbol, symbol.target);
   return static_cast<std::uint64_t>(offset->second);
 }
 

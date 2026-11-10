@@ -18,6 +18,10 @@ namespace ptxsim::simulator {
 /** @brief Reasons source-ordered launch arguments cannot be packed. */
 enum class EntryArgumentErrorCode {
   program_error,
+  /** The selected real body is a device function rather than a launch entry. */
+  non_entry_function,
+  /** The full entry ABI has no supported packed scalar byte view. */
+  unsupported_entry_signature,
   argument_count_mismatch,
   argument_size_mismatch,
 };
@@ -59,6 +63,10 @@ struct EntryArgumentError {
 
 /** @brief Categories of failure before the runner reaches a terminal state. */
 enum class RunErrorCode {
+  /** Only actual entry definitions may be selected for launch. */
+  non_entry_function,
+  /** Full ABI metadata was bound but its launch argument kinds are unimplemented. */
+  unsupported_entry_signature,
   entry_parameter_size_mismatch,
   program_error,
   register_error,

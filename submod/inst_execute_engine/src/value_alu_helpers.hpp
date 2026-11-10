@@ -12,6 +12,7 @@
 #include <ptxsim/arith/types.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 #include <ptxsim/inst_execute_engine/step_outcome.hpp>
 
 #include "prepared_effect.hpp"
@@ -63,14 +64,7 @@ concept ValueCodec = requires(const common::RawValue& raw, T value) {
 
 /** @brief Scalar-operand aliases represented as a register-or-immediate variant. */
 template <typename Operand>
-concept ScalarRegisterOrImmediate = requires(const Operand& operand) {
-  {
-    std::get_if<common::RegisterSlot>(&operand)
-  } -> std::same_as<const common::RegisterSlot*>;
-  {
-    std::get_if<common::RawValue>(&operand)
-  } -> std::same_as<const common::RawValue*>;
-};
+concept ScalarRegisterOrImmediate = std::same_as<std::remove_cvref_t<Operand>, exec_ir::ScalarOperand>;
 
 namespace value_alu_detail {
 
@@ -295,17 +289,28 @@ auto read_value(const memory::RegisterView& registers,
   return *value;
 }
 
+/** @brief Read a complete bound register view at its actual scalar component slot. */
+template <ValueCodec T>
+auto read_value(const memory::RegisterView& registers,
+                const exec_ir::RegisterRef& reference) -> std::expected<T, LaneFaultCause> {
+  return read_value<T>(registers, reference.slot);
+}
+
 /** @brief Read an exact typed value from a scalar register-or-immediate operand. */
 template <ValueCodec T, ScalarRegisterOrImmediate Operand>
 auto read_value(const memory::RegisterView& registers, const Operand& operand)
     -> std::expected<T, LaneFaultCause> {
-  if (const auto* slot = std::get_if<common::RegisterSlot>(&operand))
-    return read_value<T>(registers, *slot);
-  const auto* immediate = std::get_if<common::RawValue>(&operand);
+  if (const auto* slot = std::get_if<exec_ir::RegisterRef>(&operand))
+    return read_value<T>(registers, slot->slot);
+  const auto* immediate = std::get_if<exec_ir::Immediate>(&operand);
   if (immediate == nullptr)
     return std::unexpected(LaneFaultCause{
         common::RawValueError{value_codec<T>::width, common::RawWidth::pred}});
-  const auto value = value_codec<T>::decode(*immediate);
+  const auto raw = exec_ir::immediate_value(*immediate);
+  if (!raw)
+    return std::unexpected(LaneFaultCause{
+        common::RawValueError{value_codec<T>::width, common::RawWidth::pred}});
+  const auto value = value_codec<T>::decode(*raw);
   if (!value)
     return std::unexpected(LaneFaultCause{value.error()});
   return *value;
@@ -315,7 +320,7 @@ auto read_value(const memory::RegisterView& registers, const Operand& operand)
 inline auto read_predicate(const memory::RegisterView& registers,
                            exec_ir::Predicate predicate)
     -> std::expected<bool, LaneFaultCause> {
-  const auto value = read_value<bool>(registers, predicate.source);
+  const auto value = read_value<bool>(registers, predicate.register_ref.slot);
   if (!value)
     return std::unexpected(value.error());
   return predicate.negated ? !*value : *value;
@@ -335,6 +340,14 @@ auto resolve_destination(const memory::RegisterView& registers,
   return {};
 }
 
+/** @brief Check a bound destination view against its actual frame slot width. */
+template <ValueCodec T>
+auto resolve_destination(const memory::RegisterView& registers,
+                         const exec_ir::RegisterRef& destination)
+    -> std::expected<void, LaneFaultCause> {
+  return resolve_destination<T>(registers, destination.slot);
+}
+
 /** @brief Form one deferred scalar register write after all inputs are validated. */
 template <ValueCodec T>
 auto stage_register_write(const memory::RegisterView& registers,
@@ -345,6 +358,14 @@ auto stage_register_write(const memory::RegisterView& registers,
                                value_codec<T>::encode(value)}},
       .memory_write = std::nullopt,
       .control = successor};
+}
+
+/** @brief Stage an owned destination view without mutating its source instruction. */
+template <ValueCodec T>
+auto stage_register_write(const memory::RegisterView& registers,
+                          const exec_ir::RegisterRef& destination, T value,
+                          common::ProgramCounter successor) -> PreparedEffect {
+  return stage_register_write<T>(registers, destination.slot, value, successor);
 }
 
 }  // namespace ptxsim::inst_execute_engine::detail

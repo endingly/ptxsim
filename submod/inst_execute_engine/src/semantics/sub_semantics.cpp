@@ -19,39 +19,39 @@ auto sub_float32x2(const arith::context& context, arith::float32x2_t lhs,
 
 }  // namespace sub_detail
 
-auto valid_sub(const exec_ir::Sub::FloatF32& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubFloatF32& form) noexcept -> bool {
   return floating_detail::rounding(form.rounding).has_value();
 }
 
-auto valid_sub(const exec_ir::Sub::FloatF32x2& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubFloatF32x2& form) noexcept -> bool {
   return floating_detail::rounding(form.rounding).has_value();
 }
 
-auto valid_sub(const exec_ir::Sub::FloatF64& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubFloatF64& form) noexcept -> bool {
   return floating_detail::rounding(form.rounding).has_value();
 }
 
-auto valid_sub(const exec_ir::Sub::Half& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubHalf& form) noexcept -> bool {
   return form.rounding == exec_ir::RoundingMode::rn;
 }
 
-auto valid_sub(const exec_ir::Sub::Bfloat& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubBfloat& form) noexcept -> bool {
   return form.rounding == exec_ir::RoundingMode::rn;
 }
 
-auto valid_sub(const exec_ir::Sub::MixedF32& form) noexcept -> bool {
+auto valid_sub(const exec_ir::SubMixedF32& form) noexcept -> bool {
   return floating_detail::rounding(form.rounding).has_value();
 }
 
-auto valid_sub(const exec_ir::Sub::IntegerNoSat&) noexcept -> bool {
+auto valid_sub(const exec_ir::SubIntegerNoSat&) noexcept -> bool {
   return true;
 }
 
-auto valid_sub(const exec_ir::Sub::OptionalSat&) noexcept -> bool {
+auto valid_sub(const exec_ir::SubOptionalSat&) noexcept -> bool {
   return true;
 }
 
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF32& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF32& form,
          arith::float32_t lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error> {
   const auto control =
@@ -64,7 +64,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::FloatF32& form,
   return difference->value;
 }
 
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF32x2& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF32x2& form,
          arith::float32x2_t lhs, arith::float32x2_t rhs)
     -> std::expected<arith::float32x2_t, arith::arithmetic_error> {
   const auto control = floating_detail::controls(form.rounding, form.ftz);
@@ -73,7 +73,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::FloatF32x2& form,
   return sub_detail::sub_float32x2(context, lhs, rhs, *control);
 }
 
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF64& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF64& form,
          arith::float64_t lhs, arith::float64_t rhs)
     -> std::expected<arith::float64_t, arith::arithmetic_error> {
   const auto control = floating_detail::controls(form.rounding);

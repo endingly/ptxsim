@@ -1,9 +1,5 @@
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.14 REQUIRED COMPONENTS Interpreter)
 set(PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER
-    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}/exec_ir_lowering.gen.hpp")
-set(PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE
-    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}/exec_ir_lowering.gen.cpp")
 file(GLOB_RECURSE PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/model/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/frontend/*.py"
@@ -15,27 +11,32 @@ list(APPEND PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/__init__.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/artifacts.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/__init__.py")
+set(PTXSIM_EXEC_IR_LOWERING_PLAN "${CMAKE_CURRENT_BINARY_DIR}/lowering_artifacts.cmake")
+include(plan_codegen)
+ptxsim_plan_codegen(ptxsim_codegen.code_gen.lowering
+    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}" "${PTXSIM_EXEC_IR_LOWERING_PLAN}"
+    "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
+    ${PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES})
+include("${PTXSIM_EXEC_IR_LOWERING_PLAN}")
 add_custom_command(
-    OUTPUT "${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER}"
-           "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}"
+    OUTPUT ${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADERS}
+           ${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCES}
+    BYPRODUCTS "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}/artifact_plan.json"
     COMMAND "${Python3_EXECUTABLE}" -m ptxsim_codegen.code_gen.lowering
-            --output
-            "${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER}"
-            --source-output
-            "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}"
+            --output-dir "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}"
     DEPENDS "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
             ${PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES}
     COMMENT "Generating PTXSim execution IR lowering"
     VERBATIM)
 add_custom_target(ptxsim_exec_ir_lowering_codegen DEPENDS
-    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADER}"
-    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}")
+    ${PTXSIM_EXEC_IR_LOWERING_GENERATED_HEADERS}
+    ${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCES})
 
 file(GLOB_RECURSE ptxsim_exec_ir_lowering_srcs CONFIGURE_DEPENDS src/*.cpp)
-find_package(ptx_frontend 0.0.1 CONFIG REQUIRED COMPONENTS resolved_ir)
+find_package(ptx_frontend 0.8.0 EXACT CONFIG REQUIRED COMPONENTS resolved_ir)
 add_library(ptxsim_exec_ir_lowering
     ${ptxsim_exec_ir_lowering_srcs}
-    "${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCE}")
+    ${PTXSIM_EXEC_IR_LOWERING_GENERATED_SOURCES})
 add_library(ptxsim::exec_ir_lowering ALIAS ptxsim_exec_ir_lowering)
 set_target_properties(ptxsim_exec_ir_lowering PROPERTIES EXPORT_NAME exec_ir_lowering)
 target_compile_features(ptxsim_exec_ir_lowering PUBLIC cxx_std_23)

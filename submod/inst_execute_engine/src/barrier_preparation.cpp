@@ -1,4 +1,5 @@
 #include "barrier_preparation.hpp"
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 
 #include <cstdint>
 
@@ -9,8 +10,10 @@ namespace {
 auto barrier_operand(LaneResourceResolver& resolver,
                      const exec_ir::ScalarOperand& operand)
     -> std::expected<std::uint32_t, LaneFaultCause> {
-  if (const auto* immediate = std::get_if<common::RawValue>(&operand)) {
-    const auto value = immediate->as_b32();
+  if (const auto* immediate = std::get_if<exec_ir::Immediate>(&operand)) {
+    const auto raw = exec_ir::immediate_value(*immediate);
+    if (!raw) return std::unexpected(LaneFaultCause{UnsupportedMovType{immediate->type}});
+    const auto value = raw->as_b32();
     if (!value) {
       return std::unexpected(LaneFaultCause{value.error()});
     }
@@ -31,7 +34,7 @@ auto barrier_predicate(LaneResourceResolver& resolver,
   if (!registers) {
     return std::unexpected(registers.error());
   }
-  const auto raw = registers->get().read(predicate.source);
+  const auto raw = registers->get().read(predicate.register_ref.slot);
   if (!raw) {
     return std::unexpected(LaneFaultCause{raw.error()});
   }

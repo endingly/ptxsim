@@ -6,7 +6,7 @@
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/arith/packed.hpp>
 #include <ptxsim/arith/scalar.hpp>
-#include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/fma.gen.hpp>
 
 #include "../floating_controls.hpp"
 
@@ -50,29 +50,29 @@ auto control(const Form& form)
 template <typename Form, typename T>
 concept HomogeneousFma =
     (std::same_as<T, arith::float32_t> &&
-     (std::same_as<Form, exec_ir::Fma::RnF32> ||
-      std::same_as<Form, exec_ir::Fma::DirectedF32>)) ||
+     (std::same_as<Form, exec_ir::FmaRnF32> ||
+      std::same_as<Form, exec_ir::FmaDirectedF32>)) ||
     (std::same_as<T, arith::float64_t> &&
-     (std::same_as<Form, exec_ir::Fma::RnF64> ||
-      std::same_as<Form, exec_ir::Fma::DirectedF64>)) ||
+     (std::same_as<Form, exec_ir::FmaRnF64> ||
+      std::same_as<Form, exec_ir::FmaDirectedF64>)) ||
     (std::same_as<T, arith::float32x2_t> &&
-     std::same_as<Form, exec_ir::Fma::F32x2>) ||
+     std::same_as<Form, exec_ir::FmaF32x2>) ||
     (std::same_as<T, arith::float16_t> &&
-     (std::same_as<Form, exec_ir::Fma::RnF16> ||
-      std::same_as<Form, exec_ir::Fma::HalfRelu> ||
-      std::same_as<Form, exec_ir::Fma::HalfOob> ||
-      std::same_as<Form, exec_ir::Fma::HalfOobRelu>)) ||
+     (std::same_as<Form, exec_ir::FmaRnF16> ||
+      std::same_as<Form, exec_ir::FmaHalfRelu> ||
+      std::same_as<Form, exec_ir::FmaHalfOob> ||
+      std::same_as<Form, exec_ir::FmaHalfOobRelu>)) ||
     (std::same_as<T, arith::float16x2_t> &&
-     (std::same_as<Form, exec_ir::Fma::RnF16x2> ||
-      std::same_as<Form, exec_ir::Fma::HalfRelu> ||
-      std::same_as<Form, exec_ir::Fma::HalfOob> ||
-      std::same_as<Form, exec_ir::Fma::HalfOobRelu>)) ||
+     (std::same_as<Form, exec_ir::FmaRnF16x2> ||
+      std::same_as<Form, exec_ir::FmaHalfRelu> ||
+      std::same_as<Form, exec_ir::FmaHalfOob> ||
+      std::same_as<Form, exec_ir::FmaHalfOobRelu>)) ||
     (std::same_as<T, arith::bfloat16_t> &&
-     (std::same_as<Form, exec_ir::Fma::Bf16> ||
-      std::same_as<Form, exec_ir::Fma::Bf16Oob>)) ||
+     (std::same_as<Form, exec_ir::FmaBf16> ||
+      std::same_as<Form, exec_ir::FmaBf16Oob>)) ||
     (std::same_as<T, arith::bfloat16x2_t> &&
-     (std::same_as<Form, exec_ir::Fma::Bf16x2> ||
-      std::same_as<Form, exec_ir::Fma::Bf16x2Oob>));
+     (std::same_as<Form, exec_ir::FmaBf16x2> ||
+      std::same_as<Form, exec_ir::FmaBf16x2Oob>));
 
 /** @brief Evaluate one homogeneous FMA after its PTX controls are decoded. */
 template <FmaForm Form, typename T>
@@ -91,9 +91,9 @@ auto evaluate(const arith::context& context, const Form& form, T lhs, T rhs,
 /** @brief Check whether a low-precision source type belongs to one mixed FMA form. */
 template <typename Form, typename Low>
 concept MixedFma =
-    (std::same_as<Form, exec_ir::Fma::MixedF32F16> &&
+    (std::same_as<Form, exec_ir::FmaMixedF32F16> &&
      std::same_as<Low, arith::float16_t>) ||
-    (std::same_as<Form, exec_ir::Fma::MixedF32Bf16> &&
+    (std::same_as<Form, exec_ir::FmaMixedF32Bf16> &&
      std::same_as<Low, arith::bfloat16_t>);
 
 /** @brief Evaluate a mixed low-precision FMA with a single f32 final rounding. */
@@ -117,15 +117,15 @@ auto evaluate_mixed(const arith::context& context, const Form& form, Low lhs,
 /** @brief Validate the projected FMA rounding control before lane resources are read. */
 template <fma_detail::FmaForm Form>
 auto valid_fma(const Form& form) noexcept -> bool {
-  if constexpr (std::same_as<Form, exec_ir::Fma::DirectedF32> ||
-                std::same_as<Form, exec_ir::Fma::DirectedF64>) {
+  if constexpr (std::same_as<Form, exec_ir::FmaDirectedF32> ||
+                std::same_as<Form, exec_ir::FmaDirectedF64>) {
     return form.rounding == exec_ir::RoundingMode::rz ||
            form.rounding == exec_ir::RoundingMode::rm ||
            form.rounding == exec_ir::RoundingMode::rp;
   }
-  if constexpr (std::same_as<Form, exec_ir::Fma::F32x2> ||
-                std::same_as<Form, exec_ir::Fma::MixedF32F16> ||
-                std::same_as<Form, exec_ir::Fma::MixedF32Bf16>) {
+  if constexpr (std::same_as<Form, exec_ir::FmaF32x2> ||
+                std::same_as<Form, exec_ir::FmaMixedF32F16> ||
+                std::same_as<Form, exec_ir::FmaMixedF32Bf16>) {
     return floating_detail::rounding(form.rounding).has_value();
   }
   return form.rounding == exec_ir::RoundingMode::rn;

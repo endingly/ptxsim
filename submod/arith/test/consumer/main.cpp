@@ -2,6 +2,7 @@
 #include <ptxsim/common/ids.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/model/control_flow/exit.gen.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
 #include <ptxsim/execution_model/execution_model.hpp>
 #include <ptxsim/inst_execute_engine/inst_execute_engine.hpp>
@@ -14,6 +15,7 @@
 
 #include <array>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <span>
 #include <utility>
@@ -119,12 +121,25 @@ int main() {
   ptxsim::runtime::LaunchRuntime runtime{
       ptxsim::execution_model::GridId{0},
       {.cta_dim = {1, 1, 1}, .thread_dim = {1, 1, 1}, .warp_size = 32}};
-  const auto program = ptxsim::exec_ir::ExecutableProgram::create({
-      .instructions = {ptxsim::exec_ir::Exit{
-          std::nullopt,
-          ptxsim::exec_ir::Exit::Variant{ptxsim::exec_ir::Exit::Bare{}}}},
-      .functions = {{ptxsim::common::FunctionId{0}, 0, 1, {}}},
-  });
+  ptxsim::exec_ir::ProgramDefinition definition;
+  definition.instructions.push_back(std::make_unique<ptxsim::exec_ir::ExitBare>(
+      ptxsim::exec_ir::ExitBare::Operands{}));
+  definition.function_declarations.push_back(
+      {.id = ptxsim::exec_ir::FunctionDeclarationId{0},
+       .function = ptxsim::common::FunctionId{0},
+       .name = "manual_entry",
+       .is_entry = true});
+  definition.functions.push_back(
+      {.id = ptxsim::common::FunctionId{0},
+       .name = "manual_entry",
+       .is_entry = true,
+       .declarations = {ptxsim::exec_ir::FunctionDeclarationId{0}},
+       .definition = ptxsim::exec_ir::FunctionDeclarationId{0},
+       .body = ptxsim::exec_ir::FunctionLayout{
+           .id = ptxsim::common::FunctionId{0},
+           .begin = 0,
+           .instruction_count = 1}});
+  const auto program = ptxsim::exec_ir::ExecutableProgram::create(definition);
   if (!program) {
     return 1;
   }
