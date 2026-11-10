@@ -1,6 +1,6 @@
 # Inherited executable IR delivery plan
 
-> **Status:** design approved; delivery and core acceptance pending.
+> **Status:** implementation and required local verification complete; final independent whole-goal acceptance pending.
 > **Authority:** [Inherited executable IR architecture](../arch/inherited_exec_ir.md).
 > **Baseline:** `origin/main` `775f004af2c6861a053e47d686137fe08d8d29b0`.
 > **Branch/worktree:** `refactor/inherited-exec-ir`, `/root/code/ptxsim-ir-inheritance`.
@@ -94,8 +94,8 @@ are inventory checks, not claims of semantic executor coverage.
 | S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Accepted and committed `17375149` |
 | S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | Accepted and committed `d1168b6`, coupled with S3 |
 | S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | Accepted and committed `d1168b6`, coupled with S2 |
-| S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Runtime/resource/closure verified; final independent acceptance pending |
-| S5 | Coverage ledger, consumers and installed package, complete CTest and GCC/Clang Debug/Release plus sanitizer gates; actual-diff core review and final documentation | Pending |
+| S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Accepted and committed `72a6a14` |
+| S5 | Coverage ledger, consumers and installed package, complete CTest and GCC/Clang Debug/Release plus sanitizer gates; actual-diff core review and final documentation | Five configurations verified; final independent whole-goal acceptance pending |
 
 Each stable diff receives independent max-effort review and Authority Sol
 acceptance before the Git owner commits and the next slice begins. S2 may add a
@@ -117,9 +117,8 @@ target is complete. No compatibility manifest or form-alias layer is added.
 S2 and S3 are delivered as one coupled buildable slice: changing to the 0.8.0
 Python APIs makes the legacy generator/binder path incompatible. One full
 projection, owned inherited IR and complete frontend binding switch together;
-a minimal internal engine entry adapter may preserve existing behavior until
-S4 removes it. No compatibility manifest, old form alias layer or dual Python
-frontend installation is introduced.
+the temporary internal engine entry adapter was removed by S4. No compatibility
+manifest, old form alias layer or dual Python frontend installation is introduced.
 
 The refined Authority Sol contracts are mandatory:
 
@@ -488,7 +487,7 @@ verified below in S4, including GCC Debug consumer/install integration.
 Remaining compiler/configuration and sanitizer rows are S5. The bounded GCC Debug, Python, distribution and earlier
 ownership/binding checks above do not establish those later outcomes.
 
-## S4 verified candidate, acceptance pending
+## S4 accepted implementation and verification
 
 The packaged `execution.yaml` replaces the temporary form registry with 83
 layout rules covering the same 67 implemented forms, including all 16 FMA
@@ -513,9 +512,9 @@ The old optional-PC call remains available without overload ambiguity.
 A paired link fixture shares one generated object between a positive executable
 that supplies the exact typed handler and a negative executable that omits only
 that definition. Actual runtime, positive/negative links, installed resources
-and input closure now pass within the scopes below. This candidate still
-requires final independent Max review and Authority acceptance; its
-implementation writer does not grant that acceptance.
+and input closure now pass within the scopes below. Independent Max and
+Authority Sol subsequently accepted the exact 26-path slice, committed as `72a6a140414cb323c2ee341687055fab0a198631`. Its
+implementation writer did not grant that acceptance.
 
 Owner checks for this candidate used private output directories. The existing
 33 engine-generator tests passed; a later whole Python run passed all 64 cases
@@ -614,10 +613,77 @@ Per the user's later path convention, subsequent S5 builds/tests use the actual
 worktree presets at out/build/<preset> and out/install/<preset>, without copying
 the source/build for each configuration into /tmp. The already passing S4
 temporary gate is preserved as evidence and is not moved or rebuilt merely to
-change its path. Source hashes are frozen and checked before/after subsequent
-preset runs. The verified GCC Debug row may be reused; the remaining compiler
-and sanitizer rows are not yet claimed passed. S5 and whole-goal acceptance
-remain pending.
+change its path. Source remains frozen during subsequent preset runs, with
+each row's before/after evidence distinguished below. The verified GCC Debug row
+is reused. Final results and the separate whole-goal review boundary follow.
+
+## S5 final implementation and local verification
+
+S4 received independent Max and Authority Sol acceptance and was committed as
+`72a6a140414cb323c2ee341687055fab0a198631`, parent `d1168b6`, tree
+`50d039c2eb69037b78019ae40175897ab223e18b`. The complete implementation is
+summarized in the [coverage and evidence ledger](inherited_exec_ir_coverage.md).
+No production, test, package or CI source changed during the final matrix.
+
+All five required configurations completed their default/all builds and full,
+unfiltered CTest suites. Each row includes build-tree and installed consumers,
+the semantics link contract and the exact missing-handler link contract; none
+was skipped.
+
+| Configuration | Actual full CTest outcome | Evidence |
+| --- | --- | --- |
+| GCC Debug | 700/700 passed, 0 failed/skipped; 345.52 s | Reused accepted S4 row: `/tmp/ptxsim-root-repair-integrated-20261110/s4-consumer-overlay-ctest-result.json` and `s4-final-posthash.json` |
+| GCC Release | 700/700 passed, 0 failed/skipped; 262.24 s | `out/verification/s5-gcc-release/ctest-summary.json`, `source-after.json` |
+| Clang Debug | 700/700 passed, 0 failed/skipped; 366.35 s | `out/verification/s5-clang-debug/ctest.log`, configure/build/ctest exit files and `progress.txt` |
+| Clang Release | 700/700 passed, 0 failed/skipped; 230.77 s | `out/verification/s5-clang-release-ctest.log`, `s5-clang-release-progress.txt` |
+| GCC Debug, combined ASan+UBSan | 700/700 passed, 0 failed/skipped; 1,180.60 s | `out/verification/s5-sanitizers/ctest.log`, `ctest.exit`, `ctest-summary.json`, `source-after.json` |
+
+The new preset rows used the frozen `72a6a14` source. GCC Release, Clang
+Release and the sanitizer row each checked all 295 tracked-file raw SHA-256
+values before and after, with manifest fingerprint
+`869ba100aec42d40d26fad43e15e8267a63f0637f22667e658bc7f63624ce584`.
+Clang Debug recorded the same clean HEAD/tree before and after, without an
+independent raw-byte hash manifest. Production, test, package and CI sources
+were not changed during the matrix.
+The final sanitizer source check reports `matches_before=true` and a clean
+worktree; the before/after hash files compare equal. Its actual CTest terminal
+exit is zero. The report parser initially counted only result lines numbered
+100 and above; that diagnostic did not change the actual 700-test CTest summary
+or any test execution.
+
+All 584 project native compilation commands in the sanitizer row carry address
+and undefined-behavior instrumentation plus frame pointers. Actual consumer
+compile/link commands retain the sanitizer flags, as do the link fixtures.
+Configure, build, CTest and LastTest logs contain no sanitizer diagnostic matches.
+External frontend archives are not claimed instrumented. The exact installed
+frontend Debug/Release prefix was reused on the same host/libstdc++; successful
+Clang links and runs establish the tested ABI combination.
+
+Clang emitted non-exhaustive-switch warnings for the full comparison, rounding
+and address-space enums. Bounded read-only diagnosis confirmed explicit
+unsupported/error fallbacks; current profile/handler bounds exclude the
+unimplemented alternatives before lane preparation, while ordinary shared
+memory retains its explicit per-CTA path. The conversion helper's dangling-else
+warning has unambiguous intended C++ binding and predates this migration.
+These are recorded warnings, not a warning-free claim or an authorization to
+extend execution semantics. No source cleanup or extra test matrix was added.
+
+The accepted S4 normal-distribution/resource, 66-plus-complementary-13 Python
+(68 distinct), 751 unchanged IR/lowering output and 16 input-closure/no-op
+checks remain applicable to the unchanged runtime. Earlier leaf/record shape
+inventories are not substituted for accepted actual full-binder/Program review,
+compiled all-kind bridges and current integration tests. The only retired
+execution combinations remain the two explicitly authorized OOB+SAT FMA forms;
+the other 68 numeric cases and all 16 native FMA identities remain covered.
+Project Python stays under `python/`, with the user's two CI-only script
+exceptions under `.github/scripts/`. No remote GitHub CI run is claimed.
+
+Implementation and required local verification are complete. This final
+three-document diff still requires independent Max actual-diff review and
+Authority Sol whole-goal acceptance; this status is not an implementation-writer
+acceptance verdict. Only the Git owner may commit the reviewed final slice.
+The original dirty `/root/code/ptxsim` worktree remains untouched and no push has
+been performed or authorized.
 
 ## Review artifact mapping
 
