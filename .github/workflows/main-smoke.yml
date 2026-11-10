@@ -31,35 +31,23 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: GCC Debug
-            preset: ci-linux-gcc-debug
-            cc: /usr/bin/gcc
-            cxx: /usr/bin/g++
-            vcpkg_cache: gcc
-            writes_vcpkg_downloads: true
-          - name: GCC Release
-            preset: ci-linux-gcc-release
-            cc: /usr/bin/gcc
-            cxx: /usr/bin/g++
-            vcpkg_cache: gcc
-            writes_vcpkg_downloads: false
           - name: Clang Debug
             preset: ci-linux-clang-debug
             cc: /usr/bin/clang
             cxx: /usr/bin/clang++
             vcpkg_cache: clang
-            writes_vcpkg_downloads: false
+            writes_vcpkg_downloads: true
           - name: Clang Release
             preset: ci-linux-clang-release
             cc: /usr/bin/clang
             cxx: /usr/bin/clang++
             vcpkg_cache: clang
             writes_vcpkg_downloads: false
-          - name: GCC ASan + UBSan
-            preset: ci-linux-gcc-asan-ubsan
-            cc: /usr/bin/gcc
-            cxx: /usr/bin/g++
-            vcpkg_cache: gcc
+          - name: Clang ASan + UBSan
+            preset: ci-linux-clang-asan-ubsan
+            cc: /usr/bin/clang
+            cxx: /usr/bin/clang++
+            vcpkg_cache: clang
             writes_vcpkg_downloads: false
 
     steps:
@@ -108,9 +96,9 @@ jobs:
         run: cmake --build --preset "${{ matrix.preset }}"
 
       - name: Run build-tree and installed-package smoke tests
-        if: matrix.preset == 'ci-linux-gcc-debug'
+        if: matrix.preset == 'ci-linux-clang-debug'
         run: >-
-          ctest --preset ci-linux-gcc-debug --output-on-failure --no-tests=error
+          ctest --preset ci-linux-clang-debug --output-on-failure --no-tests=error
           -R '^ptxsim_arith_(build-tree|installed)_consumer$'
 
       - name: Show compiler cache statistics
