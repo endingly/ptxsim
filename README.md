@@ -46,16 +46,17 @@ runner CLI or CUDA runtime replacement.
 
 ## Build and run a first check
 
-The maintained build matrix is Linux with GCC and Clang. You need CMake 3.28+,
+The maintained build matrix is Linux with Clang and LLVM tools. You need CMake 3.28+,
 Ninja, Python 3.14+, and a compiler/standard library supporting C++23
 `std::expected` and the `__int128` extension. CI uses Ubuntu 26.04. Other platforms
-are not covered by that matrix.
+are not covered by that matrix. The presets cover Debug, Release, and ASan+UBSan,
+using LLVM archive tools and lld.
 
 On Ubuntu, install the build tools:
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y build-essential ccache clang cmake curl flex git \
+sudo apt-get install -y build-essential ccache clang libclang-rt-dev llvm lld cmake curl flex git \
   ninja-build pkg-config python3 python3-pip python3-venv tar unzip zip
 git clone https://github.com/endingly/ptxsim.git
 cd ptxsim
@@ -76,9 +77,9 @@ PTXSIM_VCPKG_REVISION=$(python -c 'import json; print(json.load(open("vcpkg.json
 git -C "$VCPKG_ROOT" checkout "$PTXSIM_VCPKG_REVISION"
 "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
-cmake --preset ci-linux-gcc-debug
-cmake --build --preset ci-linux-gcc-debug --parallel 2
-ctest --preset ci-linux-gcc-debug --output-on-failure --no-tests=error \
+cmake --preset ci-linux-clang-debug
+cmake --build --preset ci-linux-clang-debug --parallel 2
+ctest --preset ci-linux-clang-debug --output-on-failure --no-tests=error \
   -R '^ptxsim_arith_(build-tree|installed)_consumer$'
 ```
 
@@ -95,7 +96,7 @@ client itself exits silently with status zero.
 For the complete C++ suite:
 
 ```sh
-ctest --preset ci-linux-gcc-debug --output-on-failure --no-tests=error
+ctest --preset ci-linux-clang-debug --output-on-failure --no-tests=error
 ```
 
 See [Building and Testing](https://github.com/endingly/ptxsim/wiki/Building-and-Testing)

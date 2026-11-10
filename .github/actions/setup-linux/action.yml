@@ -62,7 +62,7 @@ runs:
           -o Dir::Cache::archives="$APT_CACHE_DIR" \
           -o Binary::apt::APT::Keep-Downloaded-Packages=true \
           install -y --no-install-recommends \
-          build-essential ccache clang clang-format cmake curl flex gcc g++ \
+          build-essential ccache clang clang-format libclang-rt-dev llvm lld cmake curl flex \
           git ninja-build pkg-config python3 python3-pip python3-venv tar unzip zip
         sudo chmod -R a+rX "$APT_CACHE_DIR"
 
@@ -83,7 +83,7 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/vcpkg/archives
-        key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json') }}
+        key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json', 'cmake/toolchains/**') }}
 
     - name: Set up Python environment
       shell: bash

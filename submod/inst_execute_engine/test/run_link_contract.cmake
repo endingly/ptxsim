@@ -38,6 +38,10 @@ if(PTXSIM_TOOLCHAIN_FILE)
     list(APPEND ptxsim_link_contract_args
         "-DCMAKE_TOOLCHAIN_FILE=${PTXSIM_TOOLCHAIN_FILE}")
 endif()
+if(PTXSIM_CHAINLOAD_TOOLCHAIN_FILE)
+    list(APPEND ptxsim_link_contract_args
+        "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${PTXSIM_CHAINLOAD_TOOLCHAIN_FILE}")
+endif()
 if(PTXSIM_LINK_CONTRACT_MODE STREQUAL "handler")
     file(MAKE_DIRECTORY "${PTXSIM_CONSUMER_BINARY_DIR}")
     set(ptxsim_required_handler_source "${PTXSIM_CONSUMER_BINARY_DIR}/required_handler.gen.cpp")

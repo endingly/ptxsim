@@ -28,6 +28,13 @@ def compiler_identity() -> str:
     identity.update(f"ImageOS={os.environ.get('ImageOS') or 'local'}\n".encode())
     for command in (["cmake", "--version"], ["ninja", "--version"]):
         identity.update(subprocess.check_output(command))
+    # Companion tools affect archives and links even when clang is unchanged.
+    for tool in (
+        "llvm-ar", "llvm-ranlib", "llvm-nm", "llvm-strip", "llvm-objcopy",
+        "llvm-objdump", "llvm-readelf", "llvm-addr2line", "ld.lld",
+    ):
+        identity.update(tool.encode("ascii") + b"\n")
+        identity.update(subprocess.check_output([f"/usr/bin/{tool}", "--version"]))
     for executable in compilers:
         for option in ("--version", "-dumpmachine"):
             identity.update(subprocess.check_output([str(executable), option]))
