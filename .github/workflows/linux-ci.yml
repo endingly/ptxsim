@@ -3,12 +3,16 @@ name: Linux CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  workflow_dispatch:
   schedule:
     - cron: "0 0 1 * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: linux-ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
@@ -17,119 +21,231 @@ env:
   VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.cache/vcpkg/archives,readwrite"
   CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
   CCACHE_MAXSIZE: 1G
+  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
 
 jobs:
-  python:
-    name: Python generators
+  dependencies:
+    uses: ./.github/workflows/dependency-prepare.yml
+
+  formatting:
+    name: Formatting
     runs-on: ubuntu-26.04
     timeout-minutes: 10
-    concurrency:
-      group: linux-ci-${{ github.ref }}-python
-      cancel-in-progress: true
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
 
-      - name: Install Python dependencies
-        shell: bash
+      - name: Install pinned formatter
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends python3 python3-pip python3-venv
+          sudo apt-get install -y --no-install-recommends clang-format-21
 
-      - name: Set up Python environment
-        shell: bash
-        run: |
-          python3 -m venv .venv
-          .venv/bin/python -m pip install -e ./python
+      - name: Check changed handwritten C++ formatting
+        env:
+          FORMAT_BASE: ${{ github.event.pull_request.base.sha || format('{0}^', github.sha) }}
+        run: python3 .github/scripts/check_clang_format.py --base "$FORMAT_BASE"
 
-      - name: Test Python generators
-        shell: bash
-        run: |
-          .venv/bin/python -m unittest discover -s python/tests -v
+      - name: Audit all handwritten C++ formatting
+        if: always()
+        continue-on-error: true
+        run: python3 .github/scripts/check_clang_format.py --audit
 
   test:
+    needs: dependencies
     name: ${{ matrix.name }}
     runs-on: ubuntu-26.04
     timeout-minutes: 60
+    cache-mode: write
     env:
-      CC: ${{ matrix.cc }}
-      CXX: ${{ matrix.cxx }}
-    concurrency:
-      group: linux-ci-${{ github.ref }}-${{ matrix.preset }}
-      cancel-in-progress: true
+      CC: /usr/bin/clang
+      CXX: /usr/bin/clang++
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Clang Debug
+          - name: Debug
             preset: ci-linux-clang-debug
-            cc: /usr/bin/clang
-            cxx: /usr/bin/clang++
-            vcpkg_cache: clang
-            writes_vcpkg_downloads: true
-          - name: Clang Release
+          - name: Release
             preset: ci-linux-clang-release
-            cc: /usr/bin/clang
-            cxx: /usr/bin/clang++
-            vcpkg_cache: clang
-            writes_vcpkg_downloads: false
-          - name: Clang ASan + UBSan
+          - name: ASan + UBSan
             preset: ci-linux-clang-asan-ubsan
-            cc: /usr/bin/clang
-            cxx: /usr/bin/clang++
-            vcpkg_cache: clang
-            writes_vcpkg_downloads: false
 
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Initialize compiler-cache metrics directory
+        shell: bash
+        run: echo "CCACHE_METRICS_DIR=$RUNNER_TEMP/ccache-metrics/${{ matrix.preset }}" >> "$GITHUB_ENV"
 
       - name: Set up Linux dependencies
         id: setup
         uses: ./.github/actions/setup-linux
         with:
-          compiler: ${{ matrix.vcpkg_cache }}
-          writes-downloads: ${{ matrix.writes_vcpkg_downloads }}
+          compiler: clang
+          writes-downloads: 'false'
 
-      - name: Restore compiler cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
-        with:
-          path: .cache/ccache
-          key: ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: |
-            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ steps.setup.outputs.month }}-
-            ccache-v6-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-
-
-      - name: Show compiler cache configuration
+      # PR, scheduled, and manual jobs restore a compatible main-produced seed;
+      # only integration smoke on trusted main may upload immutable SHA keys.
+      - name: Verify prepared dependency cache handoff
+        env:
+          PREPARED_COMPILER_IDENTITY: ${{ needs.dependencies.outputs.compiler-identity }}
+          PREPARED_BINARY_CACHE_KEY: ${{ needs.dependencies.outputs.binary-cache-key }}
+          ACTUAL_COMPILER_IDENTITY: ${{ steps.setup.outputs.compiler-identity }}
+          ACTUAL_BINARY_CACHE_KEY: ${{ steps.setup.outputs.binary-cache-key }}
+          ACTUAL_BINARY_CACHE_HIT: ${{ steps.setup.outputs.binary-cache-hit }}
         shell: bash
         run: |
-          ccache --version
-          ccache --show-config
+          echo "Prepared tool identity: $PREPARED_COMPILER_IDENTITY"
+          echo "Actual tool identity: $ACTUAL_COMPILER_IDENTITY"
+          echo "Prepared binary key: $PREPARED_BINARY_CACHE_KEY"
+          echo "Actual binary key: $ACTUAL_BINARY_CACHE_KEY"
+          echo "Exact dependency cache hit: $ACTUAL_BINARY_CACHE_HIT"
+          if [ "$PREPARED_COMPILER_IDENTITY" != "$ACTUAL_COMPILER_IDENTITY" ] || \
+             [ "$PREPARED_BINARY_CACHE_KEY" != "$ACTUAL_BINARY_CACHE_KEY" ]; then
+            echo "::warning::Installed dependency identity differs; configure will safely build missing dependencies under this job's own key."
+          elif [ "$ACTUAL_BINARY_CACHE_HIT" != "true" ]; then
+            echo "::warning::Prepared cache is unavailable; configure will safely build missing dependencies."
+          fi
 
-      - name: Reset compiler cache statistics
-        shell: bash
-        run: ccache --zero-stats
-
-      - name: Run core CMake workflow preset
-        shell: bash
-        run: cmake --workflow --preset "${{ matrix.preset }}"
-
-      - name: Save vcpkg downloads cache
-        if: success() && matrix.writes_vcpkg_downloads && steps.setup.outputs.downloads-cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      - name: Restore persistent compiler cache
+        id: ccache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
-          path: .cache/vcpkg/downloads
-          key: ${{ steps.setup.outputs.downloads-cache-key }}
+          path: .cache/ccache
+          key: ccache-v9-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ github.sha }}
+          restore-keys: |
+            ccache-v9-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-
 
-      # Jobs may use different installed toolchains and therefore different binary keys.
-      - name: Save vcpkg binary cache
+      - name: Configure and reset production compiler-cache statistics
+        id: configure
+        shell: bash
+        run: |
+          rm -rf "$CCACHE_METRICS_DIR"
+          mkdir -p "$CCACHE_METRICS_DIR"
+          ccache --zero-stats
+          date +%s > "$CCACHE_METRICS_DIR/production.started-at"
+          set +e
+          cmake --preset "${{ matrix.preset }}" -DPython3_EXECUTABLE="$GITHUB_WORKSPACE/.venv/bin/python"
+          configure_exit_code=$?
+          echo "$configure_exit_code" > "$CCACHE_METRICS_DIR/production.configure-exit-code"
+          if [ "$configure_exit_code" -ne 0 ]; then
+            date +%s > "$CCACHE_METRICS_DIR/production.finished-at"
+          fi
+          exit "$configure_exit_code"
+
+      # Installed toolchains can differ within the matrix, producing distinct binary keys.
+      - name: Save vcpkg binary archive cache
         if: success() && steps.setup.outputs.binary-cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: .cache/vcpkg/archives
           key: ${{ steps.setup.outputs.binary-cache-key }}
 
-      - name: Show compiler cache statistics
+      - name: Build production target
+        id: production-build
+        shell: bash
+        run: |
+          date +%s > "$CCACHE_METRICS_DIR/production.build-started-at"
+          set +e
+          cmake --build --preset "${{ matrix.preset }}" --target ptxsim_simulator
+          build_exit_code=$?
+          date +%s > "$CCACHE_METRICS_DIR/production.finished-at"
+          echo "$build_exit_code" > "$CCACHE_METRICS_DIR/production.build-exit-code"
+          exit "$build_exit_code"
+
+      - name: Record production compiler-cache statistics
         if: always()
         shell: bash
-        run: ccache --show-stats || true
+        run: |
+          python3 .github/scripts/capture_ccache_metrics.py \
+            --phase production-build --started-at-file "$CCACHE_METRICS_DIR/production.started-at" \
+            --finished-at-file "$CCACHE_METRICS_DIR/production.finished-at" \
+            --build-started-at-file "$CCACHE_METRICS_DIR/production.build-started-at" \
+            --build-finished-at-file "$CCACHE_METRICS_DIR/production.finished-at" \
+            --build-exit-code-file "$CCACHE_METRICS_DIR/production.build-exit-code" \
+            --command-exit-code-file "$CCACHE_METRICS_DIR/production.configure-exit-code" \
+            --status "${{ steps.configure.outcome }}" \
+            --status "${{ steps.production-build.outcome }}" \
+            --output "$CCACHE_METRICS_DIR/production-build.json" || true
+          ccache --show-stats || true
+
+      # Production and test compilation share the persistent compiler cache.
+      # Reset only statistics so test-phase hit/miss metrics remain independent.
+      - name: Reset test compiler-cache statistics
+        if: success()
+        shell: bash
+        run: |
+          ccache --zero-stats
+          date +%s > "$CCACHE_METRICS_DIR/tests.started-at"
+
+      - name: Build test support
+        id: test-support
+        if: success()
+        shell: bash
+        run: |
+          date +%s > "$CCACHE_METRICS_DIR/tests.build-started-at"
+          set +e
+          cmake --build --preset "${{ matrix.preset }}"
+          build_exit_code=$?
+          date +%s > "$CCACHE_METRICS_DIR/tests.build-finished-at"
+          echo "$build_exit_code" > "$CCACHE_METRICS_DIR/tests.build-exit-code"
+          if [ "$build_exit_code" -ne 0 ]; then
+            date +%s > "$CCACHE_METRICS_DIR/tests.finished-at"
+          fi
+          exit "$build_exit_code"
+
+      - name: Test
+        id: test
+        shell: bash
+        if: success()
+        run: |
+          set +e
+          ctest --preset "${{ matrix.preset }}" --output-on-failure --no-tests=error
+          test_exit_code=$?
+          echo "$test_exit_code" > "$CCACHE_METRICS_DIR/tests.exit-code"
+          date +%s > "$CCACHE_METRICS_DIR/tests.finished-at"
+          exit "$test_exit_code"
+
+      - name: Record test compiler-cache statistics
+        if: always()
+        shell: bash
+        run: |
+          python3 .github/scripts/capture_ccache_metrics.py \
+            --phase tests \
+            --started-at-file "$CCACHE_METRICS_DIR/tests.started-at" \
+            --finished-at-file "$CCACHE_METRICS_DIR/tests.finished-at" \
+            --build-started-at-file "$CCACHE_METRICS_DIR/tests.build-started-at" \
+            --build-finished-at-file "$CCACHE_METRICS_DIR/tests.build-finished-at" \
+            --build-exit-code-file "$CCACHE_METRICS_DIR/tests.build-exit-code" \
+            --command-exit-code-file "$CCACHE_METRICS_DIR/tests.exit-code" \
+            --status "${{ steps.test-support.outcome }}" \
+            --status "${{ steps.test.outcome }}" \
+            --output "$CCACHE_METRICS_DIR/tests.json" || true
+          ccache --show-stats || true
+
+      - name: Save PR compiler cache
+        if: >
+          github.event_name == 'pull_request' &&
+          steps.production-build.outcome == 'success' &&
+          steps.test-support.outcome == 'success' &&
+          steps.test.outcome == 'success' &&
+          steps.ccache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/ccache
+          key: ccache-v9-${{ runner.os }}-${{ runner.arch }}-${{ matrix.preset }}-${{ steps.setup.outputs.compiler-identity }}-${{ github.sha }}
+
+      # JSON records local cache size, cleanup count, hit/miss rate, and phase
+      # wall-clock time. Actions transfer bytes/times remain in action logs.
+      - name: Upload compiler-cache measurements
+        continue-on-error: true
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ccache-metrics-${{ matrix.preset }}
+          path: ${{ runner.temp }}/ccache-metrics/${{ matrix.preset }}
+          if-no-files-found: warn
+          retention-days: 14

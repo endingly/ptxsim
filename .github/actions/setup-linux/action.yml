@@ -1,12 +1,12 @@
 name: Set up Linux build dependencies
-description: Shared toolchain setup and cache identity for acceptance and main cache warmup jobs
+description: Shared LLVM toolchain, Python and dependency caches for acceptance and integration jobs
 
 inputs:
   compiler:
     description: Compiler family used to partition the vcpkg binary cache
     required: true
   writes-downloads:
-    description: Whether this job owns shared APT and vcpkg download cache writes
+    description: Whether this job owns shared APT, pip and vcpkg download cache writes
     default: 'false'
 
 outputs:
@@ -16,6 +16,9 @@ outputs:
   compiler-identity:
     description: Fingerprint of installed compilers, build tools and OS, excluding runner image revisions
     value: ${{ steps.identity.outputs.compiler }}
+  python-version:
+    description: Installed interpreter identity for Python download caches
+    value: ${{ steps.identity.outputs.python }}
   binary-cache-key:
     description: Exact dependency cache key shared by main and PR jobs
     value: ${{ steps.binaries.outputs.cache-primary-key }}
@@ -46,9 +49,9 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/apt/archives
-        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.epoch.outputs.month }}-${{ hashFiles('.github/actions/setup-linux/action.yml') }}
+        key: apt-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.epoch.outputs.month }}-${{ hashFiles('.github/actions/setup-linux/action.yml') }}
         restore-keys: |
-          apt-${{ runner.os }}-${{ runner.arch }}-${{ steps.epoch.outputs.month }}-
+          apt-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.epoch.outputs.month }}-
 
     - name: Install system dependencies
       shell: bash
@@ -83,13 +86,33 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/vcpkg/archives
-        key: vcpkg-binaries-v2-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json', 'cmake/toolchains/**', '.triplets/**') }}
+        key: vcpkg-binaries-v3-${{ runner.os }}-${{ runner.arch }}-${{ inputs.compiler }}-${{ steps.identity.outputs.compiler }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**', 'CMakePresets.json', 'cmake/toolchains/**', '.triplets/**') }}
+
+    - name: Restore Python download cache
+      id: pip
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: .cache/pip
+        key: pip-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.identity.outputs.python }}-${{ steps.epoch.outputs.month }}-${{ hashFiles('python/pyproject.toml') }}
+        restore-keys: |
+          pip-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.identity.outputs.python }}-${{ steps.epoch.outputs.month }}-
 
     - name: Set up Python environment
       shell: bash
       run: |
         python3 -m venv .venv
         .venv/bin/python -m pip install -e ./python
+
+    - name: Save Python download cache
+      if: inputs.writes-downloads == 'true' && steps.pip.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: .cache/pip
+        key: ${{ steps.pip.outputs.cache-primary-key }}
+
+    - name: Expose project Python environment
+      shell: bash
+      run: |
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
         echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
 
@@ -98,9 +121,9 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: .cache/vcpkg/downloads
-        key: vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
+        key: vcpkg-downloads-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.identity.outputs.vcpkg-revision }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json', '.ports/**') }}
         restore-keys: |
-          vcpkg-downloads-${{ runner.os }}-${{ runner.arch }}-
+          vcpkg-downloads-v3-${{ runner.os }}-${{ runner.arch }}-${{ steps.identity.outputs.vcpkg-revision }}-
 
     - name: Prepare vcpkg cache directories
       shell: bash

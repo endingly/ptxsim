@@ -1,0 +1,120 @@
+name: Prepare Linux dependencies
+
+on:
+  workflow_call:
+    outputs:
+      compiler-identity:
+        description: Installed toolchain identity that produced the dependency cache
+        value: ${{ jobs.prepare.outputs.compiler-identity }}
+      binary-cache-key:
+        description: Exact dependency archive cache key saved before native builds
+        value: ${{ jobs.prepare.outputs.binary-cache-key }}
+
+permissions:
+  contents: read
+
+env:
+  VCPKG_ROOT: ${{ github.workspace }}/.vcpkg
+  VCPKG_DOWNLOADS: ${{ github.workspace }}/.cache/vcpkg/downloads
+  VCPKG_BINARY_CACHE: ${{ github.workspace }}/.cache/vcpkg/archives
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.cache/vcpkg/archives,readwrite"
+  CCACHE_DIR: ${{ github.workspace }}/.cache/ccache
+  CCACHE_MAXSIZE: 1G
+  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
+
+jobs:
+  prepare:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    cache-mode: write
+    env:
+      CC: /usr/bin/clang
+      CXX: /usr/bin/clang++
+    outputs:
+      compiler-identity: ${{ steps.setup.outputs.compiler-identity }}
+      binary-cache-key: ${{ steps.setup.outputs.binary-cache-key }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Initialize dependency measurements
+        run: |
+          mkdir -p "$RUNNER_TEMP/dependency-metrics"
+          echo "DEPENDENCY_METRICS_DIR=$RUNNER_TEMP/dependency-metrics" >> "$GITHUB_ENV"
+
+      - name: Set up Linux dependencies
+        id: setup
+        uses: ./.github/actions/setup-linux
+        with:
+          compiler: clang
+          writes-downloads: 'true'
+
+      # The three presets have the same dependency manifest feature, dynamic
+      # triplet and LLVM toolchain. Sanitizer flags apply to project targets.
+      # Configure once to build dependencies without compiling project targets.
+      - name: Prepare dependency archives
+        id: configure
+        run: |
+          ccache --zero-stats
+          date +%s > "$DEPENDENCY_METRICS_DIR/prepare.started-at"
+          set +e
+          cmake --preset ci-linux-clang-debug -DPython3_EXECUTABLE="$GITHUB_WORKSPACE/.venv/bin/python" \
+            2>&1 | tee "$DEPENDENCY_METRICS_DIR/configure.log"
+          configure_exit_code=${PIPESTATUS[0]}
+          date +%s > "$DEPENDENCY_METRICS_DIR/prepare.finished-at"
+          echo "$configure_exit_code" > "$DEPENDENCY_METRICS_DIR/prepare.exit-code"
+          exit "$configure_exit_code"
+
+      # Save before the native matrix starts, even on a completely cold run.
+      - name: Save prepared dependency archive cache
+        if: success() && steps.setup.outputs.binary-cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/archives
+          key: ${{ steps.setup.outputs.binary-cache-key }}
+
+      - name: Save dependency source-download cache
+        if: success() && steps.setup.outputs.downloads-cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/vcpkg/downloads
+          key: ${{ steps.setup.outputs.downloads-cache-key }}
+
+      - name: Record dependency preparation measurements
+        if: always()
+        env:
+          PREPARED_COMPILER_IDENTITY: ${{ steps.setup.outputs.compiler-identity }}
+          PREPARED_BINARY_CACHE_KEY: ${{ steps.setup.outputs.binary-cache-key }}
+          PREPARED_BINARY_CACHE_HIT: ${{ steps.setup.outputs.binary-cache-hit }}
+        run: |
+          python3 .github/scripts/capture_ccache_metrics.py \
+            --phase dependency-preparation \
+            --started-at-file "$DEPENDENCY_METRICS_DIR/prepare.started-at" \
+            --finished-at-file "$DEPENDENCY_METRICS_DIR/prepare.finished-at" \
+            --command-exit-code-file "$DEPENDENCY_METRICS_DIR/prepare.exit-code" \
+            --status "${{ steps.setup.outcome }}" \
+            --status "${{ steps.configure.outcome }}" \
+            --output "$DEPENDENCY_METRICS_DIR/dependency-preparation.json" || true
+          python3 - <<'PY' || true
+          import json
+          import os
+          from pathlib import Path
+          metadata = {name: os.environ.get(name) for name in (
+              "PREPARED_COMPILER_IDENTITY", "PREPARED_BINARY_CACHE_KEY", "PREPARED_BINARY_CACHE_HIT",
+          )}
+          metadata["preset"] = "ci-linux-clang-debug"
+          metadata["vcpkg_baseline"] = json.loads(Path("vcpkg.json").read_text())["builtin-baseline"]
+          serialized = json.dumps(metadata, indent=2, sort_keys=True)
+          print(serialized)
+          (Path(os.environ["DEPENDENCY_METRICS_DIR"]) / "identity.json").write_text(serialized + "\n")
+          PY
+
+      - name: Upload dependency preparation measurements
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dependency-preparation-${{ github.workflow }}
+          path: ${{ runner.temp }}/dependency-metrics
+          if-no-files-found: warn
+          retention-days: 14
