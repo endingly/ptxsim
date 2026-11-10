@@ -1,6 +1,6 @@
 # Inherited executable IR and complete frontend binding
 
-> **Status:** Authority Sol approved design; implementation and actual-diff acceptance pending.
+> **Status:** Implemented and accepted through S4 commit `72a6a14`; required local verification complete, final whole-goal review pending.
 > **Baseline:** `origin/main` at `775f004af2c6861a053e47d686137fe08d8d29b0`.
 > **Active plan:** [Inherited executable IR delivery](../milestone_plan/inherited_exec_ir_execution_plan.md).
 
