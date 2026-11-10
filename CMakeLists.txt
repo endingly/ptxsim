@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.28.0)
 list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+option(BUILD_SHARED_LIBS "Build ptxsim components as shared libraries" ON)
+
 project(ptxsim VERSION 0.0.1 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
@@ -62,6 +64,19 @@ if(BUILD_TESTING)
     include(CTest)
     enable_testing()
     include(GoogleTest)
+endif()
+
+if(BUILD_SHARED_LIBS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Installed components find siblings after relocation; managed dependencies
+    # remain discoverable in their separately installed external prefix.
+    if(NOT DEFINED CMAKE_INSTALL_RPATH)
+        set(CMAKE_INSTALL_RPATH "$ORIGIN")
+        # Dependency runtime paths follow this default, preserving explicit overrides.
+        set(PTXSIM_DEFAULT_INSTALL_RPATH TRUE)
+    endif()
+    if(NOT DEFINED CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    endif()
 endif()
 
 add_subdirectory(submod)

@@ -1,4 +1,9 @@
 # Shared by vcpkg chainloading and standalone CMake consumer checks.
+# vcpkg port configurations pass this root before loading their chainload file.
+# Preserve the platform setup, PIC, and triplet flags from its Linux toolchain.
+if(DEFINED _VCPKG_ROOT_DIR)
+    include("${_VCPKG_ROOT_DIR}/scripts/toolchains/linux.cmake")
+endif()
 # This dedicated toolchain also replaces stale cached tool paths.
 # Clang uses its integrated assembler; llvm-as accepts LLVM IR, not platform ASM.
 set(CMAKE_C_COMPILER "/usr/bin/clang" CACHE FILEPATH "LLVM C compiler" FORCE)
@@ -16,7 +21,9 @@ set(CMAKE_LINKER "/usr/bin/ld.lld" CACHE FILEPATH "LLVM linker" FORCE)
 # CMAKE_LINKER alone does not select the linker invoked by the Clang driver.
 # Initial flags keep this compatible with the project's CMake 3.28 minimum.
 foreach(kind IN ITEMS EXE SHARED MODULE)
-    set(CMAKE_${kind}_LINKER_FLAGS_INIT "-fuse-ld=lld")
+    if(NOT "${CMAKE_${kind}_LINKER_FLAGS_INIT}" MATCHES "(^| )-fuse-ld=lld($| )")
+        string(APPEND CMAKE_${kind}_LINKER_FLAGS_INIT " -fuse-ld=lld")
+    endif()
     # Existing preset build trees already have cached flags, so update those too.
     if(DEFINED CACHE{CMAKE_${kind}_LINKER_FLAGS} AND
        NOT "${CMAKE_${kind}_LINKER_FLAGS}" MATCHES "(^| )-fuse-ld=lld($| )")

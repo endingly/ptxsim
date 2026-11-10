@@ -45,6 +45,15 @@ find_package(magic_enum CONFIG REQUIRED)
 target_link_libraries(ptxsim_exec_ir
     PUBLIC ptxsim::common
     PRIVATE fmt::fmt magic_enum::magic_enum)
+if(BUILD_SHARED_LIBS AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   PTXSIM_DEFAULT_INSTALL_RPATH AND CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+    get_target_property(ptxsim_fmt_type fmt::fmt TYPE)
+    if(ptxsim_fmt_type STREQUAL "SHARED_LIBRARY")
+        # Automatic link-path RPATH collection skips dependencies under the source tree.
+        set_property(TARGET ptxsim_exec_ir APPEND PROPERTY INSTALL_RPATH
+            "$<TARGET_FILE_DIR:fmt::fmt>")
+    endif()
+endif()
 add_dependencies(ptxsim_exec_ir ptxsim_exec_ir_codegen)
 target_include_directories(ptxsim_exec_ir PUBLIC
     $<BUILD_INTERFACE:${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}>

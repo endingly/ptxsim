@@ -43,6 +43,17 @@ target_compile_features(ptxsim_exec_ir_lowering PUBLIC cxx_std_23)
 target_link_libraries(ptxsim_exec_ir_lowering PUBLIC
     ptxsim::exec_ir
     ptx_frontend::resolved_ir)
+if(BUILD_SHARED_LIBS AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
+   PTXSIM_DEFAULT_INSTALL_RPATH AND CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+    foreach(dependency IN ITEMS ptx_frontend::resolved_ir fmt::fmt)
+        get_target_property(ptxsim_dependency_type ${dependency} TYPE)
+        if(ptxsim_dependency_type STREQUAL "SHARED_LIBRARY")
+            # These managed dependencies may live below the source/build tree.
+            set_property(TARGET ptxsim_exec_ir_lowering APPEND PROPERTY INSTALL_RPATH
+                "$<TARGET_FILE_DIR:${dependency}>")
+        endif()
+    endforeach()
+endif()
 add_dependencies(ptxsim_exec_ir_lowering ptxsim_exec_ir_lowering_codegen)
 target_include_directories(ptxsim_exec_ir_lowering PRIVATE
     "${PTXSIM_EXEC_IR_LOWERING_GENERATED_DIR}"

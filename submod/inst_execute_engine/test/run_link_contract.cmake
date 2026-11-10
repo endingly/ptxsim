@@ -42,6 +42,18 @@ if(PTXSIM_CHAINLOAD_TOOLCHAIN_FILE)
     list(APPEND ptxsim_link_contract_args
         "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=${PTXSIM_CHAINLOAD_TOOLCHAIN_FILE}")
 endif()
+if(PTXSIM_TARGET_TRIPLET)
+    list(APPEND ptxsim_link_contract_args
+        "-DVCPKG_TARGET_TRIPLET=${PTXSIM_TARGET_TRIPLET}")
+endif()
+if(PTXSIM_INSTALLED_DIR)
+    list(APPEND ptxsim_link_contract_args
+        "-DVCPKG_INSTALLED_DIR=${PTXSIM_INSTALLED_DIR}")
+endif()
+if(PTXSIM_OVERLAY_TRIPLETS)
+    list(APPEND ptxsim_link_contract_args
+        "-DVCPKG_OVERLAY_TRIPLETS=${PTXSIM_OVERLAY_TRIPLETS}")
+endif()
 if(PTXSIM_LINK_CONTRACT_MODE STREQUAL "handler")
     file(MAKE_DIRECTORY "${PTXSIM_CONSUMER_BINARY_DIR}")
     set(ptxsim_required_handler_source "${PTXSIM_CONSUMER_BINARY_DIR}/required_handler.gen.cpp")
