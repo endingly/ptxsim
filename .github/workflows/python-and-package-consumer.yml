@@ -1,0 +1,64 @@
+name: Python generators and package
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-package-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_CACHE_DIR: ${{ github.workspace }}/.cache/pip
+
+jobs:
+  test:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    cache-mode: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install Python tools and identify interpreter
+        id: python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3 python3-pip python3-venv clang-format-21
+          echo "identity=$(python3 -VV | sha256sum | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+          echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Python download cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: .cache/pip
+          key: pip-package-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.python.outputs.identity }}-${{ steps.python.outputs.month }}-${{ hashFiles('python/pyproject.toml', '.github/workflows/python-and-package-consumer.yml') }}
+          restore-keys: |
+            pip-package-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.python.outputs.identity }}-${{ steps.python.outputs.month }}-
+
+      - name: Test CI helpers and action pins
+        run: |
+          python3 .github/scripts/check-action-pins.py
+          python3 -m unittest discover -s .github/scripts/tests -v
+
+      - name: Test Python generators
+        run: |
+          python3 -m venv .venv
+          .venv/bin/python -m pip install -e ./python
+          .venv/bin/python -m unittest discover -s python/tests -v
+
+      - name: Build wheel and test installed generator commands
+        run: |
+          .venv/bin/python -m pip wheel --no-deps ./python --wheel-dir "$RUNNER_TEMP/ptxsim-wheel"
+          python3 -m venv "$RUNNER_TEMP/ptxsim-consumer"
+          "$RUNNER_TEMP/ptxsim-consumer/bin/python" -m pip install "$RUNNER_TEMP"/ptxsim-wheel/ptxsim_codegen-*.whl
+          cd "$RUNNER_TEMP"
+          for command in ptxsim-exec-ir-codegen ptxsim-exec-ir-lowering-codegen ptxsim-inst-engine-codegen; do
+            "$RUNNER_TEMP/ptxsim-consumer/bin/$command" --output-dir "$RUNNER_TEMP/installed-$command"
+          done

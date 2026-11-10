@@ -1,0 +1,71 @@
+name: PR cache maintenance
+
+on:
+  workflow_run:
+    workflows: ["Linux CI"]
+    types: [completed]
+
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  prune:
+    if: >
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.pull_requests[0].number != null
+    permissions:
+      contents: read
+      actions: write
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out trusted maintenance helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: refs/heads/main
+
+      - name: Retain two ccache generations per PR lineage
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        shell: bash
+        run: |
+          python3 .github/scripts/cleanup_pr_ccache.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --ref "refs/pull/${PR_NUMBER}/merge" \
+            --retain 2 \
+            --execute
+
+  delete:
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      contents: read
+      actions: write
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out trusted maintenance helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: refs/heads/main
+
+      - name: Delete recognized compiler caches for closed PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        shell: bash
+        run: |
+          python3 .github/scripts/cleanup_pr_ccache.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --ref "refs/pull/${PR_NUMBER}/merge" \
+            --retain 0 \
+            --execute

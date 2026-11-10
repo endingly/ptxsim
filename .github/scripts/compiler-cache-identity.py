@@ -61,8 +61,9 @@ def main() -> None:
     if not isinstance(revision, str) or re.fullmatch(r"[0-9a-f]{40}", revision) is None:
         raise ValueError("vcpkg builtin-baseline must be a full commit SHA")
     identity = compiler_identity()
+    python_identity = hashlib.sha256(subprocess.check_output([sys.executable, "-VV"])).hexdigest()
     with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
-        output.write(f"compiler={identity}\nvcpkg-revision={revision}\n")
+        output.write(f"compiler={identity}\nvcpkg-revision={revision}\npython={python_identity}\n")
 
 
 if __name__ == "__main__":
