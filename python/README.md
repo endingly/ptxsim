@@ -1,8 +1,9 @@
 # PTXSim Python generators
 
-`python/pyproject.toml` builds the single `ptxsim-codegen` distribution. All
-Python source and resources belong to this directory; C++ submodules
-contain their C++ sources and CMake integration.
+`python/pyproject.toml` builds the single `ptxsim-codegen` distribution.
+Project Python source, generator resources, tests and helpers belong to this
+directory; C++ submodules contain their C++ sources and CMake integration.
+Scripts used only by CI remain in `.github/scripts/`.
 
 | Package | Responsibility |
 | --- | --- |
@@ -12,7 +13,7 @@ contain their C++ sources and CMake integration.
 | `ptxsim_codegen.code_gen.exec_ir` | IR declarations and diagnostics |
 | `ptxsim_codegen.code_gen.lowering` | Binding generator CLI |
 | `ptxsim_codegen.code_gen.engine` | Numeric, predicate, memory, control-flow and barrier preparation |
-| `ptxsim_codegen.resources` | Packaged backend YAML |
+| `ptxsim_codegen.resources` | Packaged representation and execution YAML |
 
 The Python and C++ dependencies both select frontend release 0.8.0 (tag commit
 `14879089d2a0f8c5fcb962c621c43b6dc3de193c`). The wheel URL and SHA-256 are
@@ -58,7 +59,9 @@ All generator commands use packaged frontend and backend resources:
 
 The console commands remain `ptxsim-exec-ir-codegen`,
 `ptxsim-exec-ir-lowering-codegen` and `ptxsim-inst-engine-codegen`. Optional
-`--backend` and `--spec-dir` arguments override the packaged inputs.
+`--backend` and `--spec-dir` arguments override the packaged inputs. The engine
+command additionally accepts `--execution-profile PATH`; changing execution
+admission never changes the full IR or cold binder.
 
 Each command publishes `artifact_plan.json` and a bounded set of generated
 headers and sources. `--cmake-plan-output PATH` writes the exact CMake output
@@ -68,8 +71,20 @@ then copies all selected controls, operands and identities into owned types.
 Issue entries select a typed handler before looping over lanes. Arithmetic
 semantics, allocation, memory-transfer helpers and commit remain handwritten C++.
 
-CMake tracks shared model/frontend/resources and each command's own emitter
-closure. Tests are outside the import packages. Publication keeps unchanged
+`resources/execution.yaml` registers exact semantic forms, typed handlers and
+finite layout/control/operand-category admission. Omitted forms reject actual
+issues as unsupported. Unknown identities, selector paths and overlapping rules
+fail generation; an unavailable declared handler leaves a required typed link
+symbol. Numeric values, ordinary IDs and register contents are never selectors.
+A profile selects or narrows a typed handler; it cannot add semantics to that
+handler. Known-handler preconditions remain before continuation, predicate and
+lane reads. For example, registering relaxed memory or XOR SETP controls still
+rejects those issues as unsupported with the current ordinary-memory and
+literal-AND comparison implementations. Memory joint-size and sink rules remain
+local transfer/shape preconditions rather than a second PTX topology schema.
+
+CMake tracks shared model/frontend/backend inputs and each command's own emitter
+closure. Execution YAML is an engine-only input. Tests are outside the import packages. Publication keeps unchanged
 artifact contents and modification times stable for incremental builds.
 
 ## Distribution
@@ -84,5 +99,6 @@ python -m build --sdist ./python --outdir out/sdist
 `build` is an optional local distribution-validation tool, not a runtime
 requirement. Build isolation installs setuptools and wheel from
 `build-system.requires`. The wheel and source distribution contain the backend
-YAML and all generator modules. Install a rebuilt wheel to update a regular
-installation; editing the checkout does not change installed resources.
+and execution YAML resources and all generator modules. Install a rebuilt wheel
+to update a regular installation; editing the checkout does not change installed
+resources.

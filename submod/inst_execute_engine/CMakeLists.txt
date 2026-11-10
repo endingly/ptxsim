@@ -6,9 +6,10 @@ file(GLOB_RECURSE PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/model/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/frontend/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.py"
-    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.yaml"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/engine/*.py")
 list(APPEND PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES
+    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/backend.yaml"
+    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/execution.yaml"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/__init__.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/artifacts.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/__init__.py")
@@ -83,6 +84,31 @@ if(BUILD_TESTING)
                      "-DPTXSIM_MAGIC_ENUM_DIR=${magic_enum_DIR}"
                      "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
                      -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_link_contract.cmake")
-    set_tests_properties(InstExecuteEngineSemanticsLinkContract PROPERTIES
+    add_test(NAME InstExecuteEngineMissingHandlerLinkContract
+             COMMAND "${CMAKE_COMMAND}"
+                     "-DPTXSIM_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+                     "-DPTXSIM_PACKAGE_BUILD_DIR=${PROJECT_BINARY_DIR}"
+                     "-DPTXSIM_CONSUMER_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/missing-handler-contract"
+                     "-DPTXSIM_LINK_CONTRACT_MODE=handler"
+                     "-DPTXSIM_PYTHON_EXECUTABLE=${Python3_EXECUTABLE}"
+                     "-DPTXSIM_GENERATED_HEADER=${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}/instruction_preparation.gen.hpp"
+                     "-DPTXSIM_GENERATED_PLAN=${PTXSIM_INST_EXECUTE_ENGINE_PLAN}"
+                     "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
+                     "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
+                     "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+                     "-DPTXSIM_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}"
+                     "-DPTXSIM_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+                     "-DPTXSIM_BUILD_CONFIG=$<CONFIG>"
+                     "-DPTXSIM_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}"
+                     "-DPTXSIM_ENABLE_ASAN=${PTXSIM_ENABLE_ASAN}"
+                     "-DPTXSIM_ENABLE_UBSAN=${PTXSIM_ENABLE_UBSAN}"
+                     "-DPTXSIM_SOFTFLOAT_DIR=${softfloat_DIR}"
+                     "-DPTXSIM_DYNAMIC_BITSET_DIR=${sul-dynamic_bitset_DIR}"
+                     "-DPTXSIM_FMT_DIR=${fmt_DIR}"
+                     "-DPTXSIM_MAGIC_ENUM_DIR=${magic_enum_DIR}"
+                     "-DPTXSIM_PTX_FRONTEND_DIR=${ptx_frontend_DIR}"
+                     -P "${CMAKE_CURRENT_SOURCE_DIR}/test/run_link_contract.cmake")
+    set_tests_properties(InstExecuteEngineSemanticsLinkContract
+                         InstExecuteEngineMissingHandlerLinkContract PROPERTIES
                          RUN_SERIAL TRUE)
 endif()

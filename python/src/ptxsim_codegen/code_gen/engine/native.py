@@ -1,4 +1,4 @@
-"""Emit native typed issue-group adapters while preserving implemented behavior."""
+"""Emit dense typed issue groups from the packaged execution capabilities."""
 
 from __future__ import annotations
 
@@ -9,6 +9,8 @@ import re
 from ptxsim_codegen.artifacts import atomic_write
 from ptxsim_codegen.model import GenerationError
 from ptxsim_codegen.model.snapshot import FieldStorage, Form, Snapshot, ValueKind
+
+from . import capabilities
 
 
 _CODECS = {
@@ -26,17 +28,7 @@ _WIDTHS = {
     'u8x4': 32, 's8x4': 32, 'u16x2': 32, 's16x2': 32,
     'u64': 64, 's64': 64, 'f32x2': 64, 'f64': 64, 'f32': 32,
 }
-_VALUE_FORMS = {
-    'add': ('add_float_f32', 'add_float_f32x2', 'add_float_f64', 'add_half',
-            'add_bfloat', 'add_mixed_f32', 'add_integer_no_sat', 'add_sat', 'add_packed_optional_sat'),
-    'sub': ('sub_float_f32', 'sub_float_f32x2', 'sub_float_f64', 'sub_half',
-            'sub_bfloat', 'sub_mixed_f32', 'sub_integer_no_sat', 'sub_optional_sat'),
-    'mul': ('mul_rn_f32', 'mul_lo_u32', 'mul_hi_u32', 'mul_wide_u32', 'mul_wide_s32'),
-    'fma': ('fma_rn_f32', 'fma_directed_f32', 'fma_rn_f64', 'fma_directed_f64',
-            'fma_f32x2', 'fma_rn_f16', 'fma_rn_f16x2', 'fma_half_relu',
-            'fma_half_oob', 'fma_half_oob_relu', 'fma_bf16', 'fma_bf16x2',
-            'fma_bf16_oob', 'fma_bf16x2_oob', 'fma_mixed_f32_f16', 'fma_mixed_f32_bf16'),
-}
+_VALUE_OPCODES = ('add', 'sub', 'mul', 'fma')
 
 
 @dataclass(frozen=True)
@@ -60,7 +52,7 @@ class ValuePath:
 
 def value_paths(form: Form) -> tuple[ValueOperand, tuple[ValueOperand, ...], tuple[ValuePath, ...]]:
     """Resolve supported arithmetic storage/type facts from the full shared model."""
-    if form.identity.opcode not in _VALUE_FORMS:
+    if form.identity.opcode not in _VALUE_OPCODES:
         raise GenerationError(f'{form.identity}: no arithmetic handler ABI')
     if len(form.layouts) != 1:
         raise GenerationError(f'{form.identity}: value arithmetic requires one actual layout')
@@ -155,7 +147,7 @@ def _group_signature(name: str) -> str:
     return f'''auto {name}(runtime::LaunchRuntime& runtime, common::FunctionId function,
     const arith::context& arithmetic, execution_model::Warp& warp,
     const execution_model::WarpIssueGroup& issue, const exec_ir::Instruction& base,
-    std::optional<common::ProgramCounter> successor) -> std::expected<PreparedIssue, StepError>'''
+    SuccessorContext successor) -> std::expected<PreparedIssue, ExecutionError>'''
 
 
 def value_group(form: Form) -> str:
@@ -185,14 +177,8 @@ def value_group(form: Form) -> str:
 
 def selected_value_forms(model: Snapshot) -> tuple[Form, ...]:
     """Locate every previously implemented numeric form without filtering the model."""
-    by_id = {(form.identity.opcode, form.identity.variant): form for form in model.forms}
-    result = []
-    for opcode, names in _VALUE_FORMS.items():
-        for name in names:
-            if (opcode, name) not in by_id:
-                raise GenerationError(f'missing implemented semantic form: {opcode}/{name}')
-            result.append(by_id[opcode, name])
-    return tuple(result)
+    return tuple(form for form in implemented_forms(model) if form.identity.opcode in _VALUE_OPCODES)
+
 
 
 def generate_value_probe(model: Snapshot, path: Path) -> None:
@@ -200,7 +186,7 @@ def generate_value_probe(model: Snapshot, path: Path) -> None:
     forms = selected_value_forms(model)
     lines = ['// Generated typed arithmetic groups. Do not edit.\n',
              '#include "group_execution.hpp"\n#include "value_alu_helpers.hpp"\n',
-             *[f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_FORMS],
+             *[f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_OPCODES],
              _includes(forms), _validation_declarations(forms), 'namespace ptxsim::inst_execute_engine::detail {\n']
     lines += [value_group(form) for form in forms]
     lines += ['}  // namespace ptxsim::inst_execute_engine::detail\n']
@@ -437,36 +423,25 @@ def control_group(form: Form) -> str:
     return _typed_group(form, '', body)
 
 
-def implemented_forms(model: Snapshot) -> tuple[Form, ...]:
+def implemented_forms(model: Snapshot, profile: capabilities.Profile | None = None) -> tuple[Form, ...]:
     """Require every existing implementation, without admitting new semantics by accident."""
-    expected = {**_VALUE_FORMS,
-        'mov': ('mov_scalar','mov_b128_pack_unpack','mov_v4_u32','mov_pred'),
-        'setp': ('setp_signed','setp_signed_boolean','setp_unsigned','setp_unsigned_boolean'),
-        'ld': ('ld_generic_scalar','ld_explicit_scalar','ld_generic_vector','ld_explicit_vector'),
-        'st': ('st_generic_scalar','st_explicit_scalar','st_generic_vector','st_explicit_vector'),
-        'bar': ('bar_sync','bar_cta_sync','bar_arrive','bar_cta_arrive','bar_red_popc_u32',
-                'bar_cta_red_popc_u32','bar_red_and_pred','bar_cta_red_and_pred',
-                'bar_red_or_pred','bar_cta_red_or_pred','bar_warp_sync'),
-        'bra': ('bra_direct',), 'exit': ('exit_bare',)}
-    by_id = {(form.identity.opcode, form.identity.variant): form for form in model.forms}
-    if len(by_id) != len(model.forms):
-        raise GenerationError('duplicate semantic form identity')
-    result = []
-    for opcode, names in expected.items():
-        for name in names:
-            if (opcode, name) not in by_id:
-                raise GenerationError(f'missing implemented semantic form {opcode}/{name}')
-            form = by_id[opcode, name]
+    profile = capabilities.load(model) if profile is None else profile
+    result = tuple(form for form in model.forms if profile.for_form(form))
+    for form in result:
+        handlers = {rule.handler for rule in profile.for_form(form)}
+        if len(handlers) != 1:
+            raise GenerationError(f'{form.identity}: one typed handler ABI is required per form')
+        if next(iter(handlers)) in _HANDLERS:
             _check_shape(form)
-            result.append(form)
-    return tuple(result)
+    return result
 
 
-def _group(form: Form) -> str:
+
+def _handler_body(form: Form) -> str:
     """Select one implementation emitter using only semantic identity."""
     _check_shape(form)
     opcode = form.identity.opcode
-    if opcode in _VALUE_FORMS:
+    if opcode in _VALUE_OPCODES:
         return value_group(form)
     if opcode == 'mov':
         return mov_group(form)
@@ -479,13 +454,75 @@ def _group(form: Form) -> str:
     return control_group(form)
 
 
+_HANDLERS = {'value_alu': value_group, 'movement': mov_group, 'comparison': setp_group,
+             'memory': memory_group, 'barrier': barrier_group, 'control': control_group}
+
+
+def _movement_structure(form: Form) -> str:
+    """Validate immutable aggregate/intrinsic shape even when execution is disabled."""
+    if form.identity.opcode != 'mov' or form.identity.variant not in {'mov_scalar','mov_b128_pack_unpack'}:
+        return ''
+    lines = []
+    for layout in form.layouts:
+        name = layout.identity.name
+        members = {field.identity.name: field.cpp_name for field in layout.fields}
+        selected = f'std::get_if<exec_ir::{form.cpp_name}::{_layout_cpp(name)}>(&form.operands)'
+        if name == 'scalar':
+            check = f'valid_scalar_move_shape(selected->{members["src"]}, form.type, form.static_contract(), {layout.index})'
+        else:
+            check = f'valid_aggregate_move_shape(selected->{members["src" if name == "pack" else "dst"]}, form.type, {str(name == "pack").lower()})'
+        lines.append(f'  if (const auto* selected = {selected}; selected && !{check}) return step_error(StepErrorCode::invalid_instruction);\n')
+    return ''.join(lines)
+
+
+def _group(form: Form, rules: tuple[capabilities.Rule, ...] | None = None) -> str:
+    """Generate one typed entry with inline finite admission before its direct handler."""
+    if rules is None:
+        return _handler_body(form)
+    handlers = {rule.handler for rule in rules}
+    if len(handlers) > 1:
+        raise GenerationError(f'{form.identity}: one typed handler ABI is required per form')
+    handler = next(iter(handlers)) if handlers else None
+    prefix = (_group_signature('group_' + form.cpp_name) + ' {\n'
+              + f'  const auto& form = static_cast<const exec_ir::{form.cpp_name}&>(base);\n'
+              + f'  if (!exec_ir::validate_{form.cpp_name}(form)) return step_error(StepErrorCode::invalid_instruction);\n'
+              + _movement_structure(form))
+    conditions = []
+    for layout in form.layouts:
+        check = capabilities.expression(form, rules, layout.index)
+        if len(form.layouts) == 1:
+            conditions.append('  const auto& operands = form.operands;\n'
+                              + f'  if (!{check}) return step_error(StepErrorCode::unsupported_instruction);\n')
+        else:
+            conditions.append(f'  if (const auto* selected = std::get_if<exec_ir::{form.cpp_name}::{_layout_cpp(layout.identity.name)}>(&form.operands)) {{\n'
+                              + '    const auto& operands = *selected;\n'
+                              + f'    if (!{check}) return step_error(StepErrorCode::unsupported_instruction);\n  }}\n')
+    if handler is None:
+        return (f'/** @brief Validate and reject disabled {form.cpp_name} without lane activity. */\n'
+                + prefix + ''.join(conditions) + '  return step_error(StepErrorCode::unsupported_instruction);\n}\n')
+    if handler in _HANDLERS:
+        body = _HANDLERS[handler](form)
+        entry = _group_signature('group_' + form.cpp_name) + ' {\n'
+        typed = (f'  const auto& form = static_cast<const exec_ir::{form.cpp_name}&>(base);\n'
+                 + f'  if (!exec_ir::validate_{form.cpp_name}(form)) return step_error(StepErrorCode::invalid_instruction);\n')
+        # Exact structural checks precede the inline profile; the handler keeps its ABI guards.
+        return body.replace(entry + typed, prefix + ''.join(conditions), 1)
+    # An explicitly declared unavailable implementation is a real unresolved typed symbol.
+    symbol = 'handler_' + handler + '_' + form.cpp_name
+    declaration = (_group_signature(symbol).replace('const exec_ir::Instruction& base',
+                    f'const exec_ir::{form.cpp_name}& form') + ';\n')
+    return (f'/** @brief Required external typed implementation for {form.cpp_name}. */\n'
+            + declaration + prefix + ''.join(conditions)
+            + f'  return {symbol}(runtime, function, arithmetic, warp, issue, form, successor);\n}}\n')
+
+
 def generate_groups_probe(model: Snapshot, path: Path) -> None:
     """Publish all implemented groups for a bounded native compile."""
     forms = implemented_forms(model)
     lines = ['#include "group_execution.hpp"\n#include "value_alu_helpers.hpp"\n',
              '#include "mov_preparation.hpp"\n#include "memory_preparation.hpp"\n#include "barrier_preparation.hpp"\n',
              '#include "semantics/setp_semantics.hpp"\n',
-             *[f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_FORMS],
+             *[f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_OPCODES],
              _includes(forms), _validation_declarations(forms), 'namespace ptxsim::inst_execute_engine::detail {\n']
     lines += [_group(form) for form in forms]
     lines += ['}\n']
@@ -519,15 +556,16 @@ def _group_includes(forms: tuple[Form, ...]) -> str:
     return ('#include "group_execution.hpp"\n#include "value_alu_helpers.hpp"\n'
             '#include "mov_preparation.hpp"\n#include "memory_preparation.hpp"\n'
             '#include "barrier_preparation.hpp"\n#include "semantics/setp_semantics.hpp"\n'
-            + ''.join(f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_FORMS)
+            + ''.join(f'#include "semantics/{opcode}_semantics.hpp"\n' for opcode in _VALUE_OPCODES)
             + _includes(forms))
 
 
-def generate(model: Snapshot, root: Path) -> EngineArtifacts:
+def generate(model: Snapshot, root: Path, profile: capabilities.Profile | None = None) -> EngineArtifacts:
     """Emit complete dense Kind entries, with unsupported semantics local to their issue."""
     import json
     plan = artifact_plan(model)
-    supported = {form.kind for form in implemented_forms(model)}
+    profile = capabilities.load(model) if profile is None else profile
+    registered = {form.kind for form in implemented_forms(model, profile)}
     declarations = ['// Generated exact issue-group entries. Do not edit.\n#pragma once\n',
                     '#include "instruction_preparation.hpp"\n',
                     'namespace ptxsim::inst_execute_engine::detail {\n']
@@ -539,12 +577,12 @@ def generate(model: Snapshot, root: Path) -> EngineArtifacts:
     forms = model.forms
     for index, start in enumerate(range(0, len(forms), 64)):
         shard = forms[start:start + 64]
-        selected = tuple(form for form in shard if form.kind in supported)
+        selected = tuple(form for form in shard if form.kind in registered or form.identity.opcode == 'mov')
         source = [_group_includes(selected), _validation_declarations(shard),
                   'namespace ptxsim::inst_execute_engine::detail {\n']
         for form in shard:
-            if form.kind in supported:
-                source.append(_group(form))
+            if form.kind in registered or form.identity.opcode == 'mov':
+                source.append(_group(form, profile.for_form(form)))
             else:
                 source += [f'/** @brief Reject unimplemented {form.cpp_name} before any lane activity. */\n',
                            _group_signature('group_' + form.cpp_name), ' {\n',
@@ -577,7 +615,7 @@ def _check_controls(form: Form, allowed: set[str]) -> None:
 def _check_shape(form: Form) -> None:
     """Check the bounded handler ABI without restricting full IR representation."""
     op, name = form.identity.opcode, form.identity.variant
-    if op in _VALUE_FORMS:
+    if op in _VALUE_OPCODES:
         value_paths(form)
         return
     allowed = {'mov': {'type','vector'}, 'setp': {'comparison','boolean','type'},
@@ -585,6 +623,8 @@ def _check_shape(form: Form) -> None:
                'st': {'mmio','semantics','scope','state_space','cache','vector','type'},
                'bar': {'cta','sync','arrive','red','reduction','result_type','warp'},
                'bra': {'uni'}, 'exit': set()}
+    if op not in allowed:
+        raise GenerationError(f'{form.identity}: no typed handler ABI for opcode')
     _check_controls(form, allowed[op])
     if op == 'mov':
         layouts = {'scalar','pack','unpack'} if name == 'mov_scalar' else {'pack','unpack'} if name == 'mov_b128_pack_unpack' else {'default'}

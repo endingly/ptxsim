@@ -38,6 +38,22 @@ if(PTXSIM_TOOLCHAIN_FILE)
     list(APPEND ptxsim_link_contract_args
         "-DCMAKE_TOOLCHAIN_FILE=${PTXSIM_TOOLCHAIN_FILE}")
 endif()
+if(PTXSIM_LINK_CONTRACT_MODE STREQUAL "handler")
+    file(MAKE_DIRECTORY "${PTXSIM_CONSUMER_BINARY_DIR}")
+    set(ptxsim_required_handler_source "${PTXSIM_CONSUMER_BINARY_DIR}/required_handler.gen.cpp")
+    execute_process(
+        COMMAND "${PTXSIM_PYTHON_EXECUTABLE}"
+                "${PTXSIM_SOURCE_DIR}/python/tests/generate_missing_handler.py"
+                "${ptxsim_required_handler_source}"
+        RESULT_VARIABLE ptxsim_handler_generation_result
+        OUTPUT_VARIABLE ptxsim_handler_generation_output
+        ERROR_VARIABLE ptxsim_handler_generation_error)
+    if(NOT ptxsim_handler_generation_result EQUAL 0)
+        message(FATAL_ERROR "handler fixture generation failed:\n${ptxsim_handler_generation_output}\n${ptxsim_handler_generation_error}")
+    endif()
+    list(APPEND ptxsim_link_contract_args
+        "-DPTXSIM_REQUIRED_HANDLER_SOURCE=${ptxsim_required_handler_source}")
+endif()
 execute_process(
     COMMAND "${CMAKE_COMMAND}" ${ptxsim_link_contract_args}
             "-DCMAKE_CXX_COMPILER_LAUNCHER=${PTXSIM_CXX_COMPILER_LAUNCHER}"
@@ -49,9 +65,19 @@ if(NOT ptxsim_configure_result EQUAL 0)
         "link contract configure failed:\n${ptxsim_configure_output}\n${ptxsim_configure_error}")
 endif()
 
+if(PTXSIM_LINK_CONTRACT_MODE STREQUAL "handler")
+    set(ptxsim_positive_target ptxsim_required_handler_complete)
+    set(ptxsim_negative_target ptxsim_required_handler_missing)
+    set(ptxsim_required_symbol "handler_required_contract_ExitBare")
+else()
+    set(ptxsim_positive_target ptxsim_inst_execute_engine_link_contract_complete)
+    set(ptxsim_negative_target ptxsim_inst_execute_engine_link_contract_missing_add)
+    set(ptxsim_required_symbol "semantics::add")
+endif()
+
 set(ptxsim_positive_command "${CMAKE_COMMAND}" --build
     "${ptxsim_link_contract_build}" --target
-    ptxsim_inst_execute_engine_link_contract_complete --parallel 2)
+    ${ptxsim_positive_target} --parallel 2)
 if(PTXSIM_BUILD_CONFIG)
     list(APPEND ptxsim_positive_command --config "${PTXSIM_BUILD_CONFIG}")
 endif()
@@ -67,7 +93,7 @@ endif()
 
 set(ptxsim_negative_command "${CMAKE_COMMAND}" --build
     "${ptxsim_link_contract_build}" --target
-    ptxsim_inst_execute_engine_link_contract_missing_add --parallel 2)
+    ${ptxsim_negative_target} --parallel 2)
 if(PTXSIM_BUILD_CONFIG)
     list(APPEND ptxsim_negative_command --config "${PTXSIM_BUILD_CONFIG}")
 endif()
@@ -77,7 +103,7 @@ execute_process(
     OUTPUT_VARIABLE ptxsim_negative_output
     ERROR_VARIABLE ptxsim_negative_error)
 if(ptxsim_negative_result EQUAL 0)
-    message(FATAL_ERROR "missing Add semantics unexpectedly linked")
+    message(FATAL_ERROR "required implementation unexpectedly linked without its definition")
 endif()
 
 set(ptxsim_negative_log
@@ -85,9 +111,9 @@ set(ptxsim_negative_log
 if(NOT ptxsim_negative_log MATCHES
        "undefined reference|unresolved external|undefined symbol")
     message(FATAL_ERROR
-        "missing Add semantics failed before link:\n${ptxsim_negative_log}")
+        "required implementation failed before link:\n${ptxsim_negative_log}")
 endif()
-if(NOT ptxsim_negative_log MATCHES "semantics::add")
+if(NOT ptxsim_negative_log MATCHES "${ptxsim_required_symbol}")
     message(FATAL_ERROR
-        "link failure did not name generated semantics::add:\n${ptxsim_negative_log}")
+        "link failure did not name required ${ptxsim_required_symbol}:\n${ptxsim_negative_log}")
 endif()

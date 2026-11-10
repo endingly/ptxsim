@@ -33,7 +33,7 @@ struct PreparedIssue {
                                  execution_model::Warp& warp,
                                  const execution_model::WarpIssueGroup& issue,
                                  const exec_ir::Instruction& instruction,
-                                 std::optional<common::ProgramCounter> successor)
-    -> std::expected<PreparedIssue, StepError>;
+                                 SuccessorContext successor)
+    -> std::expected<PreparedIssue, ExecutionError>;
 
 }  // namespace ptxsim::inst_execute_engine::detail

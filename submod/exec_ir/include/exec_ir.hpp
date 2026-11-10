@@ -15,10 +15,6 @@
 
 namespace ptxsim::exec_ir {
 
-/** @brief Query whether a supported form can require a same-body successor.
- *  Call only after execution capability has admitted the selected exact form.
- */
-[[nodiscard]] auto may_fallthrough(const Instruction&) noexcept -> bool;
 
 /** @brief Caller-owned mutable construction graph, independently frozen by create. */
 struct ProgramDefinition {

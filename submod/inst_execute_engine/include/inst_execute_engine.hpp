@@ -46,6 +46,13 @@ class InstExecuteEngine final {
                              std::optional<common::ProgramCounter> successor)
       -> std::expected<StepReport, StepError>;
 
+  /** @brief Execute with a deferred continuation error, applying it only after admission. */
+  [[nodiscard]] auto execute_with_context(execution_model::Warp& warp,
+                                         const execution_model::WarpIssueGroup& issue,
+                                         const exec_ir::Instruction& instruction,
+                                         SuccessorContext successor)
+      -> std::expected<StepReport, ExecutionError>;
+
  private:
   /** One lane retained while its CTA barrier is still active. */
   struct PendingCtaBarrierLane {

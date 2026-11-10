@@ -258,19 +258,16 @@ auto Simulator::step() -> std::expected<StepReport, RunError> {
     return std::unexpected(program_error(instruction.error()));
   }
 
-  std::optional<common::ProgramCounter> successor;
-  if (exec_ir::may_fallthrough(instruction->get())) {
-    const auto fallthrough = program_.fallthrough(location);
-    if (!fallthrough) {
-      return std::unexpected(program_error(fallthrough.error()));
-    }
-    successor = fallthrough->pc;
-  }
-
-  const auto result = engine_.execute(*selected->warp, selected->group,
-                                      instruction->get(), successor);
+  const auto fallthrough = program_.fallthrough(location);
+  inst_execute_engine::SuccessorContext successor{
+      fallthrough ? std::expected<std::optional<common::ProgramCounter>, exec_ir::ProgramError>{fallthrough->pc}
+                  : std::unexpected(fallthrough.error())};
+  const auto result = engine_.execute_with_context(*selected->warp, selected->group,
+                                                   instruction->get(), std::move(successor));
   if (!result) {
-    return std::unexpected(execution_error(result.error()));
+    if (const auto* error = std::get_if<exec_ir::ProgramError>(&result.error()))
+      return std::unexpected(program_error(*error));
+    return std::unexpected(execution_error(std::get<inst_execute_engine::StepError>(result.error())));
   }
   if (!result->faults.empty() || runtime_.grid().trapped()) {
     return StepReport{.termination = StepTermination::trapped,

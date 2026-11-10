@@ -120,7 +120,12 @@ and static type/layout/control ranges. Omitted forms are unsupported. Generate
 one dense capability table; do not add an independent supported boolean.
 Unknown or overlapping rules fail generation. A declared handler without its
 implementation fails compilation or linking. The full IR and binder remain
-independent of this registry.
+independent of this registry. A profile may select or narrow a known typed
+handler, but cannot create semantics by widening a rule. Its implementation
+preconditions remain early bounds before continuation, predicate or lane reads:
+for example, current ordinary memory excludes relaxed/cache/MMIO behavior and
+SETP Boolean execution uses literal AND. Joint transfer-size and sink shape
+checks stay local handler preconditions, not a duplicated PTX topology schema.
 
 Issue performs one Kind decode and one indirect group dispatch. A typed group
 performs the participating-lane loop after that dispatch. Preserve predicate
@@ -128,7 +133,23 @@ gating, lazy operand/resource access, fault ordering, prepare-before-commit,
 branch/exit, barriers, entry ABI and storage behavior. Unsupported issue is
 reported before reading ordinary operands, changing any state, or requiring
 fallthrough; unsupported instructions at unexecuted
-PCs do not reject the whole program. Profile disabling and a PreparedProgram
+PCs do not reject the whole program.
+
+The engine's context-aware API owns `SuccessorContext`, containing a native PC,
+a direct-caller absent successor, or the original deferred `ProgramError`.
+`ExecutionError` preserves `StepError` and `ProgramError` as distinct variants.
+The optional-PC convenience API retains direct-caller `missing_fallthrough`.
+Simulator fetches and queries fallthrough without classifying Kind or Opcode;
+it forwards the owning result to the engine. Common issue validation precedes
+the single dispatch. Inside the selected group, exact structural validation and
+inline capability admission precede continuation requirements. The exact form's
+constexpr Opcode and execution-guard presence determine that requirement:
+arithmetic, memory and barriers require a successor; unconditional Bra/Exit do
+not, while guarded Bra/Exit do. A required deferred program error is propagated
+unchanged before predicate or ordinary operand reads; an irrelevant deferred
+error is ignored. Existing supported predicate/preparation/commit order remains.
+
+Profile disabling and a PreparedProgram
 cache boundary may be reserved without requiring caching or JIT in this change.
 
 ## Python and build ownership
