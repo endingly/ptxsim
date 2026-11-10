@@ -39,7 +39,7 @@ constexpr std::string_view kSparseStorage = R"ptx(
 
 }  // namespace
 
-TEST(StorageLowering, OwnsSparseInitializerBytesAfterFrontendDestruction) {
+TEST(StorageLowering, OwnsSparseInitializerCellsAfterFrontendDestruction) {
   auto program = [&]() {
     const auto module = storage_module(kSparseStorage);
     EXPECT_TRUE(module);
@@ -48,13 +48,16 @@ TEST(StorageLowering, OwnsSparseInitializerBytesAfterFrontendDestruction) {
   ASSERT_TRUE(program);
   const auto& storage = program->storage_declarations();
   ASSERT_EQ(storage.size(), 1U);
-  EXPECT_EQ(storage[0].extent, 12U);
+  EXPECT_EQ(storage[0].byte_extent, 12U);
   EXPECT_EQ(storage[0].alignment, 16U);
-  const std::vector<std::byte> expected{
-      std::byte{0x44}, std::byte{0x33}, std::byte{0x22}, std::byte{0x11},
-      std::byte{0x88}, std::byte{0x77}, std::byte{0x66}, std::byte{0x55},
-      std::byte{0},    std::byte{0},    std::byte{0},    std::byte{0}};
-  EXPECT_EQ(storage[0].initializer_bytes, expected);
+  ASSERT_EQ(storage[0].initializer.size(),2);
+  EXPECT_EQ(storage[0].initializer[0].byte_offset,0);
+  EXPECT_EQ(storage[0].initializer[1].byte_offset,4);
+  EXPECT_EQ(std::get<exec_ir::Constant128>(storage[0].initializer[0].value),
+            (exec_ir::Constant128{0x11223344,0}));
+  EXPECT_EQ(std::get<exec_ir::Constant128>(storage[0].initializer[1].value),
+            (exec_ir::Constant128{0x55667788,0}));
+  EXPECT_EQ(storage[0].initialization,exec_ir::StorageInitialization::explicit_values);
 }
 
 TEST(StorageLowering, RejectsInconsistentNormalizedMetadata) {
@@ -120,16 +123,21 @@ TEST(StorageLowering, RejectsInconsistentNormalizedMetadata) {
   }
 }
 
-TEST(StorageLowering, RejectsHugeInitializerBeforeMaterializingBytes) {
-  auto module = storage_module(kSparseStorage);
+TEST(StorageLowering, RetainsHugeSparseInitializerWithoutMaterializingBytes) {
+  const auto module=storage_module(R"ptx(
+.global .align 16 .u32 data[1073741824] = {0x11223344, 0x55667788};
+.entry kernel() { exit; }
+)ptx");
   ASSERT_TRUE(module);
-  auto& row = module->storage_declarations[0];
-  row.byte_extent = exec_ir::kStorageAddressSpaceSize;
-  row.array_extents[0] = exec_ir::kStorageAddressSpaceSize / 4;
-  const auto program = lower(*module);
-  ASSERT_FALSE(program);
-  EXPECT_EQ(program.error().code,
-            LoweringErrorCode::unsupported_storage_declaration);
+  const auto program=lower(*module);
+  ASSERT_TRUE(program);
+  ASSERT_EQ(program->storage_declarations().size(),1);
+  const auto& row=program->storage_declarations()[0];
+  EXPECT_EQ(row.byte_extent,std::uint64_t{1}<<32);
+  EXPECT_EQ(row.array_extents,(std::vector<std::optional<std::uint64_t>>{1073741824}));
+  ASSERT_EQ(row.initializer.size(),2);
+  EXPECT_EQ(std::get<exec_ir::Constant128>(row.initializer[0].value).bits,0x11223344);
+  EXPECT_EQ(std::get<exec_ir::Constant128>(row.initializer[1].value).bits,0x55667788);
 }
 
 TEST(StorageLowering, CoalescesOnlyCompatibleExternalRedeclarations) {
@@ -156,13 +164,14 @@ TEST(StorageLowering, RetainsUnsizedExternalExtentForLaunchBinding) {
   const auto program = lower(*module);
   ASSERT_TRUE(program);
   ASSERT_EQ(program->storage_declarations().size(), 1U);
-  EXPECT_EQ(program->storage_declarations()[0].extent, 0U);
+  EXPECT_EQ(program->storage_declarations()[0].byte_extent, std::nullopt);
   EXPECT_EQ(program->storage_declarations()[0].initialization,
             exec_ir::StorageInitialization::external);
-  EXPECT_EQ(program->storage_declarations()[0].external_extent_multiple, 8U);
+  EXPECT_EQ(program->storage_declarations()[0].array_extents,
+            (std::vector<std::optional<std::uint64_t>>{std::nullopt,2}));
 }
 
-TEST(StorageLowering, RejectsRelocationsInsteadOfInventingAddresses) {
+TEST(StorageLowering, OwnsUnevaluatedRelocationsWithoutInventingAddresses) {
   const auto module = storage_module(R"ptx(
 .global .u32 data = 4;
 .global .u64 pointer = data;
@@ -170,9 +179,15 @@ TEST(StorageLowering, RejectsRelocationsInsteadOfInventingAddresses) {
 )ptx");
   ASSERT_TRUE(module);
   const auto result = lower(*module);
-  ASSERT_FALSE(result);
-  EXPECT_EQ(result.error().code,
-            LoweringErrorCode::unsupported_storage_relocation);
+  ASSERT_TRUE(result);
+  ASSERT_EQ(result->storage_declarations().size(),2);
+  const auto& pointer=result->storage_declarations()[1];
+  ASSERT_EQ(pointer.initializer.size(),1);
+  const auto* relocation=std::get_if<exec_ir::StorageRelocation>(&pointer.initializer[0].value);
+  ASSERT_NE(relocation,nullptr);
+  EXPECT_EQ(relocation->target,(decltype(relocation->target){exec_ir::StorageId{0}}));
+  EXPECT_EQ(relocation->address_kind,exec_ir::StorageAddressKind::StateSpace);
+  EXPECT_EQ(relocation->addend_bits,0);
 }
 
 }  // namespace ptxsim::exec_ir_lowering::test

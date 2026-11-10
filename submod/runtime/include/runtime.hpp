@@ -71,14 +71,19 @@ enum class StorageErrorCode : std::uint8_t {
   incompatible_address_space,
   runtime_binding_failure,
   address_space_failure,
+  unsupported_declaration,
+  unsupported_relocation,
 };
+
+/** @brief Distinct owned declaration domains reported by symbolic-address faults. */
+using StorageTarget = std::variant<exec_ir::StorageId, exec_ir::ParameterId>;
 
 /** @brief Structured storage materialization or symbolic-address failure. */
 struct StorageError {
   /** @brief Stable reason without flattened diagnostic text. */
   StorageErrorCode code;
   /** @brief Declaration identity involved when one is known. */
-  std::optional<common::SymbolId> symbol;
+  std::optional<StorageTarget> symbol;
   /** @brief Underlying resource binding failure when applicable. */
   std::optional<RuntimeBindingError> runtime_error;
   /** @brief Underlying memory resource failure when applicable. */
@@ -195,6 +200,8 @@ class LaunchRuntime final {
   std::map<ThreadFunction, memory::LocalFrameHandle> local_frames_;
   /** @brief One stable layout copy prevents symbolic lookup against another program. */
   std::optional<std::vector<exec_ir::StorageDeclaration>> storage_layout_;
+  /** @brief Entry parameter byte offsets and canonical owners, keyed by owned parameter ID. */
+  std::map<exec_ir::ParameterId, std::pair<common::FunctionId, std::size_t>> parameter_offsets_;
   /** @brief Allocation offsets keyed by executable symbol identity. */
   std::map<std::uint32_t, std::size_t> storage_offsets_;
   /** @brief CTA-specific shared offsets when callers prebind differently sized regions. */

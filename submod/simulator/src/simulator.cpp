@@ -179,6 +179,19 @@ auto Simulator::initialize() -> std::expected<void, RunError> {
     initialization_error_ = program_error(layout.error());
     return std::unexpected(*initialization_error_);
   }
+  const auto callable = program_.function_record(entry_function_);
+  if (!callable) {
+    initialization_error_ = program_error(callable.error());
+    return std::unexpected(*initialization_error_);
+  }
+  if (!callable->get().is_entry) {
+    initialization_error_ = RunError{.code = RunErrorCode::non_entry_function};
+    return std::unexpected(*initialization_error_);
+  }
+  if (!layout->get().entry_packing_available) {
+    initialization_error_ = RunError{.code = RunErrorCode::unsupported_entry_signature};
+    return std::unexpected(*initialization_error_);
+  }
   if (entry_parameters_.size() != layout->get().entry_parameter_size) {
     initialization_error_ = entry_parameter_size_error(
         layout->get().entry_parameter_size, entry_parameters_.size());

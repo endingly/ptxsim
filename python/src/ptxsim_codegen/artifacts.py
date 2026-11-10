@@ -27,3 +27,18 @@ def atomic_write(path: Path, content: str) -> None:
     finally:
         if replacement is not None:
             replacement.unlink(missing_ok=True)
+
+
+def write_cmake_plan(path: Path, prefix: str, headers: tuple[Path, ...], sources: tuple[Path, ...]) -> None:
+    """Publish complete artifact membership for CMake without generating sources."""
+    if not prefix or not all(character.isupper() or character.isdigit() or character == '_' for character in prefix):
+        raise ValueError('CMake artifact prefix must be an uppercase identifier')
+
+    def quote(value: Path) -> str:
+        """Escape literal absolute paths independently from CMake variable syntax."""
+        return '"' + value.absolute().as_posix().replace('"', '\\"').replace('$', '\\$').replace(';', '\\;') + '"'
+
+    lines = ['# Generated artifact membership. Do not edit.\n']
+    for suffix, values in [('HEADERS', headers), ('SOURCES', sources)]:
+        lines += [f'set({prefix}_{suffix}\n', *(f'    {quote(value)}\n' for value in values), ')\n']
+    atomic_write(path, ''.join(lines))

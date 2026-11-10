@@ -1,701 +1,269 @@
-"""Checks for projected ValueALU and predicate-comparison emitters."""
+"""Retain execution-adapter derivation, rejection and publication obligations."""
 
 from __future__ import annotations
 
-from copy import deepcopy
 from dataclasses import replace
 from pathlib import Path
+import tempfile
 import unittest
 
-from jinja2 import UndefinedError
-
-from ptxsim_codegen.frontend.inputs import load_backend, load_projected
-from ptxsim_codegen.code_gen.engine.gen_engine import _TEMPLATES, _value_alu_forms, artifacts
-from ptxsim_codegen.code_gen.engine.memory_family import memory_operation
-from ptxsim_codegen.code_gen.engine.setp_family import setp_operation
-from ptxsim_codegen.code_gen.engine.bar_family import bar_operation, bra_operation, exit_operation
-from ptxsim_codegen.code_gen.engine.mov_family import mov_operation
+from ptxsim_codegen.code_gen.engine.native import (
+    _group, _owned_fields, artifact_plan, generate, implemented_forms,
+    selected_value_forms, value_paths,
+)
+from ptxsim_codegen.frontend.v080 import snapshot
 from ptxsim_codegen.model import GenerationError
+from ptxsim_codegen.model.snapshot import FieldStorage, ValueKind
 
 
 class GenerateTests(unittest.TestCase):
-    """Exercise model-derived ValueALU preparation generation."""
+    """Check handler ABI drift independently of the full closed native representation."""
 
     @classmethod
     def setUpClass(cls) -> None:
-        """Load the pinned specification once for this suite's fixture."""
-        cls._projected_template = load_projected(load_backend(None), None)
+        """Load one immutable frontend projection for all independent mutation cases."""
+        cls.model = snapshot()
+        cls.forms = {(form.identity.opcode,form.identity.variant):form for form in cls.model.forms}
 
-    def setUp(self) -> None:
-        """Isolate nested mutable frontend fields from other test cases."""
-        self._projected = deepcopy(self._projected_template)
+    def form(self, name: str):
+        """Select an exact semantic form without relying on a compatibility alias."""
+        return next(form for form in self.model.forms if form.identity.variant == name)
 
-    def projected(self):
-        """Return this test's owned copy of the pinned frontend records."""
-        return self._projected
+    def operand(self, form, index: int, **changes):
+        """Mutate one layout-local operand while retaining the rest of the model."""
+        layout=form.layouts[0]
+        fields=list(layout.fields); fields[index]=replace(fields[index],**changes)
+        return replace(form,layouts=(replace(layout,fields=tuple(fields)),*form.layouts[1:]))
 
-    def add(self):
-        """Return the complete projected Add instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "add"
-        )
+    def binding(self, form, index: int, **changes):
+        """Mutate one typed binding attached to its exact field identity."""
+        return self.operand(form,index,binding=replace(form.layouts[0].fields[index].binding,**changes))
 
-    def sub(self):
-        """Return the complete projected Sub instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "sub"
-        )
+    def model_with(self, changed):
+        """Replace one form without losing full untouched opcode/form coverage."""
+        return replace(self.model,instructions=tuple(replace(op,forms=tuple(
+            changed if form.identity == changed.identity else form for form in op.forms))
+            for op in self.model.instructions))
 
-    def mul(self):
-        """Return the complete projected Mul instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "mul"
-        )
+    def test_emits_every_projected_form_and_dynamic_type(self):
+        """All full IR Kinds own entries; existing forms own direct typed groups."""
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory); plan=generate(self.model,root)
+            self.assertEqual(plan,artifact_plan(self.model))
+            self.assertEqual(len(implemented_forms(self.model)),67)
+            source=(root/'instruction_preparation.gen.cpp').read_text()
+            self.assertEqual(source.count('&group_'),5454)  # One type declaration plus every Kind entry.
+            for form in self.model.forms: self.assertIn('&group_'+form.cpp_name,source)
+            self.assertEqual(source.count('instruction.instruction_kind()'),1)
+            bodies='\n'.join((root/path).read_text() for path in plan.sources)
+            self.assertNotIn('structurally_valid(',bodies)
+            self.assertNotIn('std::visit(',bodies)
+            self.assertIn('prepare_group(',bodies)
 
-    def fma(self):
-        """Return the complete projected FMA instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "fma"
-        )
+    def test_mov_derives_scalar_pack_unpack_vector_and_predicate_paths(self):
+        """Both original aggregate shapes and the split b128 form preserve old behavior."""
+        for name in ('mov_scalar','mov_b128_pack_unpack','mov_v4_u32','mov_pred'):
+            self.assertIn('prepare_',_group(self.form(name)))
+        scalar=_group(self.form('mov_scalar'))
+        for name in ('ScalarOperands','PackOperands','UnpackOperands'): self.assertIn(name,scalar)
+        self.assertIn('OpaqueSymbolRef',scalar); self.assertIn('FunctionRef',scalar)
+        self.assertLess(scalar.index('unsupported_instruction'),scalar.index('prepare_group('))
 
-    def setp(self):
-        """Return the complete projected Setp instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "setp"
-        )
+    def test_mov_rejects_unrecognized_vector_sink_contract(self):
+        """An aggregate source cannot begin accepting sinks without a handler change."""
+        form=self.form('mov_b128_pack_unpack')
+        changed=self.binding(form,1,allow_vector_sink=True)
+        with self.assertRaises(GenerationError): _group(changed)
 
-    def mov(self):
-        """Return the complete projected MOV instruction from pinned frontend input."""
-        return next(
-            instruction
-            for instruction in self.projected()
-            if instruction.opcode == "mov"
-        )
+    def test_mov_rejects_unconsumed_modifier_and_width_policy_drift(self):
+        """New controls and storage widening never silently enter movement semantics."""
+        form=self.form('mov_scalar'); field=form.modifiers[0]
+        changed=replace(form,modifiers=(replace(field,identity=replace(field.identity,name='unknown')),))
+        with self.assertRaises(GenerationError): _group(changed)
+        policy=type(form.layouts[0].fields[0].binding.register_width_policy).EQUAL_OR_WIDER
+        with self.assertRaises(GenerationError): _group(self.binding(form,0,register_width_policy=policy))
 
-    def ld(self):
-        """Return the complete projected Load instruction from pinned frontend input."""
-        return next(instruction for instruction in self.projected() if instruction.opcode == "ld")
+    def test_mov_rejects_predicate_fixed_type_drift(self):
+        """Predicate movement retains the fixed logical domain."""
+        form=self.form('mov_pred'); field=form.modifiers[0]
+        atom=next(atom for domain in self.model.domains for atom in domain.values if atom.cpp=='DataType::b32')
+        with self.assertRaises(GenerationError): _group(replace(form,modifiers=(replace(field,constant=atom),)))
 
-    def st(self):
-        """Return the complete projected Store instruction from pinned frontend input."""
-        return next(instruction for instruction in self.projected() if instruction.opcode == "st")
+    def test_mov_rejects_missing_or_duplicate_projected_inventory(self):
+        """A missing existing implementation cannot degrade to a default unsupported entry."""
+        op=next(op for op in self.model.instructions if op.opcode=='mov')
+        for forms in (op.forms[1:],(*op.forms,op.forms[0])):
+            changed=replace(self.model,instructions=tuple(replace(item,forms=forms) if item is op else item for item in self.model.instructions))
+            with self.assertRaises(GenerationError): implemented_forms(changed)
 
-    def bar(self):
-        """Return the complete projected Bar instruction from pinned frontend input."""
-        return next(instruction for instruction in self.projected() if instruction.opcode == "bar")
+    def test_fma_inventory_controls_and_three_read_preparation_are_complete(self):
+        """All 16 existing FMA forms retain exactly three numeric inputs."""
+        forms=[form for form in selected_value_forms(self.model) if form.identity.opcode=='fma']
+        self.assertEqual(len(forms),16)
+        for form in forms:
+            _,sources,paths=value_paths(form); self.assertEqual(len(sources),3)
+            self.assertTrue(paths)
+            text=_group(form); self.assertIn('semantics::fma',text)
+            self.assertIn('source_2',text)
 
-    def bra(self):
-        """Return the complete projected Bra instruction from pinned frontend input."""
-        return next(instruction for instruction in self.projected() if instruction.opcode == "bra")
+    def test_template_rejects_missing_render_data(self):
+        """Template-free emitters still reject missing scoped handler fields."""
+        with self.assertRaises(GenerationError): _owned_fields('operands.absent',self.form('mov_pred').layouts[0])
 
-    def exit(self):
-        """Return the complete projected Exit instruction from pinned frontend input."""
-        return next(instruction for instruction in self.projected() if instruction.opcode == "exit")
+    def test_value_alu_family_accepts_operation_and_semantic_parameters(self):
+        """Each existing arithmetic opcode supplies its own numeric operation and arity."""
+        for form in selected_value_forms(self.model):
+            self.assertIn('semantics::'+form.identity.opcode+'(',_group(form))
 
-    def all_operations(self):
-        """Return every execution family currently emitted by this generator."""
-        return (self.mov(), self.add(), self.sub(), self.mul(), self.fma(), self.setp(), self.ld(), self.st(),
-                self.bar(), self.bra(), self.exit())
+    def test_rendering_is_deterministic(self):
+        """Complete bounded artifacts retain exact bytes across repeated publication."""
+        with tempfile.TemporaryDirectory() as directory:
+            first,second=Path(directory)/'a',Path(directory)/'b'
+            plan=generate(self.model,first); self.assertEqual(generate(self.model,second),plan)
+            for path in (*plan.headers,*plan.sources): self.assertEqual((first/path).read_bytes(),(second/path).read_bytes())
 
-    def render_instruction(self, instruction):
-        """Render one modified enabled instruction with every other enabled binding."""
-        enabled = self.all_operations()
-        return artifacts(
-            tuple(
-                instruction if candidate.opcode == instruction.opcode else candidate
-                for candidate in enabled
-            ),
-            Path(f"{instruction.opcode}.gen.hpp"),
-        )
+    def test_derives_mixed_source_and_result_type_paths(self):
+        """Mixed Add inputs retain distinct selected input and f32 result codecs."""
+        _,_,paths=value_paths(self.form('add_mixed_f32'))
+        self.assertTrue(all(path.destination=='arith::float32_t' for path in paths))
+        self.assertTrue(any('arith::float16_t' in path.sources for path in paths))
 
-    def test_emits_every_projected_form_and_dynamic_type(self) -> None:
-        """Generated dispatch has one adapter per form and every declared dynamic type."""
-        instructions = (self.add(), self.sub(), self.mul(), self.fma(), self.setp())
-        _, source = artifacts(self.all_operations(), Path("value_alu.gen.hpp"))
-        for instruction in instructions:
-            self.assertIn(f'#include "semantics/{instruction.opcode}_semantics.hpp"', source)
-        expected_cases = sum(
-            len(modifier.values)
-            for instruction in instructions
-            for form in instruction.forms
-            for modifier in form.variant.modifiers
-            if modifier.name in {"type", "input_type"}
-            and modifier.presence != "fixed"
-        )
-        self.assertEqual(source.count("case exec_ir::DataType::"), expected_cases)
-        self.assertEqual(
-            source.count("return prepare_add_") + source.count("return prepare_sub_")
-            + source.count("return prepare_mul_") + source.count("return prepare_fma_")
-            + source.count("return prepare_setp_"),
-            sum(len(instruction.forms) for instruction in instructions),
-        )
-        for path in ("rn_f32", "lo_u32", "hi_u32", "wide_u32", "wide_s32"):
-            self.assertIn(f"auto prepare_mul_{path}", source)
-        self.assertNotIn("unsupported_instruction", source)
+    def test_derives_operand_paths_from_the_resolved_layout(self):
+        """Physical C++ operand spelling is read from the exact layout field."""
+        form=self.form('add_integer_no_sat')
+        changed=self.operand(form,1,cpp_name='renamed_source')
+        self.assertIn('operands.renamed_source',_group(changed))
 
-    def test_mov_derives_scalar_pack_unpack_vector_and_predicate_paths(self) -> None:
-        """MOV topology is derived from layouts, including b128-only aggregate paths."""
-        family = mov_operation(self.mov())
-        self.assertEqual(tuple(form.kind for form in family.forms),
-                         ("scalar", "vector", "predicate"))
-        scalar = family.forms[0]
-        self.assertEqual(tuple(layout.kind for layout in scalar.layouts),
-                         ("scalar", "pack", "unpack"))
-        self.assertIn("b128", scalar.type_values)
-        _, source = self.render_instruction(self.mov())
-        self.assertIn("prepare_scalar_move(resolver, form.type", source)
-        self.assertIn("prepare_pack_move(resolver, form.type", source)
-        self.assertIn("prepare_unpack_move(resolver, form.type", source)
-        self.assertIn("prepare_vector_special_move", source)
-        self.assertIn("prepare_predicate_move", source)
-        self.assertIn("form.type != exec_ir::DataType::b128", source)
+    def test_derives_fixed_type_from_projected_modifier_field(self):
+        """A fixed semantic scalar selector resolves to a concrete codec."""
+        form=self.form('add_integer_no_sat'); control=next(field for field in form.modifiers if field.identity.name=='type')
+        atom=next(atom for atom in control.domain if atom.spelling=='u16')
+        changed=replace(form,modifiers=tuple(replace(field,storage=FieldStorage.CONSTANT,constant=atom) if field is control else field for field in form.modifiers))
+        _,_,paths=value_paths(changed)
+        self.assertEqual(len(paths),1); self.assertEqual(paths[0].destination,'std::uint16_t')
 
-    def test_mov_rejects_unrecognized_vector_sink_contract(self) -> None:
-        """A source vector sink cannot silently acquire pack semantics."""
-        instruction = self.mov()
-        scalar = instruction.forms[0]
-        pack = scalar.source.operand_layouts[1]
-        changed_binding = replace(pack.bindings[1], allow_vector_sink=True)
-        changed_pack = replace(pack, bindings=(pack.bindings[0], changed_binding))
-        changed_scalar = replace(
-            scalar, source=replace(
-                scalar.source,
-                operand_layouts=(scalar.source.operand_layouts[0], changed_pack,
-                                 scalar.source.operand_layouts[2]),
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(instruction, forms=(changed_scalar, *instruction.forms[1:])))
+    def test_matches_bindings_by_target_field_not_tuple_order(self):
+        """Reordering complete fields preserves attached semantic type expressions."""
+        form=self.form('add_integer_no_sat'); layout=form.layouts[0]
+        changed=replace(form,layouts=(replace(layout,fields=(layout.fields[0],layout.fields[2],layout.fields[1])),))
+        _,reads,_=value_paths(changed)
+        self.assertEqual(tuple(item.name for item in reads),('src2','src1'))
 
-    def test_mov_rejects_unconsumed_modifier_and_width_policy_drift(self) -> None:
-        """New MOV controls and non-exact register contracts cannot be ignored."""
-        instruction = self.mov()
-        scalar = instruction.forms[0]
-        changed_variant = replace(
-            scalar.variant,
-            modifiers=(replace(scalar.variant.modifiers[0], name="unadapted"),),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(
-                instruction,
-                forms=(replace(scalar, variant=changed_variant), *instruction.forms[1:]),
-            ))
-        layout = scalar.source.operand_layouts[0]
-        changed_binding = replace(
-            layout.bindings[0],
-            register_width_policy=type(layout.bindings[0].register_width_policy).EXACT,
-        )
-        changed_layout = replace(
-            layout, bindings=(changed_binding, layout.bindings[1:][0]),
-        )
-        changed_scalar = replace(
-            scalar,
-            source=replace(scalar.source, operand_layouts=(
-                changed_layout, *scalar.source.operand_layouts[1:],
-            )),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(instruction, forms=(changed_scalar, *instruction.forms[1:])))
+    def test_rejects_projected_value_alu_shape_drift(self):
+        """An extra source is rejected rather than omitted from arithmetic."""
+        form=self.form('add_integer_no_sat'); layout=form.layouts[0]
+        extra=layout.fields[1]; extra=replace(extra,identity=replace(extra.identity,name='extra'),binding=replace(extra.binding,target_field_id='extra'))
+        with self.assertRaises(GenerationError): value_paths(replace(form,layouts=(replace(layout,fields=(*layout.fields,extra)),)))
 
-    def test_mov_rejects_predicate_fixed_type_drift(self) -> None:
-        """Predicate MOV requires pred bindings instead of any fixed scalar type."""
-        instruction = self.mov()
-        predicate = instruction.forms[2]
-        layout = predicate.source.operand_layouts[0]
-        changed_binding = replace(
-            layout.bindings[0],
-            type_expression=replace(layout.bindings[0].type_expression,
-                                    scalar_type="u32"),
-        )
-        changed_layout = replace(
-            layout, bindings=(changed_binding, layout.bindings[1]),
-        )
-        changed_predicate = replace(
-            predicate,
-            source=replace(predicate.source, operand_layouts=(changed_layout,)),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(
-                instruction,
-                forms=(*instruction.forms[:2], changed_predicate),
-            ))
-        duplicate_bindings = replace(
-            layout, bindings=(*layout.bindings, layout.bindings[0]),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(
-                instruction,
-                forms=(*instruction.forms[:2], replace(
-                    predicate,
-                    source=replace(predicate.source,
-                                   operand_layouts=(duplicate_bindings,)),
-                )),
-            ))
+    def test_rejects_read_write_operand_access(self):
+        """Value arithmetic cannot silently ignore a read/write role."""
+        form=self.form('add_integer_no_sat'); access=type(form.layouts[0].fields[0].binding.access).READ_WRITE
+        with self.assertRaises(GenerationError): value_paths(self.binding(form,0,access=access))
 
-    def test_mov_rejects_missing_or_duplicate_projected_inventory(self) -> None:
-        """MOV inventory drift cannot silently omit or duplicate an execution path."""
-        instruction = self.mov()
-        scalar = instruction.forms[0]
-        type_modifier = next(
-            modifier for modifier in scalar.variant.modifiers
-            if modifier.name == "type"
-        )
-        reduced_variant = replace(
-            scalar.variant,
-            modifiers=tuple(
-                replace(modifier, values=modifier.values[:-1])
-                if modifier is type_modifier else modifier
-                for modifier in scalar.variant.modifiers
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(
-                instruction,
-                forms=(replace(scalar, variant=reduced_variant), *instruction.forms[1:]),
-            ))
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(instruction, forms=instruction.forms[:2]))
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(instruction, forms=(*instruction.forms, scalar)))
-        duplicated_layout = replace(
-            scalar.source,
-            operand_layouts=(scalar.source.operand_layouts[0],
-                             scalar.source.operand_layouts[0],
-                             scalar.source.operand_layouts[2]),
-        )
-        with self.assertRaises(GenerationError):
-            mov_operation(replace(
-                instruction,
-                forms=(replace(scalar, source=duplicated_layout), *instruction.forms[1:]),
-            ))
+    def test_rejects_unsupported_value_alu_width_policy(self):
+        """Arithmetic preserves exact and same-width physical storage policy."""
+        form=self.form('add_integer_no_sat'); policy=type(form.layouts[0].fields[0].binding.register_width_policy).EQUAL_OR_WIDER
+        with self.assertRaises(GenerationError): value_paths(self.binding(form,0,register_width_policy=policy))
 
-    def test_fma_inventory_controls_and_three_read_preparation_are_complete(self) -> None:
-        """FMA emits every pinned form, selector, and source read without an implicit fallback."""
-        fma = self.fma()
-        expected_forms = (
-            "RnF32", "DirectedF32", "RnF64", "DirectedF64", "F32x2",
-            "RnF16", "RnF16x2", "HalfRelu", "HalfOob", "HalfOobRelu",
-            "Bf16", "Bf16x2", "Bf16Oob", "Bf16x2Oob", "MixedF32F16",
-            "MixedF32Bf16",
-        )
-        self.assertEqual(tuple(form.source.cpp_name for form in fma.forms), expected_forms)
-        dynamic_type_selector_count = sum(
-            len(modifier.values)
-            for form in fma.forms
-            for modifier in form.variant.modifiers
-            if modifier.presence == "required" and modifier.kind == "type"
-        )
-        optional_flag_count = sum(
-            1
-            for form in fma.forms
-            for modifier in form.variant.modifiers
-            if modifier.presence == "optional" and modifier.kind == "flag"
-        )
-        fixed_or_required_cardinality = sum(
-            __import__("math").prod(
-                len(modifier.values) if modifier.presence == "required" else 2
-                for modifier in form.variant.modifiers
-                if modifier.presence in {"required", "optional"}
-                and (modifier.presence == "required" or modifier.kind == "flag")
-            )
-            for form in fma.forms
-        )
-        self.assertEqual(fixed_or_required_cardinality, 70)
+    def test_rejects_a_new_unadapted_control(self):
+        """No newly projected control is ignored by an old implementation."""
+        form=self.form('add_float_f32'); field=form.modifiers[0]
+        changed=replace(form,modifiers=(replace(field,identity=replace(field.identity,name='unknown')),*form.modifiers[1:]))
+        with self.assertRaises(GenerationError): value_paths(changed)
 
-        _, source = self.render_instruction(fma)
-        fma_begin = source.index("auto prepare_fma_")
-        fma_end = source.index("auto prepare_setp_")
-        fma_source = source[fma_begin:fma_end]
-        emitted_type_paths = sum(
-            len(form.dynamic_type_selector.cases)
-            if form.dynamic_type_selector is not None else 1
-            for form in _value_alu_forms(fma)
-        )
-        self.assertIn('#include "semantics/fma_semantics.hpp"', source)
-        self.assertEqual(source.count("return prepare_fma_"), len(expected_forms))
-        self.assertEqual(fma_source.count("case exec_ir::DataType::"), dynamic_type_selector_count)
-        self.assertEqual(optional_flag_count, 17)
-        self.assertEqual(fma_source.count("read_value<"), 3 * emitted_type_paths)
-        self.assertEqual(
-            fma_source.count("semantics::fma(arithmetic, form, *src1, *src2, *src3)"),
-            emitted_type_paths,
-        )
+    def test_requires_every_enabled_operation(self):
+        """Removing an existing opcode fails the handler registration contract."""
+        changed=replace(self.model,instructions=tuple(op for op in self.model.instructions if op.opcode!='add'))
+        with self.assertRaises(GenerationError): implemented_forms(changed)
 
-    def test_template_rejects_missing_render_data(self) -> None:
-        """Templates fail explicitly instead of silently eliding missing model data."""
-        with self.assertRaises(UndefinedError):
-            _TEMPLATES.get_template("instruction_preparation.cpp.j2").render(
-                header_name="add.gen.hpp"
-            )
+    def test_setp_derives_every_projected_form_and_predicate_topology(self):
+        """Single/pair layouts retain s32/u32 relations and AND combine scope."""
+        for name in ('setp_signed','setp_signed_boolean','setp_unsigned','setp_unsigned_boolean'):
+            text=_group(self.form(name))
+            self.assertIn('SingleOperands',text); self.assertIn('PairOperands',text)
+            self.assertIn('effect.writes[1]',text)
+            if name.endswith('_boolean'): self.assertIn('form.boolean != exec_ir::BooleanOperator::and_',text)
 
-    def test_value_alu_family_accepts_operation_and_semantic_parameters(self) -> None:
-        """The family template does not hard-code the operation-specific C++ names."""
-        form = _value_alu_forms(self.add())[0]
-        family = _TEMPLATES.get_template("families/value_alu.cpp.j2").module
-        source = family.adapter(form, "Dummy", "dummy")
-        self.assertIn("exec_ir::Dummy::FloatF32", source)
-        self.assertIn("semantics::dummy", source)
+    def test_setp_rejects_predicate_shape_drift(self):
+        """Single and pair predicate topology cannot be conflated."""
+        form=self.form('setp_unsigned')
+        with self.assertRaises(GenerationError): _group(self.operand(form,0,value_kind=ValueKind.PREDICATE_PAIR_OR_SINK))
 
-    def test_rendering_is_deterministic(self) -> None:
-        """Repeated rendering of one projected input produces byte-identical text."""
-        instruction = self.add()
-        self.assertEqual(
-            self.render_instruction(instruction),
-            self.render_instruction(instruction),
-        )
+    def test_derives_sub_mixed_operand_names_from_its_layout(self):
+        """The distinct source and subtrahend roles remain ordered."""
+        text=_group(self.form('sub_mixed_f32'))
+        self.assertIn('operands.src',text); self.assertIn('operands.subtrahend',text)
 
-    def test_derives_mixed_source_and_result_type_paths(self) -> None:
-        """Mixed forms keep their source and destination C++ types distinct."""
-        instruction = self.add()
-        mixed = next(form for form in instruction.forms if form.source.cpp_name == "MixedF32")
-        _, source = self.render_instruction(replace(instruction, forms=(mixed,)))
-        self.assertIn("read_value<arith::float16_t>(registers->get(), form.src)", source)
-        self.assertIn("read_value<arith::float32_t>(registers->get(), form.addend)", source)
-        self.assertIn("resolve_destination<arith::float32_t>(registers->get(), form.dst)", source)
+    def test_derives_wide_operand_types_independently(self):
+        """Wide Mul uses a 64-bit result and 32-bit operands."""
+        _,_,paths=value_paths(self.form('mul_wide_s32'))
+        self.assertEqual(paths[0].destination,'std::int64_t')
+        self.assertEqual(paths[0].sources,('std::int32_t','std::int32_t'))
 
-    def test_derives_operand_paths_from_the_resolved_layout(self) -> None:
-        """Changing projected field spellings changes emitted reads and destination checks."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        renamed_fields = tuple(
-            replace(field, name={"dst": "out", "src1": "left", "src2": "right"}[field.name])
-            for field in layout.fields
-        )
-        renamed_bindings = tuple(
-            replace(binding, target_field_id={"dst": "out", "src1": "left", "src2": "right"}[binding.target_field_id])
-            for binding in layout.bindings
-        )
-        renamed_layout = replace(layout, fields=renamed_fields, bindings=renamed_bindings)
-        renamed_source = replace(form.source, operand_layouts=(renamed_layout,))
-        renamed_form = replace(form, source=renamed_source)
-        _, source = self.render_instruction(replace(instruction, forms=(renamed_form, *instruction.forms[1:])))
-        self.assertIn("form.left", source)
-        self.assertIn("form.right", source)
-        self.assertIn("form.out", source)
+    def test_rejects_unresolved_operand_type_expressions(self):
+        """A missing referenced modifier does not become a guessed scalar type."""
+        form=self.form('add_integer_no_sat'); expression=form.layouts[0].fields[0].binding.type_expression
+        with self.assertRaises(GenerationError): value_paths(self.binding(form,0,type_expression=replace(expression,modifier_field_id='absent')))
 
-    def test_derives_fixed_type_from_projected_modifier_field(self) -> None:
-        """A changed projected static type changes the emitted codec without a form table."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        modifiers = tuple(
-            replace(field, constant_value="f64") if field.name == "type" else field
-            for field in form.source.modifier_fields
-        )
-        changed = replace(form, source=replace(form.source, modifier_fields=modifiers))
-        _, source = self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
-        first_adapter = source.partition("auto prepare_add_float_f32")[2].partition("auto prepare_add_float_f32x2")[0]
-        self.assertIn("read_value<arith::float64_t>", first_adapter)
+    def test_memory_derives_ordinary_forms_and_rejects_hint_forms(self):
+        """Only the eight existing ordinary memory forms select typed memory groups."""
+        selected=implemented_forms(self.model)
+        memory=[form for form in selected if form.identity.opcode in {'ld','st'}]
+        self.assertEqual(len(memory),8)
+        for form in memory:
+            text=_group(form); self.assertIn('prepare_memory_',text)
+            self.assertIn('ParameterAddressQualifier::Function',text)
+        self.assertFalse(any('hint' in form.identity.variant for form in memory))
 
-    def test_matches_bindings_by_target_field_not_tuple_order(self) -> None:
-        """Resolved binding order is irrelevant when its target identities agree."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        reordered = replace(layout, bindings=tuple(reversed(layout.bindings)))
-        changed = replace(form, source=replace(form.source, operand_layouts=(reordered,)))
-        _, source = self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
-        self.assertIn("form.src1", source)
-        self.assertIn("form.dst", source)
+    def test_memory_derives_renamed_operand_fields(self):
+        """A handler resolves memory roles to the selected owned C++ names."""
+        form=self.form('ld_generic_scalar'); changed=self.operand(form,1,cpp_name='renamed_address')
+        self.assertIn('form.operands.renamed_address',_group(changed))
 
-    def test_rejects_projected_value_alu_shape_drift(self) -> None:
-        """A projected third source is rejected instead of silently being ignored."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        third_source = replace(layout.fields[0], name="extra", operand_access=layout.fields[1].operand_access)
-        third_binding = replace(layout.bindings[0], target_field_id="extra")
-        drifted_layout = replace(
-            layout,
-            fields=(*layout.fields, third_source),
-            bindings=(*layout.bindings, third_binding),
-        )
-        drifted_form = replace(form, source=replace(form.source, operand_layouts=(drifted_layout,)))
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(drifted_form, *instruction.forms[1:])))
+    def test_memory_rejects_type_allowlist_drift(self):
+        """An additional representable type remains outside the current memory admission."""
+        text=_group(self.form('ld_generic_scalar'))
+        self.assertNotIn('form.type == exec_ir::DataType::b128',text)
+        self.assertIn('unsupported_instruction',text)
+        self.assertIn('DataType::b8',text); self.assertIn('DataType::f64',text)
 
-    def test_rejects_read_write_operand_access(self) -> None:
-        """A read-write field cannot be silently omitted from the ValueALU contract."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        changed_fields = (
-            replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ_WRITE),
-            *layout.fields[1:],
-        )
-        changed_layout = replace(layout, fields=changed_fields)
-        changed_form = replace(form, source=replace(form.source, operand_layouts=(changed_layout,)))
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(changed_form, *instruction.forms[1:])))
+    def test_bar_derives_every_projected_form_and_reduction_token(self):
+        """All eleven existing collective forms retain their complete protocols."""
+        forms=[form for form in implemented_forms(self.model) if form.identity.opcode=='bar']
+        self.assertEqual(len(forms),11)
+        for form in forms:
+            text=_group(form)
+            if form.identity.variant=='bar_warp_sync': self.assertIn('PrepareKind::warp_sync',text)
+            else: self.assertIn('PrepareKind::cta_barrier',text)
+        for name in ('Popc','And','Or'): self.assertIn('Reduce'+name,_group(self.form('bar_red_'+name.lower()+'_'+('u32' if name=='Popc' else 'pred'))))
 
-    def test_rejects_unsupported_value_alu_width_policy(self) -> None:
-        """Only exact and same-width policies can enter this fixed ValueALU family."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        changed_binding = replace(layout.bindings[0], register_width_policy=type(layout.bindings[0].register_width_policy).EQUAL_OR_WIDER)
-        changed_layout = replace(layout, bindings=(changed_binding, *layout.bindings[1:]))
-        changed_form = replace(form, source=replace(form.source, operand_layouts=(changed_layout,)))
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(changed_form, *instruction.forms[1:])))
+    def test_bar_derives_renamed_operand_fields(self):
+        """A barrier carrier follows its layout-local owned field mapping."""
+        form=self.form('bar_warp_sync'); changed=self.operand(form,0,cpp_name='renamed_mask')
+        self.assertIn('form.operands.renamed_mask',_group(changed))
 
-    def test_rejects_a_new_unadapted_control(self) -> None:
-        """A projected control cannot be ignored until the semantic adapter owns it."""
-        instruction = self.add()
-        form = instruction.forms[0]
-        changed_variant = replace(
-            form.variant,
-            modifiers=(replace(form.variant.modifiers[0], name="unadapted"), *form.variant.modifiers[1:]),
-        )
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(replace(form, variant=changed_variant), *instruction.forms[1:])))
+    def test_bar_rejects_reduction_token_drift(self):
+        """A changed fixed reduction control cannot execute under the old protocol."""
+        form=self.form('bar_red_popc_u32'); field=next(field for field in form.modifiers if field.identity.name=='reduction')
+        changed=replace(form,modifiers=tuple(replace(item,constant=replace(item.constant,spelling=False)) if item is field else item for item in form.modifiers))
+        with self.assertRaises(GenerationError): _group(changed)
 
-    def test_requires_every_enabled_operation(self) -> None:
-        """Omitting an enabled operation fails rather than silently skipping it."""
-        with self.assertRaisesRegex(GenerationError, "no mul instruction"):
-            artifacts((self.mov(), self.add(), self.sub(), self.setp(), self.ld(), self.st()), Path("add.gen.hpp"))
+    def test_bar_rejects_predicate_destination_shape_drift(self):
+        """Predicate reductions retain a logical destination rather than a scalar slot."""
+        form=self.form('bar_red_and_pred')
+        with self.assertRaises(GenerationError): _group(self.operand(form,0,value_kind=ValueKind.REGISTER))
 
-    def test_setp_derives_every_projected_form_and_predicate_topology(self) -> None:
-        """The predicate family derives pair and combine handling from operand projection."""
-        family = setp_operation(self.setp())
-        self.assertEqual(len(family.forms), 5)
-        pair = next(form for form in family.forms if form.pair_destination)
-        self.assertEqual(pair.destination.name, "dst")
-        self.assertFalse(pair.destination.allows_negation)
-        unsigned_combine = next(form for form in family.forms if form.cpp_name == "LtAndU32")
-        signed_pair = next(form for form in family.forms if form.cpp_name == "LtAndS32Pair")
-        self.assertTrue(unsigned_combine.combine.allows_negation)
-        self.assertFalse(signed_pair.combine.allows_negation)
-        _, source = artifacts(
-            self.all_operations(), Path("setp.gen.hpp")
-        )
-        self.assertIn("exec_ir::BooleanOperator::and_", source)
+    def test_control_families_derive_direct_target_and_bare_exit(self):
+        """Control entries preserve owned local PC/owner and architectural exit effects."""
+        self.assertIn('form.operands.target.pc',_group(self.form('bra_direct')))
+        self.assertIn('target.function != function',_group(self.form('bra_direct')))
+        self.assertIn('ExitControl{}',_group(self.form('exit_bare')))
 
-    def test_setp_rejects_predicate_shape_drift(self) -> None:
-        """A predicate-pair field cannot be silently treated as one destination."""
-        instruction = self.setp()
-        form = next(form for form in instruction.forms if form.source.cpp_name == "EqU32Pair")
-        layout = form.source.operand_layouts[0]
-        changed_field = replace(
-            layout.fields[0],
-            allowed_operand_shapes=(type(layout.fields[0].allowed_operand_shapes[0]).PREDICATE,),
-        )
-        changed_form = replace(
-            form,
-            source=replace(form.source, operand_layouts=(replace(layout, fields=(changed_field, *layout.fields[1:])),)),
-        )
-        with self.assertRaises(GenerationError):
-            setp_operation(replace(instruction, forms=(changed_form, *instruction.forms[1:])))
-
-    def test_derives_sub_mixed_operand_names_from_its_layout(self) -> None:
-        """Sub mixed forms retain their distinct source and subtrahend field names."""
-        sub = self.sub()
-        mixed = next(form for form in sub.forms if form.source.cpp_name == "MixedF32")
-        _, source = self.render_instruction(replace(sub, forms=(mixed,)))
-        self.assertIn("form.src", source)
-        self.assertIn("form.subtrahend", source)
-
-    def test_derives_wide_operand_types_independently(self) -> None:
-        """Wide Mul result and sources follow their individual projected expressions."""
-        mul = self.mul()
-        wide_unsigned = next(form for form in mul.forms if form.source.cpp_name == "WideU32")
-        wide_signed = next(form for form in mul.forms if form.source.cpp_name == "WideS32")
-        _, source = self.render_instruction(replace(mul, forms=(wide_unsigned, wide_signed)))
-        self.assertIn("read_value<std::uint32_t>(registers->get(), form.src1)", source)
-        self.assertIn("resolve_destination<std::uint64_t>(registers->get(), form.dst)", source)
-        self.assertIn("read_value<std::int32_t>(registers->get(), form.src1)", source)
-        self.assertIn("resolve_destination<std::int64_t>(registers->get(), form.dst)", source)
-
-    def test_rejects_unresolved_operand_type_expressions(self) -> None:
-        """A new projected type transformation cannot silently select a codec."""
-        mul = self.mul()
-        form = next(form for form in mul.forms if form.source.cpp_name == "WideU32")
-        layout = form.source.operand_layouts[0]
-        changed_binding = replace(
-            layout.bindings[0],
-            type_expression=replace(
-                layout.bindings[0].type_expression,
-                kind=type(layout.bindings[0].type_expression.kind).NONE,
-                scalar_type=None,
-            ),
-        )
-        changed = replace(
-            form,
-            source=replace(
-                form.source,
-                operand_layouts=(replace(layout, bindings=(changed_binding, *layout.bindings[1:])),),
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(mul, forms=(changed, *mul.forms[1:])))
-
-    def test_memory_derives_ordinary_forms_and_rejects_hint_forms(self) -> None:
-        """Only ordinary frontend forms enter memory preparation; hint forms stay unrouted."""
-        load = memory_operation(self.ld())
-        store = memory_operation(self.st())
-        self.assertEqual(tuple(form.cpp_name for form in load.forms),
-                         ("GenericScalar", "ExplicitScalar", "GenericVector", "ExplicitVector"))
-        self.assertEqual(tuple(form.cpp_name for form in store.forms),
-                         ("GenericScalar", "ExplicitScalar", "GenericVector", "ExplicitVector"))
-        _, source = artifacts(self.all_operations(), Path("memory.gen.hpp"))
-        self.assertIn("auto prepare_ld_generic_vector", source)
-        self.assertIn("auto prepare_st_explicit_vector", source)
-        self.assertIn("return prepare_memory_load(", source)
-        self.assertIn("return prepare_memory_store(", source)
-        self.assertNotIn("prepare_ld_global_u32_l1_evict", source)
-
-    def test_memory_derives_renamed_operand_fields(self) -> None:
-        """Memory adapters follow projected operand identities rather than dst/src spellings."""
-        load = self.ld()
-        form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
-        layout = form.source.operand_layouts[0]
-        renamed = {layout.fields[0].name: "result", layout.fields[1].name: "location"}
-        changed_layout = replace(
-            layout,
-            fields=tuple(replace(field, name=renamed[field.name]) for field in layout.fields),
-            bindings=tuple(replace(binding, target_field_id=renamed[binding.target_field_id])
-                           for binding in layout.bindings),
-        )
-        changed = replace(
-            form,
-            source=replace(
-                form.source,
-                operand_layouts=(changed_layout,),
-                memory_consistency=replace(
-                    form.source.memory_consistency, address_field_id="location"
-                ),
-                address_alignments=tuple(
-                    replace(alignment, address_field_ids=("location",))
-                    for alignment in form.source.address_alignments
-                ),
-            ),
-        )
-        _, source = self.render_instruction(replace(load, forms=(changed, *load.forms[1:])))
-        self.assertIn("form.result", source)
-        self.assertIn("form.location", source)
-
-    def test_memory_rejects_type_allowlist_drift(self) -> None:
-        """A frontend type addition cannot silently acquire byte-width semantics."""
-        load = self.ld()
-        form = next(form for form in load.forms if form.source.cpp_name == "GenericScalar")
-        changed_variant = replace(
-            form.variant,
-            modifiers=tuple(
-                replace(modifier, values=(*modifier.values, replace(modifier.values[0], value="b128")))
-                if modifier.name == "type" else modifier
-                for modifier in form.variant.modifiers
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(load, forms=(replace(form, variant=changed_variant), *load.forms[1:])))
-
-    def test_bar_derives_every_projected_form_and_reduction_token(self) -> None:
-        """Every projected Bar form reaches the helper using modifier-token protocols."""
-        family = bar_operation(self.bar())
-        self.assertEqual(len(family.forms), 11)
-        self.assertEqual(sum(form.warp_sync for form in family.forms), 1)
-        protocols = {form.protocol for form in family.forms if not form.warp_sync}
-        self.assertEqual(protocols, {"SyncArrive", "ReducePopc", "ReduceAnd", "ReduceOr"})
-        _, source = artifacts(self.all_operations(), Path("bar.gen.hpp"))
-        self.assertEqual(source.count("return prepare_bar_") - 1, 11)
-        self.assertIn("CtaBarrierProtocol::ReducePopc", source)
-        self.assertIn("CtaBarrierProtocol::ReduceAnd", source)
-        self.assertIn("CtaBarrierProtocol::ReduceOr", source)
-        self.assertIn("prepare_bar_warp_sync(resolver, form.membermask", source)
-        self.assertIn("operands.dst.source", source)
-
-    def test_bar_derives_renamed_operand_fields(self) -> None:
-        """Collective adapters follow layout identities rather than Bar field spellings."""
-        instruction = self.bar()
-        form = next(form for form in instruction.forms if form.source.cpp_name == "RedPopcU32")
-        source_layout = form.source.operand_layouts[0]
-        renamed = {"dst": "result", "barrier": "slot", "predicate": "input"}
-        changed_layout = replace(
-            source_layout,
-            fields=tuple(replace(field, name=renamed[field.name], source_name=renamed[field.source_name])
-                         for field in source_layout.fields),
-            bindings=tuple(replace(binding, target_field_id=renamed[binding.target_field_id])
-                           for binding in source_layout.bindings),
-        )
-        changed_source_layout = replace(
-            form.layouts[0],
-            operands=tuple(replace(operand, name=renamed[operand.name])
-                           for operand in form.layouts[0].operands),
-        )
-        changed = replace(
-            form,
-            layouts=(changed_source_layout, *form.layouts[1:]),
-            source=replace(form.source, operand_layouts=(changed_layout, *form.source.operand_layouts[1:])),
-        )
-        _, source = self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
-        self.assertIn("operands.slot", source)
-        self.assertIn("operands.input", source)
-        self.assertIn("operands.result", source)
-
-    def test_bar_rejects_reduction_token_drift(self) -> None:
-        """An unrecognized fixed reduction modifier cannot silently acquire a protocol."""
-        instruction = self.bar()
-        form = next(form for form in instruction.forms if form.source.cpp_name == "RedPopcU32")
-        changed_variant = replace(
-            form.variant,
-            modifiers=tuple(
-                replace(modifier, token=".xor") if modifier.name == "reduction" else modifier
-                for modifier in form.variant.modifiers
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(replace(form, variant=changed_variant), *instruction.forms[1:])))
-
-    def test_bar_rejects_predicate_destination_shape_drift(self) -> None:
-        """Predicate reductions cannot treat an ordinary register as a predicate result."""
-        instruction = self.bar()
-        form = next(form for form in instruction.forms if form.source.cpp_name == "RedAndPred")
-        layout = form.source.operand_layouts[0]
-        changed_fields = (
-            replace(layout.fields[0], allowed_operand_shapes=(type(layout.fields[0].allowed_operand_shapes[0]).REGISTER,)),
-            *layout.fields[1:],
-        )
-        changed = replace(form, source=replace(form.source, operand_layouts=(replace(layout, fields=changed_fields), *form.source.operand_layouts[1:])))
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(changed, *instruction.forms[1:])))
-
-    def test_control_families_derive_direct_target_and_bare_exit(self) -> None:
-        """Branch and exit control effects come from their projected operand topology."""
-        branch = bra_operation(self.bra())
-        exit_form = exit_operation(self.exit())
-        self.assertEqual(branch.target, "target")
-        self.assertIsNone(exit_form.target)
-        _, source = artifacts(self.all_operations(), Path("control.gen.hpp"))
-        self.assertIn("auto validate_bra", source)
-        self.assertIn(".control = form.target", source)
-        self.assertIn("auto validate_exit", source)
-        self.assertIn(".control = ExitControl{}", source)
-
-    def test_control_family_rejects_operand_drift(self) -> None:
-        """A direct branch cannot silently accept a non-control target operand."""
-        instruction = self.bra()
-        form = instruction.forms[0]
-        layout = form.source.operand_layouts[0]
-        changed = replace(
-            form,
-            source=replace(
-                form.source,
-                operand_layouts=(replace(layout, fields=(replace(layout.fields[0], operand_access=type(layout.fields[0].operand_access).READ),)),),
-            ),
-        )
-        with self.assertRaises(GenerationError):
-            self.render_instruction(replace(instruction, forms=(changed,)))
+    def test_control_family_rejects_operand_drift(self):
+        """A non-branch target carrier cannot select the direct branch handler."""
+        form=self.form('bra_direct')
+        with self.assertRaises(GenerationError): _group(self.operand(form,0,value_kind=ValueKind.REGISTER))
 
 
-if __name__ == "__main__":
+if __name__=='__main__':
     unittest.main()

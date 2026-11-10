@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
+#include <concepts>
+#include <stdexcept>
+#include <ptxsim/exec_ir/exec_ir.gen.hpp>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
 #include <cstdint>
 #include <string>
 #include <limits>
@@ -17,9 +22,40 @@
 namespace ptxsim::exec_ir_lowering::test {
 namespace {
 
-using ptx_frontend::resolved_ir::Mov;
+namespace source = ptx_frontend::resolved_ir;
 using ptx_frontend::resolved_ir::ResolvedModule;
 
+/** @brief Query a sealed native exact form with an assertion before dereferencing. */
+template <exec_ir::GeneratedForm Form>
+auto native_form(const exec_ir::Instruction& value) -> const Form& {
+  const auto* form=value.get_if<Form>();
+  EXPECT_NE(form,nullptr);
+  if (!form) throw std::runtime_error("unexpected native form");
+  return *form;
+}
+/** @brief Access a mutable exact frontend fixture after validating its real dynamic class. */
+template <typename Form> requires std::derived_from<Form,source::Instruction>
+auto source_form(std::unique_ptr<source::Instruction>& value) -> Form& {
+  auto* form=dynamic_cast<Form*>(value.get());
+  EXPECT_NE(form,nullptr);
+  if (!form) throw std::runtime_error("unexpected source form");
+  return *form;
+}
+/** @brief Access an exact frontend fixture without exposing mutable test references. */
+template <typename Form> requires std::derived_from<Form,source::Instruction>
+auto source_form(const std::unique_ptr<source::Instruction>& value) -> const Form& {
+  const auto* form=dynamic_cast<const Form*>(value.get());
+  EXPECT_NE(form,nullptr);
+  if (!form) throw std::runtime_error("unexpected source form");
+  return *form;
+}
+/** @brief Bind one ordinary register test view with its actual native type and class. */
+auto reg(std::uint32_t id,exec_ir::DataType type=exec_ir::DataType::b32) -> exec_ir::RegisterRef {
+  return {.slot=common::RegisterSlot{id},
+          .register_class=type==exec_ir::DataType::pred?exec_ir::RegisterClass::Predicate:exec_ir::RegisterClass::General,
+          .declared_type=type};
+}
+/** @brief Parse and resolve a test module before introducing malformed metadata. */
 auto resolve(std::string_view source) -> ResolvedModule {
   ptx_frontend::PtxSyntaxParser parser(source);
   const auto ast = parser.parseModule();
@@ -29,7 +65,7 @@ auto resolve(std::string_view source) -> ResolvedModule {
   }
   auto module = ptx_frontend::resolved_ir::resolveModule(*ast);
   if (!module) {
-    ADD_FAILURE() << "PTX resolve failed";
+    for(const auto& diagnostic:module.error()) ADD_FAILURE() << diagnostic.message;
     return {};
   }
   return std::move(*module);
@@ -73,7 +109,7 @@ auto lowered_entry_parameters_after_frontend_dies()
 )ptx"));
 }
 TEST(ExecIrLowering, PreservesMemoryVectorSinksAndSubtractedOffsets) {
-  const auto program = lower(resolve(R"ptx(
+  ptx_frontend::PtxSyntaxParser legacy_parser(R"ptx(
 .entry kernel() {
   .reg .b32 %r;
   .reg .b64 %a;
@@ -81,13 +117,30 @@ TEST(ExecIrLowering, PreservesMemoryVectorSinksAndSubtractedOffsets) {
   ld.global.u32 %r, [-4];
   exit;
 }
+)ptx");
+  const auto legacy_ast=legacy_parser.parseModule(); ASSERT_TRUE(legacy_ast);
+  const auto legacy_source=ptx_frontend::resolved_ir::resolveModule(*legacy_ast);
+  ASSERT_FALSE(legacy_source);
+  EXPECT_TRUE(std::ranges::any_of(legacy_source.error(),[](const auto& error) {
+    return error.message.find("must be an unsigned 32-bit value")!=std::string::npos;
+  }));
+  const auto program=lower(resolve(R"ptx(
+.entry kernel() {
+  .reg .b32 %r;
+  .reg .b64 %a;
+  ld.global.v8.b32 {%r, _, _, _, _, _, _, _}, [%a-32];
+  exit;
+}
 )ptx"));
   ASSERT_TRUE(program);
-  const auto text = exec_ir::to_string(*program);
-  EXPECT_NE(text.find("-" + common::to_string(
-                                common::RawValue::b64(std::uint64_t{32}))),
-            std::string::npos);
-  EXPECT_NE(text.find("_"), std::string::npos);
+  const auto instruction=program->fetch({common::FunctionId{0},common::ProgramCounter{0}}); ASSERT_TRUE(instruction);
+  const auto& form=native_form<exec_ir::LdExplicitVector>(instruction->get());
+  EXPECT_EQ(form.vector,exec_ir::VectorArity::v8); EXPECT_EQ(form.type,exec_ir::DataType::b32);
+  ASSERT_EQ(form.operands.dst.elements.size(),8);
+  ASSERT_TRUE(form.operands.dst.elements[0]); EXPECT_EQ(form.operands.dst.elements[0]->slot,common::RegisterSlot{0});
+  for(std::size_t index=1;index<8;++index) EXPECT_FALSE(form.operands.dst.elements[index]);
+  EXPECT_EQ(form.operands.address.offset,(std::optional{exec_ir::AddressOffset{
+      exec_ir::AddressOffsetOperator::Subtract,exec_ir::Immediate{32,exec_ir::DataType::s64,false,32}}}));
 }
 
 }  // namespace
@@ -98,22 +151,17 @@ TEST(ExecIrLowering, LowersBoundProgramsWithoutFrontendLifetime) {
   const auto& program = *program_result;
 
   EXPECT_EQ(exec_ir::to_string(program),
-            "gpc0  [func:0 pc:0]  "
-            "@!predicate:0 mov.b32 register:2, register:1\n"
-            "gpc1  [func:0 pc:1]  "
-            "@predicate:0 add.u32 register:5, register:3, b32:0x00000007\n"
-            "gpc2  [func:0 pc:2]  "
-            "bra pc:5\n"
-            "gpc3  [func:0 pc:3]  "
-            "add.u32 register:3, register:3, register:4\n"
-            "gpc4  [func:0 pc:4]  "
-            "add.u32 register:6, register:3, register:4\n"
-            "gpc5  [func:0 pc:5]  "
-            "exit\n"
-            "gpc6  [func:1 pc:0]  "
-            "mov.b32 register:1, register:0\n"
-            "gpc7  [func:1 pc:1]  "
-            "exit");
+            R"expected(function:0:
+  pc:0: mov/mov_scalar @predicate{register=register{slot=register:0, class=Predicate, type=pred, width=none, component=none}, negated=true} type=b32 layout=scalar dst=register{slot=register:2, class=General, type=b32, width=none, component=none} src=register{slot=register:1, class=General, type=b32, width=none, component=none}
+  pc:1: add/add_integer_no_sat @predicate{register=register{slot=register:0, class=Predicate, type=pred, width=none, component=none}, negated=false} type=u32 layout=default dst=register{slot=register:5, class=General, type=u32, width=none, component=none} src1=register{slot=register:3, class=General, type=u32, width=none, component=none} src2=immediate{bits=0x7, type=u32, negative=false, integer-source=0x7}
+  pc:2: bra/bra_direct uni=false layout=default target=branch-target{function=function:0, pc=pc:5}
+  pc:3: add/add_integer_no_sat type=u32 layout=default dst=register{slot=register:3, class=General, type=u32, width=none, component=none} src1=register{slot=register:3, class=General, type=u32, width=none, component=none} src2=register{slot=register:4, class=General, type=u32, width=none, component=none}
+  pc:4: add/add_integer_no_sat type=u32 layout=default dst=register{slot=register:6, class=General, type=u32, width=none, component=none} src1=register{slot=register:3, class=General, type=u32, width=none, component=none} src2=register{slot=register:4, class=General, type=u32, width=none, component=none}
+  pc:5: exit/exit_bare layout=default
+function:1:
+  pc:0: mov/mov_scalar type=b32 layout=scalar dst=register{slot=register:1, class=General, type=b32, width=none, component=none} src=register{slot=register:0, class=General, type=b32, width=none, component=none}
+  pc:1: exit/exit_bare layout=default
+)expected");
   EXPECT_TRUE(
       program.fetch({common::FunctionId{0}, common::ProgramCounter{0}}));
   EXPECT_TRUE(
@@ -130,10 +178,10 @@ TEST(ExecIrLowering, BindsScalarNamesEndingInDigitsBySymbolIdentity) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "mov.b32 register:0, register:0\n"
-            "gpc1  [func:0 pc:1]  "
-            "exit");
+            R"expected(function:0:
+  pc:0: mov/mov_scalar type=b32 layout=scalar dst=register{slot=register:0, class=General, type=b32, width=none, component=none} src=register{slot=register:0, class=General, type=b32, width=none, component=none}
+  pc:1: exit/exit_bare layout=default
+)expected");
 }
 
 TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
@@ -148,14 +196,14 @@ TEST(ExecIrLowering, BindsThreadIdXAsTheCanonicalSpecialRegister) {
   const auto instruction =
       program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  const auto& mov = std::get<exec_ir::Mov>(instruction->get());
-  const auto& form = std::get<exec_ir::Mov::Scalar>(mov.variant);
+  const auto& form = native_form<exec_ir::MovScalar>(instruction->get());
   const auto& operands =
-      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+      std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
   EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
             (exec_ir::SpecialRegisterRef{
-                .id = exec_ir::kThreadIdSpecialRegister,
+                .id = exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::Tid,0},
                 .component = 0U,
+                .element_type=exec_ir::DataType::u32, .vector_width=4,
             }));
 
   const auto lowered_component = lower(resolve(R"ptx(
@@ -185,13 +233,11 @@ TEST(ExecIrLowering, BindsB64MoveImmediate) {
   exit;
 }
 )ptx");
-  const auto& resolved_mov = std::get<Mov>(module.functions[0].body[0]);
-  const auto& resolved_form = std::get<Mov::Scalar>(resolved_mov.variant);
-  const auto& resolved_operands =
-      std::get<Mov::Scalar::ScalarOperands>(resolved_form.operands);
+  const auto& resolved_form=source_form<source::MovScalar>(module.functions[0].body[0]);
+  const auto& resolved_operands=*resolved_form.src_mov_source;
   const auto& immediate =
       std::get<ptx_frontend::resolved_ir::ResolvedImmediate>(
-          resolved_operands.src.value);
+          resolved_operands.value);
   EXPECT_EQ(immediate.type, ptx_frontend::base::ScalarType::B64);
   EXPECT_EQ(immediate.bits, 0U);
   EXPECT_FALSE(immediate.is_negative);
@@ -201,13 +247,12 @@ TEST(ExecIrLowering, BindsB64MoveImmediate) {
   const auto instruction =
       program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  const auto& mov = std::get<exec_ir::Mov>(instruction->get());
-  const auto& form = std::get<exec_ir::Mov::Scalar>(mov.variant);
+  const auto& form = native_form<exec_ir::MovScalar>(instruction->get());
   const auto& operands =
-      std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+      std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
   EXPECT_EQ(form.type, exec_ir::DataType::b64);
-  EXPECT_EQ(operands.dst, common::RegisterSlot{0});
-  EXPECT_EQ(std::get<common::RawValue>(operands.src),
+  EXPECT_EQ(operands.dst, reg(0,exec_ir::DataType::b64));
+  EXPECT_EQ(*exec_ir::immediate_value(std::get<exec_ir::Immediate>(operands.src)),
             common::RawValue::b64(std::uint64_t{0}));
 }
 
@@ -219,10 +264,7 @@ TEST(ExecIrLowering, RejectsScalarImmediateBitsOutsideResolvedWidth) {
   exit;
 }
 )ptx");
-  auto& add =
-      std::get<ptx_frontend::resolved_ir::Add>(module.functions[0].body[0]);
-  auto& form =
-      std::get<ptx_frontend::resolved_ir::Add::IntegerNoSat>(add.variant);
+  auto& form=source_form<source::AddIntegerNoSat>(module.functions[0].body[0]);
   auto& immediate =
       std::get<ptx_frontend::resolved_ir::ResolvedImmediate>(form.src2.value);
   immediate.bits = 0x10000U;
@@ -248,9 +290,9 @@ TEST(ExecIrLowering, LowersEntryParametersWithCanonicalOffsets) {
   EXPECT_EQ(layout->get().entry_parameter_size, 20U);
   EXPECT_EQ(layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {.offset = 0U, .size = 4U, .alignment = 4U},
-                {.offset = 8U, .size = 8U, .alignment = 8U},
-                {.offset = 16U, .size = 4U, .alignment = 4U},
+                {.offset = 0U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{0}},
+                {.offset = 8U, .size = 8U, .alignment = 8U, .parameter=exec_ir::ParameterId{1}},
+                {.offset = 16U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{2}},
             }));
 
   const auto first =
@@ -262,21 +304,15 @@ TEST(ExecIrLowering, LowersEntryParametersWithCanonicalOffsets) {
   ASSERT_TRUE(first);
   ASSERT_TRUE(second);
   ASSERT_TRUE(third);
-  const auto& first_form = std::get<exec_ir::Ld::ExplicitScalar>(
-      std::get<exec_ir::Ld>(first->get()).variant);
-  const auto& second_form = std::get<exec_ir::Ld::ExplicitScalar>(
-      std::get<exec_ir::Ld>(second->get()).variant);
-  const auto& third_form = std::get<exec_ir::Ld::ExplicitScalar>(
-      std::get<exec_ir::Ld>(third->get()).variant);
-  EXPECT_EQ(first_form.address,
-            (exec_ir::Address{common::RawValue::b64(std::uint64_t{0})}));
-  EXPECT_EQ(second_form.address,
-            (exec_ir::Address{common::RawValue::b64(std::uint64_t{8})}));
-  EXPECT_EQ(std::get<common::RawValue>(third_form.address.base),
-            common::RawValue::b64(std::uint64_t{16}));
+  const auto& first_form = native_form<exec_ir::LdExplicitScalar>(first->get());
+  const auto& second_form = native_form<exec_ir::LdExplicitScalar>(second->get());
+  const auto& third_form = native_form<exec_ir::LdExplicitScalar>(third->get());
+  EXPECT_EQ(std::get<exec_ir::ParameterId>(std::get<exec_ir::SymbolRef>(first_form.operands.address.base).target),exec_ir::ParameterId{0});
+  EXPECT_EQ(std::get<exec_ir::ParameterId>(std::get<exec_ir::SymbolRef>(second_form.operands.address.base).target),exec_ir::ParameterId{1});
+  EXPECT_EQ(std::get<exec_ir::ParameterId>(std::get<exec_ir::SymbolRef>(third_form.operands.address.base).target),exec_ir::ParameterId{2});
   EXPECT_EQ(
-      third_form.address.offset,
-      (exec_ir::AddressOffset{true, common::RawValue::b64(std::uint64_t{4})}));
+      third_form.operands.address.offset,
+      (exec_ir::AddressOffset{exec_ir::AddressOffsetOperator::Subtract, exec_ir::Immediate{4,exec_ir::DataType::s64,false,4}}));
 }
 
 TEST(ExecIrLowering, UsesDeclarationAlignmentNotPointerTargetAlignment) {
@@ -305,23 +341,21 @@ TEST(ExecIrLowering, UsesDeclarationAlignmentNotPointerTargetAlignment) {
   EXPECT_EQ(layout->get().entry_parameter_size, 48U);
   EXPECT_EQ(layout->get().entry_parameters[0],
             (exec_ir::EntryParameterLayout{
-                .offset = 0U, .size = 8U, .alignment = 16U}));
+                .offset = 0U, .size = 8U, .alignment = 16U, .parameter=exec_ir::ParameterId{0}}));
   EXPECT_EQ(layout->get().entry_parameters[1],
             (exec_ir::EntryParameterLayout{
-                .offset = 8U, .size = 8U, .alignment = 8U}));
+                .offset = 8U, .size = 8U, .alignment = 8U, .parameter=exec_ir::ParameterId{1}}));
   EXPECT_EQ(layout->get().entry_parameters[3].offset, 24U);
   EXPECT_EQ(layout->get().entry_parameters[8].offset, 44U);
 
   const auto address =
       program->fetch({common::FunctionId{0}, common::ProgramCounter{2}});
   ASSERT_TRUE(address);
-  const auto& form = std::get<exec_ir::Ld::ExplicitScalar>(
-      std::get<exec_ir::Ld>(address->get()).variant);
-  EXPECT_EQ(std::get<common::RawValue>(form.address.base),
-            common::RawValue::b64(std::uint64_t{44}));
+  const auto& form = native_form<exec_ir::LdExplicitScalar>(address->get());
+  EXPECT_EQ(std::get<exec_ir::ParameterId>(std::get<exec_ir::SymbolRef>(form.operands.address.base).target),exec_ir::ParameterId{8});
   EXPECT_EQ(
-      form.address.offset,
-      (exec_ir::AddressOffset{true, common::RawValue::b64(std::uint64_t{4})}));
+      form.operands.address.offset,
+      (exec_ir::AddressOffset{exec_ir::AddressOffsetOperator::Subtract, exec_ir::Immediate{4,exec_ir::DataType::s64,false,4}}));
 }
 
 TEST(ExecIrLowering, LowersOverAlignedByteArraysWithoutTrailingPadding) {
@@ -336,8 +370,8 @@ TEST(ExecIrLowering, LowersOverAlignedByteArraysWithoutTrailingPadding) {
   EXPECT_EQ(layout->get().entry_parameter_size, 20U);
   EXPECT_EQ(layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {.offset = 0U, .size = 16U, .alignment = 16U},
-                {.offset = 16U, .size = 4U, .alignment = 4U},
+                {.offset = 0U, .size = 16U, .alignment = 16U, .parameter=exec_ir::ParameterId{0}},
+                {.offset = 16U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{1}},
             }));
 }
 
@@ -355,9 +389,9 @@ TEST(ExecIrLowering, UsesPhysicalByteWidthsForTwoByteDeclarations) {
   EXPECT_EQ(layout->get().entry_parameter_size, 8U);
   EXPECT_EQ(layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {.offset = 0U, .size = 2U, .alignment = 2U},
-                {.offset = 2U, .size = 2U, .alignment = 2U},
-                {.offset = 4U, .size = 4U, .alignment = 4U},
+                {.offset = 0U, .size = 2U, .alignment = 2U, .parameter=exec_ir::ParameterId{0}},
+                {.offset = 2U, .size = 2U, .alignment = 2U, .parameter=exec_ir::ParameterId{1}},
+                {.offset = 4U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{2}},
             }));
 }
 
@@ -369,9 +403,9 @@ TEST(ExecIrLowering, RetainsEntryLayoutsWithoutFrontendLifetime) {
   EXPECT_EQ(layout->get().entry_parameter_size, 28U);
   EXPECT_EQ(layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {.offset = 0U, .size = 16U, .alignment = 16U},
-                {.offset = 16U, .size = 8U, .alignment = 8U},
-                {.offset = 24U, .size = 4U, .alignment = 4U},
+                {.offset = 0U, .size = 16U, .alignment = 16U, .parameter=exec_ir::ParameterId{0}},
+                {.offset = 16U, .size = 8U, .alignment = 8U, .parameter=exec_ir::ParameterId{1}},
+                {.offset = 24U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{2}},
             }));
 }
 
@@ -380,39 +414,40 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
 .entry first(.param .u32 input, .param .align 16 .b8 bytes[16]) { exit; }
 .entry second(.param .u32 input) { exit; }
 )ptx";
-  const auto expect_invalid = [](ResolvedModule module) {
+  const auto expect_invalid = [](ResolvedModule module,std::string_view mutation) {
+    SCOPED_TRACE(mutation);
     const auto result = lower(module);
     ASSERT_FALSE(result);
     EXPECT_EQ(result.error().code,
-              LoweringErrorCode::invalid_entry_parameter_layout);
+              LoweringErrorCode::malformed_resolved_ir);
   };
 
   auto duplicate = resolve(source);
   duplicate.functions[0].parameter_declarations.push_back(
       duplicate.functions[0].parameter_declarations.front());
-  expect_invalid(std::move(duplicate));
+  expect_invalid(std::move(duplicate),"duplicate");
 
   auto foreign = resolve(source);
   foreign.functions[0].parameter_declarations.front().symbol_id =
       foreign.functions[1].parameter_declarations.front().symbol_id;
-  expect_invalid(std::move(foreign));
+  expect_invalid(std::move(foreign),"foreign");
 
   auto missing = resolve(source);
   missing.functions[0].parameter_declarations.erase(
       missing.functions[0].parameter_declarations.begin());
-  expect_invalid(std::move(missing));
+  expect_invalid(std::move(missing),"missing");
 
   auto missing_extent = resolve(source);
   missing_extent.functions[0]
       .parameter_declarations.front()
       .byte_extent.reset();
-  expect_invalid(std::move(missing_extent));
+  expect_invalid(std::move(missing_extent),"missing_extent");
 
   auto non_power_two_alignment = resolve(source);
   non_power_two_alignment.functions[0]
       .parameter_declarations.front()
       .alignment = 3U;
-  expect_invalid(std::move(non_power_two_alignment));
+  expect_invalid(std::move(non_power_two_alignment),"non_power_two_alignment");
 
   auto mismatched_symbol_alignment = resolve(source);
   auto& alignment_symbol = const_cast<ptx_frontend::binding::Symbol&>(
@@ -421,24 +456,24 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
               .parameter_declarations.front()
               .symbol_id));
   alignment_symbol.address_alignment = 8U;
-  expect_invalid(std::move(mismatched_symbol_alignment));
+  expect_invalid(std::move(mismatched_symbol_alignment),"mismatched_symbol_alignment");
 
   auto invalid_role = resolve(source);
   invalid_role.functions[0].parameter_declarations.front().role =
       static_cast<ptx_frontend::resolved_ir::ParameterDeclarationRole>(255U);
-  expect_invalid(std::move(invalid_role));
+  expect_invalid(std::move(invalid_role),"invalid_role");
 
   auto device_role_on_entry = resolve(source);
   device_role_on_entry.functions[0].parameter_declarations.front().role =
       ptx_frontend::resolved_ir::ParameterDeclarationRole::DeviceInput;
-  expect_invalid(std::move(device_role_on_entry));
+  expect_invalid(std::move(device_role_on_entry),"device_role_on_entry");
 
   auto entry_role_on_device = resolve(R"ptx(
 .func helper(.param .u32 input) { exit; }
 )ptx");
   entry_role_on_device.functions[0].parameter_declarations.front().role =
       ptx_frontend::resolved_ir::ParameterDeclarationRole::EntryInput;
-  expect_invalid(std::move(entry_role_on_device));
+  expect_invalid(std::move(entry_role_on_device),"entry_role_on_device");
 
   auto reordered_unsized_input = resolve(R"ptx(
 .version 9.3
@@ -447,27 +482,27 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
 )ptx");
   std::swap(reordered_unsized_input.functions[0].parameter_declarations[0],
             reordered_unsized_input.functions[0].parameter_declarations[1]);
-  expect_invalid(std::move(reordered_unsized_input));
+  expect_invalid(std::move(reordered_unsized_input),"reordered_unsized_input");
 
   auto invalid_scope = resolve(source);
   invalid_scope.functions[0].parameter_declarations.front().scope_id =
       invalid_scope.symbols.moduleScope();
-  expect_invalid(std::move(invalid_scope));
+  expect_invalid(std::move(invalid_scope),"invalid_scope");
 
   auto invalid_size = resolve(source);
   invalid_size.functions[0].parameter_declarations.front().byte_extent = 8U;
-  expect_invalid(std::move(invalid_size));
+  expect_invalid(std::move(invalid_size),"invalid_size");
 
   auto vector_parameter = resolve(source);
   vector_parameter.functions[0].parameter_declarations.front().vector_width =
       2U;
-  expect_invalid(std::move(vector_parameter));
+  expect_invalid(std::move(vector_parameter),"vector_parameter");
 
   auto multi_dimensional = resolve(source);
   multi_dimensional.functions[0]
       .parameter_declarations[1]
       .array_extents.push_back(1U);
-  expect_invalid(std::move(multi_dimensional));
+  expect_invalid(std::move(multi_dimensional),"multi_dimensional");
 
   // Deliberately corrupt non-const module storage through the frontend's
   // read-only symbol view to exercise unsupported entry declaration shapes.
@@ -477,25 +512,25 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
                                                 .parameter_declarations.front()
                                                 .symbol_id));
   vector_symbol.vector_width = 2U;
-  expect_invalid(std::move(vector_symbol_metadata));
+  expect_invalid(std::move(vector_symbol_metadata),"vector_symbol_metadata");
 
   auto parameter_group = resolve(source);
   auto& group_symbol = const_cast<
       ptx_frontend::binding::Symbol&>(parameter_group.symbols.symbol(
       parameter_group.functions[0].parameter_declarations.front().symbol_id));
   group_symbol.parameterized_count = 2U;
-  expect_invalid(std::move(parameter_group));
+  expect_invalid(std::move(parameter_group),"parameter_group");
 
   auto zero_extent = resolve(source);
   zero_extent.functions[0].parameter_declarations[1].array_extents[0] = 0U;
-  expect_invalid(std::move(zero_extent));
+  expect_invalid(std::move(zero_extent),"zero_extent");
 
   auto cumulative_overflow = resolve(source);
   cumulative_overflow.functions[0].parameter_declarations[1].array_extents[0] =
       std::numeric_limits<std::uint64_t>::max();
   cumulative_overflow.functions[0].parameter_declarations[1].byte_extent =
       std::numeric_limits<std::uint64_t>::max();
-  expect_invalid(std::move(cumulative_overflow));
+  expect_invalid(std::move(cumulative_overflow),"cumulative_overflow");
 
   auto multiplication_overflow = resolve(R"ptx(
 .entry kernel(.param .b16 values[2]) { exit; }
@@ -505,13 +540,13 @@ TEST(ExecIrLowering, RejectsMalformedEntryParameterMetadata) {
       .array_extents[0] = std::numeric_limits<std::uint64_t>::max();
   multiplication_overflow.functions[0].parameter_declarations[0].byte_extent =
       std::numeric_limits<std::uint64_t>::max();
-  expect_invalid(std::move(multiplication_overflow));
+  expect_invalid(std::move(multiplication_overflow),"multiplication_overflow");
 
   auto unsized = resolve(source);
   unsized.functions[0].parameter_declarations[1].array_extents[0] =
       std::nullopt;
   unsized.functions[0].parameter_declarations[1].byte_extent.reset();
-  expect_invalid(std::move(unsized));
+  expect_invalid(std::move(unsized),"unsized");
 }
 
 TEST(ExecIrLowering, RejectsEmptyEntryWithoutAnOwnedScope) {
@@ -538,12 +573,22 @@ TEST(ExecIrLowering, RetainsPrototypeAndDefinitionParameterScopes) {
 }
 )ptx"));
   ASSERT_TRUE(program);
-  for (const auto function : {common::FunctionId{0}, common::FunctionId{1}}) {
-    const auto layout = program->function_layout(function);
-    ASSERT_TRUE(layout);
-    EXPECT_EQ(layout->get().entry_parameter_size, 0U);
-    EXPECT_TRUE(layout->get().entry_parameters.empty());
+  ASSERT_EQ(program->functions().size(),1);
+  ASSERT_EQ(program->function_declarations().size(),2);
+  const auto& canonical=program->functions()[0];
+  ASSERT_TRUE(canonical.body); ASSERT_TRUE(canonical.definition);
+  EXPECT_EQ(*canonical.definition,exec_ir::FunctionDeclarationId{1});
+  const auto& prototype=program->function_declarations()[0];
+  const auto& definition=program->function_declarations()[1];
+  EXPECT_TRUE(prototype.is_prototype); EXPECT_FALSE(definition.is_prototype);
+  ASSERT_EQ(prototype.parameters.size(),3); ASSERT_EQ(definition.parameters.size(),3);
+  for(std::size_t index=0;index<3;++index) {
+    EXPECT_NE(prototype.parameters[index],definition.parameters[index]);
+    EXPECT_EQ(program->parameters()[prototype.parameters[index].value()].owner_declaration,prototype.id);
+    EXPECT_EQ(program->parameters()[definition.parameters[index].value()].owner_declaration,definition.id);
   }
+  EXPECT_EQ(canonical.body->entry_parameter_size,0);
+  EXPECT_TRUE(canonical.body->entry_parameters.empty());
 }
 
 TEST(ExecIrLowering, IgnoresValidNonEntryParameterRolesInLaunchLayouts) {
@@ -567,12 +612,12 @@ TEST(ExecIrLowering, IgnoresValidNonEntryParameterRolesInLaunchLayouts) {
   EXPECT_EQ(entry_layout->get().entry_parameter_size, 4U);
   EXPECT_EQ(entry_layout->get().entry_parameters,
             (std::vector<exec_ir::EntryParameterLayout>{
-                {.offset = 0U, .size = 4U, .alignment = 4U}}));
+                {.offset = 0U, .size = 4U, .alignment = 4U, .parameter=exec_ir::ParameterId{0}}}));
   EXPECT_EQ(device_layout->get().entry_parameter_size, 0U);
   EXPECT_TRUE(device_layout->get().entry_parameters.empty());
 }
 
-TEST(ExecIrLowering, KeepsDeviceFunctionParametersUnsupported) {
+TEST(ExecIrLowering, BindsDeviceFunctionParameterAddressesWithoutRequiringExecutionSupport) {
   const auto program = lower(resolve(R"ptx(
 .func helper(.param .u32 input) {
   .reg .u32 %result;
@@ -580,8 +625,14 @@ TEST(ExecIrLowering, KeepsDeviceFunctionParametersUnsupported) {
   exit;
 }
 )ptx"));
-  ASSERT_FALSE(program);
-  EXPECT_EQ(program.error().code, LoweringErrorCode::unsupported_operand);
+  ASSERT_TRUE(program);
+  ASSERT_EQ(program->parameters().size(),1);
+  EXPECT_EQ(program->parameters()[0].role,exec_ir::ParameterDeclarationRole::DeviceInput);
+  const auto instruction=program->fetch({common::FunctionId{0},common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  const auto& form=native_form<exec_ir::LdExplicitScalar>(instruction->get());
+  EXPECT_EQ(form.operands.address.parameter_qualifier,exec_ir::ParameterAddressQualifier::Default);
+  EXPECT_EQ(std::get<exec_ir::ParameterId>(std::get<exec_ir::SymbolRef>(form.operands.address.base).target),exec_ir::ParameterId{0});
 }
 
 TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {
@@ -597,12 +648,13 @@ TEST(ExecIrLowering, LowersScalarUnsignedLessThanPredicateComparison) {
   const auto instruction =
       program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  const auto& setp = std::get<exec_ir::Setp>(instruction->get());
-  const auto& form = std::get<exec_ir::Setp::LtU32>(setp.variant);
+  const auto& form = native_form<exec_ir::SetpUnsigned>(instruction->get());
   EXPECT_EQ(form.comparison, exec_ir::ComparisonOperator::lt);
-  EXPECT_EQ(form.dst, (exec_ir::Predicate{common::RegisterSlot{0}}));
-  EXPECT_EQ(form.src1, (exec_ir::ScalarOperand{common::RegisterSlot{1}}));
-  EXPECT_EQ(form.src2, (exec_ir::ScalarOperand{common::RawValue::b32(1U)}));
+  const auto& operands=std::get<exec_ir::SetpUnsigned::SingleOperands>(form.operands);
+  ASSERT_TRUE(operands.dst.predicate);
+  EXPECT_EQ(operands.dst.predicate->register_ref.slot,common::RegisterSlot{0});
+  EXPECT_EQ(operands.src1,(exec_ir::ScalarOperand{reg(1,exec_ir::DataType::u32)}));
+  EXPECT_EQ(*exec_ir::immediate_value(std::get<exec_ir::Immediate>(operands.src2)),common::RawValue::b32(std::uint32_t{1}));
 }
 
 TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
@@ -616,12 +668,11 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "bar.warp.sync b32:0x00000003\n"
-            "gpc1  [func:0 pc:1]  "
-            "bar.warp.sync register:0\n"
-            "gpc2  [func:0 pc:2]  "
-            "exit");
+            R"expected(function:0:
+  pc:0: bar/bar_warp_sync warp=true sync=true layout=default membermask=immediate{bits=0x3, type=u32, negative=false, integer-source=0x3}
+  pc:1: bar/bar_warp_sync warp=true sync=true layout=default membermask=register{slot=register:0, class=General, type=b32, width=none, component=none}
+  pc:2: exit/exit_bare layout=default
+)expected");
 
   const auto predicated = lower(resolve(R"ptx(
 .entry kernel() {
@@ -642,11 +693,10 @@ TEST(ExecIrLowering, LowersWarpSyncImmediateAndRegisterMasks) {
   const auto instruction =
       other_form->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  const auto& barrier = std::get<exec_ir::Bar>(instruction->get());
-  const auto& sync = std::get<exec_ir::Bar::Sync>(barrier.variant);
+  const auto& sync = native_form<exec_ir::BarSync>(instruction->get());
   const auto& operands =
-      std::get<exec_ir::Bar::Sync::ImmediateBarrierOperands>(sync.operands);
-  EXPECT_EQ(operands.barrier, common::RawValue::b32(0U));
+      std::get<exec_ir::BarSync::ImmediateBarrierOperands>(sync.operands);
+  EXPECT_EQ(*exec_ir::immediate_value(operands.barrier), common::RawValue::b32(0U));
 }
 
 TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
@@ -692,10 +742,9 @@ TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
   exit;
 }
 )ptx");
-  auto& mov = std::get<Mov>(malformed_module.functions[0].body[0]);
-  auto& form = std::get<Mov::Scalar>(mov.variant);
-  auto& operands = std::get<Mov::Scalar::ScalarOperands>(form.operands);
-  std::get<ptx_frontend::resolved_ir::ResolvedRegisterRef>(operands.src.value)
+  auto& form=source_form<source::MovScalar>(malformed_module.functions[0].body[0]);
+  auto& operands=*form.src_mov_source;
+  std::get<ptx_frontend::resolved_ir::ResolvedRegisterRef>(operands.value)
       .symbol_id.reset();
   const auto malformed = lower(malformed_module);
   ASSERT_FALSE(malformed);
@@ -708,13 +757,10 @@ TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
   exit;
 }
 )ptx");
-  auto& scalar_mov =
-      std::get<Mov>(malformed_scalar_member.functions[0].body[0]);
-  auto& scalar_form = std::get<Mov::Scalar>(scalar_mov.variant);
-  auto& scalar_operands =
-      std::get<Mov::Scalar::ScalarOperands>(scalar_form.operands);
+  auto& scalar_form=source_form<source::MovScalar>(malformed_scalar_member.functions[0].body[0]);
+  auto& scalar_operands=*scalar_form.src_mov_source;
   std::get<ptx_frontend::resolved_ir::ResolvedRegisterRef>(
-      scalar_operands.src.value)
+      scalar_operands.value)
       .parameterized_index = std::numeric_limits<std::uint32_t>::max();
   const auto malformed_member = lower(malformed_scalar_member);
   ASSERT_FALSE(malformed_member);
@@ -722,17 +768,18 @@ TEST(ExecIrLowering, LowersGeneratedFormsAndRejectsUnsupportedLeaves) {
             LoweringErrorCode::malformed_resolved_ir);
 }
 
-TEST(ExecIrLowering, RejectsTrailingTargetsAndLowersPredicatedExit) {
+TEST(ExecIrLowering, BindsTrailingTargetBoundariesAndLowersPredicatedExit) {
   const auto trailing_target = lower(resolve(R"ptx(
 .entry kernel() {
   bra trailing;
 trailing:
 }
 )ptx"));
-  ASSERT_FALSE(trailing_target);
-  EXPECT_EQ(trailing_target.error().code,
-            LoweringErrorCode::invalid_branch_target);
-  EXPECT_EQ(trailing_target.error().instruction, 0U);
+  ASSERT_TRUE(trailing_target);
+  const auto trailing_branch=trailing_target->fetch({common::FunctionId{0},common::ProgramCounter{0}});
+  ASSERT_TRUE(trailing_branch);
+  const auto& trailing_form=native_form<exec_ir::BraDirect>(trailing_branch->get());
+  EXPECT_EQ(trailing_form.operands.target.pc.value(),trailing_target->functions()[0].body->instruction_count);
 
   auto unbound_label_module = resolve(R"ptx(
 .entry kernel() {
@@ -741,10 +788,9 @@ target:
   exit;
 }
 )ptx");
-  auto& branch = std::get<ptx_frontend::resolved_ir::Bra>(
+  auto& branch=source_form<source::BraDirect>(
       unbound_label_module.functions[0].body[0]);
-  std::get<ptx_frontend::resolved_ir::Bra::Direct>(branch.variant)
-      .target.value.symbol_id.reset();
+  branch.target.value.symbol_id.reset();
   const auto unbound_label = lower(unbound_label_module);
   ASSERT_FALSE(unbound_label);
   EXPECT_EQ(unbound_label.error().code,
@@ -802,7 +848,7 @@ target:
   const auto instruction = predicated_exit->fetch(
       {common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  EXPECT_TRUE(exec_ir::execution_predicate(instruction->get()));
+  EXPECT_TRUE((instruction->get()).execution_predicate);
 }
 
 TEST(ExecIrLowering, LowersPredicatesForEverySupportedOperation) {
@@ -824,19 +870,19 @@ done:
     const auto instruction =
         program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
     ASSERT_TRUE(instruction);
-    ASSERT_TRUE(exec_ir::execution_predicate(instruction->get()));
-    EXPECT_EQ(exec_ir::execution_predicate(instruction->get())->source,
+    ASSERT_TRUE((instruction->get()).execution_predicate);
+    EXPECT_EQ((instruction->get()).execution_predicate->register_ref.slot,
               common::RegisterSlot{0});
   }
   EXPECT_TRUE(
-      exec_ir::execution_predicate(
+      (
           program->fetch({common::FunctionId{0}, common::ProgramCounter{0}})
-              ->get())
+              ->get()).execution_predicate
           ->negated);
   EXPECT_FALSE(
-      exec_ir::execution_predicate(
+      (
           program->fetch({common::FunctionId{0}, common::ProgramCounter{1}})
-              ->get())
+              ->get()).execution_predicate
           ->negated);
 }
 
@@ -849,8 +895,10 @@ TEST(ExecIrLowering, PreservesZeroBodyPrototypes) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "gpc0  [func:1 pc:0]  "
-            "exit");
+            R"expected(function:0: <declaration>
+function:1:
+  pc:0: exit/exit_bare layout=default
+)expected");
 }
 
 TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
@@ -867,16 +915,13 @@ TEST(ExecIrLowering, LowersGenericAndGlobalScalarMemory) {
 )ptx"));
   ASSERT_TRUE(program);
   EXPECT_EQ(exec_ir::to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "ld.u32 register:0, [register:1]\n"
-            "gpc1  [func:0 pc:1]  "
-            "ld.global.u32 register:0, [register:1]\n"
-            "gpc2  [func:0 pc:2]  "
-            "st.u32 [register:1], register:0\n"
-            "gpc3  [func:0 pc:3]  "
-            "st.global.u32 [register:1], register:0\n"
-            "gpc4  [func:0 pc:4]  "
-            "exit");
+            R"expected(function:0:
+  pc:0: ld/ld_generic_scalar mmio=false semantics=omitted scope=none cache=unspecified type=u32 layout=default dst=register{slot=register:0, class=General, type=u32, width=none, component=none} address=address{base=register{slot=register:1, class=General, type=b64, width=none, component=none}, offset=none, enclosing=Entry, parameter=Default, unified=false, named-index=none}
+  pc:1: ld/ld_explicit_scalar mmio=false semantics=omitted scope=none state_space=global cache=unspecified type=u32 layout=default dst=register{slot=register:0, class=General, type=u32, width=none, component=none} address=address{base=register{slot=register:1, class=General, type=b64, width=none, component=none}, offset=none, enclosing=Entry, parameter=Default, unified=false, named-index=none}
+  pc:2: st/st_generic_scalar mmio=false semantics=omitted scope=none cache=unspecified type=u32 layout=default address=address{base=register{slot=register:1, class=General, type=b64, width=none, component=none}, offset=none, enclosing=Entry, parameter=Default, unified=false, named-index=none} src=register{slot=register:0, class=General, type=u32, width=none, component=none}
+  pc:3: st/st_explicit_scalar mmio=false semantics=omitted scope=none state_space=global cache=unspecified type=u32 layout=default address=address{base=register{slot=register:1, class=General, type=b64, width=none, component=none}, offset=none, enclosing=Entry, parameter=Default, unified=false, named-index=none} src=register{slot=register:0, class=General, type=u32, width=none, component=none}
+  pc:4: exit/exit_bare layout=default
+)expected");
 }
 
 TEST(ExecIrLowering, LowersScalarMemoryFormsAndPreservesOffsets) {
@@ -908,18 +953,19 @@ TEST(ExecIrLowering, LowersScalarMemoryFormsAndPreservesOffsets) {
 }
 )ptx"));
   ASSERT_TRUE(offset);
-  EXPECT_NE(
-      exec_ir::to_string(*offset).find(
-          "+" + common::to_string(common::RawValue::b64(std::uint64_t{4}))),
-      std::string::npos);
+  const auto instruction=offset->fetch({common::FunctionId{0},common::ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  EXPECT_EQ(native_form<exec_ir::LdGenericScalar>(instruction->get()).operands.address.offset,
+      (std::optional{exec_ir::AddressOffset{exec_ir::AddressOffsetOperator::Add,
+          exec_ir::Immediate{4,exec_ir::DataType::s64,false,4}}}));
 }
 
 TEST(ExecIrLowering, PreservesAllTopologyIdentitiesAndComponents) {
   const std::array names{"tid", "ntid", "ctaid", "nctaid"};
-  const std::array ids{exec_ir::kThreadIdSpecialRegister,
-                       exec_ir::kThreadCountSpecialRegister,
-                       exec_ir::kCtaIdSpecialRegister,
-                       exec_ir::kCtaCountSpecialRegister};
+  const std::array ids{exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::Tid,0},
+                       exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::NTid,0},
+                       exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::CtaId,0},
+                       exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::NCtaId,0}};
   for (std::size_t index = 0; index < names.size(); ++index) {
     for (std::uint8_t component = 0; component < 3; ++component) {
       const std::string source = ".entry kernel() { .reg .u32 %r; mov.u32 %r, %" +
@@ -930,11 +976,10 @@ TEST(ExecIrLowering, PreservesAllTopologyIdentitiesAndComponents) {
       const auto instruction =
           program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
       ASSERT_TRUE(instruction);
-      const auto& form = std::get<exec_ir::Mov::Scalar>(
-          std::get<exec_ir::Mov>(instruction->get()).variant);
-      const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+      const auto& form = native_form<exec_ir::MovScalar>(instruction->get());
+      const auto& operands = std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
       EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
-                (exec_ir::SpecialRegisterRef{ids[index], component}));
+                (exec_ir::SpecialRegisterRef{ids[index],component,exec_ir::DataType::u32,4}));
     }
   }
   const auto program = lower(resolve(
@@ -943,11 +988,10 @@ TEST(ExecIrLowering, PreservesAllTopologyIdentitiesAndComponents) {
   const auto instruction =
       program->fetch({common::FunctionId{0}, common::ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  const auto& form = std::get<exec_ir::Mov::Scalar>(
-      std::get<exec_ir::Mov>(instruction->get()).variant);
-  const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
+  const auto& form = native_form<exec_ir::MovScalar>(instruction->get());
+  const auto& operands = std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
   EXPECT_EQ(std::get<exec_ir::SpecialRegisterRef>(operands.src),
-            (exec_ir::SpecialRegisterRef{exec_ir::kLaneIdSpecialRegister, std::nullopt}));
+            (exec_ir::SpecialRegisterRef{exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::LaneId,0},std::nullopt,exec_ir::DataType::u32,1}));
 }
 
 TEST(ExecIrLowering, AllocatesDistinctContiguousVectorRegisterMembers) {
@@ -964,19 +1008,19 @@ TEST(ExecIrLowering, AllocatesDistinctContiguousVectorRegisterMembers) {
     const auto instruction =
         program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
     ASSERT_TRUE(instruction);
-    const auto& form = std::get<exec_ir::Mov::V4U32>(
-        std::get<exec_ir::Mov>(instruction->get()).variant);
-    EXPECT_EQ(form.dst.register_slot, common::RegisterSlot{4U * pc});
-    EXPECT_EQ(form.src.id, pc == 0 ? exec_ir::kThreadIdSpecialRegister
-                                  : exec_ir::kThreadCountSpecialRegister);
+    const auto& form = native_form<exec_ir::MovV4U32>(instruction->get());
+    ASSERT_EQ(form.operands.dst.elements.size(),4);
+    EXPECT_EQ(form.operands.dst.elements[0]->slot,common::RegisterSlot{4U*pc});
+    EXPECT_EQ(std::get<exec_ir::VectorSpecialRegisterRef>(form.operands.src).register_ref.id, (pc == 0 ? exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::Tid,0}
+                                  : exec_ir::SpecialRegisterId{exec_ir::SpecialRegisterKind::NTid,0}));
   }
 }
 
 TEST(ExecIrLowering, RejectsMalformedTopologyAndVectorReferences) {
   auto module = resolve(
       ".entry kernel() { .reg .u32 %r; mov.u32 %r, %tid.x; exit; }");
-  auto& scalar = std::get<Mov::Scalar>(std::get<Mov>(module.functions[0].body[0]).variant);
-  auto& source = std::get<Mov::Scalar::ScalarOperands>(scalar.operands).src.value;
+  auto& scalar = source_form<source::MovScalar>(module.functions[0].body[0]);
+  auto& source = scalar.src_mov_source->value;
   auto& special = std::get<ptx_frontend::resolved_ir::ResolvedSpecialRegisterRef>(source);
   special.component = static_cast<ptx_frontend::base::VectorComponent>(3U);
   const auto invalid_component = lower(module);
@@ -990,9 +1034,9 @@ TEST(ExecIrLowering, RejectsMalformedTopologyAndVectorReferences) {
 
   auto vector_module = resolve(
       ".entry kernel() { .reg .v4 .u32 %v; mov.v4.u32 %v, %tid; exit; }");
-  auto& vector = std::get<Mov::V4U32>(
-      std::get<Mov>(vector_module.functions[0].body[0]).variant);
-  vector.dst.value.register_ref.vector_width = 2U;
+  auto& vector = source_form<source::MovV4U32>(vector_module.functions[0].body[0]);
+  ASSERT_TRUE(vector.dst.value.source.whole_base);
+  vector.dst.value.source.whole_base->value.register_ref.vector_width=2U;
   const auto invalid_vector = lower(vector_module);
   ASSERT_FALSE(invalid_vector);
   EXPECT_EQ(invalid_vector.error().code, LoweringErrorCode::malformed_resolved_ir);
@@ -1004,8 +1048,15 @@ TEST(ExecIrLowering, KeepsArchitecturalSpecialRegistersAsExplicitPrerequisites) 
     const auto program = lower(resolve(
         ".version 9.3\n.target sm_100\n.entry kernel() { .reg .u32 %r; mov.u32 %r, " +
         std::string(source) + "; exit; }"));
-    ASSERT_FALSE(program);
-    EXPECT_EQ(program.error().code, LoweringErrorCode::unsupported_operand);
+    ASSERT_TRUE(program);
+    const auto instruction=program->fetch({common::FunctionId{0},common::ProgramCounter{0}});
+    ASSERT_TRUE(instruction);
+    const auto& form=native_form<exec_ir::MovScalar>(instruction->get());
+    const auto& operands=std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
+    const auto& intrinsic=std::get<exec_ir::SpecialRegisterRef>(operands.src);
+    EXPECT_EQ(intrinsic.id.kind,source==std::string_view{"%clock"}?exec_ir::SpecialRegisterKind::Clock:
+        source==std::string_view{"%smid"}?exec_ir::SpecialRegisterKind::SmId:exec_ir::SpecialRegisterKind::PerformanceMonitor);
+    EXPECT_EQ(intrinsic.id.index,source==std::string_view{"%pm1"}?1:0);
   }
 }
 
@@ -1028,18 +1079,19 @@ TEST(ExecIrLowering, BindsEntryParameterMoveAddressesToAbiOffsets) {
     const auto instruction =
         program->fetch({common::FunctionId{0}, common::ProgramCounter{pc}});
     ASSERT_TRUE(instruction);
-    const auto& form = std::get<exec_ir::Mov::Scalar>(
-        std::get<exec_ir::Mov>(instruction->get()).variant);
-    const auto& operands = std::get<exec_ir::Mov::Scalar::ScalarOperands>(form.operands);
-    const auto& address = std::get<exec_ir::Address>(operands.src);
-    EXPECT_EQ(std::get<common::RawValue>(address.base),
-              common::RawValue::b64(std::uint64_t{pc == 0 ? 0U : 8U}));
-    if (pc == 2) {
+    const auto& form = native_form<exec_ir::MovScalar>(instruction->get());
+    const auto& operands = std::get<exec_ir::MovScalar::ScalarOperands>(form.operands);
+    const auto& symbol=pc<2?std::get<exec_ir::SymbolRef>(operands.src):
+        std::get<exec_ir::SymbolRef>(std::get<exec_ir::Address>(operands.src).base);
+    EXPECT_EQ(std::get<exec_ir::ParameterId>(symbol.target),exec_ir::ParameterId{pc==0?0U:1U});
+    const auto& parameter=program->parameters()[std::get<exec_ir::ParameterId>(symbol.target).value()];
+    EXPECT_EQ(parameter.owner_function,common::FunctionId{0});
+    EXPECT_EQ(parameter.role,exec_ir::ParameterDeclarationRole::EntryInput);
+    if(pc==2) {
+      const auto& address=std::get<exec_ir::Address>(operands.src);
       ASSERT_TRUE(address.offset);
-      EXPECT_FALSE(address.offset->subtract);
-      EXPECT_EQ(address.offset->value, common::RawValue::b64(std::uint64_t{4}));
-    } else {
-      EXPECT_FALSE(address.offset);
+      EXPECT_EQ(address.offset->operation,exec_ir::AddressOffsetOperator::Add);
+      EXPECT_EQ(*exec_ir::immediate_value(address.offset->value),common::RawValue::b64(std::uint64_t{4}));
     }
   }
 }

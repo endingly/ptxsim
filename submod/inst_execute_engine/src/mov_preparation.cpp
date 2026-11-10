@@ -1,5 +1,8 @@
 #include "mov_preparation.hpp"
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
+#include <ptxsim/exec_ir/form_contracts.gen.hpp>
 
+#include <algorithm>
 #include <array>
 #include <concepts>
 #include <cstdint>
@@ -13,6 +16,36 @@
 
 namespace ptxsim::inst_execute_engine::detail {
 namespace {
+
+/** @brief Compare the closed compatibility-fact vocabulary with an owned intrinsic identity. */
+auto compatibility_kind_matches(exec_ir::contract::OperandTypeCompatibilitySpecialRegisterKind expected,
+                                exec_ir::SpecialRegisterKind actual) noexcept -> bool {
+  using Expected=exec_ir::contract::OperandTypeCompatibilitySpecialRegisterKind;
+  switch(expected) {
+    case Expected::tid:return actual==exec_ir::SpecialRegisterKind::Tid;
+    case Expected::ntid:return actual==exec_ir::SpecialRegisterKind::NTid;
+    case Expected::ctaid:return actual==exec_ir::SpecialRegisterKind::CtaId;
+    case Expected::nctaid:return actual==exec_ir::SpecialRegisterKind::NCtaId;
+    case Expected::gridid:return actual==exec_ir::SpecialRegisterKind::GridId;
+  }
+  return false;
+}
+/** @brief Recognize genuine Bit containers without treating floating encodings as integers. */
+auto bit_type(exec_ir::DataType type) noexcept -> bool {
+  switch(type) {
+    case exec_ir::DataType::b1:case exec_ir::DataType::b8:case exec_ir::DataType::b16:
+    case exec_ir::DataType::b32:case exec_ir::DataType::b64:case exec_ir::DataType::b128:return true;
+    default:return false;
+  }
+}
+/** @brief Recognize fundamental signed/unsigned scalars admitted by same-width intrinsic compatibility. */
+auto fundamental_integer(exec_ir::DataType type) noexcept -> bool {
+  switch(type) {
+    case exec_ir::DataType::u8:case exec_ir::DataType::u16:case exec_ir::DataType::u32:case exec_ir::DataType::u64:
+    case exec_ir::DataType::s8:case exec_ir::DataType::s16:case exec_ir::DataType::s32:case exec_ir::DataType::s64:return true;
+    default:return false;
+  }
+}
 
 /** @brief Return the raw storage width represented by one movement type. */
 auto movement_width(exec_ir::DataType type) noexcept
@@ -118,7 +151,7 @@ auto unsupported_special(const exec_ir::SpecialRegisterRef& source)
 
 /** @brief Resolve one x/y/z coordinate from a topology special-register identity. */
 auto topology_component(const execution_model::Thread& thread,
-                        common::SpecialRegisterId id, std::uint8_t component)
+                        exec_ir::SpecialRegisterId id, std::uint8_t component)
     -> std::expected<std::uint32_t, LaneFaultCause> {
   if (component > 2U) {
     return unsupported_special(exec_ir::SpecialRegisterRef{id, component});
@@ -126,13 +159,13 @@ auto topology_component(const execution_model::Thread& thread,
   const auto select = [component](common::Dim3 value) {
     return component == 0U ? value.x : component == 1U ? value.y : value.z;
   };
-  if (id == exec_ir::kThreadIdSpecialRegister)
+  if (id.kind == exec_ir::SpecialRegisterKind::Tid)
     return select(thread.position());
-  if (id == exec_ir::kThreadCountSpecialRegister)
+  if (id.kind == exec_ir::SpecialRegisterKind::NTid)
     return select(thread.cta().thread_shape());
-  if (id == exec_ir::kCtaIdSpecialRegister)
+  if (id.kind == exec_ir::SpecialRegisterKind::CtaId)
     return select(thread.cta().position());
-  if (id == exec_ir::kCtaCountSpecialRegister)
+  if (id.kind == exec_ir::SpecialRegisterKind::NCtaId)
     return select(thread.grid().cta_shape());
   return unsupported_special(exec_ir::SpecialRegisterRef{id, component});
 }
@@ -142,7 +175,7 @@ auto topology_value(const execution_model::Thread& thread,
                     const exec_ir::SpecialRegisterRef& source,
                     common::RawWidth width)
     -> std::expected<common::RawValue, LaneFaultCause> {
-  if (source.id == exec_ir::kGridIdSpecialRegister) {
+  if (source.id.kind == exec_ir::SpecialRegisterKind::GridId) {
     if (source.component || (width != common::RawWidth::b16 &&
                              width != common::RawWidth::b32 &&
                              width != common::RawWidth::b64)) {
@@ -150,11 +183,11 @@ auto topology_value(const execution_model::Thread& thread,
     }
     return raw_bits(width, thread.grid().id().value);
   }
-  if (source.id == exec_ir::kLaneMaskEqSpecialRegister ||
-      source.id == exec_ir::kLaneMaskLeSpecialRegister ||
-      source.id == exec_ir::kLaneMaskLtSpecialRegister ||
-      source.id == exec_ir::kLaneMaskGeSpecialRegister ||
-      source.id == exec_ir::kLaneMaskGtSpecialRegister) {
+  if (source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskEq ||
+      source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskLe ||
+      source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskLt ||
+      source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskGe ||
+      source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskGt) {
     if (source.component || width != common::RawWidth::b32 ||
         thread.lane_id().value >= 32U) {
       return unsupported_special(source);
@@ -162,24 +195,24 @@ auto topology_value(const execution_model::Thread& thread,
     const auto lane = thread.lane_id().value;
     const auto equal = std::uint32_t{1} << lane;
     const auto lower = equal - 1U;
-    if (source.id == exec_ir::kLaneMaskEqSpecialRegister)
+    if (source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskEq)
       return common::RawValue::b32(equal);
-    if (source.id == exec_ir::kLaneMaskLtSpecialRegister)
+    if (source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskLt)
       return common::RawValue::b32(lower);
-    if (source.id == exec_ir::kLaneMaskLeSpecialRegister)
+    if (source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskLe)
       return common::RawValue::b32(lower | equal);
-    if (source.id == exec_ir::kLaneMaskGeSpecialRegister)
+    if (source.id.kind == exec_ir::SpecialRegisterKind::LaneMaskGe)
       return common::RawValue::b32(~lower);
     return common::RawValue::b32(~(lower | equal));
   }
-  if (source.id == exec_ir::kWarpIdSpecialRegister) {
+  if (source.id.kind == exec_ir::SpecialRegisterKind::WarpId) {
     if (source.component || width != common::RawWidth::b32) {
       return unsupported_special(source);
     }
     return common::RawValue::b32(thread.warp().index_in_cta());
   }
   std::uint32_t value = 0;
-  if (source.id == exec_ir::kLaneIdSpecialRegister) {
+  if (source.id.kind == exec_ir::SpecialRegisterKind::LaneId) {
     if (source.component || width != common::RawWidth::b32) {
       return unsupported_special(source);
     }
@@ -206,8 +239,8 @@ auto scalar_source(const memory::RegisterView& registers,
                    LaneResourceResolver& resolver,
                    const exec_ir::MovSource& source, common::RawWidth width)
     -> std::expected<common::RawValue, LaneFaultCause> {
-  if (const auto* slot = std::get_if<common::RegisterSlot>(&source)) {
-    const auto value = registers.read(*slot);
+  if (const auto* slot = std::get_if<exec_ir::RegisterRef>(&source)) {
+    const auto value = registers.read(slot->slot);
     if (!value)
       return std::unexpected(LaneFaultCause{value.error()});
     if (value->width() != width) {
@@ -216,12 +249,16 @@ auto scalar_source(const memory::RegisterView& registers,
     }
     return *value;
   }
-  if (const auto* immediate = std::get_if<common::RawValue>(&source)) {
-    if (immediate->width() != width) {
-      return std::unexpected(
-          LaneFaultCause{common::RawValueError{width, immediate->width()}});
-    }
-    return *immediate;
+  if (const auto* immediate = std::get_if<exec_ir::Immediate>(&source)) {
+    const auto value = exec_ir::immediate_value(*immediate);
+    if (!value || value->width() != width)
+      return std::unexpected(LaneFaultCause{UnsupportedMovType{immediate->type}});
+    return *value;
+  }
+  if (const auto* symbol = std::get_if<exec_ir::SymbolRef>(&source)) {
+    const auto numeric = resolver.resolve_symbol_offset(*symbol);
+    if (!numeric) return std::unexpected(numeric.error());
+    return raw_bits(width, *numeric);
   }
   if (const auto* special = std::get_if<exec_ir::SpecialRegisterRef>(&source))
     return topology_value(resolver.thread(), *special, width);
@@ -231,20 +268,9 @@ auto scalar_source(const memory::RegisterView& registers,
           std::get<exec_ir::SymbolRef>(address->base));
       if (!numeric)
         return std::unexpected(numeric.error());
-      std::uint64_t value = *numeric;
-      if (address->offset) {
-        const auto magnitude = address->offset->value.as_b64();
-        if (!magnitude)
-          return std::unexpected(LaneFaultCause{magnitude.error()});
-        if ((address->offset->subtract && *magnitude > value) ||
-            (!address->offset->subtract &&
-             *magnitude > std::numeric_limits<std::uint64_t>::max() - value)) {
-          return std::unexpected(LaneFaultCause{UnsupportedMovSource{}});
-        }
-        value =
-            address->offset->subtract ? value - *magnitude : value + *magnitude;
-      }
-      return raw_bits(width, value);
+      const auto value = apply_address_offset(*numeric,address->offset);
+      if (!value) return std::unexpected(value.error());
+      return raw_bits(width,*value);
     }
     const auto numeric = numeric_address(registers, *address);
     if (!numeric)
@@ -309,6 +335,30 @@ auto valid_movement_type(exec_ir::DataType type) noexcept -> bool {
   return movement_width(type).has_value();
 }
 
+auto valid_scalar_move_shape(const exec_ir::MovSource& source,exec_ir::DataType type,
+    const exec_ir::FormContract& contract,std::uint16_t layout) noexcept -> bool {
+  const auto* special=std::get_if<exec_ir::SpecialRegisterRef>(&source);
+  if(!special) return true;
+  const auto requested_width=exec_ir::data_type_width(type);
+  if(!requested_width) return false;
+  const auto bits=width_bits(*requested_width);
+  if(!bits) return false;
+  /** @brief Effective intrinsic element type after only matching form/layout-specific overrides. */
+  auto effective=special->element_type;
+  for(const auto& fact:contract.facts.operand_type_compatibility) {
+    const auto& field=fact.target_field_id;
+    if(field.scope==exec_ir::contract::FieldReferenceScope::SelectedLayoutOperand &&
+        field.role==exec_ir::contract::FieldRole::src &&
+        std::ranges::find(field.layouts,layout)!=field.layouts.end() &&
+        fact.instruction_width==*bits && compatibility_kind_matches(fact.special_register_kind,special->id.kind))
+      effective=fact.effective_type;
+  }
+  const auto actual_width=exec_ir::data_type_width(effective);
+  return actual_width && *actual_width==*requested_width &&
+      (effective==type || bit_type(effective) || bit_type(type) ||
+       (fundamental_integer(effective) && fundamental_integer(type)));
+}
+
 auto valid_scalar_move_source(const exec_ir::MovSource& source,
                               exec_ir::DataType type) noexcept -> bool {
   const auto is_address_integer = [type] {
@@ -338,33 +388,33 @@ auto valid_scalar_move_source(const exec_ir::MovSource& source,
             (type == exec_ir::DataType::b64 || type == exec_ir::DataType::u64 ||
              type == exec_ir::DataType::s64));
   };
-  if (special->id == exec_ir::kThreadIdSpecialRegister ||
-      special->id == exec_ir::kThreadCountSpecialRegister ||
-      special->id == exec_ir::kCtaIdSpecialRegister ||
-      special->id == exec_ir::kCtaCountSpecialRegister) {
+  if (special->id.kind == exec_ir::SpecialRegisterKind::Tid ||
+      special->id.kind == exec_ir::SpecialRegisterKind::NTid ||
+      special->id.kind == exec_ir::SpecialRegisterKind::CtaId ||
+      special->id.kind == exec_ir::SpecialRegisterKind::NCtaId) {
     return special->component && *special->component <= 2U &&
            (is_integer(common::RawWidth::b16) ||
             is_integer(common::RawWidth::b32));
   }
-  if (special->id == exec_ir::kGridIdSpecialRegister) {
+  if (special->id.kind == exec_ir::SpecialRegisterKind::GridId) {
     return !special->component &&
            (is_integer(common::RawWidth::b16) ||
             is_integer(common::RawWidth::b32) ||
             is_integer(common::RawWidth::b64));
   }
-  if (special->id == exec_ir::kLaneIdSpecialRegister ||
-      special->id == exec_ir::kWarpIdSpecialRegister ||
-      special->id == exec_ir::kLaneMaskEqSpecialRegister ||
-      special->id == exec_ir::kLaneMaskLeSpecialRegister ||
-      special->id == exec_ir::kLaneMaskLtSpecialRegister ||
-      special->id == exec_ir::kLaneMaskGeSpecialRegister ||
-      special->id == exec_ir::kLaneMaskGtSpecialRegister) {
+  if (special->id.kind == exec_ir::SpecialRegisterKind::LaneId ||
+      special->id.kind == exec_ir::SpecialRegisterKind::WarpId ||
+      special->id.kind == exec_ir::SpecialRegisterKind::LaneMaskEq ||
+      special->id.kind == exec_ir::SpecialRegisterKind::LaneMaskLe ||
+      special->id.kind == exec_ir::SpecialRegisterKind::LaneMaskLt ||
+      special->id.kind == exec_ir::SpecialRegisterKind::LaneMaskGe ||
+      special->id.kind == exec_ir::SpecialRegisterKind::LaneMaskGt) {
     return !special->component && is_integer(common::RawWidth::b32);
   }
-  return true;
+  return false;
 }
 
-auto valid_aggregate_move(const exec_ir::RegisterVector& registers,
+auto valid_aggregate_move_shape(const exec_ir::RegisterVector& registers,
                           exec_ir::DataType type,
                           bool source_vector) noexcept -> bool {
   const auto count = registers.elements.size();
@@ -376,11 +426,16 @@ auto valid_aggregate_move(const exec_ir::RegisterVector& registers,
       (type == exec_ir::DataType::b16 && count != 2U)) {
     return false;
   }
-  return source_vector
-             ? std::ranges::all_of(registers.elements,
-                                   [](const auto& slot) { return slot.has_value(); })
-             : std::ranges::any_of(registers.elements,
-                                   [](const auto& slot) { return slot.has_value(); });
+  return source_vector ? std::ranges::all_of(registers.elements,
+      [](const auto& slot) { return slot.has_value(); }) :
+      std::ranges::any_of(registers.elements,[](const auto& slot) { return slot.has_value(); });
+}
+
+auto valid_aggregate_move(const exec_ir::RegisterVector& registers,exec_ir::DataType type,
+                          bool source_vector) noexcept -> bool {
+  return valid_aggregate_move_shape(registers,type,source_vector) &&
+      (source_vector || std::ranges::any_of(registers.elements,
+          [](const auto& slot) { return slot.has_value(); }));
 }
 
 auto prepare_scalar_move(LaneResourceResolver& resolver, exec_ir::DataType type,
@@ -427,7 +482,7 @@ auto prepare_pack_move(LaneResourceResolver& resolver, exec_ir::DataType type,
   for (std::size_t index = 0; index < source.elements.size(); ++index) {
     if (!source.elements[index])
       return std::unexpected(LaneFaultCause{InvalidMovVector{}});
-    const auto raw = registers->get().read(*source.elements[index]);
+    const auto raw = registers->get().read(source.elements[index]->slot);
     if (!raw)
       return std::unexpected(LaneFaultCause{raw.error()});
     const auto value = low_bits(*raw, *component);
@@ -479,7 +534,7 @@ auto prepare_unpack_move(LaneResourceResolver& resolver, exec_ir::DataType type,
       raw_bits(common::RawWidth::b8, 0), raw_bits(common::RawWidth::b8, 0),
       raw_bits(common::RawWidth::b8, 0), raw_bits(common::RawWidth::b8, 0)};
   for (std::size_t index = 0; index < destination.elements.size(); ++index) {
-    slots[index] = destination.elements[index];
+    if (destination.elements[index]) slots[index] = destination.elements[index]->slot;
     const auto piece = index * bits < 64U
                            ? (aggregate_bits.low >> (index * bits))
                            : (aggregate_bits.high >> (index * bits - 64U));
@@ -496,7 +551,7 @@ auto prepare_unpack_move(LaneResourceResolver& resolver, exec_ir::DataType type,
 
 auto prepare_vector_special_move(
     LaneResourceResolver& resolver, exec_ir::VectorArity vector,
-    exec_ir::DataType type, exec_ir::VectorRegisterRef destination,
+    exec_ir::DataType type, const exec_ir::RegisterVector& destination,
     exec_ir::VectorSpecialRegisterRef source,
     std::optional<common::ProgramCounter> successor)
     -> std::expected<PreparedEffect, LaneFaultCause> {
@@ -511,14 +566,16 @@ auto prepare_vector_special_move(
       common::RawValue::b32(0U), common::RawValue::b32(0U),
       common::RawValue::b32(0U), common::RawValue::b32(0U)};
   for (std::size_t index = 0; index < slots.size(); ++index) {
-    slots[index] = component_slot(destination.register_slot, index);
+    if (destination.elements.size() != 4 || !destination.elements[index])
+      return std::unexpected(LaneFaultCause{InvalidMovVector{}});
+    slots[index] = destination.elements[index]->slot;
     if (!slots[index])
       return std::unexpected(LaneFaultCause{InvalidMovVector{}});
     const auto valid = valid_destination(registers->get(), *slots[index], common::RawWidth::b32);
     if (!valid)
       return std::unexpected(valid.error());
     if (index < 3U) {
-      const auto coordinate = topology_component(resolver.thread(), source.id,
+      const auto coordinate = topology_component(resolver.thread(), source.register_ref.id,
                                                  static_cast<std::uint8_t>(index));
       if (!coordinate)
         return std::unexpected(coordinate.error());
@@ -540,7 +597,7 @@ auto prepare_predicate_move(LaneResourceResolver& resolver,
     return std::unexpected(LaneFaultCause{InvalidMovPredicate{}});
   bool value = false;
   if (const auto* predicate = std::get_if<exec_ir::Predicate>(&source)) {
-    const auto raw = registers->get().read(predicate->source);
+    const auto raw = registers->get().read(predicate->register_ref.slot);
     if (!raw)
       return std::unexpected(LaneFaultCause{raw.error()});
     const auto decoded = raw->as_pred();
@@ -548,13 +605,15 @@ auto prepare_predicate_move(LaneResourceResolver& resolver,
       return std::unexpected(LaneFaultCause{decoded.error()});
     value = predicate->negated ? !*decoded : *decoded;
   } else {
-    return unsupported_special(std::get<exec_ir::SpecialRegisterRef>(source));
+    if (const auto* intrinsic = std::get_if<exec_ir::PredicateSpecialRegister>(&source))
+      return unsupported_special(intrinsic->register_ref);
+    value = std::get<exec_ir::PredicateConstant>(source).value;
   }
-  const auto valid = valid_destination(registers->get(), destination.source,
+  const auto valid = valid_destination(registers->get(), destination.register_ref.slot,
                                        common::RawWidth::pred);
   if (!valid)
     return std::unexpected(valid.error());
-  return staged_writes(registers->get(), {destination.source, std::nullopt,
+  return staged_writes(registers->get(), {destination.register_ref.slot, std::nullopt,
                                            std::nullopt, std::nullopt},
                        {common::RawValue::pred(value), raw_bits(common::RawWidth::b8, 0),
                         raw_bits(common::RawWidth::b8, 0), raw_bits(common::RawWidth::b8, 0)},

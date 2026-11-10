@@ -321,4 +321,46 @@ TEST(Simulator, InitializesAndLoadsTheSingleEntryParameter) {
             (EntryParameterSizeError{.expected = 4U, .actual = 1U}));
 }
 
+TEST(Simulator, TrailingLabelTargetIsLazyUntilItsTakenPcIsFetched) {
+  for(const bool taken:{false,true}) {
+    auto program=exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() { .reg .pred %p; @%p bra trailing; exit; trailing: }
+)ptx"));
+    ASSERT_TRUE(program);
+    runtime::LaunchRuntime runtime{execution_model::GridId{202},shape()};
+    const arith::context arithmetic;
+    Simulator simulator{*program,runtime,common::FunctionId{0},arithmetic};
+    ASSERT_TRUE(simulator.run(0));
+    for(auto& thread:warp(runtime)) {
+      const auto frame=runtime.register_frame(thread.id(),common::FunctionId{0}); ASSERT_TRUE(frame);
+      auto registers=runtime.registers().view(*frame); ASSERT_TRUE(registers);
+      ASSERT_TRUE(registers->write(common::RegisterSlot{0},common::RawValue::pred(taken)));
+    }
+    const auto branch=simulator.step(); ASSERT_TRUE(branch);
+    if(taken) {
+      for(const auto& thread:warp(runtime)) EXPECT_EQ(thread.pc(),common::ProgramCounter{2});
+      const auto fetched=simulator.step(); ASSERT_FALSE(fetched);
+      EXPECT_EQ(fetched.error().code,RunErrorCode::program_error); ASSERT_TRUE(fetched.error().program_error);
+      EXPECT_EQ(fetched.error().program_error->code,exec_ir::ProgramErrorCode::pc_out_of_range);
+    } else {
+      const auto run=simulator.run(1); ASSERT_TRUE(run);
+      EXPECT_EQ(run->termination,RunTermination::completed); EXPECT_TRUE(runtime.grid().completed());
+    }
+  }
+}
+TEST(Simulator, UnpredicatedTerminalBranchPublishesTrailingPcBeforeFetchError) {
+  auto program=exec_ir_lowering::lower(resolve(R"ptx(
+.entry kernel() { bra trailing; trailing: }
+)ptx"));
+  ASSERT_TRUE(program);
+  runtime::LaunchRuntime runtime{execution_model::GridId{203},shape()};
+  const arith::context arithmetic;
+  Simulator simulator{*program,runtime,common::FunctionId{0},arithmetic};
+  ASSERT_TRUE(simulator.step());
+  for(const auto& thread:warp(runtime)) EXPECT_EQ(thread.pc(),common::ProgramCounter{1});
+  const auto fetched=simulator.step(); ASSERT_FALSE(fetched);
+  EXPECT_EQ(fetched.error().code,RunErrorCode::program_error); ASSERT_TRUE(fetched.error().program_error);
+  EXPECT_EQ(fetched.error().program_error->code,exec_ir::ProgramErrorCode::pc_out_of_range);
+}
+
 }  // namespace ptxsim::simulator::test

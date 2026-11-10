@@ -91,9 +91,9 @@ are inventory checks, not claims of semantic executor coverage.
 | Slice | Scope and required evidence | Status |
 | --- | --- | --- |
 | S0 | Adopted architecture, current plan, exact source/artifact inventory, explicit old-contract supersession, role/effort/provenance record; diff and local-link checks | Accepted and committed `8d7b6a2` |
-| S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Verified; slice acceptance pending |
-| S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | Pending |
-| S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | Pending |
+| S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Accepted and committed `17375149` |
+| S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | In progress, coupled with S3 |
+| S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | In progress, coupled with S2 |
 | S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Pending |
 | S5 | Coverage ledger, consumers and installed package, complete CTest and GCC/Clang Debug/Release plus sanitizer gates; actual-diff core review and final documentation | Pending |
 
@@ -112,8 +112,123 @@ avoids a broken intermediate generator because frontend 0.8.0 removed APIs
 used by the old generator. S1 does not claim the requested release/dependency
 target is complete. No compatibility manifest or form-alias layer is added.
 
+## Current implementation boundary
+
+S2 and S3 are delivered as one coupled buildable slice: changing to the 0.8.0
+Python APIs makes the legacy generator/binder path incompatible. One full
+projection, owned inherited IR and complete frontend binding switch together;
+a minimal internal engine entry adapter may preserve existing behavior until
+S4 removes it. No compatibility manifest, old form alias layer or dual Python
+frontend installation is introduced.
+
+The refined Authority Sol contracts are mandatory:
+
+- Every final form is a direct `Instruction` subclass. Base construction and
+  copy/move are private to generated final friends, preventing arbitrary
+  user-derived copies from forging Kind/Opcode. Generated typed queries use a
+  concept over exact generated forms and one Kind comparison, without RTTI.
+- `ExecutableProgram::create(const ProgramDefinition&)` freezes a fresh deep
+  value snapshot. Internal generated typed-copy thunks construct actual const
+  final objects, copying all nested containers and metadata tables. Private
+  const storage exposes only const children; program copies share it. Caller
+  instruction/container/metadata aliases remain legally mutable and cannot
+  change the frozen snapshot. No public virtual clone is required.
+- Register every canonical callable function, including prototypes, externs and
+  aliases. A function's body is optional; declaration is distinct from a zero
+  length definition. Fetching a declaration reports a structured nonexecutable
+  function error. Entry launch requires a real entry definition. Declaration
+  and definition parameter scopes remain distinct.
+- Storage/resource, parameter, prototype, call-target-set, branch-target-set
+  and call-table identities are separate strong domains. Indirect callees
+  retain register/metadata/table alternatives; sparse call-table slots retain
+  order, byte offsets, duplicate targets and ABI. Full signatures preserve
+  roles, pointer properties and array extents, independently of launch packing.
+- Owned declarations retain scalar/opaque element types, vector width, optional
+  extents/alignment, external/definition, parameterized count, managed/unified
+  UUIDs and opaque static objects. Sparse initialization retains Constant128 or
+  typed storage/resource/function relocation targets, member/address kind,
+  addend bits and mask. Runtime allocation views are derived only when supported;
+  an unknown allocation is a runtime capability error, not a missing binder.
+- Bind every actual nested C++ alternative, including predicate constants and
+  special registers, all seven MOV sources, indirect callee and CP-async
+  controls, call parameter/literal arguments, address base/index/offset and
+  unified/parameter roles, texture/surface direct versus indirect resources,
+  fabric counters/endpoints, stack function scope and signed TCGEN offsets.
+  Immediate leaves retain type/use bits, negativity and integer source bits.
+- The immutable projection separates semantic IDs, version-specific C++ access,
+  owned fields/layouts, modifier domains and complete typed contracts. Layout
+  fields are keyed by form/layout/field, so reused names with different storage
+  are never flattened together. Static contracts may use owned constexpr tables
+  shared by Kind. All emitters consume this projection, and optional/None means
+  a real absence rather than a missing implementation.
+
+## Current projection and binding refinements
+
+Atomic selected address qualifiers are explicit instance controls outside the
+74 ordinary resolved ValueKinds. The projection records their access and typed
+native domain for all 99 relevant forms. Sixty-one instance controls have
+non-injective frontend C++ value mappings. Their explicit equivalence/context
+records keep canonical parameter/shared spaces together with the selected
+parameter or atomic qualifier; a generic converter must not choose the first
+source token. Native structural checks and printing must use the complete
+combination. Backend vocabularies exactly cover frontend domain vocabularies;
+missing/extra atoms and accidental owned enumerator collisions fail generation.
+
+Authority classified `FunctionRef.address_availability` and
+`SymbolRef.address_availability` as frontend target-legality-only metadata and
+approved their deliberate omission from runtime values. Actual function/space,
+parameter role, alignment, managed/unified and callable identity facts remain.
+Opaque scope binding must first compare the exact source declaration scope,
+kind, member and entry role before normalizing to a ResourceId and owned owner.
+Stack/local allocation scope must be present and exactly equal to the current
+function declaration scope, with matching Entry/Device kind and register owner,
+before conversion to canonical FunctionId. Canonical aliases cannot excuse an
+incorrect declaration scope. Required tests include these malformed-cache cases
+and normal source-lifetime independence.
+
 ## Verification record
 
+- S2/S3 model-stage evidence: the full immutable projection ran with
+  **137 opcodes / 5,453 forms / 7,457 layouts / 48 specification operand kinds**.
+  Seven focused projection tests passed, including layout-local overloaded
+  names, immutable ownership, semantic/C++ name separation, selected atomic
+  qualifiers, 61 source-equivalence contexts, and missing/extra/colliding
+  backend-domain rejection. Early independent max review of the four model
+  files found no additional blocker; its scope was model code only, not the
+  complete coupled slice or actual binder behavior.
+- The new production-only 0.8.0 overlay built and installed Debug and Release
+  successfully in `/tmp/ptxsim-inherited-v080-build/vcpkg_installed` (session
+  32444, 23 minutes). ABI
+  `40895797ec15081dec8838fd9d6153981aae51a3bd9bcbd2d044cb28cfbd5afe`
+  used the exact source archive SHA512 recorded in the architecture. The
+  buildtree environment contained frontend 0.8.0 and its production
+  dependencies, no pytest/unittest-parallel, and passed `pip check`. A separate
+  package-only CMake probe found exact version 0.8.0, `resolved_ir`, and both
+  configuration archives. Logs: `/tmp/ptxsim-inherited-v080-build/logs/`.
+  This is dependency/package evidence, not a new root build.
+- Build-floor evidence: Python 3.14.4, setuptools **80.0.0**, wheel 0.48.0
+  successfully built a read-only source snapshot with `pip wheel
+  --no-build-isolation --no-deps`. The tested pyproject SHA256 was
+  `a30a7607f13340160adb9d367f46d0bc7b92f9b0d337af07e7f780836d131ca0`;
+  its metadata retained the exact 0.8.0 wheel hash and Python >=3.14.
+  `/tmp/ptxsim-buildfloor-bkwxq3/verification-summary.txt` records the inputs.
+  This proves the declared backend floor, not final resources/CLI installation.
+- Early inherited-IR syntax evidence: 5,453 final classes were emitted across
+  342 public headers and 202 constructor/domain sources. A frozen independent
+  copy passed **202/202** GCC 15.2 C++23 `-fsyntax-only` checks at parallelism
+  four in 44.412 seconds, without errors or warnings. All 553 input files were
+  regular files and retained their hashes. Frozen manifest SHA256
+  `4d209218a5aa8239792a76c0c1136857871c1e2856ca8952a7eebe026298efe6`
+  and artifact-plan SHA256
+  `92e08514b0e891f2a0bb5029aa78f1a9034f6b6fae3d8fdb40381011e6258c71`
+  are recorded under `/tmp/ptxsim-inherited-ir-syntax-20261110/`. This does not
+  prove linkage, native static contract completeness, Program freeze/binding,
+  root integration or runtime behavior; those remain in progress.
+- S1 committed as `17375149f81baf1f14a799cd3c61ba37b53f43eb`, after
+  independent max review and Authority acceptance of all 84 paths at
+  `64adb19db344a201f6d1ce43c1b73e950e46fb844e892899c1c15392792fa43d`.
+  Git independently matched the staged F/D manifest fingerprint; the worktree
+  was clean. S1's validated legacy environments remain baseline evidence.
 - S0 committed as `8d7b6a29365cd666c8fb73638fb91bebf9c3c144`. Independent
   `gpt-6.1-sol/max` and Authority `gpt-6.1-sol/high` accepted the actual staged
   15-file fingerprint
@@ -128,9 +243,11 @@ target is complete. No compatibility manifest or form-alias layer is added.
   end-to-end regression tests; supported instruction ordering remains intact.
 - Existing generated execution covers mov/add/sub/mul/fma/setp/ld/st/bar/bra/exit.
   SETP currently exposes u32/s32, eq/lt/ge and optional and (helper or/xor code
-  does not establish exposed support). FMA has 70 canonical PTX spellings and
-  16 old IR forms. Preserve these tests and arithmetic/MOV/memory/barrier,
-  predication, prepare/commit, entry-argument and storage pipeline coverage.
+  does not establish exposed support). The legacy baseline had 70 accepted
+  FMA spellings and 16 old IR forms; the explicit user retirement below removes
+  only the two combinations rejected by frontend 0.8. Preserve the other
+  arithmetic/MOV/memory/barrier, predication, prepare/commit, entry-argument
+  and storage pipeline coverage.
 
 - Baseline worktree began clean at the exact fetched main SHA above. Apart from
   the user-authorized nine policy files extracted byte-for-byte from `ea0dc33`,
@@ -200,6 +317,177 @@ target is complete. No compatibility manifest or form-alias layer is added.
   release 0.8.0/full representation/full binding/execution migration remain
   S2-S4 obligations. Release, Clang, ASan/UBSan and the full compiler matrix
   remain S5 gates and have not been run for S1.
+
+## Coupled S2/S3 verification in progress
+
+S2/S3 remains unaccepted. The temporary engine adapter preserves the existing
+families while the official capability registry and Simulator issue ordering
+remain S4 work. The following later evidence supersedes the limitations of the
+early syntax-only inventory above only within each stated check's scope.
+
+- The exact 0.8.0 production port built and installed both Debug and Release in
+  `/tmp/ptxsim-inherited-v080-build/vcpkg_installed`. ABI
+  `40895797ec15081dec8838fd9d6153981aae51a3bd9bcbd2d044cb28cfbd5afe`
+  and the source SHA512 above matched. Its isolated production environment
+  contains no pytest or unittest-parallel; `pip check` and the exported CMake
+  version/target probe passed. This does not substitute for root integration.
+- Python 3.14.4 with the declared minimum `setuptools==80.0.0` built the wheel
+  successfully. The bounded backend-floor result is recorded in
+  `/tmp/ptxsim-buildfloor-bkwxq3/verification-summary.txt`; normal dependency
+  installation and runtime resource validation are separate checks.
+- The frozen actual IR/Program gate compiled 207 translation units, linked all
+  real objects without stubs or undefined-symbol suppression, and passed six
+  lifetime/operand tests. It checked all three then-existing 5,453-slot dense
+  tables and unchanged hashes of all 559 frozen inputs. Evidence:
+  `/tmp/ptxsim-actual-ir-program-gate-20261110/actual-ir-program-gate-summary.md`.
+- The subsequent descriptor gate compiled 208 translation units and linked
+  real native getters; eight tests passed. It checked 5,453 getters, 7,457
+  layouts, 31,154 scoped binding joins and four complete dense tables. The
+  signed range tests accept -8/-1/0/7 and reject -9/8. Evidence:
+  `/tmp/ptxsim-native-descriptor-gate-20261110/native-static-descriptor-gate-summary.md`.
+- The full cold bridge linked 412 real objects with the exact frontend archives.
+  After repairing two invalid new fixtures, ten tests passed. Independent
+  review then identified external natural/explicit alignment canonicalization
+  and indexed-special-register domain checks; their repairs passed all fourteen
+  tests with the original failing and successful evidence retained separately.
+  Evidence: `/tmp/ptxsim-binding-compile-gate-20261110/repair/summary.md`.
+- The initial frozen root production build completed all 544 Ninja steps and
+  nine native archives with tests disabled. A separate cleanup comparison ran
+  all six actual generator CLIs and proved byte equality of 839 artifacts.
+  That comparison predates the later intrinsic/predicate/offset repairs and
+  must not be cited as verification of those changes. Evidence roots:
+  `/tmp/ptxsim-root-nontest-fullbuild-20261110/` and
+  `/tmp/ptxsim-codegen-equivalence-20261110/`.
+- The later production repair is frozen by
+  `/tmp/ptxsim-production-repair-manifest.json`, SHA256
+  `c31cfa596f4e26318e318821dc0ada3232fa7e48954051716752de602055f641`.
+  Its 189 current inputs and 18 deleted legacy paths were verified before and
+  after copying. All nine production targets completed the 544-step build
+  after a fresh `BUILD_TESTING=ON` configuration in
+  `/tmp/ptxsim-root-repair-integrated-20261110/`. Independent source reviews
+  resolved the scoped entry-ABI join, predicate-output validation, closed
+  intrinsic admission and shared checked signed-offset findings; these source
+  conclusions do not replace the pending integrated runtime regressions.
+- A normal installed wheel from that frozen production snapshot passed all
+  55 Python tests in 60.433 seconds, with zero failures, errors or skips.
+  Production/test source hashes and installed-package provenance were checked.
+  Evidence: `/tmp/ptxsim-current-python-suite-verification.md`. A wrapper's
+  initial inclusion of generated bytecode in its input count was diagnosed
+  separately; no source drift or test rerun occurred.
+- The strengthened seventeen-test regression input set is frozen separately
+  under the repaired root gate's `regression-inputs-v2`. It independently
+  checks signed-offset memory locations, matching intrinsic types, scoped ABI
+  joins and legal source inversion. Its real seventeen-case run passed sixteen
+  tests; the only failure was a new test incorrectly treating a vector entry's
+  known eight-byte packing as unavailable. The V3 correction retains that
+  source as a positive pack/run test and separately tests a valid native body
+  that explicitly provides no supported packed-byte view. The original failed
+  V2 evidence remains separate; the corrected cases passed in the subsequent
+  integrated runs described below.
+- A subsequent narrow `exec_ir.cpp` repair validates all five parameter roles,
+  two resource roles and three opaque kinds before interpreting derived views.
+  Unknown enum values are structural metadata errors even when packing is
+  unavailable. Independent source review resolved this finding; the source hash
+  is `02c3ab472091fae13145bf7aaf15411707b4aca79290426e6bbdaa2edbd7cef6`.
+  Its three new metadata tests and restored expected/fetch guards are recorded
+  in `/tmp/ptxsim-metadata-domain-repair-packet.json`. The c31 production build
+  above predates this patch; the subsequent combined incremental build and
+  runtime runs below cover it. The original source/object/archive are preserved
+  separately by the verifier before updating its configured temporary tree.
+- The remaining integrated test client migration is a validation candidate,
+  recorded in `/tmp/ptxsim-integrated-test-candidate-manifest.json`. All ninety
+  engine cases remain; after the user's explicit retirement below, FMA retains
+  68 numeric execution cases, both retired source spellings as rejection tests,
+  and all sixteen native semantic identities. Sparse storage/relocation binding
+  assertions now inspect complete owned metadata, with allocation restrictions
+  retained at runtime. Exact printer expectations were refreshed against real
+  output without dropping the numeric/PTX obligations. Consumers, compiler
+  matrix and sanitizers remain later gates; no complete-goal acceptance is
+  claimed.
+
+The first complete GCC Debug test run reached all 681 CTest cases: 635 passed,
+46 failed, and none were skipped or left unrun. All twenty-one scoped
+metadata/issue/launch regressions passed in that run. The full log and parsed
+result are under `/tmp/ptxsim-root-repair-integrated-20261110/`, as
+`fullsuite-ctest-v2.log` and `fullsuite-ctest-v2-result.json`. The earlier build's
+single old variant-equality client error was repaired by a constrained native
+mixed-form comparison; every arithmetic input and expected result remains.
+
+The next candidate repairs physical immediate use-bit/provenance consistency,
+formal/definition scope caches, sparse initializer cell shape, and unsigned
+32-bit numeric base decoding, plus the independent exact printer expectations.
+MOV shape validation is separated from implementation admission using the
+owned layout-local compatibility facts. Focused source and generation checks
+are recorded in `/tmp/ptxsim-post681-combined-repair-packet.json`; its
+incremental default build completed successfully. The subsequent unfiltered
+run reached all 689 cases: 687 passed, two failed, and none were
+skipped or left unrun. Evidence is `post681-final-fullsuite-ctest.log` in the
+same repaired root gate. The retired FMA source-rejection regression passed.
+No fresh full-suite success is claimed.
+
+The user resolved the pinned-frontend conflict on 2026-11-10: “明确移除那两种新
+frontend 不再支持的组合”. Only `fma.rn.oob.sat.f16` and
+`fma.rn.oob.sat.f16x2` are retired from PTX/native execution. Their original
+public-ABI kernel spellings remain explicit parse-success/resolve-rejection
+regressions, with the exact 0.8 modifier-combination diagnostic. The other 68
+numeric execution cases keep their original inputs and expected bits; all 16
+native form identities remain covered. No frontend patch, legacy parser or
+native extension restores the removed controls. Generic low-level arithmetic
+primitives are unchanged. This is an explicit user scope exception, not an
+implementation fallback or permission to remove any other old case. The
+parameterized execution suite loses two cases and gains one rejection test
+that checks both strings, so this file's CTest count changes by minus one.
+
+
+The final two failures are isolated in
+`/tmp/ptxsim-final-two-repairs-packet.json`. The storage cold binder now checks
+that nonempty scalar cells require explicit initialization, and that constants
+fit the physical scalar container with a zero high word through 64 bits. This
+preserves sparse layouts, relocations and the existing B128 positive cases.
+The MOV helper test now respects its real compatibility reference, which spans
+all three layouts, and separately checks an owned copy with a restricted
+layout link. Both changed translation units passed syntax checks. The same configured
+build directory then completed its incremental default/all build successfully
+(session 18685). All 171 tests in the affected lowering and engine executables
+passed: 54 lowering and 117 engine, with zero failures, skips or unrun tests
+(session 63247, 1.56 seconds). Both previously failing cases passed. Evidence:
+`final-two-repairs-affected-ctest-result.json` and its selection ledger/log in
+the repaired root gate. Its current 189-production-input fingerprint is
+`41711db9b61b9e641738985f63a9a6716b42bb7afb1fb28f2e4c8cfdb8717dfa`.
+The preceding complete 689-case run remains a 687/2 result. Together these
+checks cover the final changes and the unaffected earlier results; they are
+not a fresh passing run of all 689 cases.
+
+The fresh normal installed wheel after the MOV generator repair passed all 55
+Python tests in 72.390 seconds with zero failures, errors or skips. Installed
+source provenance and all 23 Python production inputs matched. Evidence:
+`/tmp/ptxsim-post681-python-suite-verification.md`. The final two repairs change
+only native C++ and one C++ test; they do not invalidate that Python input set.
+
+
+A separate distribution gate built an sdist and then a wheel from that sdist,
+installed the wheel with normal dependency resolution into an independent
+runtime environment, and verified package provenance plus `pip check`. The
+32-file source snapshot fingerprint is
+`e37f84dd469d0f87ea1c2e0fd56a7a521e11a111151d1044ad49743cc9d8017f`;
+the sdist SHA256 is
+`aba1075476e9b196991c9d35ad23e9adcd8beac61ebb1434b19c1b194c991579`,
+and the resulting wheel SHA256 is
+`07366d0c046f16e7b824cccbfbbd9811a678dbc832e9e862413ef50a5c57b814`.
+All 23 runtime modules and `backend.yaml` retained their exact source bytes.
+The wheel excludes tests, caches and retired generator modules; the sdist
+legitimately includes six source test files. All three installed CLI commands
+completed successfully: IR produced 343 headers and 203 sources, lowering two
+headers and 203 sources, and engine one header and 87 sources. The engine table
+contains all 5,453 distinct dense entries. Evidence:
+`/tmp/ptxsim-s2-distribution-20261110.Wba24P/summary.json`.
+
+This coupled S2/S3 candidate is ready for final independent actual-diff and
+Authority acceptance. It remains unaccepted until those gates complete. The
+official execution capability YAML and deferred-successor ordering are S4;
+consumer/install integration, the remaining compiler/configuration matrix and
+sanitizers remain S5. The bounded GCC Debug, Python, distribution and earlier
+ownership/binding checks above do not establish those later outcomes.
 
 ## Review artifact mapping
 

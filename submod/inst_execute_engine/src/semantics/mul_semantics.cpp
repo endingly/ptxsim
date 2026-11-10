@@ -4,30 +4,30 @@
 
 namespace ptxsim::inst_execute_engine::detail::semantics {
 
-auto valid_mul(const exec_ir::Mul::RnF32&) noexcept -> bool {
+auto valid_mul(const exec_ir::MulRnF32& form) noexcept -> bool {
+  return form.rounding == exec_ir::RoundingMode::rn && !form.ftz && !form.sat;
+}
+
+auto valid_mul(const exec_ir::MulLoU32&) noexcept -> bool {
   return true;
 }
 
-auto valid_mul(const exec_ir::Mul::LoU32&) noexcept -> bool {
+auto valid_mul(const exec_ir::MulHiU32&) noexcept -> bool {
   return true;
 }
 
-auto valid_mul(const exec_ir::Mul::HiU32&) noexcept -> bool {
+auto valid_mul(const exec_ir::MulWideU32&) noexcept -> bool {
   return true;
 }
 
-auto valid_mul(const exec_ir::Mul::WideU32&) noexcept -> bool {
+auto valid_mul(const exec_ir::MulWideS32&) noexcept -> bool {
   return true;
 }
 
-auto valid_mul(const exec_ir::Mul::WideS32&) noexcept -> bool {
-  return true;
-}
-
-auto mul(const arith::context& context, const exec_ir::Mul::RnF32& form,
+auto mul(const arith::context& context, const exec_ir::MulRnF32& form,
          arith::float32_t lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error> {
-  const auto control = floating_detail::controls(exec_ir::Mul::RnF32::rounding);
+  const auto control = floating_detail::controls(form.rounding);
   if (!control)
     return std::unexpected(control.error());
   const auto product = arith::mul(context, lhs, rhs, *control);
@@ -36,7 +36,7 @@ auto mul(const arith::context& context, const exec_ir::Mul::RnF32& form,
   return product->value;
 }
 
-auto mul(const arith::context& context, const exec_ir::Mul::LoU32&,
+auto mul(const arith::context& context, const exec_ir::MulLoU32&,
          std::uint32_t lhs, std::uint32_t rhs)
     -> std::expected<std::uint32_t, arith::arithmetic_error> {
   const auto product = arith::mul(context, lhs, rhs);
@@ -45,7 +45,7 @@ auto mul(const arith::context& context, const exec_ir::Mul::LoU32&,
   return product->value;
 }
 
-auto mul(const arith::context& context, const exec_ir::Mul::HiU32&,
+auto mul(const arith::context& context, const exec_ir::MulHiU32&,
          std::uint32_t lhs, std::uint32_t rhs)
     -> std::expected<std::uint32_t, arith::arithmetic_error> {
   const auto product = arith::mul(
@@ -55,7 +55,7 @@ auto mul(const arith::context& context, const exec_ir::Mul::HiU32&,
   return product->value;
 }
 
-auto mul(const arith::context& context, const exec_ir::Mul::WideU32&,
+auto mul(const arith::context& context, const exec_ir::MulWideU32&,
          std::uint32_t lhs, std::uint32_t rhs)
     -> std::expected<std::uint64_t, arith::arithmetic_error> {
   const auto product = arith::mul<std::uint64_t>(
@@ -65,7 +65,7 @@ auto mul(const arith::context& context, const exec_ir::Mul::WideU32&,
   return product->value;
 }
 
-auto mul(const arith::context& context, const exec_ir::Mul::WideS32&,
+auto mul(const arith::context& context, const exec_ir::MulWideS32&,
          std::int32_t lhs, std::int32_t rhs)
     -> std::expected<std::int64_t, arith::arithmetic_error> {
   const auto product = arith::mul<std::int64_t>(

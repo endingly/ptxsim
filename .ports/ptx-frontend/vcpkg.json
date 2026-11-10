@@ -1,7 +1,6 @@
 {
   "name": "ptx-frontend",
-  "version-string": "0.0.1b0",
-  "port-version": 6,
+  "version-string": "0.8.0",
   "description": "A C++23 frontend for NVIDIA PTX with resolved semantic IR",
   "homepage": "https://github.com/endingly/ptx_frontend",
   "license": "MIT",

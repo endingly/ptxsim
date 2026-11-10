@@ -6,9 +6,9 @@
  */
 int main() {
   using PrepareAdd = decltype(
-      &ptxsim::inst_execute_engine::detail::generated::prepare_add);
+      &ptxsim::inst_execute_engine::detail::group_AddFloatF32);
   /** Volatile use prevents link-time collection of generated preparation. */
   volatile PrepareAdd prepare =
-      &ptxsim::inst_execute_engine::detail::generated::prepare_add;
+      &ptxsim::inst_execute_engine::detail::group_AddFloatF32;
   return prepare == nullptr;
 }

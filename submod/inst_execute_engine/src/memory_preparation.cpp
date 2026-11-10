@@ -300,7 +300,7 @@ auto prepare_memory_load(LaneResourceResolver& resolver,
       continue;
     }
     const auto width =
-        registers->get().declared_width(*destination.elements[index]);
+        registers->get().declared_width(destination.elements[index]->slot);
     if (!width)
       return std::unexpected(LaneFaultCause{width.error()});
     if (!raw_size(*width) || *raw_size(*width) < shape->first)
@@ -315,14 +315,14 @@ auto prepare_memory_load(LaneResourceResolver& resolver,
     if (!destination.elements[index])
       continue;
     const auto width =
-        *registers->get().declared_width(*destination.elements[index]);
+        *registers->get().declared_width(destination.elements[index]->slot);
     const auto value = loaded_value(
         std::span{bytes}.subspan(index * shape->first, shape->first),
         signed_type(type), width);
     if (!value)
       return std::unexpected(value.error());
     effect.writes[index] =
-        PreparedWrite{registers->get(), *destination.elements[index], *value};
+        PreparedWrite{registers->get(), destination.elements[index]->slot, *value};
   }
   return effect;
 }
@@ -370,7 +370,7 @@ auto prepare_memory_store(LaneResourceResolver& resolver,
   for (std::size_t index = 0; index < shape->second; ++index) {
     if (!source.elements[index])
       return width_fault(common::RawWidth::b64, common::RawWidth::pred);
-    const auto value = registers->get().read(*source.elements[index]);
+    const auto value = registers->get().read(source.elements[index]->slot);
     if (!value)
       return std::unexpected(LaneFaultCause{value.error()});
     if (const auto encoded = store_bytes(

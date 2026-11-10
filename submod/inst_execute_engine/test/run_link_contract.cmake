@@ -3,7 +3,7 @@ set(ptxsim_link_contract_source
 set(ptxsim_link_contract_build "${PTXSIM_CONSUMER_BINARY_DIR}/build")
 
 foreach(ptxsim_link_contract_file IN ITEMS
-        "${PTXSIM_GENERATED_HEADER}" "${PTXSIM_GENERATED_SOURCE}")
+        "${PTXSIM_GENERATED_HEADER}" "${PTXSIM_GENERATED_PLAN}")
     if(NOT EXISTS "${ptxsim_link_contract_file}")
         message(FATAL_ERROR
             "generated execution preparation is unavailable: ${ptxsim_link_contract_file}")
@@ -23,7 +23,7 @@ set(ptxsim_link_contract_args
     "-DCMAKE_CXX_COMPILER=${PTXSIM_CXX_COMPILER}"
     "-DPTXSIM_SOURCE_DIR=${PTXSIM_SOURCE_DIR}"
     "-DPTXSIM_GENERATED_HEADER=${PTXSIM_GENERATED_HEADER}"
-    "-DPTXSIM_GENERATED_SOURCE=${PTXSIM_GENERATED_SOURCE}"
+    "-DPTXSIM_GENERATED_PLAN=${PTXSIM_GENERATED_PLAN}"
     "-DPTXSIM_ENABLE_ASAN=${PTXSIM_ENABLE_ASAN}"
     "-DPTXSIM_ENABLE_UBSAN=${PTXSIM_ENABLE_UBSAN}")
 if(PTXSIM_MAKE_PROGRAM)

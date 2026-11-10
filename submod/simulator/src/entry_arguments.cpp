@@ -14,6 +14,15 @@ auto pack_entry_arguments(const exec_ir::ExecutableProgram& program,
         EntryArgumentError{.code = EntryArgumentErrorCode::program_error,
                            .program_error = layout.error()});
   }
+  const auto callable = program.function_record(function);
+  if (!callable) {
+    return std::unexpected(EntryArgumentError{.code = EntryArgumentErrorCode::program_error,
+                                             .program_error = callable.error()});
+  }
+  if (!callable->get().is_entry)
+    return std::unexpected(EntryArgumentError{.code = EntryArgumentErrorCode::non_entry_function});
+  if (!layout->get().entry_packing_available)
+    return std::unexpected(EntryArgumentError{.code = EntryArgumentErrorCode::unsupported_entry_signature});
   const auto& parameters = layout->get().entry_parameters;
   if (arguments.size() != parameters.size()) {
     return std::unexpected(EntryArgumentError{

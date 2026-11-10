@@ -1,372 +1,248 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include <ptxsim/exec_ir/exec_ir.gen.hpp>
 #include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/exec_ir_types.hpp>
+#include <ptxsim/exec_ir/instruction_catalogue.gen.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/add.gen.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/sub.gen.hpp>
+#include <ptxsim/exec_ir/model/control_flow/bra.gen.hpp>
+#include <ptxsim/exec_ir/model/control_flow/exit.gen.hpp>
+#include <ptxsim/exec_ir/model/data_movement/mov.gen.hpp>
+#include <ptxsim/exec_ir/model/data_movement/ld.gen.hpp>
+#include <ptxsim/exec_ir/model/data_movement/st.gen.hpp>
+#include <ptxsim/exec_ir/model/parallel_synchronization_and_communication/bar.gen.hpp>
 
 namespace ptxsim::exec_ir::test {
 namespace {
-
 using common::CodeLocation;
 using common::FunctionId;
 using common::ProgramCounter;
-using common::RawValue;
 using common::RawWidth;
-using common::RegisterSlot;
+static_assert(std::is_abstract_v<Instruction> == false);
+static_assert(GeneratedForm<AddIntegerNoSat>);
+static_assert(GeneratedForm<SubIntegerNoSat>);
+static_assert(AddIntegerNoSat::opcode == Opcode::Add);
+static_assert(std::is_final_v<AddIntegerNoSat>);
 
-static_assert(std::variant_size_v<Instruction> ==
-              static_cast<std::size_t>(Op::count));
-static_assert(InstructionAlternative<Add>);
-static_assert(InstructionAlternative<And>);
-static_assert(Add::opcode == Op::add);
-static_assert(And::opcode == Op::and_);
-
-/** @brief Build a generated scalar move instruction. */
-auto mov(std::optional<Predicate> predicate, DataType type, RegisterSlot dst,
-         RegisterSlot src) -> Instruction {
-  Mov::Scalar::ScalarOperands operands{dst, src};
-  Mov::Scalar form{type, operands};
-  return Mov{std::move(predicate), Mov::Variant{form}};
+/** @brief Bind a test register's real slot and declared scalar type. */
+auto reg(std::uint32_t slot, DataType type = DataType::b32) -> RegisterRef {
+  return {.slot = common::RegisterSlot{slot},
+          .register_class = type == DataType::pred ? RegisterClass::Predicate : RegisterClass::General,
+          .declared_type = type};
 }
-
-/** @brief Build a generated integer add instruction. */
-auto add(std::optional<Predicate> predicate, DataType type, RegisterSlot dst,
-         B32Operand lhs, B32Operand rhs) -> Instruction {
-  Add::IntegerNoSat form{type, dst, std::move(lhs), std::move(rhs)};
-  return Add{std::move(predicate), Add::Variant{form}};
+/** @brief Build a complete ordinary body/declaration pair in dense order. */
+void body(ProgramDefinition& input, std::uint32_t id, std::size_t begin,
+          std::uint32_t count, std::vector<RawWidth> widths = {}) {
+  input.function_declarations.push_back({.id = FunctionDeclarationId{id}, .function = FunctionId{id}});
+  input.functions.push_back({.id = FunctionId{id}, .declarations = {FunctionDeclarationId{id}},
+      .definition = FunctionDeclarationId{id}, .body = FunctionLayout{
+          .id = FunctionId{id}, .begin = begin, .instruction_count = count,
+          .register_widths = std::move(widths)}});
 }
-
-/** @brief Build a generated scalar load instruction. */
-auto load(std::optional<Predicate> predicate, DataType type, AddressSpace space,
-          RegisterSlot dst, RegisterSlot address) -> Instruction {
-  if (space == AddressSpace::generic) {
-    Ld::GenericScalar form{false,
-                           MemoryConsistency::omitted,
-                           MemoryScope::none,
-                           CacheOperator::unspecified,
-                           type,
-                           dst,
-                           address};
-    return Ld{std::move(predicate), Ld::Variant{form}};
-  }
-  Ld::ExplicitScalar form{false,
-                          MemoryConsistency::omitted,
-                          MemoryScope::none,
-                          space,
-                          CacheOperator::unspecified,
-                          type,
-                          dst,
-                          address};
-  return Ld{std::move(predicate), Ld::Variant{form}};
-}
-
-/** @brief Build a generated scalar store instruction. */
-auto store(std::optional<Predicate> predicate, DataType type,
-           AddressSpace space, RegisterSlot address, RegisterSlot src)
-    -> Instruction {
-  if (space == AddressSpace::generic) {
-    St::GenericScalar form{false,
-                           MemoryConsistency::omitted,
-                           MemoryScope::none,
-                           CacheOperator::unspecified,
-                           type,
-                           address,
-                           src};
-    return St{std::move(predicate), St::Variant{form}};
-  }
-  St::ExplicitScalar form{false,
-                          MemoryConsistency::omitted,
-                          MemoryScope::none,
-                          space,
-                          CacheOperator::unspecified,
-                          type,
-                          address,
-                          src};
-  return St{std::move(predicate), St::Variant{form}};
-}
-
-/** @brief Build a generated warp-synchronization instruction. */
-auto bar(std::optional<Predicate> predicate, B32Operand mask) -> Instruction {
-  Bar::WarpSync form{std::move(mask)};
-  return Bar{std::move(predicate), Bar::Variant{form}};
-}
-
-/** @brief Build a generated direct branch instruction. */
-auto bra(std::optional<Predicate> predicate, ProgramCounter target)
-    -> Instruction {
-  Bra::Direct form{false, target};
-  return Bra{std::move(predicate), Bra::Variant{form}};
-}
-
-/** @brief Build a generated exit instruction. */
-auto exit(std::optional<Predicate> predicate = std::nullopt) -> Instruction {
-  return Exit{std::move(predicate), Exit::Variant{Exit::Bare{}}};
-}
-
+/** @brief Construct independent function-local bodies with a predicate and a branch. */
 auto valid_definition() -> ProgramDefinition {
-  return {
-      .instructions = {mov(std::nullopt, DataType::b32, RegisterSlot{1},
-                           RegisterSlot{0}),
-                       add(Predicate{RegisterSlot{2}, true}, DataType::u32,
-                           RegisterSlot{1}, B32Operand{RegisterSlot{1}},
-                           B32Operand{RawValue::b32(1U)}),
-                       bra(std::nullopt, ProgramCounter{0}), exit()},
-      .functions = {{FunctionId{0},
-                     0,
-                     3,
-                     {RawWidth::b32, RawWidth::b32, RawWidth::pred}},
-                    {FunctionId{1}, 3, 1, {}}},
-  };
+  ProgramDefinition input;
+  input.instructions.push_back(std::make_unique<MovScalar>(
+      MovScalar::ScalarOperands{reg(1), reg(0)}, MovScalar::Controls{DataType::b32}));
+  input.instructions.push_back(std::make_unique<AddIntegerNoSat>(
+      AddIntegerNoSat::Operands{reg(1, DataType::u32), ScalarOperand{reg(1, DataType::u32)},
+          ScalarOperand{Immediate{1, DataType::u32}}}, AddIntegerNoSat::Controls{DataType::u32},
+      Predicate{reg(2, DataType::pred), true}));
+  input.instructions.push_back(std::make_unique<BraDirect>(
+      BraDirect::Operands{BranchTarget{FunctionId{0}, ProgramCounter{0}}}));
+  input.instructions.push_back(std::make_unique<ExitBare>(ExitBare::Operands{}));
+  body(input, 0, 0, 3, {RawWidth::b32, RawWidth::b32, RawWidth::pred});
+  body(input, 1, 3, 1);
+  return input;
 }
-
+/** @brief Create a valid independently frozen test snapshot. */
 auto make_program() -> ExecutableProgram {
-  auto program = ExecutableProgram::create(valid_definition());
-  EXPECT_TRUE(program);
-  return std::move(*program);
+  auto result = ExecutableProgram::create(valid_definition());
+  EXPECT_TRUE(result.has_value());
+  return std::move(*result);
+}
+/** @brief Add full parameter identities for a derived entry packing test. */
+void parameter_records(ProgramDefinition& input) {
+  input.functions[0].is_entry=true;
+  input.function_declarations[0].is_entry=true;
+  for (std::uint32_t id = 0; id < 3; ++id) {
+    input.parameters.push_back({.id = ParameterId{id}, .owner_declaration = FunctionDeclarationId{0},
+        .owner_function = FunctionId{0}, .role=ParameterDeclarationRole::EntryInput,
+        .scalar_type=id==1?DataType::u64:DataType::u32, .alignment=id==1?8U:4U, .byte_extent=id==1?8U:4U});
+    input.function_declarations[0].parameters.push_back(ParameterId{id});
+  }
 }
 
 TEST(ExecutableProgram, FetchUsesFunctionLocalProgramCounters) {
   const auto program = make_program();
-
   const auto first_layout = program.function_layout(FunctionId{0});
   const auto first = program.fetch({FunctionId{0}, ProgramCounter{0}});
   const auto second = program.fetch({FunctionId{1}, ProgramCounter{0}});
-
-  ASSERT_TRUE(first_layout);
-  ASSERT_TRUE(first);
-  ASSERT_TRUE(second);
+  ASSERT_TRUE(first_layout); ASSERT_TRUE(first); ASSERT_TRUE(second);
   EXPECT_EQ(first_layout->get().id, FunctionId{0});
   EXPECT_EQ(first_layout->get().register_widths,
             (std::vector{RawWidth::b32, RawWidth::b32, RawWidth::pred}));
   EXPECT_NE(&first->get(), &second->get());
-  EXPECT_TRUE(std::holds_alternative<Mov>(first->get()));
-  EXPECT_TRUE(std::holds_alternative<Exit>(second->get()));
-  EXPECT_EQ(op(first->get()), Op::mov);
-  EXPECT_EQ(op(second->get()), Op::exit);
+  EXPECT_NE(first->get().get_if<MovScalar>(), nullptr);
+  EXPECT_NE(second->get().get_if<ExitBare>(), nullptr);
+  EXPECT_EQ(first->get().instruction_opcode(), Opcode::Mov);
+  EXPECT_EQ(second->get().instruction_opcode(), Opcode::Exit);
 }
-}  // namespace
-
 TEST(ExecutableProgram, DerivesFlatOffsetsAndSameFunctionFallthrough) {
   const auto program = make_program();
-
   EXPECT_EQ(*program.flat_offset({FunctionId{0}, ProgramCounter{2}}), 2U);
   EXPECT_EQ(*program.flat_offset({FunctionId{1}, ProgramCounter{0}}), 3U);
   EXPECT_EQ(*program.fallthrough({FunctionId{0}, ProgramCounter{1}}),
             (CodeLocation{FunctionId{0}, ProgramCounter{2}}));
-  const auto final_fallthrough =
-      program.fallthrough({FunctionId{1}, ProgramCounter{0}});
-  ASSERT_FALSE(final_fallthrough);
-  EXPECT_EQ(final_fallthrough.error().code, ProgramErrorCode::no_fallthrough);
+  const auto final = program.fallthrough({FunctionId{1}, ProgramCounter{0}});
+  ASSERT_FALSE(final); EXPECT_EQ(final.error().code, ProgramErrorCode::no_fallthrough);
 }
-
 TEST(ExecutableProgram, RejectsInvalidLocationsAndDefinitions) {
   const auto program = make_program();
-  const auto missing_layout = program.function_layout(FunctionId{2});
-  ASSERT_FALSE(missing_layout);
-  EXPECT_EQ(missing_layout.error().code, ProgramErrorCode::function_not_found);
-  const auto missing_function =
-      program.fetch({FunctionId{2}, ProgramCounter{0}});
+  const auto missing_function = program.function_layout(FunctionId{2});
   ASSERT_FALSE(missing_function);
-  EXPECT_EQ(missing_function.error().code,
-            ProgramErrorCode::function_not_found);
-  const auto missing_pc = program.fetch({FunctionId{1}, ProgramCounter{1}});
-  ASSERT_FALSE(missing_pc);
-  EXPECT_EQ(missing_pc.error().code, ProgramErrorCode::pc_out_of_range);
-
-  auto invalid_layout = valid_definition();
-  invalid_layout.functions[1].begin = 2;
-  const auto layout_result =
-      ExecutableProgram::create(std::move(invalid_layout));
-  ASSERT_FALSE(layout_result);
-  EXPECT_EQ(layout_result.error().code, ProgramErrorCode::invalid_layout);
-
-  auto invalid_layout_range = valid_definition();
-  invalid_layout_range.functions[1].instruction_count = 2;
-  const auto range_result =
-      ExecutableProgram::create(std::move(invalid_layout_range));
-  ASSERT_FALSE(range_result);
-  EXPECT_EQ(range_result.error().code, ProgramErrorCode::invalid_layout_range);
-
-  auto invalid_dense_id = valid_definition();
-  invalid_dense_id.functions[1].id = FunctionId{2};
-  const auto dense_id_result =
-      ExecutableProgram::create(std::move(invalid_dense_id));
-  ASSERT_FALSE(dense_id_result);
-  EXPECT_EQ(dense_id_result.error().code,
-            ProgramErrorCode::function_id_not_dense);
-
-  auto invalid_width = valid_definition();
-  invalid_width.functions[0].register_widths[0] = static_cast<RawWidth>(99);
-  const auto width_result = ExecutableProgram::create(std::move(invalid_width));
-  ASSERT_FALSE(width_result);
-  EXPECT_EQ(width_result.error().code,
-            ProgramErrorCode::invalid_register_width);
-  EXPECT_EQ(width_result.error().actual, static_cast<RawWidth>(99));
+  EXPECT_EQ(missing_function.error().code, ProgramErrorCode::function_not_found);
+  const auto missing_location_function = program.fetch({FunctionId{2}, ProgramCounter{0}});
+  ASSERT_FALSE(missing_location_function);
+  EXPECT_EQ(missing_location_function.error().code, ProgramErrorCode::function_not_found);
+  const auto invalid_pc = program.fetch({FunctionId{1}, ProgramCounter{1}});
+  ASSERT_FALSE(invalid_pc);
+  EXPECT_EQ(invalid_pc.error().code, ProgramErrorCode::pc_out_of_range);
+  auto input = valid_definition();
+  input.functions[1].body->begin = 2;
+  const auto overlapping = ExecutableProgram::create(input);
+  ASSERT_FALSE(overlapping);
+  EXPECT_EQ(overlapping.error().code, ProgramErrorCode::invalid_layout);
+  input = valid_definition(); input.functions[1].body->instruction_count = 2;
+  const auto outside_instructions = ExecutableProgram::create(input);
+  ASSERT_FALSE(outside_instructions);
+  EXPECT_EQ(outside_instructions.error().code, ProgramErrorCode::invalid_layout_range);
+  input = valid_definition(); input.functions[1].id = FunctionId{2};
+  const auto nondense = ExecutableProgram::create(input);
+  ASSERT_FALSE(nondense);
+  EXPECT_EQ(nondense.error().code, ProgramErrorCode::function_id_not_dense);
+  input = valid_definition(); input.functions[0].body->register_widths[0] = static_cast<RawWidth>(99);
+  const auto invalid = ExecutableProgram::create(input);
+  ASSERT_FALSE(invalid); EXPECT_EQ(invalid.error().code, ProgramErrorCode::invalid_register_width);
+  EXPECT_EQ(invalid.error().actual, static_cast<RawWidth>(99));
 }
-
 TEST(ExecutableProgram, ValidatesExactSourceOrderedEntryParameterLayouts) {
-  auto definition = valid_definition();
-  auto& layout = definition.functions.front();
-  layout.entry_parameter_size = 20U;
-  layout.entry_parameters = {
-      EntryParameterLayout{.offset = 0U, .size = 4U, .alignment = 4U},
-      EntryParameterLayout{.offset = 8U, .size = 8U, .alignment = 8U},
-      EntryParameterLayout{.offset = 16U, .size = 4U, .alignment = 4U},
-  };
-  const auto expected_parameters = layout.entry_parameters;
-
-  const auto program = ExecutableProgram::create(std::move(definition));
-  ASSERT_TRUE(program);
-  const auto validated = program->function_layout(FunctionId{0});
-  ASSERT_TRUE(validated);
-  EXPECT_EQ(validated->get().entry_parameter_size, 20U);
-  EXPECT_EQ(validated->get().entry_parameters, expected_parameters);
+  auto input = valid_definition(); parameter_records(input);
+  auto& layout = *input.functions[0].body;
+  layout.entry_parameter_size = 20;
+  layout.entry_parameters = {{0, 4, 4, ParameterId{0}}, {8, 8, 8, ParameterId{1}}, {16, 4, 4, ParameterId{2}}};
+  const auto expected = layout.entry_parameters;
+  const auto program = ExecutableProgram::create(input);
+  ASSERT_TRUE(program); const auto actual = program->function_layout(FunctionId{0});
+  ASSERT_TRUE(actual); EXPECT_EQ(actual->get().entry_parameter_size, 20U);
+  EXPECT_EQ(actual->get().entry_parameters, expected);
 }
-
 TEST(ExecutableProgram, RejectsMalformedEntryParameterLayouts) {
-  const auto expect_invalid = [](ProgramDefinition definition) {
-    const auto result = ExecutableProgram::create(std::move(definition));
-    ASSERT_FALSE(result);
-    EXPECT_EQ(result.error().code,
-              ProgramErrorCode::invalid_entry_parameter_layout);
-  };
-
-  auto missing_slots = valid_definition();
-  missing_slots.functions.front().entry_parameter_size = 4U;
-  expect_invalid(std::move(missing_slots));
-
-  auto bad_alignment = valid_definition();
-  bad_alignment.functions.front().entry_parameter_size = 4U;
-  bad_alignment.functions.front().entry_parameters = {
-      {.offset = 0U, .size = 4U, .alignment = 3U}};
-  expect_invalid(std::move(bad_alignment));
-
-  auto noncanonical_offset = valid_definition();
-  noncanonical_offset.functions.front().entry_parameter_size = 12U;
-  noncanonical_offset.functions.front().entry_parameters = {
-      {.offset = 0U, .size = 4U, .alignment = 4U},
-      {.offset = 4U, .size = 8U, .alignment = 8U}};
-  expect_invalid(std::move(noncanonical_offset));
-
-  auto wrong_total = valid_definition();
-  wrong_total.functions.front().entry_parameter_size = 8U;
-  wrong_total.functions.front().entry_parameters = {
-      {.offset = 0U, .size = 4U, .alignment = 4U}};
-  expect_invalid(std::move(wrong_total));
-
-  auto overflow = valid_definition();
-  overflow.functions.front().entry_parameter_size =
-      std::numeric_limits<std::size_t>::max();
-  overflow.functions.front().entry_parameters = {
-      {.offset = 0U,
-       .size = std::numeric_limits<std::size_t>::max(),
-       .alignment = 1U},
-      {.offset = std::numeric_limits<std::size_t>::max(),
-       .size = 1U,
-       .alignment = 1U}};
-  expect_invalid(std::move(overflow));
+  for (unsigned scenario = 0; scenario < 5; ++scenario) {
+    auto input = valid_definition(); parameter_records(input);
+    auto& layout = *input.functions[0].body;
+    layout.entry_parameter_size = 4;
+    if (scenario == 1) layout.entry_parameters = {{0, 4, 3, ParameterId{0}}};
+    if (scenario == 2) { layout.entry_parameter_size = 12; layout.entry_parameters = {{0,4,4,ParameterId{0}},{4,8,8,ParameterId{1}}}; }
+    if (scenario == 3) { layout.entry_parameter_size = 8; layout.entry_parameters = {{0,4,4,ParameterId{0}}}; }
+    if (scenario == 4) {
+      const auto max = std::numeric_limits<std::size_t>::max();
+      layout.entry_parameter_size = max;
+      layout.entry_parameters = {{0,max,1,ParameterId{0}},{max,1,1,ParameterId{1}}};
+    }
+    const auto result = ExecutableProgram::create(input);
+    ASSERT_FALSE(result); EXPECT_EQ(result.error().code, ProgramErrorCode::invalid_entry_parameter_layout);
+  }
 }
-
 TEST(ExecutableProgram, PrintsCanonicalExecutableProgram) {
-  const auto program = make_program();
-
-  EXPECT_EQ(to_string(program),
-            "gpc0  [func:0 pc:0]  "
-            "mov.b32 register:1, register:0\n"
-            "gpc1  [func:0 pc:1]  "
-            "@!predicate:2 add.u32 register:1, register:1, b32:0x00000001\n"
-            "gpc2  [func:0 pc:2]  "
-            "bra pc:0\n"
-            "gpc3  [func:1 pc:0]  "
-            "exit");
+  const auto text = to_string(make_program());
+  EXPECT_EQ(text, R"expected(function:0:
+  pc:0: mov/mov_scalar type=b32 layout=scalar dst=register{slot=register:1, class=General, type=b32, width=none, component=none} src=register{slot=register:0, class=General, type=b32, width=none, component=none}
+  pc:1: add/add_integer_no_sat @predicate{register=register{slot=register:2, class=Predicate, type=pred, width=none, component=none}, negated=true} type=u32 layout=default dst=register{slot=register:1, class=General, type=u32, width=none, component=none} src1=register{slot=register:1, class=General, type=u32, width=none, component=none} src2=immediate{bits=0x1, type=u32, negative=false, integer-source=none}
+  pc:2: bra/bra_direct uni=false layout=default target=branch-target{function=function:0, pc=pc:0}
+function:1:
+  pc:0: exit/exit_bare layout=default
+)expected");
 }
-
 TEST(ExecutableProgram, PrintsScalarLoadStore) {
-  const auto program = ExecutableProgram::create({
-      .instructions = {load(std::nullopt, DataType::u32, AddressSpace::generic,
-                            RegisterSlot{0}, RegisterSlot{1}),
-                       store(std::nullopt, DataType::u32, AddressSpace::global,
-                             RegisterSlot{1}, RegisterSlot{0}),
-                       exit()},
-      .functions = {{FunctionId{0}, 0, 3, {RawWidth::b32, RawWidth::b64}}},
-  });
-  ASSERT_TRUE(program);
-  EXPECT_EQ(to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "ld.u32 register:0, [register:1]\n"
-            "gpc1  [func:0 pc:1]  "
-            "st.global.u32 [register:1], register:0\n"
-            "gpc2  [func:0 pc:2]  "
-            "exit");
+  ProgramDefinition input;
+  input.instructions.push_back(std::make_unique<LdGenericScalar>(
+      LdGenericScalar::Operands{reg(0, DataType::u32), Address{reg(1,DataType::u64)}},
+      LdGenericScalar::Controls{.type=DataType::u32}));
+  input.instructions.push_back(std::make_unique<StExplicitScalar>(
+      StExplicitScalar::Operands{Address{reg(1,DataType::u64)},reg(0,DataType::u32)},
+      StExplicitScalar::Controls{.state_space=AddressSpace::global,.type=DataType::u32}));
+  input.instructions.push_back(std::make_unique<ExitBare>(ExitBare::Operands{}));
+  body(input,0,0,3,{RawWidth::b32,RawWidth::b64});
+  const auto program=ExecutableProgram::create(input); ASSERT_TRUE(program);
+  const auto text=to_string(*program);
+  EXPECT_EQ(text, R"expected(function:0:
+  pc:0: ld/ld_generic_scalar mmio=false semantics=omitted scope=none cache=unspecified type=u32 layout=default dst=register{slot=register:0, class=General, type=u32, width=none, component=none} address=address{base=register{slot=register:1, class=General, type=u64, width=none, component=none}, offset=none, enclosing=Unknown, parameter=Default, unified=false, named-index=none}
+  pc:1: st/st_explicit_scalar mmio=false semantics=omitted scope=none state_space=global cache=unspecified type=u32 layout=default address=address{base=register{slot=register:1, class=General, type=u64, width=none, component=none}, offset=none, enclosing=Unknown, parameter=Default, unified=false, named-index=none} src=register{slot=register:0, class=General, type=u32, width=none, component=none}
+  pc:2: exit/exit_bare layout=default
+)expected");
 }
-
 TEST(ExecutableProgram, PrintsWarpSync) {
-  const auto program = ExecutableProgram::create({
-      .instructions = {bar(std::nullopt, B32Operand{RawValue::b32(3U)}),
-                       exit()},
-      .functions = {{FunctionId{0}, 0, 2, {RawWidth::b32}}},
-  });
-  ASSERT_TRUE(program);
-  EXPECT_EQ(op(program->fetch({FunctionId{0}, ProgramCounter{0}})->get()),
-            Op::bar);
-  EXPECT_EQ(to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "bar.warp.sync b32:0x00000003\n"
-            "gpc1  [func:0 pc:1]  "
-            "exit");
-}
-
-TEST(ExecutableProgram, AcceptsAndPrintsDeclarationOnlyOpcode) {
-  const Sub::IntegerNoSat form{DataType::u32, RegisterSlot{0},
-                               ScalarOperand{RegisterSlot{1}},
-                               ScalarOperand{RegisterSlot{2}}};
-  const auto program = ExecutableProgram::create({
-      .instructions = {Sub{Predicate{RegisterSlot{3}}, Sub::Variant{form}}},
-      .functions = {{FunctionId{0},
-                     0,
-                     1,
-                     {RawWidth::b32, RawWidth::b32, RawWidth::b32,
-                      RawWidth::pred}}},
-  });
-  ASSERT_TRUE(program);
-  const auto instruction = program->fetch({FunctionId{0}, ProgramCounter{0}});
+  ProgramDefinition input;
+  input.instructions.push_back(std::make_unique<BarWarpSync>(
+      BarWarpSync::Operands{ScalarOperand{Immediate{3,DataType::b32}}}));
+  input.instructions.push_back(std::make_unique<ExitBare>(ExitBare::Operands{}));
+  body(input,0,0,2);
+  const auto program=ExecutableProgram::create(input); ASSERT_TRUE(program);
+  const auto instruction=program->fetch({FunctionId{0},ProgramCounter{0}});
   ASSERT_TRUE(instruction);
-  EXPECT_EQ(op(instruction->get()), Op::sub);
-  EXPECT_EQ(to_string(*program),
-            "gpc0  [func:0 pc:0]  "
-            "@predicate:3 sub.u32 register:0, register:1, register:2");
+  EXPECT_EQ(instruction->get().instruction_opcode(),Opcode::Bar);
+  EXPECT_EQ(to_string(*program), R"expected(function:0:
+  pc:0: bar/bar_warp_sync warp=true sync=true layout=default membermask=immediate{bits=0x3, type=b32, negative=false, integer-source=none}
+  pc:1: exit/exit_bare layout=default
+)expected");
 }
-
+TEST(ExecutableProgram, AcceptsAndPrintsDeclarationOnlyOpcode) {
+  ProgramDefinition input;
+  input.instructions.push_back(std::make_unique<SubIntegerNoSat>(
+      SubIntegerNoSat::Operands{reg(0,DataType::u32),ScalarOperand{reg(1,DataType::u32)},ScalarOperand{reg(2,DataType::u32)}},
+      SubIntegerNoSat::Controls{DataType::u32},Predicate{reg(3,DataType::pred)}));
+  body(input,0,0,1,{RawWidth::b32,RawWidth::b32,RawWidth::b32,RawWidth::pred});
+  const auto program=ExecutableProgram::create(input); ASSERT_TRUE(program);
+  const auto instruction=program->fetch({FunctionId{0},ProgramCounter{0}});
+  ASSERT_TRUE(instruction);
+  EXPECT_EQ(instruction->get().instruction_opcode(),Opcode::Sub);
+  EXPECT_EQ(to_string(*program), R"expected(function:0:
+  pc:0: sub/sub_integer_no_sat @predicate{register=register{slot=register:3, class=Predicate, type=pred, width=none, component=none}, negated=false} type=u32 layout=default dst=register{slot=register:0, class=General, type=u32, width=none, component=none} src1=register{slot=register:1, class=General, type=u32, width=none, component=none} src2=register{slot=register:2, class=General, type=u32, width=none, component=none}
+)expected");
+}
 TEST(InstructionDiagnostic, FormatsDeclarationOnlyOpcodeWithoutValidation) {
-  const Sub::IntegerNoSat form{DataType::u32, RegisterSlot{0},
-                               ScalarOperand{RegisterSlot{1}},
-                               ScalarOperand{RawValue::b32(1U)}};
-  EXPECT_EQ(to_string(Instruction{Sub{std::nullopt, Sub::Variant{form}}}),
-            "sub.u32 register:0, register:1, b32:0x00000001");
-  EXPECT_EQ(to_string(bar(std::nullopt, B32Operand{RawValue::b32(3U)})),
-            "bar.warp.sync b32:0x00000003");
+  const SubIntegerNoSat form{
+      SubIntegerNoSat::Operands{reg(0,DataType::u32),ScalarOperand{reg(1,DataType::u32)},ScalarOperand{Immediate{1,DataType::u32}}},
+      SubIntegerNoSat::Controls{DataType::u32}};
+  const auto text=to_string(form);
+  EXPECT_EQ(text, R"expected(sub/sub_integer_no_sat type=u32 layout=default dst=register{slot=register:0, class=General, type=u32, width=none, component=none} src1=register{slot=register:1, class=General, type=u32, width=none, component=none} src2=immediate{bits=0x1, type=u32, negative=false, integer-source=none})expected");
+  const BarWarpSync barrier{BarWarpSync::Operands{ScalarOperand{Immediate{3,DataType::b32}}}};
+  EXPECT_EQ(to_string(barrier), R"expected(bar/bar_warp_sync warp=true sync=true layout=default membermask=immediate{bits=0x3, type=b32, negative=false, integer-source=none})expected");
 }
-
 TEST(InstructionDiagnostic, FormatsStableModifierAliases) {
-  EXPECT_EQ(to_string(Predicate{RegisterSlot{3}, false}), "predicate:3");
-  EXPECT_EQ(to_string(Predicate{RegisterSlot{3}, true}), "!predicate:3");
-  EXPECT_EQ(to_string(BooleanOperator::and_), "and");
-  EXPECT_EQ(to_string(MemoryConsistency::volatile_), "volatile");
-  EXPECT_EQ(to_string(AddressSpace::const_), "const");
-  EXPECT_EQ(to_string(AddressSpace::param_entry), "param::entry");
-  EXPECT_EQ(to_string(AddressSpace::param_func), "param::func");
-  EXPECT_EQ(to_string(MbarrierPhaseType::conditional),
-            "phase_type::conditional");
-  EXPECT_EQ(to_string(MbarrierPhaseType::primary), "phase_type::primary");
-  EXPECT_EQ(to_string(MbarrierLayout::v0), "layout::v0");
-  EXPECT_EQ(to_string(MbarrierLayout::v1), "layout::v1");
-  EXPECT_EQ(to_string(AsyncProxyKind::async_shared_cta), "async.shared::cta");
-  EXPECT_EQ(to_string(ProxyKindPair::async_generic), "async::generic");
-  EXPECT_EQ(to_string(static_cast<DataType>(255)), "<invalid>");
+  EXPECT_NE(to_string(Predicate{reg(3,DataType::pred),false}).find("negated=false"),std::string::npos);
+  EXPECT_NE(to_string(Predicate{reg(3,DataType::pred),true}).find("negated=true"),std::string::npos);
+  EXPECT_EQ(to_string(BooleanOperator::and_),"and");
+  EXPECT_EQ(to_string(MemoryConsistency::volatile_),"volatile");
+  EXPECT_EQ(to_string(AddressSpace::const_),"const");
+  EXPECT_EQ(to_string(AddressSpace::param_entry),"param::entry");
+  EXPECT_EQ(to_string(AddressSpace::param_func),"param::func");
+  EXPECT_EQ(to_string(MbarrierPhaseType::phase_type_conditional),"phase_type::conditional");
+  EXPECT_EQ(to_string(MbarrierPhaseType::phase_type_primary),"phase_type::primary");
+  EXPECT_EQ(to_string(MbarrierLayout::layout_v0),"layout::v0");
+  EXPECT_EQ(to_string(MbarrierLayout::layout_v1),"layout::v1");
+  EXPECT_EQ(to_string(AsyncProxyKind::async_shared_cta),"async.shared::cta");
+  EXPECT_EQ(to_string(ProxyKindPair::async_generic),"async::generic");
+  EXPECT_EQ(to_string(static_cast<DataType>(65535)),"<invalid>");
 }
-
+}  // namespace
 }  // namespace ptxsim::exec_ir::test

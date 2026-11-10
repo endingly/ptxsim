@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <stdexcept>
+
 #include <ptx_frontend/resolved_ir/ptx_resolved_ir.hpp>
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
@@ -28,14 +30,23 @@ auto storage_module() -> ptx_frontend::resolved_ir::ResolvedModule {
 /** @brief Return the mutable resolved symbol source of the first MOV instruction. */
 auto mov_symbol(ptx_frontend::resolved_ir::ResolvedModule& module)
     -> ptx_frontend::resolved_ir::ResolvedSymbolRef& {
-  auto& mov =
-      std::get<ptx_frontend::resolved_ir::Mov>(module.functions[0].body[0]);
-  auto& form = std::get<ptx_frontend::resolved_ir::Mov::Scalar>(mov.variant);
-  auto& operands =
-      std::get<ptx_frontend::resolved_ir::Mov::Scalar::ScalarOperands>(
-          form.operands);
-  return std::get<ptx_frontend::resolved_ir::ResolvedSymbolRef>(
-      operands.src.value);
+  auto* mov = dynamic_cast<ptx_frontend::resolved_ir::MovScalar*>(
+      module.functions[0].body[0].get());
+  EXPECT_NE(mov, nullptr);
+  if (mov == nullptr) {
+    throw std::runtime_error("expected a resolved scalar MOV instruction");
+  }
+  EXPECT_TRUE(mov->src_mov_source.has_value());
+  if (!mov->src_mov_source.has_value()) {
+    throw std::runtime_error("expected resolved scalar MOV source operands");
+  }
+  auto* symbol = std::get_if<ptx_frontend::resolved_ir::ResolvedSymbolRef>(
+      &mov->src_mov_source->value);
+  EXPECT_NE(symbol, nullptr);
+  if (symbol == nullptr) {
+    throw std::runtime_error("expected a resolved symbol MOV source");
+  }
+  return *symbol;
 }
 
 }  // namespace

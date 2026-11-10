@@ -11,7 +11,7 @@
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/arith/packed.hpp>
 #include <ptxsim/arith/scalar.hpp>
-#include <ptxsim/exec_ir/exec_ir.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/sub.gen.hpp>
 
 #include "../floating_controls.hpp"
 #include "../value_alu_helpers.hpp"
@@ -47,25 +47,25 @@ auto sub_packed_integer(const arith::context& context,
 }  // namespace sub_detail
 
 /** @brief Validate controls retained by the scalar f32 subtraction form. */
-auto valid_sub(const exec_ir::Sub::FloatF32& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubFloatF32& form) noexcept -> bool;
 /** @brief Validate controls retained by the packed f32 subtraction form. */
-auto valid_sub(const exec_ir::Sub::FloatF32x2& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubFloatF32x2& form) noexcept -> bool;
 /** @brief Validate controls retained by the f64 subtraction form. */
-auto valid_sub(const exec_ir::Sub::FloatF64& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubFloatF64& form) noexcept -> bool;
 /** @brief Validate the rn-only PTX half-precision subtraction control. */
-auto valid_sub(const exec_ir::Sub::Half& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubHalf& form) noexcept -> bool;
 /** @brief Validate the rn-only PTX bfloat16 subtraction control. */
-auto valid_sub(const exec_ir::Sub::Bfloat& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubBfloat& form) noexcept -> bool;
 /** @brief Validate controls retained by mixed low-precision-to-f32 subtraction. */
-auto valid_sub(const exec_ir::Sub::MixedF32& form) noexcept -> bool;
+auto valid_sub(const exec_ir::SubMixedF32& form) noexcept -> bool;
 /** @brief Integer forms have no dynamic arithmetic controls to validate. */
-auto valid_sub(const exec_ir::Sub::IntegerNoSat&) noexcept -> bool;
+auto valid_sub(const exec_ir::SubIntegerNoSat&) noexcept -> bool;
 /** @brief Optional saturation forms have no invalid arithmetic controls. */
-auto valid_sub(const exec_ir::Sub::OptionalSat&) noexcept -> bool;
+auto valid_sub(const exec_ir::SubOptionalSat&) noexcept -> bool;
 
 /** @brief Evaluate wrapping same-width scalar integer subtraction. */
 template <arith::arithmetic_integer T>
-auto sub(const arith::context& context, const exec_ir::Sub::IntegerNoSat&,
+auto sub(const arith::context& context, const exec_ir::SubIntegerNoSat&,
          T lhs, T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto difference = arith::sub(context, lhs, rhs);
   if (!difference)
@@ -75,7 +75,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::IntegerNoSat&,
 
 /** @brief Evaluate scalar optional-saturation integer subtraction. */
 template <arith::arithmetic_integer T>
-auto sub(const arith::context& context, const exec_ir::Sub::OptionalSat& form,
+auto sub(const arith::context& context, const exec_ir::SubOptionalSat& form,
          T lhs, T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto difference =
       arith::sub(context, lhs, rhs,
@@ -88,7 +88,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::OptionalSat& form,
 
 /** @brief Evaluate packed optional-saturation subtraction without cross-lane borrow. */
 template <PackedIntegerElement Element, std::size_t Lanes>
-auto sub(const arith::context& context, const exec_ir::Sub::OptionalSat& form,
+auto sub(const arith::context& context, const exec_ir::SubOptionalSat& form,
          packed_integer<Element, Lanes> lhs, packed_integer<Element, Lanes> rhs)
     -> std::expected<packed_integer<Element, Lanes>, arith::arithmetic_error> {
   return sub_detail::sub_packed_integer(
@@ -98,17 +98,17 @@ auto sub(const arith::context& context, const exec_ir::Sub::OptionalSat& form,
 }
 
 /** @brief Evaluate scalar f32 subtraction with PTX rounding, FTZ, and sat controls. */
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF32& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF32& form,
          arith::float32_t lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error>;
 
 /** @brief Evaluate f32x2 as two independent scalar f32 subtractions. */
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF32x2& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF32x2& form,
          arith::float32x2_t lhs, arith::float32x2_t rhs)
     -> std::expected<arith::float32x2_t, arith::arithmetic_error>;
 
 /** @brief Evaluate scalar f64 subtraction with the selected PTX rounding mode. */
-auto sub(const arith::context& context, const exec_ir::Sub::FloatF64& form,
+auto sub(const arith::context& context, const exec_ir::SubFloatF64& form,
          arith::float64_t lhs, arith::float64_t rhs)
     -> std::expected<arith::float64_t, arith::arithmetic_error>;
 
@@ -116,7 +116,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::FloatF64& form,
 template <typename T>
   requires(std::same_as<T, arith::float16_t> ||
            std::same_as<T, arith::float16x2_t>)
-auto sub(const arith::context& context, const exec_ir::Sub::Half& form, T lhs,
+auto sub(const arith::context& context, const exec_ir::SubHalf& form, T lhs,
          T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto control =
       floating_detail::controls(form.rounding, form.ftz, form.sat);
@@ -132,7 +132,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::Half& form, T lhs,
 template <typename T>
   requires(std::same_as<T, arith::bfloat16_t> ||
            std::same_as<T, arith::bfloat16x2_t>)
-auto sub(const arith::context& context, const exec_ir::Sub::Bfloat& form, T lhs,
+auto sub(const arith::context& context, const exec_ir::SubBfloat& form, T lhs,
          T rhs) -> std::expected<T, arith::arithmetic_error> {
   const auto control = floating_detail::controls(form.rounding);
   if (!control)
@@ -147,7 +147,7 @@ auto sub(const arith::context& context, const exec_ir::Sub::Bfloat& form, T lhs,
 template <typename Low>
   requires(std::same_as<Low, arith::float16_t> ||
            std::same_as<Low, arith::bfloat16_t>)
-auto sub(const arith::context& context, const exec_ir::Sub::MixedF32& form,
+auto sub(const arith::context& context, const exec_ir::SubMixedF32& form,
          Low lhs, arith::float32_t rhs)
     -> std::expected<arith::float32_t, arith::arithmetic_error> {
   const auto control =

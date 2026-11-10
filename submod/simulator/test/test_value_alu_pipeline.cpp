@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <concepts>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -10,6 +11,8 @@
 #include <ptx_frontend/syntax/ptx_syntax_parser.hpp>
 #include <ptxsim/common/raw_value.hpp>
 #include <ptxsim/exec_ir_lowering/exec_ir_lowering.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/add.gen.hpp>
+#include <ptxsim/exec_ir/model/arithmetic/sub.gen.hpp>
 #include <ptxsim/simulator/simulator.hpp>
 
 namespace ptxsim::simulator::test {
@@ -32,6 +35,36 @@ struct ValueAluPipelineCase {
   /** Legacy spelling that must lower identically to the canonical instruction. */
   std::string_view legacy_instruction{};
 };
+
+/** @brief Compare all native mixed-form controls and operands for the two accepted spellings. */
+template<class Form>
+  requires (std::same_as<Form,exec_ir::AddMixedF32> || std::same_as<Form,exec_ir::SubMixedF32>)
+void expect_mixed_alias(const exec_ir::Instruction& canonical,const exec_ir::Instruction& legacy,
+                        const ValueAluPipelineCase& item) {
+  const auto* left=canonical.get_if<Form>();
+  const auto* right=legacy.get_if<Form>();
+  ASSERT_NE(left,nullptr); ASSERT_NE(right,nullptr);
+  EXPECT_EQ(canonical.instruction_kind(),legacy.instruction_kind());
+  EXPECT_EQ(canonical.instruction_opcode(),legacy.instruction_opcode());
+  EXPECT_EQ(left->execution_predicate,right->execution_predicate);
+  EXPECT_FALSE(left->execution_predicate);
+  EXPECT_EQ(left->rounding,right->rounding); EXPECT_EQ(left->rounding,exec_ir::RoundingMode::rn);
+  EXPECT_EQ(left->sat,right->sat); EXPECT_TRUE(left->sat);
+  EXPECT_EQ(left->input_type,right->input_type);
+  const auto input_type=item.instruction.find(".bf16")!=std::string_view::npos?exec_ir::DataType::bf16:exec_ir::DataType::f16;
+  EXPECT_EQ(left->input_type,input_type);
+  EXPECT_EQ(left->operands,right->operands);
+  const auto text=exec_ir::to_string(canonical);
+  EXPECT_EQ(text,exec_ir::to_string(legacy));
+  const bool add=std::same_as<Form,exec_ir::AddMixedF32>;
+  const std::string expected=std::string(add?"add/add_mixed_f32":"sub/sub_mixed_f32")+
+      " rounding=rn sat=true result_type=f32 input_type="+std::string(input_type==exec_ir::DataType::bf16?"bf16":"f16")+
+      " layout=default dst=register{slot=register:0, class=General, type=b32, width=none, component=none}"
+      " src=register{slot=register:1, class=General, type=b16, width=none, component=none}"+
+      (add?" addend=":" subtrahend=")+
+      "register{slot=register:2, class=General, type=b32, width=none, component=none}";
+  EXPECT_EQ(text,expected);
+}
 
 /** @brief Give parameterized tests stable names without dumping object bytes. */
 void PrintTo(const ValueAluPipelineCase& item, std::ostream* output) {
@@ -96,10 +129,12 @@ TEST_P(ValueAluPipeline, ExecutesResolvedRegisterOperands) {
         {common::FunctionId{0}, common::ProgramCounter{0}});
     ASSERT_TRUE(canonical_instruction);
     ASSERT_TRUE(legacy_instruction);
-    EXPECT_EQ(
-        exec_ir::to_string(canonical_instruction->get()),
-        std::string(item.instruction) + " register:0, register:1, register:2");
-    EXPECT_EQ(canonical_instruction->get(), legacy_instruction->get());
+    if(item.instruction.starts_with("add."))
+      expect_mixed_alias<exec_ir::AddMixedF32>(canonical_instruction->get(),legacy_instruction->get(),item);
+    else {
+      ASSERT_TRUE(item.instruction.starts_with("sub."));
+      expect_mixed_alias<exec_ir::SubMixedF32>(canonical_instruction->get(),legacy_instruction->get(),item);
+    }
   }
   runtime::LaunchRuntime runtime{
       execution_model::GridId{41},

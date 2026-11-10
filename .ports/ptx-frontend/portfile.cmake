@@ -3,23 +3,17 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO endingly/ptx_frontend
-    REF 1a32fac33be61c0f540caaecf2ce14373c281b45
-    SHA512 416e8922f10daf750b02ca5f3a80bb55d158512c41a31f9fd097d1be02c65e9d77a34bdcc9937f8069d6ce98cc05354156a4fb169a6ad9e603c91c6cde2327e3
+    REF v0.8.0
+    SHA512 0cb40c2301d47633abca8f6ef2de570e1097fcfde6e9f904ad4bd2f84fda61753e7276d19bfc7709c07c6a2ba29ca02407e74fc937241bbd38b49d3ba9e0f824
     HEAD_REF main
 )
 
-# The requirements file's editable path is relative to the source checkout;
-# vcpkg installs it from its buildtree instead.
-vcpkg_replace_string(
-    "${SOURCE_PATH}/requirements.txt"
-    "-e ./python"
-    "-e ${SOURCE_PATH}/python"
-)
-
+# Install only the matching source package's production/build dependencies.
+# Upstream requirements.txt also requests test runners although tests are off.
 x_vcpkg_get_python_packages(
     PYTHON_VERSION 3
     OUT_PYTHON_VAR PYTHON3
-    REQUIREMENTS_FILE "${SOURCE_PATH}/requirements.txt"
+    PACKAGES "${SOURCE_PATH}/python"
 )
 
 vcpkg_find_acquire_program(FLEX)

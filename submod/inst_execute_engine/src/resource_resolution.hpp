@@ -59,6 +59,10 @@ class LaneResourceResolver final {
   std::optional<memory::RegisterView> registers_;
 };
 
+/** @brief Combine signed byte-offset provenance with its explicit operator, rejecting wraparound. */
+auto apply_address_offset(std::uint64_t base, const std::optional<exec_ir::AddressOffset>& offset)
+    -> std::expected<std::uint64_t, LaneFaultCause>;
+
 /** @brief Decode and offset an address without resolving an address-space resource. */
 auto numeric_address(const memory::RegisterView& registers,
                      const exec_ir::Address& address)
@@ -66,7 +70,7 @@ auto numeric_address(const memory::RegisterView& registers,
 
 /** @brief Read a b32 operand from an immediate or one register slot. */
 auto b32_operand(const memory::RegisterView& registers,
-                 const exec_ir::B32Operand& operand)
+                 const exec_ir::ScalarOperand& operand)
     -> std::expected<std::uint32_t, LaneFaultCause>;
 
 }  // namespace ptxsim::inst_execute_engine::detail

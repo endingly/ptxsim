@@ -1,11 +1,7 @@
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.14 REQUIRED COMPONENTS Interpreter)
 
 set(PTXSIM_EXEC_IR_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR "${PTXSIM_EXEC_IR_GENERATED_DIR}/public")
-set(PTXSIM_EXEC_IR_GENERATED_HEADER
-    "${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}/ptxsim/exec_ir/exec_ir.gen.hpp")
-set(PTXSIM_EXEC_IR_GENERATED_SOURCE
-    "${PTXSIM_EXEC_IR_GENERATED_DIR}/exec_ir.gen.cpp")
 file(GLOB_RECURSE PTXSIM_EXEC_IR_CODEGEN_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/model/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/frontend/*.py"
@@ -16,24 +12,31 @@ list(APPEND PTXSIM_EXEC_IR_CODEGEN_FILES
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/__init__.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/artifacts.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/__init__.py")
+set(PTXSIM_EXEC_IR_PLAN "${CMAKE_CURRENT_BINARY_DIR}/exec_ir_artifacts.cmake")
+include(plan_codegen)
+ptxsim_plan_codegen(ptxsim_codegen.code_gen.exec_ir
+    "${PTXSIM_EXEC_IR_GENERATED_DIR}" "${PTXSIM_EXEC_IR_PLAN}"
+    "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
+    ${PTXSIM_EXEC_IR_CODEGEN_FILES})
+include("${PTXSIM_EXEC_IR_PLAN}")
 
 add_custom_command(
-    OUTPUT "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
-           "${PTXSIM_EXEC_IR_GENERATED_SOURCE}"
+    OUTPUT ${PTXSIM_EXEC_IR_GENERATED_HEADERS}
+           ${PTXSIM_EXEC_IR_GENERATED_SOURCES}
+    BYPRODUCTS "${PTXSIM_EXEC_IR_GENERATED_DIR}/artifact_plan.json"
     COMMAND "${Python3_EXECUTABLE}" -m ptxsim_codegen.code_gen.exec_ir
-            --output "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
-            --source-output "${PTXSIM_EXEC_IR_GENERATED_SOURCE}"
+            --output-dir "${PTXSIM_EXEC_IR_GENERATED_DIR}"
     DEPENDS "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
             ${PTXSIM_EXEC_IR_CODEGEN_FILES}
     COMMENT "Generating PTXSim execution IR"
     VERBATIM)
 add_custom_target(ptxsim_exec_ir_codegen DEPENDS
-    "${PTXSIM_EXEC_IR_GENERATED_HEADER}" "${PTXSIM_EXEC_IR_GENERATED_SOURCE}")
+    ${PTXSIM_EXEC_IR_GENERATED_HEADERS} ${PTXSIM_EXEC_IR_GENERATED_SOURCES})
 
 file(GLOB_RECURSE ptxsim_exec_ir_srcs CONFIGURE_DEPENDS src/*.cpp)
 add_library(ptxsim_exec_ir
     ${ptxsim_exec_ir_srcs}
-    "${PTXSIM_EXEC_IR_GENERATED_SOURCE}")
+    ${PTXSIM_EXEC_IR_GENERATED_SOURCES})
 add_library(ptxsim::exec_ir ALIAS ptxsim_exec_ir)
 set_target_properties(ptxsim_exec_ir PROPERTIES EXPORT_NAME exec_ir)
 target_compile_features(ptxsim_exec_ir PUBLIC cxx_std_23)
@@ -47,8 +50,14 @@ target_include_directories(ptxsim_exec_ir PUBLIC
     $<BUILD_INTERFACE:${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}>
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 register_headers(ptxsim_exec_ir exec_ir PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-install(FILES "${PTXSIM_EXEC_IR_GENERATED_HEADER}"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ptxsim/exec_ir")
+foreach(PTXSIM_EXEC_IR_HEADER IN LISTS PTXSIM_EXEC_IR_GENERATED_HEADERS)
+    file(RELATIVE_PATH PTXSIM_EXEC_IR_HEADER_RELATIVE
+        "${PTXSIM_EXEC_IR_GENERATED_PUBLIC_DIR}/ptxsim/exec_ir" "${PTXSIM_EXEC_IR_HEADER}")
+    get_filename_component(PTXSIM_EXEC_IR_HEADER_DIRECTORY
+        "${PTXSIM_EXEC_IR_HEADER_RELATIVE}" DIRECTORY)
+    install(FILES "${PTXSIM_EXEC_IR_HEADER}"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ptxsim/exec_ir/${PTXSIM_EXEC_IR_HEADER_DIRECTORY}")
+endforeach()
 ptxsim_enable_sanitizers(ptxsim_exec_ir)
 
 if(BUILD_TESTING)

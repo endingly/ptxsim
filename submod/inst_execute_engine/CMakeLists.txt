@@ -1,40 +1,42 @@
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 3.14 REQUIRED COMPONENTS Interpreter)
 
 set(PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/generated")
-set(PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER
-    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}/instruction_preparation.gen.hpp")
-set(PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE
-    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}/instruction_preparation.gen.cpp")
 file(GLOB_RECURSE PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/model/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/frontend/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.yaml"
-    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/engine/*.py"
-    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/templates/*.j2")
+    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/engine/*.py")
 list(APPEND PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/__init__.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/artifacts.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/__init__.py")
+set(PTXSIM_INST_EXECUTE_ENGINE_PLAN "${CMAKE_CURRENT_BINARY_DIR}/engine_artifacts.cmake")
+include(plan_codegen)
+ptxsim_plan_codegen(ptxsim_codegen.code_gen.engine
+    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}" "${PTXSIM_INST_EXECUTE_ENGINE_PLAN}"
+    "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
+    ${PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES})
+include("${PTXSIM_INST_EXECUTE_ENGINE_PLAN}")
 add_custom_command(
-    OUTPUT "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER}"
-           "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE}"
+    OUTPUT ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADERS}
+           ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCES}
+    BYPRODUCTS "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}/artifact_plan.json"
     COMMAND "${Python3_EXECUTABLE}" -m ptxsim_codegen.code_gen.engine
-            --output "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER}"
-            --source-output "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE}"
+            --output-dir "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}"
     DEPENDS "${PROJECT_SOURCE_DIR}/python/pyproject.toml"
             ${PTXSIM_INST_EXECUTE_ENGINE_CODEGEN_FILES}
-    COMMENT "Generating PTXSim instruction-family execution preparation"
+    COMMENT "Generating dense typed PTXSim issue groups"
     VERBATIM)
 add_custom_target(ptxsim_inst_execute_engine_codegen DEPENDS
-    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER}"
-    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE}")
+    ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADERS}
+    ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCES})
 
 file(GLOB_RECURSE ptxsim_inst_execute_engine_srcs CONFIGURE_DEPENDS src/*.cpp)
 add_library(ptxsim_inst_execute_engine
     ${ptxsim_inst_execute_engine_srcs}
-    "${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE}")
+    ${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCES})
 add_library(ptxsim::inst_execute_engine ALIAS ptxsim_inst_execute_engine)
 set_target_properties(ptxsim_inst_execute_engine PROPERTIES EXPORT_NAME inst_execute_engine)
 target_compile_features(ptxsim_inst_execute_engine PUBLIC cxx_std_23)
@@ -64,8 +66,8 @@ if(BUILD_TESTING)
                      "-DPTXSIM_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
                      "-DPTXSIM_PACKAGE_BUILD_DIR=${PROJECT_BINARY_DIR}"
                      "-DPTXSIM_CONSUMER_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}/link-contract"
-                     "-DPTXSIM_GENERATED_HEADER=${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_HEADER}"
-                     "-DPTXSIM_GENERATED_SOURCE=${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_SOURCE}"
+                     "-DPTXSIM_GENERATED_HEADER=${PTXSIM_INST_EXECUTE_ENGINE_GENERATED_DIR}/instruction_preparation.gen.hpp"
+                     "-DPTXSIM_GENERATED_PLAN=${PTXSIM_INST_EXECUTE_ENGINE_PLAN}"
                      "-DPTXSIM_GENERATOR=${CMAKE_GENERATOR}"
                      "-DPTXSIM_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}"
                      "-DPTXSIM_CXX_COMPILER=${CMAKE_CXX_COMPILER}"

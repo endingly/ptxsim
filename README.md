@@ -20,6 +20,11 @@ PTX source → ptx_frontend resolved IR → ptxsim executable IR
 The project is under active development; its current package version is `0.0.1`.
 It is intended for functional instruction experiments and execution testing.
 
+Frontend 0.8.0 rejects `fma.rn.oob.sat.f16` and `fma.rn.oob.sat.f16x2`.
+These two combinations are retired from PTX execution; the other 68 previously
+tested FMA combinations remain supported. Both removed spellings are retained
+as source rejection regressions.
+
 - Deterministic warp issue, per-thread program counters, predication, branches,
   and multiple warps/CTAs.
 - Movement and topology-register reads; the pinned Add, Sub, Mul, FMA, and Setp
@@ -42,7 +47,7 @@ runner CLI or CUDA runtime replacement.
 ## Build and run a first check
 
 The maintained build matrix is Linux with GCC and Clang. You need CMake 3.28+,
-Ninja, Python 3.12+, and a compiler/standard library supporting C++23
+Ninja, Python 3.14+, and a compiler/standard library supporting C++23
 `std::expected` and the `__int128` extension. CI uses Ubuntu 26.04. Other platforms
 are not covered by that matrix.
 
