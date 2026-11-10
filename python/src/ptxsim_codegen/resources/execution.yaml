@@ -1,0 +1,660 @@
+# Finite execution capabilities; omission means unsupported at actual issue.
+version: 1
+rules:
+- form: add/add_float_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f32]
+- form: add/add_float_f32x2
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    type: [f32x2]
+- form: add/add_float_f64
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    type: [f64]
+- form: add/add_half
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f16, f16x2]
+- form: add/add_bfloat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    type: [bf16, bf16x2]
+- form: add/add_mixed_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    sat: [true, false]
+    result_type: [f32]
+    input_type: [f16, bf16]
+- form: add/add_integer_no_sat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    type: [u16, u32, u64, s16, s32, s64, u16x2, s16x2]
+- form: add/add_sat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    sat: [true]
+    type: [s32, u16x2, s16x2, u32]
+- form: add/add_packed_optional_sat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    sat: [true, false]
+    type: [u8x4, s8x4]
+- form: sub/sub_float_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f32]
+- form: sub/sub_float_f32x2
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    type: [f32x2]
+- form: sub/sub_float_f64
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    type: [f64]
+- form: sub/sub_half
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f16, f16x2]
+- form: sub/sub_bfloat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    type: [bf16, bf16x2]
+- form: sub/sub_mixed_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    sat: [true, false]
+    result_type: [f32]
+    input_type: [f16, bf16]
+- form: sub/sub_integer_no_sat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    type: [u16, u32, u64, s16, s64]
+- form: sub/sub_optional_sat
+  handler: value_alu
+  layouts: [default]
+  controls:
+    sat: [true, false]
+    type: [s32, u8x4, s8x4]
+- form: mul/mul_rn_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f32]
+- form: mul/mul_lo_u32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    lo: [true]
+    type: [u32]
+- form: mul/mul_hi_u32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    hi: [true]
+    type: [u32]
+- form: mul/mul_wide_u32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    wide: [true]
+    type: [u32]
+- form: mul/mul_wide_s32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    wide: [true]
+    type: [s32]
+- form: fma/fma_rn_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f32]
+- form: fma/fma_directed_f32
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rz, rm, rp]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f32]
+- form: fma/fma_rn_f64
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    type: [f64]
+- form: fma/fma_directed_f64
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rz, rm, rp]
+    type: [f64]
+- form: fma/fma_f32x2
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    ftz: [true, false]
+    type: [f32x2]
+- form: fma/fma_rn_f16
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f16]
+- form: fma/fma_rn_f16x2
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    sat: [true, false]
+    type: [f16x2]
+- form: fma/fma_half_relu
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    ftz: [true, false]
+    relu: [true]
+    type: [f16, f16x2]
+- form: fma/fma_half_oob
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    oob: [true]
+    type: [f16, f16x2]
+- form: fma/fma_half_oob_relu
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    oob: [true]
+    relu: [true]
+    type: [f16, f16x2]
+- form: fma/fma_bf16
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    relu: [true, false]
+    type: [bf16]
+- form: fma/fma_bf16x2
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    relu: [true, false]
+    type: [bf16x2]
+- form: fma/fma_bf16_oob
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    oob: [true]
+    relu: [true, false]
+    type: [bf16]
+- form: fma/fma_bf16x2_oob
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn]
+    oob: [true]
+    relu: [true, false]
+    type: [bf16x2]
+- form: fma/fma_mixed_f32_f16
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    sat: [true, false]
+    result_type: [f32]
+    input_type: [f16]
+- form: fma/fma_mixed_f32_bf16
+  handler: value_alu
+  layouts: [default]
+  controls:
+    rounding: [rn, rz, rm, rp]
+    sat: [true, false]
+    result_type: [f32]
+    input_type: [bf16]
+- form: mov/mov_scalar
+  handler: movement
+  layouts: [scalar]
+  controls:
+    type: [b16, u16, s16, b32, u32, s32, f32, b64, u64, s64, f64]
+  operands:
+    scalar:
+      src.category: [register, immediate, special_register, symbol, address]
+      src.intrinsic: [Tid, NTid, CtaId, NCtaId, GridId, LaneId, WarpId, LaneMaskEq, LaneMaskLe, LaneMaskLt,
+        LaneMaskGe, LaneMaskGt]
+- form: mov/mov_scalar
+  handler: movement
+  layouts: [pack]
+  controls:
+    type: [b16, b32, b64]
+- form: mov/mov_scalar
+  handler: movement
+  layouts: [unpack]
+  controls:
+    type: [b16, b32, b64]
+- form: mov/mov_b128_pack_unpack
+  handler: movement
+  layouts: [pack]
+  controls:
+    type: [b128]
+- form: mov/mov_b128_pack_unpack
+  handler: movement
+  layouts: [unpack]
+  controls:
+    type: [b128]
+- form: mov/mov_v4_u32
+  handler: movement
+  layouts: [default]
+  controls:
+    vector: [v4]
+    type: [u32]
+  operands:
+    default:
+      src.category: [special_register]
+      src.intrinsic: [Tid, NTid, CtaId, NCtaId]
+- form: mov/mov_pred
+  handler: movement
+  layouts: [default]
+  controls:
+    type: [pred]
+  operands:
+    default:
+      src.category: [predicate, constant]
+- form: setp/setp_signed
+  handler: comparison
+  layouts: [single]
+  controls:
+    comparison: [eq, lt, ge]
+    type: [s32]
+  operands:
+    single:
+      dst.present: [present]
+- form: setp/setp_signed
+  handler: comparison
+  layouts: [pair]
+  controls:
+    comparison: [eq, lt, ge]
+    type: [s32]
+  operands:
+    pair:
+      dst.first.present: [present]
+      dst.second.present: [present]
+- form: setp/setp_signed_boolean
+  handler: comparison
+  layouts: [single]
+  controls:
+    comparison: [eq, lt, ge]
+    boolean: [and]
+    type: [s32]
+  operands:
+    single:
+      dst.present: [present]
+      combine.category: [predicate]
+- form: setp/setp_signed_boolean
+  handler: comparison
+  layouts: [pair]
+  controls:
+    comparison: [eq, lt, ge]
+    boolean: [and]
+    type: [s32]
+  operands:
+    pair:
+      dst.first.present: [present]
+      dst.second.present: [present]
+      combine.category: [predicate]
+- form: setp/setp_unsigned
+  handler: comparison
+  layouts: [single]
+  controls:
+    comparison: [eq, lt, ge]
+    type: [u32]
+  operands:
+    single:
+      dst.present: [present]
+- form: setp/setp_unsigned
+  handler: comparison
+  layouts: [pair]
+  controls:
+    comparison: [eq, lt, ge]
+    type: [u32]
+  operands:
+    pair:
+      dst.first.present: [present]
+      dst.second.present: [present]
+- form: setp/setp_unsigned_boolean
+  handler: comparison
+  layouts: [single]
+  controls:
+    comparison: [eq, lt, ge]
+    boolean: [and]
+    type: [u32]
+  operands:
+    single:
+      dst.present: [present]
+      combine.category: [predicate]
+- form: setp/setp_unsigned_boolean
+  handler: comparison
+  layouts: [pair]
+  controls:
+    comparison: [eq, lt, ge]
+    boolean: [and]
+    type: [u32]
+  operands:
+    pair:
+      dst.first.present: [present]
+      dst.second.present: [present]
+      combine.category: [predicate]
+- form: ld/ld_generic_scalar
+  handler: memory
+  layouts: [default]
+  controls:
+    mmio: [false]
+    semantics: [omitted, weak]
+    scope: [none]
+    cache: [unspecified]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: ld/ld_explicit_scalar
+  handler: memory
+  layouts: [default]
+  controls:
+    mmio: [false]
+    semantics: [omitted, weak]
+    scope: [none]
+    state_space: [const, global, local, param, shared]
+    cache: [unspecified]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: ld/ld_generic_vector
+  handler: memory
+  layouts: [default]
+  controls:
+    semantics: [omitted, weak]
+    scope: [none]
+    cache: [unspecified]
+    vector: [v2, v4, v8]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: ld/ld_explicit_vector
+  handler: memory
+  layouts: [default]
+  controls:
+    semantics: [omitted, weak]
+    scope: [none]
+    state_space: [const, global, local, param, shared]
+    cache: [unspecified]
+    vector: [v2, v4, v8]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: st/st_generic_scalar
+  handler: memory
+  layouts: [default]
+  controls:
+    mmio: [false]
+    semantics: [omitted, weak]
+    scope: [none]
+    cache: [unspecified]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: st/st_explicit_scalar
+  handler: memory
+  layouts: [default]
+  controls:
+    mmio: [false]
+    semantics: [omitted, weak]
+    scope: [none]
+    state_space: [global, local, shared]
+    cache: [unspecified]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: st/st_generic_vector
+  handler: memory
+  layouts: [default]
+  controls:
+    semantics: [omitted, weak]
+    scope: [none]
+    cache: [unspecified]
+    vector: [v2, v4, v8]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: st/st_explicit_vector
+  handler: memory
+  layouts: [default]
+  controls:
+    semantics: [omitted, weak]
+    scope: [none]
+    state_space: [global, local, shared]
+    cache: [unspecified]
+    vector: [v2, v4, v8]
+    type: [b8, b16, b32, b64, u8, u16, u32, u64, s8, s16, s32, s64, f32, f64]
+  operands:
+    default:
+      address.parameter_qualifier: [default, entry]
+      address.named_index: [absent]
+      address.unified: [false]
+- form: bar/bar_sync
+  handler: barrier
+  layouts: [immediate_barrier]
+  controls:
+    sync: [true]
+- form: bar/bar_sync
+  handler: barrier
+  layouts: [barrier]
+  controls:
+    sync: [true]
+- form: bar/bar_sync
+  handler: barrier
+  layouts: [barrier_and_thread_count]
+  controls:
+    sync: [true]
+- form: bar/bar_cta_sync
+  handler: barrier
+  layouts: [barrier]
+  controls:
+    cta: [true]
+    sync: [true]
+- form: bar/bar_cta_sync
+  handler: barrier
+  layouts: [barrier_and_thread_count]
+  controls:
+    cta: [true]
+    sync: [true]
+- form: bar/bar_arrive
+  handler: barrier
+  layouts: [default]
+  controls:
+    arrive: [true]
+- form: bar/bar_cta_arrive
+  handler: barrier
+  layouts: [default]
+  controls:
+    cta: [true]
+    arrive: [true]
+- form: bar/bar_red_popc_u32
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [u32]
+- form: bar/bar_red_popc_u32
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [u32]
+- form: bar/bar_cta_red_popc_u32
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [u32]
+- form: bar/bar_cta_red_popc_u32
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [u32]
+- form: bar/bar_red_and_pred
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_red_and_pred
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_cta_red_and_pred
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_cta_red_and_pred
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_red_or_pred
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_red_or_pred
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_cta_red_or_pred
+  handler: barrier
+  layouts: [without_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_cta_red_or_pred
+  handler: barrier
+  layouts: [with_thread_count]
+  controls:
+    cta: [true]
+    red: [true]
+    reduction: [true]
+    result_type: [pred]
+- form: bar/bar_warp_sync
+  handler: barrier
+  layouts: [default]
+  controls:
+    warp: [true]
+    sync: [true]
+- form: bra/bra_direct
+  handler: control
+  layouts: [default]
+  controls:
+    uni: [true, false]
+- form: exit/exit_bare
+  handler: control
+  layouts: [default]
+  controls: {}

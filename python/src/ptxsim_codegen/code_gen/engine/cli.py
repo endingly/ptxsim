@@ -10,6 +10,7 @@ from ptxsim_codegen.frontend.v080 import snapshot
 from ptxsim_codegen.model import GenerationError
 
 from .native import artifact_plan, generate
+from .capabilities import load
 
 
 def main() -> None:
@@ -17,17 +18,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--backend', type=Path)
     parser.add_argument('--spec-dir', type=Path)
+    parser.add_argument('--execution-profile', type=Path)
     parser.add_argument('--output-dir', required=True, type=Path)
     parser.add_argument('--cmake-plan-output', type=Path)
     args = parser.parse_args()
     try:
         model = snapshot(args.spec_dir, args.backend)
+        profile = load(model, args.execution_profile)
         if args.cmake_plan_output is not None:
             plan = artifact_plan(model)
             write_cmake_plan(args.cmake_plan_output, 'PTXSIM_INST_EXECUTE_ENGINE_GENERATED',
                              tuple(args.output_dir / value for value in plan.headers),
                              tuple(args.output_dir / value for value in plan.sources))
         else:
-            generate(model, args.output_dir)
+            generate(model, args.output_dir, profile)
     except (GenerationError, ImportError, OSError, ValueError) as error:
         raise SystemExit(f'inst_execute_engine generation error: {error}') from error

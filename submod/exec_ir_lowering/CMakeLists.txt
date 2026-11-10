@@ -4,10 +4,10 @@ file(GLOB_RECURSE PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/model/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/frontend/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.py"
-    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/*.yaml"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/lowering/*.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/binding/*.py")
 list(APPEND PTXSIM_EXEC_IR_LOWERING_CODEGEN_FILES
+    "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/resources/backend.yaml"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/__init__.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/artifacts.py"
     "${PROJECT_SOURCE_DIR}/python/src/ptxsim_codegen/code_gen/__init__.py")

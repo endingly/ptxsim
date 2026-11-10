@@ -27,12 +27,15 @@ template <exec_ir::GeneratedForm Form, TypedLanePreparation Prepare>
                                  execution_model::Warp& warp,
                                  const execution_model::WarpIssueGroup& issue,
                                  const Form& instruction,
-                                 std::optional<common::ProgramCounter> successor,
+                                 SuccessorContext continuation,
                                  Prepare prepare, PrepareKind kind)
-    -> std::expected<PreparedIssue, StepError> {
+    -> std::expected<PreparedIssue, ExecutionError> {
   constexpr auto opcode = Form::opcode;
   const bool needs_successor = (opcode != exec_ir::Opcode::Bra && opcode != exec_ir::Opcode::Exit) ||
                                 instruction.execution_predicate.has_value();
+  if (needs_successor && !continuation.value)
+    return std::unexpected(ExecutionError{continuation.value.error()});
+  const auto successor = continuation.value ? *continuation.value : std::optional<common::ProgramCounter>{};
   if (needs_successor && !successor) return step_error(StepErrorCode::missing_fallthrough);
   PreparedIssue result{kind, {}, {}};
   result.lanes.reserve(issue.size());

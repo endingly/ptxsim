@@ -338,4 +338,63 @@ TEST_F(OwnedIssueContract, Unsigned32NumericBasesKeepSignedOffsetsAndPredicateLa
   EXPECT_TRUE(std::holds_alternative<memory::AddressResolutionError>(result->faults[0].cause));
   EXPECT_EQ(warp().thread(execution_model::LaneId{0}).pc(),common::ProgramCounter{0});
 }
+
+TEST_F(OwnedIssueContract, DeferredProgramErrorPrecedesSupportedPredicateAndOrdinaryReads) {
+  const exec_ir::MovScalar instruction{exec_ir::MovScalar::ScalarOperands{
+      reg(999,exec_ir::DataType::u32),exec_ir::Immediate{7,exec_ir::DataType::u32}},
+      exec_ir::MovScalar::Controls{exec_ir::DataType::u32},exec_ir::Predicate{reg(777,exec_ir::DataType::pred)}};
+  const exec_ir::ProgramError error{exec_ir::ProgramErrorCode::function_not_found,
+      common::FunctionId{13},common::ProgramCounter{29},common::RawWidth::b16,exec_ir::StorageId{4}};
+  const auto before=warp().thread(execution_model::LaneId{0}).status();
+  const auto result=engine_.execute_with_context(warp(),issue(),instruction,SuccessorContext{std::unexpected(error)});
+  ASSERT_FALSE(result); ASSERT_TRUE(std::holds_alternative<exec_ir::ProgramError>(result.error()));
+  EXPECT_EQ(std::get<exec_ir::ProgramError>(result.error()),error);
+  EXPECT_EQ(warp().thread(execution_model::LaneId{0}).pc(),common::ProgramCounter{0});
+  EXPECT_EQ(warp().thread(execution_model::LaneId{0}).status(),before);
+  rejected(instruction,StepErrorCode::missing_fallthrough);
+}
+TEST_F(OwnedIssueContract, UnsupportedIgnoresDeferredErrorsAndAbsentOrFalsePredicateResources) {
+  exec_ir::DivRnF32 instruction{exec_ir::DivRnF32::Operands{reg(999,exec_ir::DataType::f32),
+      exec_ir::Immediate{0,exec_ir::DataType::f32},reg(888,exec_ir::DataType::f32)},
+      exec_ir::Predicate{reg(777,exec_ir::DataType::pred)}};
+  const exec_ir::ProgramError error{exec_ir::ProgramErrorCode::pc_out_of_range,common::FunctionId{9},common::ProgramCounter{41}};
+  const auto check=[&] {
+    const auto result=engine_.execute_with_context(warp(),issue(),instruction,SuccessorContext{std::unexpected(error)});
+    ASSERT_FALSE(result); ASSERT_TRUE(std::holds_alternative<StepError>(result.error()));
+    EXPECT_EQ(std::get<StepError>(result.error()).code,StepErrorCode::unsupported_instruction);
+    EXPECT_EQ(warp().thread(execution_model::LaneId{0}).pc(),common::ProgramCounter{0});
+    EXPECT_TRUE(warp().thread(execution_model::LaneId{0}).ready());
+  };
+  check(); rejected(instruction,StepErrorCode::unsupported_instruction);
+  auto registers=bind(); ASSERT_TRUE(registers.write(common::RegisterSlot{1},common::RawValue::pred(false)));
+  instruction.execution_predicate=exec_ir::Predicate{reg(1,exec_ir::DataType::pred)};
+  check();
+}
+TEST_F(OwnedIssueContract, UnconditionalExitIgnoresDeferredProgramError) {
+  const exec_ir::ExitBare instruction{exec_ir::ExitBare::Operands{}};
+  const exec_ir::ProgramError error{exec_ir::ProgramErrorCode::function_not_found,common::FunctionId{9}};
+  const auto result=engine_.execute_with_context(warp(),issue(),instruction,SuccessorContext{std::unexpected(error)});
+  ASSERT_TRUE(result); EXPECT_TRUE(result->faults.empty());
+  EXPECT_TRUE(runtime_.grid().completed());
+}
+TEST_F(OwnedIssueContract, UnconditionalBranchIgnoresDeferredProgramError) {
+  const exec_ir::BraDirect instruction{exec_ir::BraDirect::Operands{{common::FunctionId{0},common::ProgramCounter{17}}}};
+  const exec_ir::ProgramError error{exec_ir::ProgramErrorCode::function_not_found,common::FunctionId{9}};
+  const auto result=engine_.execute_with_context(warp(),issue(),instruction,SuccessorContext{std::unexpected(error)});
+  ASSERT_TRUE(result); EXPECT_TRUE(result->faults.empty());
+  EXPECT_EQ(warp().thread(execution_model::LaneId{0}).pc(),common::ProgramCounter{17});
+}
+TEST_F(OwnedIssueContract, PredicatedExitAndBranchRequireContinuationBeforePredicateRead) {
+  const exec_ir::Predicate guard{reg(999,exec_ir::DataType::pred)};
+  const exec_ir::ExitBare exit{exec_ir::ExitBare::Operands{},guard};
+  const exec_ir::BraDirect branch{exec_ir::BraDirect::Operands{{common::FunctionId{0},common::ProgramCounter{17}}},guard};
+  const exec_ir::ProgramError error{exec_ir::ProgramErrorCode::pc_out_of_range,common::FunctionId{9},common::ProgramCounter{41}};
+  for(const exec_ir::Instruction* instruction:std::array<const exec_ir::Instruction*,2>{&exit,&branch}) {
+    const auto result=engine_.execute_with_context(warp(),issue(),*instruction,SuccessorContext{std::unexpected(error)});
+    ASSERT_FALSE(result); ASSERT_TRUE(std::holds_alternative<exec_ir::ProgramError>(result.error()));
+    EXPECT_EQ(std::get<exec_ir::ProgramError>(result.error()),error);
+    rejected(*instruction,StepErrorCode::missing_fallthrough);
+  }
+}
+
 }  // namespace ptxsim::inst_execute_engine::test

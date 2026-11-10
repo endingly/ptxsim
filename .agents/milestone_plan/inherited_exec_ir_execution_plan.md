@@ -92,9 +92,9 @@ are inventory checks, not claims of semantic executor coverage.
 | --- | --- | --- |
 | S0 | Adopted architecture, current plan, exact source/artifact inventory, explicit old-contract supersession, role/effort/provenance record; diff and local-link checks | Accepted and committed `8d7b6a2` |
 | S1 | Physical Python package consolidation and CMake/CI/docs paths, retaining the exact current frontend C++/Python pin and dependency behavior; source tests, isolated wheel and sdist-built wheel resource loading, CMake input/rebuild checks | Accepted and committed `17375149` |
-| S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | In progress, coupled with S3 |
-| S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | In progress, coupled with S2 |
-| S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Pending |
+| S2 | Advance both frontend pins to 0.8.0; remove direct Jinja2 and separate production/build dependencies; one full projection, owned leaves and final inherited classes, closed tags and immutable program storage; exact 137/5,453/7,457 parity, all classes compiled through narrow per-opcode and bounded form/source shards, provenance/distribution/ownership checks | Accepted and committed `d1168b6`, coupled with S3 |
+| S3 | Full generated frontend binding and switch to new public IR; every leaf/layout/contract covered, real resolved-module lifetime/resource/storage/relocation tests and meaningful full-binding evidence | Accepted and committed `d1168b6`, coupled with S2 |
+| S4 | Capability YAML and dense typed-group dispatch, all previously supported execution behaviors preserved, temporary bridge removed; negative rule/link tests and issue-ordering/per-lane regressions | Runtime/resource/closure verified; final independent acceptance pending |
 | S5 | Coverage ledger, consumers and installed package, complete CTest and GCC/Clang Debug/Release plus sanitizer gates; actual-diff core review and final documentation | Pending |
 
 Each stable diff receives independent max-effort review and Authority Sol
@@ -318,11 +318,10 @@ and normal source-lifetime independence.
   S2-S4 obligations. Release, Clang, ASan/UBSan and the full compiler matrix
   remain S5 gates and have not been run for S1.
 
-## Coupled S2/S3 verification in progress
+## Coupled S2/S3 verification record
 
-S2/S3 remains unaccepted. The temporary engine adapter preserves the existing
-families while the official capability registry and Simulator issue ordering
-remain S4 work. The following later evidence supersedes the limitations of the
+S2/S3 was independently accepted and committed as `d1168b6`. Its temporary
+engine registry preserved the existing families until the S4 replacement. The following later evidence supersedes the limitations of the
 early syntax-only inventory above only within each stated check's scope.
 
 - The exact 0.8.0 production port built and installed both Debug and Release in
@@ -482,12 +481,143 @@ headers and 203 sources, and engine one header and 87 sources. The engine table
 contains all 5,453 distinct dense entries. Evidence:
 `/tmp/ptxsim-s2-distribution-20261110.Wba24P/summary.json`.
 
-This coupled S2/S3 candidate is ready for final independent actual-diff and
-Authority acceptance. It remains unaccepted until those gates complete. The
-official execution capability YAML and deferred-successor ordering are S4;
-consumer/install integration, the remaining compiler/configuration matrix and
-sanitizers remain S5. The bounded GCC Debug, Python, distribution and earlier
+The coupled S2/S3 candidate received final independent actual-diff and Authority
+acceptance and was committed as `d1168b6`; the accepted 111-path raw manifest
+fingerprint is `f792a5391e7984e6e3d5f5b2cea10882b981cfab446a45e1a9fe005912e90b35`. The official execution capability YAML and deferred-successor ordering are
+verified below in S4, including GCC Debug consumer/install integration.
+Remaining compiler/configuration and sanitizer rows are S5. The bounded GCC Debug, Python, distribution and earlier
 ownership/binding checks above do not establish those later outcomes.
+
+## S4 verified candidate, acceptance pending
+
+The packaged `execution.yaml` replaces the temporary form registry with 83
+layout rules covering the same 67 implemented forms, including all 16 FMA
+identities. The full 137/5,453/7,457 projection and cold binding are unchanged.
+Rules resolve exact semantic form/layout/control identities and closed
+layout-local operand categories, intrinsic identities, qualifiers and true
+optional presence. Unknown identities, values, selector paths and overlaps
+fail generation. Ordinary values, register widths/contents and resource IDs
+are excluded. Profiles choose or restrict a handler and cannot add semantics
+by widening values. Known-handler bounds remain before continuation/predicate/lane
+activity; custom relaxed-memory and XOR-SETP profiles have focused generation
+regressions. Transfer-size and sink checks stay local shape preconditions.
+Omitted MOV forms still receive immutable shape validation before unsupported
+rejection.
+The dense table retains one Kind decode and one indirect typed-group call;
+all admission stays inline before participating-lane loops.
+
+The owning successor context and separate structured program/execution error
+variants implement the adopted ordering above. Simulator no longer performs
+an opcode classification or propagates fallthrough errors before admission.
+The old optional-PC call remains available without overload ambiguity.
+A paired link fixture shares one generated object between a positive executable
+that supplies the exact typed handler and a negative executable that omits only
+that definition. Actual runtime, positive/negative links, installed resources
+and input closure now pass within the scopes below. This candidate still
+requires final independent Max review and Authority acceptance; its
+implementation writer does not grant that acceptance.
+
+Owner checks for this candidate used private output directories. The existing
+33 engine-generator tests passed; a later whole Python run passed all 64 cases
+in 65.890 seconds after the boolean and predicate-constant selector corrections.
+The final focused capability suite passed all 13 cases in 12.366 seconds,
+including conditional-intrinsic overlap, shared layout-local C++ spelling and
+the two wider-profile handler-bound regressions requested in review.
+The current whole-suite inventory is 68 tests; no new whole-suite run is
+claimed after those focused additions. The initial 92-TU syntax batch passed
+89 and exposed only new selector/test-client mistakes. Narrow retries fixed those inputs: unchanged
+generated files were compared byte-for-byte rather than recompiled. All 87
+generated sources, changed native sources and test translation units then
+passed syntax checks within their recorded input scopes. These early checks
+establish compilation only; the later independent gates below establish actual
+runtime, links, installed resources and closure. Evidence is under `/tmp/ptxsim-s4-*` and is indexed in
+`/tmp/ptxsim-s4-implementation-progress.md`.
+
+Independent verification completed against the frozen candidate and narrowly
+repaired fixtures:
+
+- The first unfiltered GCC Debug run reached all 700 CTest cases: 697 passed
+  and three failed, with none skipped. Both external consumers stopped during
+  frontend resolution because their entry-body .param had no PTX version;
+  this precedes ptxsim lowering or execution. The required-handler positive
+  link also exposed its omitted real issue_validation.cpp dependency.
+  Those failed binaries, objects, sources and logs remain separate evidence.
+- The consumer keeps every original instruction, its 2x3 scratch array, three
+  parameter roles/extents, 12-byte entry packing and exact fused-result bits.
+  It now supplies .version 8.0 to select the expected modern BodyLocal role
+  and prints frontend resolution errors. Pinned upstream production requires
+  this context to distinguish legacy entry inputs from body-local parameters;
+  no target/SM value or new execution semantics was introduced. The link
+  fixture adds the real issue_validation.cpp to the object library shared by
+  positive and negative controls; only the typed handler definition differs.
+- The subsequent actual default/all build and unfiltered GCC Debug CTest pass.
+  All 700 tests passed, with zero failures or skips, in 345.52 seconds
+  (session 99327). Both actual build-tree and separately installed consumers,
+  the existing missing-Add contract, and the required-handler positive plus
+  exact-symbol negative contract passed. This is the repaired full-suite
+  result, not a private diagnostic or a filtered replacement.
+- Final evidence is in
+  /tmp/ptxsim-root-repair-integrated-20261110/s4-final-posthash.json
+  (SHA256 f97ff6280e6fc49fbbb92a7ac39ca09ae0153d83eb7a5928bca578d398336c4a).
+  Its checks all pass, verification_complete is true, nine primary archives
+  and nine selected objects match the pre-fixture-repair versions, and runtime
+  plus CI differences against the live source are zero. Companion records are
+  s4-final-source-manifest.json, s4-final-codegen-manifest.json and
+  s4-consumer-overlay-ctest-result.json in that gate directory. Later docs and
+  the two added Python test cases are accounted for separately.
+- The normal PEP 517 sdist-built wheel installed with dependency resolution
+  into an independent Python 3.14.4 environment. The pinned frontend URL/hash,
+  installed provenance and pip check passed. All 24 runtime modules, both YAML
+  resources and pyproject metadata match the final runtime inputs; no tests,
+  caches or retired modules enter the wheel. All three installed CLI commands
+  passed, retaining 5,453 dispatch entries, 83 layout rules and 67 implemented
+  forms. All 751 generated IR/lowering files are byte-identical to S2/S3.
+- Independent Python testing passed the original frozen full 66 cases in
+  69.662 seconds, then the updated capability suite's 13 cases in 10.097
+  seconds, with zero failures, errors or skips. Together they cover the 68
+  distinct current cases; this is not a fresh complete 68-case run. Evidence:
+  /tmp/ptxsim-s4-python-dist-20261110-xwyes7n3/summary.json. The original sdist
+  SHA256 is 995444d01f42542c971bbea350de47331760bbeb720fa4a32da1b20a263d0f39;
+  its wheel SHA256 is
+  c09cc1cffb2a618cc04dc6e4b215bc22dda98ae9f7b1ffbcc34abc2599dbc2e7.
+  These artifacts retain their original README/test snapshot scope; subsequent
+  docs/test-only changes do not alter production modules, resources or metadata.
+  The sdist includes seven test modules; the separate CMake-only test helper
+  remains in the repository and is not an installed runtime dependency.
+- The execution YAML trigger/no-op gate passes all 16 checks. Only engine
+  generation ran; IR and lowering were not invoked and their output bytes
+  stayed unchanged. The same next build reported no work, and the YAML bytes
+  and original access/modification times were restored. Record:
+  s4-execution-yaml-trigger/trigger-noop-report.json under the repaired gate.
+
+The user's final layout exception keeps scripts used exclusively by CI in
+.github/scripts/. The attempted CI move was fully withdrawn: both scripts retain
+their original bytes/modes and the action/CONTRIBUTING references match HEAD.
+The current audit finds 32 project Python source/test/helper files under python/
+and only the two permitted CI scripts outside it. Submodules have no Python,
+Jinja or legacy Python/template/cache directory residue. The README states this
+boundary; no historical review body was rewritten and no new package dependency
+or schema was added.
+
+Authority fixed the final S5 gate scope in
+`/tmp/ptxsim-s5-authority-gate-decision.md`: GCC and Clang Debug/Release plus
+GCC Debug with combined ASan+UBSan, each default/all build and unfiltered CTest
+including build-tree and installed consumers. The exact existing frontend
+Debug/Release prefix may be reused on this host with libstdc++; actual links
+and runs must prove compatibility, without claiming that external frontend
+archives are sanitizer-instrumented. The new input-closure check only needs
+execution YAML to trigger engine generation while IR/binding remain unchanged,
+followed by a true next-build no-op; that new check now passes as recorded
+above. Earlier S1 closure evidence is retained.
+
+Per the user's later path convention, subsequent S5 builds/tests use the actual
+worktree presets at out/build/<preset> and out/install/<preset>, without copying
+the source/build for each configuration into /tmp. The already passing S4
+temporary gate is preserved as evidence and is not moved or rebuilt merely to
+change its path. Source hashes are frozen and checked before/after subsequent
+preset runs. The verified GCC Debug row may be reused; the remaining compiler
+and sanitizer rows are not yet claimed passed. S5 and whole-goal acceptance
+remain pending.
 
 ## Review artifact mapping
 

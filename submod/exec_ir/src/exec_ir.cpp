@@ -8,11 +8,6 @@
 
 namespace ptxsim::exec_ir {
 
-auto may_fallthrough(const Instruction& instruction) noexcept -> bool {
-  return instruction.execution_predicate.has_value() ||
-         (instruction.instruction_opcode() != Opcode::Bra &&
-          instruction.instruction_opcode() != Opcode::Exit);
-}
 
 namespace {
 

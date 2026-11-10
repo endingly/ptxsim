@@ -15,6 +15,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdio>
 #include <memory>
 #include <optional>
 #include <span>
@@ -26,7 +27,9 @@ namespace {
 /** @brief Exercise installed frontend metadata, argument packing and execution. */
 auto entry_argument_consumer() -> bool {
   using namespace ptxsim;
+  // An explicit version selects body-local semantics for the entry-body .param.
   ptx_frontend::PtxSyntaxParser parser(R"ptx(
+.version 8.0
 .entry arguments(.param .u64 output, .param .u32 value) {
   .param .align 8 .b8 call_scratch[2][3];
   .reg .u64 %address;
@@ -46,6 +49,8 @@ auto entry_argument_consumer() -> bool {
   }
   const auto resolved = ptx_frontend::resolved_ir::resolveModule(*ast);
   if (!resolved) {
+    for (const auto& diagnostic : resolved.error())
+      std::fprintf(stderr, "frontend resolution: %s\n", diagnostic.message.c_str());
     return false;
   }
   const auto& declarations = resolved->functions.front().parameter_declarations;

@@ -65,3 +65,19 @@ configure_link_contract_target(ptxsim_inst_execute_engine_link_contract_complete
 add_executable(ptxsim_inst_execute_engine_link_contract_missing_add
     $<TARGET_OBJECTS:ptxsim_inst_execute_engine_link_contract_objects>)
 configure_link_contract_target(ptxsim_inst_execute_engine_link_contract_missing_add)
+
+# The same generated object requires one exact typed external handler. Only the
+# positive executable supplies its definition; all other native dependencies agree.
+if(PTXSIM_REQUIRED_HANDLER_SOURCE)
+    add_library(ptxsim_required_handler_objects OBJECT
+        "${PTXSIM_REQUIRED_HANDLER_SOURCE}"
+        "${PTXSIM_SOURCE_DIR}/submod/inst_execute_engine/src/issue_validation.cpp")
+    configure_link_contract_target(ptxsim_required_handler_objects)
+    add_executable(ptxsim_required_handler_complete
+        $<TARGET_OBJECTS:ptxsim_required_handler_objects>
+        "${CMAKE_CURRENT_SOURCE_DIR}/required_handler.cc")
+    configure_link_contract_target(ptxsim_required_handler_complete)
+    add_executable(ptxsim_required_handler_missing
+        $<TARGET_OBJECTS:ptxsim_required_handler_objects>)
+    configure_link_contract_target(ptxsim_required_handler_missing)
+endif()

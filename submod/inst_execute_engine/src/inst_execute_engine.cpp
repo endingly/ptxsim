@@ -22,6 +22,16 @@ auto InstExecuteEngine::execute(execution_model::Warp& warp,
                                 const exec_ir::Instruction& instruction,
                                 std::optional<common::ProgramCounter> successor)
     -> std::expected<StepReport, StepError> {
+  auto result = execute_with_context(warp, issue, instruction, SuccessorContext{successor});
+  if (!result) return std::unexpected(std::get<StepError>(result.error()));
+  return std::move(*result);
+}
+
+auto InstExecuteEngine::execute_with_context(execution_model::Warp& warp,
+                                            const execution_model::WarpIssueGroup& issue,
+                                            const exec_ir::Instruction& instruction,
+                                            SuccessorContext successor)
+    -> std::expected<StepReport, ExecutionError> {
   if (const auto valid = detail::validate_issue(runtime_, warp, issue);
       !valid) {
     return std::unexpected(valid.error());

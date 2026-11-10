@@ -1,12 +1,13 @@
 #pragma once
 
+#include <expected>
 #include <optional>
 #include <variant>
 #include <vector>
 
 #include <ptxsim/arith/error.hpp>
 #include <ptxsim/common/raw_value.hpp>
-#include <ptxsim/exec_ir/exec_ir_types.hpp>
+#include <ptxsim/exec_ir/exec_ir.hpp>
 #include <ptxsim/execution_model/ids.hpp>
 #include <ptxsim/memory/address_space/address_space_error.hpp>
 #include <ptxsim/memory/address_space/generic_address.hpp>
@@ -100,6 +101,15 @@ struct StepError {
   /** @brief Compare the rejection category and its optional responsible lane. */
   constexpr bool operator==(const StepError&) const noexcept = default;
 };
+
+/** @brief Owning continuation value or deferred program-query failure for one issue. */
+struct SuccessorContext {
+  /** @brief PC, direct-caller absence, or an unchanged native program error; never borrowed. */
+  std::expected<std::optional<common::ProgramCounter>, exec_ir::ProgramError> value;
+};
+
+/** @brief Issue rejection preserving native program errors separately from execution errors. */
+using ExecutionError = std::variant<StepError, exec_ir::ProgramError>;
 
 /** @brief Typed faults that can occur while preparing or committing one lane. */
 using LaneFaultCause =
